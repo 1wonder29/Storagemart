@@ -1,0 +1,3 @@
+[12-Mar-2026 11:09:48 Asia/Manila] PHP Warning:  include(../Employee/session-checker.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/assets/generatePDF/generate_technical.php on line 4
+[12-Mar-2026 11:09:48 Asia/Manila] PHP Warning:  include(../Employee/session-checker.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/assets/generatePDF/generate_technical.php on line 4
+[12-Mar-2026 11:09:48 Asia/Manila] PHP Warning:  include(): Failed opening '../Employee/session-checker.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/assets/generatePDF/generate_technical.php on line 4

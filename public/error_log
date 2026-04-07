@@ -1,0 +1,317 @@
+[22-Jan-2026 20:57:19 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 20:57:19 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:04:13 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:04:13 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:20:14 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:20:14 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:21:26 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:21:26 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:22:15 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:22:15 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:25:49 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:25:49 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:27:35 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:27:35 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:27:43 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:27:43 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:35:46 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:35:46 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:37:26 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:37:26 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:40:05 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:40:05 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:48:19 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 21:48:19 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:265
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 21:48:23 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:48:23 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:56:21 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:56:21 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 21:57:47 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 21:57:47 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:265
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 21:57:50 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 21:57:50 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:265
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 21:57:53 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 21:57:53 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:265
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 21:57:53 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 21:57:53 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:265
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 22:05:40 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:40 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:40 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:40 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:40 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home4/howard/public_html/website_ccb7c893/app/Models/NotificationModel.php:40
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/app/Controllers/AuthController.php(220): NotificationModel->getUnreadCount(2200455)
+#1 /home4/howard/public_html/website_ccb7c893/app/Controllers/head/headController.php(138): AuthController->loadNotifications()
+#2 /home4/howard/public_html/website_ccb7c893/public/index.php(260): HeadController->department()
+#3 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Models/NotificationModel.php on line 40
+[22-Jan-2026 22:05:43 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:43 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:43 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:43 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:43 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home4/howard/public_html/website_ccb7c893/app/Models/NotificationModel.php:40
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/app/Controllers/AuthController.php(220): NotificationModel->getUnreadCount(2200455)
+#1 /home4/howard/public_html/website_ccb7c893/app/Controllers/head/headController.php(138): AuthController->loadNotifications()
+#2 /home4/howard/public_html/website_ccb7c893/public/index.php(260): HeadController->department()
+#3 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Models/NotificationModel.php on line 40
+[22-Jan-2026 22:05:45 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:45 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:45 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:45 America/Chicago] PHP Warning:  Undefined variable $pdo in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 9
+[22-Jan-2026 22:05:45 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home4/howard/public_html/website_ccb7c893/app/Models/NotificationModel.php:40
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/app/Controllers/AuthController.php(220): NotificationModel->getUnreadCount(2200455)
+#1 /home4/howard/public_html/website_ccb7c893/app/Controllers/head/headController.php(138): AuthController->loadNotifications()
+#2 /home4/howard/public_html/website_ccb7c893/public/index.php(260): HeadController->department()
+#3 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Models/NotificationModel.php on line 40
+[22-Jan-2026 22:06:00 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/app/Models/admin/../../config/config.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 8
+[22-Jan-2026 22:06:00 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/app/Models/admin/../../config/config.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php:8
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/app/Controllers/AuthController.php(14): BaseModel->__construct()
+#1 /home4/howard/public_html/website_ccb7c893/public/index.php(233): AuthController->__construct()
+#2 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Models/admin/BaseModel.php on line 8
+[22-Jan-2026 22:16:19 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 22:16:19 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:265
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 22:17:42 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 22:17:42 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 22:18:36 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 22:18:36 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 22:20:11 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 22:20:11 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 22:30:34 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 22:30:34 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 22:41:15 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 22:41:15 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[22-Jan-2026 22:41:35 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[22-Jan-2026 22:41:35 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:265
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[23-Jan-2026 00:18:56 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[23-Jan-2026 00:18:56 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[23-Jan-2026 00:19:09 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[23-Jan-2026 00:19:09 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:262
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 262
+[23-Jan-2026 00:19:12 America/Chicago] PHP Warning:  require_once(/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[23-Jan-2026 00:19:12 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '/home4/howard/public_html/website_ccb7c893/public/../app/Controllers/head/HeadEmployeeController.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/public/index.php:265
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 265
+[11-Mar-2026 22:20:15 America/Chicago] PHP Warning:  require(../vendor/autoload.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:15 America/Chicago] PHP Warning:  require(../vendor/autoload.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:15 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '../vendor/autoload.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php:3
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/app/Controllers/it/AssetController.php(52): require()
+#1 /home4/howard/public_html/website_ccb7c893/public/index.php(200): AssetController->asset()
+#2 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:16 America/Chicago] PHP Warning:  require(../vendor/autoload.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:16 America/Chicago] PHP Warning:  require(../vendor/autoload.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:16 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '../vendor/autoload.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php:3
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/app/Controllers/it/AssetController.php(52): require()
+#1 /home4/howard/public_html/website_ccb7c893/public/index.php(200): AssetController->asset()
+#2 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:17 America/Chicago] PHP Warning:  require(../vendor/autoload.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:17 America/Chicago] PHP Warning:  require(../vendor/autoload.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:17 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '../vendor/autoload.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php:3
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/app/Controllers/it/AssetController.php(52): require()
+#1 /home4/howard/public_html/website_ccb7c893/public/index.php(200): AssetController->asset()
+#2 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:20 America/Chicago] PHP Warning:  require(../vendor/autoload.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:20 America/Chicago] PHP Warning:  require(../vendor/autoload.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:20:20 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '../vendor/autoload.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php:3
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/app/Controllers/it/AssetController.php(52): require()
+#1 /home4/howard/public_html/website_ccb7c893/public/index.php(200): AssetController->asset()
+#2 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 3
+[11-Mar-2026 22:21:19 America/Chicago] PHP Warning:  require(../vendor/autoload.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 12
+[11-Mar-2026 22:21:19 America/Chicago] PHP Warning:  require(../vendor/autoload.php): Failed to open stream: No such file or directory in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 12
+[11-Mar-2026 22:21:19 America/Chicago] PHP Fatal error:  Uncaught Error: Failed opening required '../vendor/autoload.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php:12
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/app/Controllers/it/AssetController.php(52): require()
+#1 /home4/howard/public_html/website_ccb7c893/public/index.php(200): AssetController->asset()
+#2 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 12
+[11-Mar-2026 22:32:29 America/Chicago] PHP Parse error:  syntax error, unexpected end of file, expecting "elseif" or "else" or "endif" in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 160
+[11-Mar-2026 22:32:31 America/Chicago] PHP Parse error:  syntax error, unexpected end of file, expecting "elseif" or "else" or "endif" in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 160
+[11-Mar-2026 22:32:32 America/Chicago] PHP Parse error:  syntax error, unexpected end of file, expecting "elseif" or "else" or "endif" in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 160
+[11-Mar-2026 22:32:35 America/Chicago] PHP Parse error:  syntax error, unexpected end of file, expecting "elseif" or "else" or "endif" in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 160
+[11-Mar-2026 22:32:47 America/Chicago] PHP Parse error:  syntax error, unexpected end of file, expecting "elseif" or "else" or "endif" in /home4/howard/public_html/website_ccb7c893/app/Views/it/asset/asset.php on line 160
+[12-Mar-2026 21:25:11 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined method NotificationModel::getTicketRecipientsWithType() in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php:102
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/public/index.php(166): EmployeeTicketController->store()
+#1 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 102
+[12-Mar-2026 21:25:15 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined method NotificationModel::getTicketRecipientsWithType() in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php:102
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/public/index.php(166): EmployeeTicketController->store()
+#1 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 102
+[12-Mar-2026 21:29:09 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined method NotificationModel::getTicketRecipientsWithType() in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php:102
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/public/index.php(166): EmployeeTicketController->store()
+#1 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 102
+[12-Mar-2026 21:34:19 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined method NotificationModel::getTicketRecipientsWithType() in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php:102
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/public/index.php(166): EmployeeTicketController->store()
+#1 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 102
+[12-Mar-2026 21:35:18 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:47 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:47 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:50 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:50 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:51 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:52 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:53 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:53 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:54 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:54 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:54 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:54 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:35:58 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:36:10 America/Chicago] PHP Parse error:  Unclosed '{' on line 13 in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 300
+[12-Mar-2026 21:40:00 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined method NotificationModel::getTicketRecipientsWithType() in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php:102
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/public/index.php(166): EmployeeTicketController->store()
+#1 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 102
+[12-Mar-2026 21:44:54 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined method NotificationModel::getTicketRecipientsWithType() in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php:102
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/public/index.php(151): EmployeeTicketController->store()
+#1 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 102
+[12-Mar-2026 21:45:45 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined method NotificationModel::getTicketRecipientsWithType() in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php:102
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/public/index.php(166): EmployeeTicketController->store()
+#1 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 102
+[12-Mar-2026 21:48:17 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined method NotificationModel::getTicketRecipientsWithType() in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php:102
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/public/index.php(151): EmployeeTicketController->store()
+#1 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 102
+[12-Mar-2026 21:49:03 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined method NotificationModel::getTicketRecipientsWithType() in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php:102
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/public/index.php(154): EmployeeTicketController->store()
+#1 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Controllers/employee/TicketController.php on line 102
+[13-Mar-2026 00:51:27 America/Chicago] PHP Fatal error:  Uncaught Error: Class "ItTicketController" not found in /home4/howard/public_html/website_ccb7c893/public/index.php:182
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 182
+[13-Mar-2026 02:37:34 America/Chicago] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home4/howard/public_html/website_ccb7c893/app/Views/admin/ticket/ticket.php on line 97
+[13-Mar-2026 02:37:55 America/Chicago] PHP Fatal error:  Uncaught Error: Class "ItTicketController" not found in /home4/howard/public_html/website_ccb7c893/public/index.php:182
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 182
+[13-Mar-2026 02:38:11 America/Chicago] PHP Fatal error:  Uncaught Error: Class "ItTicketController" not found in /home4/howard/public_html/website_ccb7c893/public/index.php:182
+Stack trace:
+#0 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/public/index.php on line 182
+[13-Mar-2026 03:02:39 America/Chicago] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home4/howard/public_html/website_ccb7c893/app/Views/it/ticket/in_progress.php on line 79
+[13-Mar-2026 03:04:01 America/Chicago] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home4/howard/public_html/website_ccb7c893/app/Views/it/ticket/in_progress.php on line 77
+[13-Mar-2026 03:25:30 America/Chicago] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home4/howard/public_html/website_ccb7c893/app/Views/admin/ticket/ticket.php on line 97
+[23-Mar-2026 02:13:55 America/Chicago] addAccount error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '9132017' for key 'PRIMARY'
+[23-Mar-2026 03:01:41 America/Chicago] addAccount error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '8212024' for key 'PRIMARY'
+[23-Mar-2026 03:19:56 America/Chicago] addAccount error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '2022026' for key 'PRIMARY'
+[23-Mar-2026 03:25:15 America/Chicago] addAccount error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '8212024' for key 'PRIMARY'
+[23-Mar-2026 03:34:32 America/Chicago] addAccount error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '20260202' for key 'PRIMARY'
+[23-Mar-2026 03:38:46 America/Chicago] addAccount error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '2062026' for key 'PRIMARY'
+[26-Mar-2026 01:48:49 America/Chicago] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home4/howard/public_html/website_ccb7c893/app/Views/admin/ticket/ticket.php on line 97
+[26-Mar-2026 01:49:08 America/Chicago] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home4/howard/public_html/website_ccb7c893/app/Views/admin/ticket/ticket.php on line 97
+[26-Mar-2026 01:49:08 America/Chicago] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home4/howard/public_html/website_ccb7c893/app/Views/admin/ticket/ticket.php on line 97
+[03-Apr-2026 19:26:03 America/Chicago] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000]: General error: 1267 Illegal mix of collations (latin1_swedish_ci,IMPLICIT) and (utf8mb4_general_ci,COERCIBLE) for operation '=' in /home4/howard/public_html/website_ccb7c893/app/Models/admin/Account.php:18
+Stack trace:
+#0 /home4/howard/public_html/website_ccb7c893/app/Models/admin/Account.php(18): PDOStatement->execute(Array)
+#1 /home4/howard/public_html/website_ccb7c893/app/Controllers/AuthController.php(75): Account->findByUsername('lxbfYeaa\xC0\xA7\xC0\xA2%25...')
+#2 /home4/howard/public_html/website_ccb7c893/public/index.php(33): AuthController->login()
+#3 {main}
+  thrown in /home4/howard/public_html/website_ccb7c893/app/Models/admin/Account.php on line 18

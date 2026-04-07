@@ -1,0 +1,268 @@
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+if (php_sapi_name() === 'cli-server') {
+    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $file = __DIR__ . $path;
+
+    if (is_file($file)) {
+        return false;
+    }
+}
+
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../app/Helpers/Session.php';
+
+Session::start();
+
+// Normalize URI - no subfolder stripping needed for root domain
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri = '/' . trim($uri, '/');
+
+// ROUTES
+// HOME ROUTE
+if ($uri === '/' || $uri === '') {
+    header('Location: ' . rtrim(BASE_URL, '/') . '/login');
+    exit;
+}
+
+// LOGIN POST (exact match)
+if ($uri === '/login-post') {
+    require_once __DIR__ . '/../app/Controllers/AuthController.php';
+    (new AuthController())->login();
+    exit;
+}
+
+// LOGIN PAGE (exact match)
+if ($uri === '/login') {
+    require_once __DIR__ . '/../app/Controllers/AuthController.php';
+    (new AuthController())->show();
+    exit;
+}
+
+// LOGOUT (exact match)
+if ($uri === '/logout') {
+    require_once __DIR__ . '/../app/Controllers/AuthController.php';
+    (new AuthController())->logout();
+    exit;
+}
+
+// MARK NOTIFICATION AS READ (AJAX)
+if ($uri === '/notifications/read' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../app/Controllers/NotificationController.php';
+    (new NotificationController())->markRead();
+    exit;
+}
+
+// ADMIN PREFIX routes
+if (strpos($uri, '/admin') === 0) {
+    require_once __DIR__ . '/../app/Controllers/admin/AdminController.php';
+    require_once __DIR__ . '/../app/Controllers/admin/TicketController.php';
+    require_once __DIR__ . '/../app/Controllers/admin/AssetController.php';
+    $admin = new AdminController();
+    $ticket = new TicketController();
+    $asset = new AssetController();
+    $sub = trim(substr($uri, strlen('/admin')), '/');
+
+    if ($sub === '' || $sub === 'dashboard') {
+        $admin->dashboard();
+    } elseif ($sub === 'account') {
+        $admin->account();
+    } elseif ($sub === 'account/add') {
+        $admin->addAccount();
+    } elseif ($sub === 'account/edit') {
+        $admin->editAccount();
+    } elseif ($sub === 'employee') {
+        $admin->employee();
+    } elseif ($sub === 'tickets') {
+        $ticket->ticket();
+    } elseif ($sub === 'tickets/history') {
+        $ticket->history();
+    } elseif ($sub === 'tickets/update-assignment' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->updateAssignment();
+    } elseif ($sub === 'tickets/add') {
+        $ticket->add();
+    } elseif ($sub === 'tickets/get-assets') {
+        $ticket->getAssets();
+    } elseif ($sub === 'tickets/search-employee') {
+        $ticket->searchEmployee();
+    } elseif ($sub === 'tickets/file' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $ticket->fileTicket();
+    } elseif ($sub === 'tickets/file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->storeFile();
+    } elseif ($sub === 'assets') {
+        $asset->asset();
+    } elseif ($sub === 'assets/branch/add') {
+        $asset->branch();
+    } elseif ($sub === 'assets/category/add') {
+        $asset->category();
+    } elseif ($sub === 'assets/group/add') {
+        $asset->group();
+    } elseif ($sub === 'assets/group/update') {
+        $asset->updateGroup();
+    } elseif ($sub === 'assets/item') {
+        $asset->item();
+    } elseif ($sub === 'assets/add') {
+        $asset->addItem();
+    } elseif ($sub === 'assets/item/edit' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $asset->editItem();
+    } elseif ($sub === 'assets/item/update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $asset->updateItem();
+    } elseif ($sub === 'assets/transfer') {
+        $asset->transferItem();
+    } elseif ($sub === 'assets/search-employee') {
+        $asset->searchEmployee();
+    } elseif ($sub === 'assets/transfer-history') {
+        $asset->transferHistory();
+    } elseif ($sub === 'pendings') {
+        $ticket->pendings();
+    } elseif ($sub === 'tickets/pending' || $sub === 'tickets/pendings') {
+        $ticket->pendings();
+    } elseif ($sub === 'tickets/approve-assign' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->approveAssign();
+    } elseif ($sub === 'tickets/decline' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->decline();
+    } elseif ($sub === 'assets/view') {
+        $admin->view_asset();
+    } else {
+        http_response_code(404);
+        echo "Admin page not found.";
+    }
+    exit;
+}
+
+// Employee PREFIX routes
+if (strpos($uri, '/employee') === 0) {
+    require_once __DIR__ . '/../app/Controllers/employee/EmployeeController.php';
+    require_once __DIR__ . '/../app/Controllers/employee/AssetController.php';
+    require_once __DIR__ . '/../app/Controllers/employee/TicketController.php';
+
+    $employee = new EmployeeController();
+    $asset    = new AssetController();
+    $ticket   = new EmployeeTicketController();
+
+    $sub = trim(substr($uri, strlen('/employee')), '/');
+
+    if ($sub === '' || $sub === 'dashboard') {
+        $employee->dashboard();
+    } elseif ($sub === 'assets') {
+        $asset->asset();
+    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $ticket->create();
+    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->store();
+    } elseif ($sub === 'tickets') {
+        $ticket->index();
+    } elseif ($sub === 'tickets/create') {
+        $ticket->create();
+    } elseif ($sub === 'tickets/history') {
+        $ticket->history();
+    } elseif ($sub === 'tickets/history/fetch') {
+        $ticket->fetchHistory();
+    } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $ticket->rate();
+    } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->storeRating();
+    } else {
+        http_response_code(404);
+        echo "Employee page not found.";
+    }
+    exit;
+}
+
+// IT prefix routes - BUG-25 fix: only match exactly '/it' or paths starting with '/it/'
+if ($uri === '/it' || strpos($uri, '/it/') === 0) {
+    require_once __DIR__ . '/../app/Controllers/it/ItController.php';
+    require_once __DIR__ . '/../app/Controllers/it/AssetController.php';
+    require_once __DIR__ . '/../app/Controllers/it/TicketController.php';
+
+    $it     = new ItController();
+    $asset  = new AssetController();
+    $ticket = new TicketController();
+
+    $sub = trim(substr($uri, strlen('/it')), '/');
+
+    if ($sub === '' || $sub === 'dashboard') {
+        $it->dashboard();
+    } elseif ($sub === 'assets') {
+        $asset->asset();
+    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $ticket->create();
+    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->store();
+    } elseif ($sub === 'tickets') {
+        $ticket->index();
+    } elseif ($sub === 'tickets/create') {
+        $ticket->create();
+    } elseif ($sub === 'tickets/history') {
+        $ticket->history();
+    } elseif ($sub === 'tickets/history/fetch') {
+        $ticket->fetchHistory();
+    } elseif ($sub === 'tickets/in_progress') {
+        $ticket->in_progress();
+    } elseif ($sub === 'tickets/update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->update();
+    } elseif ($sub === 'tickets/resolve') {
+        $ticket->resolve();
+    } else {
+        http_response_code(404);
+        echo "IT page not found.";
+    }
+    exit;
+}
+
+// Head PREFIX routes
+if (strpos($uri, '/head') === 0) {
+    $sub = trim(substr($uri, strlen('/head')), '/');
+
+    // AJAX-only endpoints
+    if ($sub === 'employee/tickets' || $sub === 'employee/assets' || $sub === 'employee/assets/tickets') {
+        require_once __DIR__ . '/../app/Controllers/head/headEmployeeController.php';
+        $headEmployee = new HeadEmployeeController();
+        if ($sub === 'employee/tickets') {
+            $headEmployee->tickets();
+        } elseif ($sub === 'employee/assets') {
+            $headEmployee->assets();
+        } elseif ($sub === 'employee/assets/tickets') {
+            $headEmployee->assetTickets();
+        }
+        exit;
+    }
+
+    require_once __DIR__ . '/../app/Controllers/head/headController.php';
+    require_once __DIR__ . '/../app/Controllers/head/headAssetController.php';
+    require_once __DIR__ . '/../app/Controllers/head/headTicketController.php';
+
+    $head       = new headController();
+    $headAsset  = new headAssetController();
+    $headTicket = new headTicketController();
+
+    if ($sub === '' || $sub === 'dashboard') {
+        $head->dashboard();
+    } elseif ($sub === 'assets') {
+        $headAsset->asset();
+    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $headTicket->create();
+    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $headTicket->store();
+    } elseif ($sub === 'tickets') {
+        $headTicket->index();
+    } elseif ($sub === 'tickets/create') {
+        $headTicket->create();
+    } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $headTicket->rate();
+    } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $headTicket->storeRating();
+    } elseif ($sub === 'employee') {
+        $head->department();
+    } else {
+        http_response_code(404);
+        echo "Head page not found.";
+    }
+    exit;
+}
+
+// FALLBACK
+http_response_code(404);
+echo "404 - Page not found.";
