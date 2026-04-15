@@ -154,6 +154,11 @@ $base = rtrim(BASE_URL, '/');
                     <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                         aria-labelledby="userDropdown">
 
+                        <a class="dropdown-item" href="<?= htmlspecialchars($base) ?>/head/profile">
+                            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                            Profile
+                        </a>
+
                         <!-- FIXED: Modal trigger -->
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                             <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -175,7 +180,7 @@ $base = rtrim(BASE_URL, '/');
                     <div class="modal-header">
                         <h5 class="modal-title">Ready to Leave?</h5>
                         <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">×</span>
+                            <span aria-hidden="true">ï¿½</span>
                         </button>
                     </div>
                     <div class="modal-body">

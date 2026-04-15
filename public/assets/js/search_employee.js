@@ -14,7 +14,6 @@ $('#btnSearchEmployee').on('click', function() {
         success: function(response) {
             if(response.success) {
                 $('#employee_id').val(response.employee_id);
-                $('#employee_search').val(response.full_name);
                 $('#fullname').val(response.full_name);
                 $('#branch').val(response.branchName);
                 $('#department').val(response.department);

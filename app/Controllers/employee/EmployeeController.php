@@ -72,5 +72,33 @@ class EmployeeController extends AuthController
         require __DIR__ . '/../../Views/employee/dashboard/dashboard.php';
     }
 
+    public function profile()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'EMPLOYEE') {
+            $_SESSION['loginMessage'] = 'Please log in as employee.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $model = new Employee();
+        $profile = $model->fetchProfileByAccountId((int)$_SESSION['account_id']) ?? [];
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition  = $ctx['loggedPosition'];
+
+        if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        $csrf_token = $_SESSION['csrf_token'];
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        require __DIR__ . '/../../Views/employee/profile/profile.php';
+    }
+
     
 }

@@ -40,20 +40,11 @@ $base = rtrim(BASE_URL, '/');
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800">Tables</h1>
+                    <h1 class="h3 mb-2 text-gray-800">List of Item Assets</h1>
 
 
                     <!-- Main conctent -->
                     <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">List of Item Assets</h6>
-                        </div>
-                        <div class="d-flex flex-column align-items-end" style="gap: 10px; margin-right: 40px; margin-top: 40px;">
-                            <a href="<?= htmlspecialchars($base) ?>/admin/assets/branch/add" class="btn btn-primary" style="width:160px;"><i class="fas fa-plus"></i> Add Branch</a>
-                            <a href="<?= htmlspecialchars($base) ?>/admin/assets/category/add" class="btn btn-primary" style="width:160px;"><i class="fas fa-plus"></i> Add Category</a>
-                            <a href="<?= htmlspecialchars($base) ?>/admin/assets/group/add" class="btn btn-primary" style="width:160px;"><i class="fas fa-plus"></i> Add Group</a>
-                        </div>
-
 
                         <div class="card-body">
                             <div class="table-responsive">

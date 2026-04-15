@@ -46,6 +46,78 @@ class AuthController {
         require __DIR__ . '/../Views/auth/login.php';
     }
 
+    public function showForgotPassword() {
+        if (empty($_SESSION['forgot_csrf'])) {
+            $_SESSION['forgot_csrf'] = bin2hex(random_bytes(16));
+        }
+
+        $forgotMessage = $_SESSION['forgotMessage'] ?? null;
+        $oldUsername = $_SESSION['forgot_old_username'] ?? '';
+        $oldEmail = $_SESSION['forgot_old_email'] ?? '';
+
+        unset($_SESSION['forgotMessage'], $_SESSION['forgot_old_username'], $_SESSION['forgot_old_email']);
+
+        require __DIR__ . '/../Views/auth/forgot_password.php';
+    }
+
+    public function resetPassword() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/forgot-password');
+        }
+
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['forgot_csrf']) || !hash_equals($_SESSION['forgot_csrf'], $csrf)) {
+            $_SESSION['forgotMessage'] = "<span style='color:red'>Invalid form token. Please try again.</span>";
+            $this->redirect('/forgot-password');
+        }
+
+        $username = trim($_POST['username'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+
+        $_SESSION['forgot_old_username'] = $username;
+        $_SESSION['forgot_old_email'] = $email;
+
+        if ($username === '' || $email === '' || $newPassword === '' || $confirmPassword === '') {
+            $_SESSION['forgotMessage'] = "<span style='color:red'>Please complete all fields.</span>";
+            $this->redirect('/forgot-password');
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['forgotMessage'] = "<span style='color:red'>Please enter a valid email address.</span>";
+            $this->redirect('/forgot-password');
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            $_SESSION['forgotMessage'] = "<span style='color:red'>Passwords do not match.</span>";
+            $this->redirect('/forgot-password');
+        }
+
+        if (strlen($newPassword) < 8) {
+            $_SESSION['forgotMessage'] = "<span style='color:red'>Password must be at least 8 characters.</span>";
+            $this->redirect('/forgot-password');
+        }
+
+        $account = $this->model->findByUsernameAndEmail($username, $email);
+        if (!$account) {
+            $_SESSION['forgotMessage'] = "<span style='color:red'>No account matched the provided username and email.</span>";
+            $this->redirect('/forgot-password');
+        }
+
+        $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $ok = $this->model->updatePasswordByAccountId((int)$account['account_id'], $passwordHash);
+
+        if (!$ok) {
+            $_SESSION['forgotMessage'] = "<span style='color:red'>Failed to reset password. Please try again.</span>";
+            $this->redirect('/forgot-password');
+        }
+
+        unset($_SESSION['forgot_old_username'], $_SESSION['forgot_old_email']);
+        $_SESSION['loginMessage'] = "<span style='color:green'>Password reset successful. You can now log in.</span>";
+        $this->redirect('/login');
+    }
+
     public function login() {
         $this->log('Entered login() method. METHOD=' . ($_SERVER['REQUEST_METHOD'] ?? 'NA') . ' POST=' . json_encode(array_keys($_POST)));
 

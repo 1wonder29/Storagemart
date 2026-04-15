@@ -50,7 +50,7 @@ class itController extends AuthController{
         $dashboardModel = new DashboardModel();
         $employeeId = (int) $employeeId; // already defined earlier in your controller
 
-        $rows = $dashboardModel->getItTicketResolutionTimes($employeeId);
+        $rows = $dashboardModel->getItTicketResolutionTimes();
 
         $resolutionLabels = [];
         $resolutionData   = [];
@@ -60,6 +60,31 @@ class itController extends AuthController{
             $resolutionData[]   = (int)$row['resolution_hours'];
         }
         require_once __DIR__ . '/../../Views/it/dashboard/dashboard.php';
+    }
+
+    public function profile()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'IT') {
+            $_SESSION['loginMessage'] = 'Please log in as IT user.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $itModel = new IT();
+        $profile = $itModel->fetchProfileByAccountId((int)$_SESSION['account_id']) ?? [];
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition  = $ctx['loggedPosition'];
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        require __DIR__ . '/../../Views/it/profile/profile.php';
     }
 
 }

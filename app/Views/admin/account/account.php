@@ -40,14 +40,11 @@ $base = BASE_URL !== '' ? rtrim(BASE_URL, '/') : '';
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800">Tables</h1>
+                    <h1 class="h3 mb-2 text-gray-800">List of Accounts</h1>
 
 
                     <!-- Main conctent -->
                     <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">List of Accounts</h6>
-                        </div>
                         <div class="d-flex flex-column align-items-end" style="gap: 10px; margin-right: 40px; margin-top: 40px;">
                             <a href="<?= htmlspecialchars($base) ?>/admin/account/add" class="btn btn-primary" style="width:160px;"><i class="fas fa-plus"></i> Add Accounts</a>
                         </div>

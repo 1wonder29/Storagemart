@@ -142,4 +142,29 @@ class HeadController extends AuthController
         require __DIR__ . '/../../Views/head/department/employee.php';
     }
 
+    public function profile()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'HEAD') {
+            $_SESSION['loginMessage'] = 'Please log in as head user.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $employeeModel = new Employee();
+        $profile = $employeeModel->fetchProfileByAccountId((int)$_SESSION['account_id']) ?? [];
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition  = $ctx['loggedPosition'];
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        require __DIR__ . '/../../Views/head/profile/profile.php';
+    }
+
 }

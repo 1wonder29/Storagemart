@@ -464,5 +464,30 @@ class AdminController extends AuthController
         // Pass $assets (plural) to the view — your view expects $assets
         require __DIR__ . '/../../Views/admin/account/asset.php';
     }
+
+    public function profile()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $_SESSION['loginMessage'] = 'Please log in as admin.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $accountModel = $this->model ?? new Account();
+        $profile = $accountModel->fetchAccountById((int)$_SESSION['account_id']) ?? [];
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition  = $ctx['loggedPosition'];
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        require __DIR__ . '/../../Views/admin/profile/profile.php';
+    }
 }
 

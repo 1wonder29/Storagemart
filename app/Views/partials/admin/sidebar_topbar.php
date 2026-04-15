@@ -48,11 +48,21 @@ $base = rtrim(BASE_URL, '/');
                     <span>Ticket</span>
                 </a>
             </li>
-            <li class="nav-item <?= ($activePage === 'assets') ? 'active' : '' ?>">
-                <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/assets">
+            <li class="nav-item <?= in_array($activePage ?? '', ['assets', 'branch', 'category']) ? 'active' : '' ?>">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseAssets"
+                    aria-expanded="true" aria-controls="collapseAssets">
                     <i class="fas fa-archive"></i>
-                    <span>Assets Directory </span>
+                    <span>Assets Directory</span>
                 </a>
+                <div id="collapseAssets" class="collapse" aria-labelledby="headingAssets" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">Asset Management:</h6>
+                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets">Assets Directory</a>
+                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/branch/add">Add Branch</a>
+                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/category/add">Add Category</a>
+                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/group/add">Add Group</a>
+                    </div>
+                </div>
             </li>
             <!-- Divider -->
             <hr class="sidebar-divider">
@@ -160,6 +170,10 @@ $base = rtrim(BASE_URL, '/');
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="<?= htmlspecialchars($base) ?>/admin/profile">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Profile
+                                </a>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Logout

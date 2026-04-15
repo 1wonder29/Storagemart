@@ -53,7 +53,7 @@ $base = rtrim(BASE_URL, '/');
                 <button type="submit" name="btnLogin">LOG IN</button>
 
                 <div class="forgot-password">
-                    <a href="#">Forgot password?</a>
+                    <a href="<?= htmlspecialchars($base) ?>/forgot-password">Forgot password?</a>
                 </div>
             </form>
         </div>

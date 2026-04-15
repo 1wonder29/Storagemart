@@ -130,4 +130,36 @@ class IT extends BaseModel{
 
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
+
+    public function fetchProfileByAccountId(int $accountId): ?array
+    {
+        try {
+            $sql = "SELECT
+                        a.account_id,
+                        a.username,
+                        a.usertype,
+                        a.status,
+                        a.datecreated AS account_datecreated,
+                        e.employee_id,
+                        e.firstname,
+                        e.lastname,
+                        e.middlename,
+                        e.department,
+                        e.position,
+                        e.email,
+                        b.branchName
+                    FROM {$this->table} a
+                    LEFT JOIN {$this->tblemployee} e ON a.account_id = e.account_id
+                    LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+                    WHERE a.account_id = ?
+                    LIMIT 1";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$accountId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (\Throwable $e) {
+            error_log('IT::fetchProfileByAccountId error: ' . $e->getMessage());
+            return null;
+        }
+    }
 }

@@ -234,6 +234,8 @@ public function searchEmployee(string $q): ?array
         WHERE e.firstname   LIKE :first
             OR e.lastname   LIKE :last
             OR e.employee_id LIKE :empid
+            OR CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) LIKE :full_with_comma
+            OR CONCAT(e.firstname, ' ', IFNULL(e.middlename, ''), ' ', e.lastname) LIKE :full_plain
         LIMIT 1
     ";
 
@@ -243,6 +245,8 @@ public function searchEmployee(string $q): ?array
     $stmt->bindValue(':first', $like, PDO::PARAM_STR);
     $stmt->bindValue(':last',  $like, PDO::PARAM_STR);
     $stmt->bindValue(':empid', $like, PDO::PARAM_STR);
+    $stmt->bindValue(':full_with_comma', $like, PDO::PARAM_STR);
+    $stmt->bindValue(':full_plain', $like, PDO::PARAM_STR);
 
     $stmt->execute();
 

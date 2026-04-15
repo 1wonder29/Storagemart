@@ -19,6 +19,31 @@ class Account extends BaseModel {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
+    public function findByUsernameAndEmail(string $username, string $email): ?array {
+        $sql = "SELECT a.*
+                FROM {$this->table} a
+                INNER JOIN {$this->tblemployee} e ON e.account_id = a.account_id
+                WHERE a.username = :username
+                  AND e.email = :email
+                LIMIT 1";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':username' => $username,
+            ':email' => $email,
+        ]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function updatePasswordByAccountId(int $accountId, string $passwordHash): bool {
+        $stmt = $this->pdo->prepare("UPDATE {$this->table} SET password = :password WHERE account_id = :account_id LIMIT 1");
+        return $stmt->execute([
+            ':password' => $passwordHash,
+            ':account_id' => $accountId,
+        ]);
+    }
+
     public function loginByUsernameAndPassword(string $username, string $passwordInput): ?array {
         $user = $this->findByUsername($username);
         if (!$user) return null;

@@ -44,12 +44,6 @@ $base = rtrim(BASE_URL, '/');
                         <div class="card-header py-3">
                             <h6 class="m-0 font-weight-bold text-primary">List of Item Assets</h6>
                         </div>
-                        <div class="d-flex flex-column align-items-end" style="gap: 10px; margin-right: 40px; margin-top: 40px;">
-                            <a href="<?= htmlspecialchars($base) ?>/admin/assets/add?group_id=<?= $group_id; ?>" class="btn btn-primary" style="width:160px;">
-                                <i class="fas fa-plus"></i> Add Asset
-                            </a>
-
-                        </div>
                         <div class="card-body">
                             <div class="table-responsive">
                                 <table class="table table-bordered" id="asset_inventory" width="100%" cellspacing="0">

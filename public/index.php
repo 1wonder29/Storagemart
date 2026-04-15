@@ -41,6 +41,20 @@ if ($uri === '/login') {
     exit;
 }
 
+// FORGOT PASSWORD PAGE
+if ($uri === '/forgot-password' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Controllers/AuthController.php';
+    (new AuthController())->showForgotPassword();
+    exit;
+}
+
+// FORGOT PASSWORD SUBMIT
+if ($uri === '/forgot-password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../app/Controllers/AuthController.php';
+    (new AuthController())->resetPassword();
+    exit;
+}
+
 // LOGOUT (exact match)
 if ($uri === '/logout') {
     require_once __DIR__ . '/../app/Controllers/AuthController.php';
@@ -75,10 +89,12 @@ if (strpos($uri, '/admin') === 0) {
         $admin->editAccount();
     } elseif ($sub === 'employee') {
         $admin->employee();
+    } elseif ($sub === 'profile') {
+        $admin->profile();
     } elseif ($sub === 'tickets') {
         $ticket->ticket();
     } elseif ($sub === 'tickets/history') {
-        $ticket->history();
+        $ticket->index();
     } elseif ($sub === 'tickets/update-assignment' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $ticket->updateAssignment();
     } elseif ($sub === 'tickets/add') {
@@ -146,6 +162,8 @@ if (strpos($uri, '/employee') === 0) {
 
     if ($sub === '' || $sub === 'dashboard') {
         $employee->dashboard();
+    } elseif ($sub === 'profile') {
+        $employee->profile();
     } elseif ($sub === 'assets') {
         $asset->asset();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -157,7 +175,7 @@ if (strpos($uri, '/employee') === 0) {
     } elseif ($sub === 'tickets/create') {
         $ticket->create();
     } elseif ($sub === 'tickets/history') {
-        $ticket->history();
+        $ticket->index();
     } elseif ($sub === 'tickets/history/fetch') {
         $ticket->fetchHistory();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -185,6 +203,8 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
 
     if ($sub === '' || $sub === 'dashboard') {
         $it->dashboard();
+    } elseif ($sub === 'profile') {
+        $it->profile();
     } elseif ($sub === 'assets') {
         $asset->asset();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -240,6 +260,8 @@ if (strpos($uri, '/head') === 0) {
 
     if ($sub === '' || $sub === 'dashboard') {
         $head->dashboard();
+    } elseif ($sub === 'profile') {
+        $head->profile();
     } elseif ($sub === 'assets') {
         $headAsset->asset();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {

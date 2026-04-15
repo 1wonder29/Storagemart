@@ -34,44 +34,50 @@ $base = rtrim(BASE_URL, '/');
                     <div class="row">
                         <!-- Assets Card -->
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                        Tickets
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        <?php echo $assignedCount; ?>
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets" style="text-decoration: none; color: inherit;">
+                                <div class="card border-left-primary shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s; padding: 0;">
+                                    <div class="card-body">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Tickets
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $assignedCount; ?>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
 
                         <!-- Tickets Card -->
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                        On Going Tickets
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        <?php echo $pendingTickets; ?>
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" style="text-decoration: none; color: inherit;">
+                                <div class="card border-left-success shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s;">
+                                    <div class="card-body">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            On Going Tickets
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $pendingTickets; ?>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
 
                         <!-- Ongoing Tickets -->
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-warning shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                        Resolve
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        <?php echo $resolveTickets; ?>
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" style="text-decoration: none; color: inherit;">
+                                <div class="card border-left-warning shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s;">
+                                    <div class="card-body">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                            Resolve
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $resolveTickets; ?>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -84,44 +90,50 @@ $base = rtrim(BASE_URL, '/');
                     <div class="row">
                         <!-- Assets Card -->
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                        My Assets
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        <?php echo $myAssets; ?>
+                            <a href="<?= htmlspecialchars($base) ?>/it/assets" style="text-decoration: none; color: inherit;">
+                                <div class="card border-left-primary shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s;">
+                                    <div class="card-body">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            My Assets
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $myAssets; ?>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
 
                         <!-- Tickets Card -->
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                        My Tickets
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        <?php echo $myTickets; ?>
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets" style="text-decoration: none; color: inherit;">
+                                <div class="card border-left-success shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s;">
+                                    <div class="card-body">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            My Tickets
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $myTickets; ?>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
 
                         <!-- Ongoing Tickets -->
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-warning shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                        My On-going Tickets
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                       <?php echo $myOngoingTickets; ?>
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" style="text-decoration: none; color: inherit;">
+                                <div class="card border-left-warning shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s;">
+                                    <div class="card-body">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                            My On-going Tickets
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                           <?php echo $myOngoingTickets; ?>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                     </div>
                 </div>

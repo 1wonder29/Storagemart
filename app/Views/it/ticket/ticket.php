@@ -11,7 +11,7 @@ $base = rtrim(BASE_URL, '/');
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Storage Mart Tickets - Tables</title>
+    <title>Storage Mart Tickets - List of Tickets</title>
 
     <!-- Custom fonts for this template -->
     <link href="<?= htmlspecialchars($base)?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -40,7 +40,7 @@ $base = rtrim(BASE_URL, '/');
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800">Tables</h1>
+                    <h1 class="h3 mb-2 text-gray-800">List of Tickets</h1>
 
 
                     <!-- Main conctent -->

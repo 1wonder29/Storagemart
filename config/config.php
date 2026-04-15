@@ -5,8 +5,8 @@ define('BASE_URL', '');
 $host = 'localhost'; // IMPORTANT: use localhost on HostGator
 $port = '3306';
 $db   = 'howard_tms';
-$user = 'howard_tms';
-$pass = 'stor@geIT2025!';
+$user = 'root';
+$pass = '';
 
 try {
     $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
