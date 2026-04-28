@@ -5,8 +5,8 @@ define('BASE_URL', '/');
 $host = 'localhost';
 $port = 3306;
 $db   = 'howard_tms';
-$user = 'howard_tms';
-$pass = 'stor@geIT2025!'; // change this in cPanel
+$user = 'root';  // Changed from howard_tms to match main config
+$pass = '';      // Changed from stor@geIT2025! to empty, matching main config
 
 /**
  * PDO

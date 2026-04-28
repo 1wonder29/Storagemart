@@ -408,25 +408,8 @@ class AssetController extends AuthController {
 
         $assetModel = new Asset();
 
-        // read group_id from querystring and validate immediately
-        $group_id = isset($_GET['group_id']) ? (int) $_GET['group_id'] : 0;
-        if ($group_id <= 0) {
-            $_SESSION['flash_error'] = 'Invalid group id.';
-            $this->redirect('/admin/assets');
-            return;
-        }
-
-        // GET -> show Add Item form (and items list if you want)
+        // GET -> show Add Item form
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $group = $assetModel->fetchGroupById($group_id);
-            if (!$group) {
-                $_SESSION['flash_error'] = 'Group not found.';
-                $this->redirect('/admin/assets');
-                return;
-            }
-
-            $items = $assetModel->fetchItemsByGroupId($group_id);
-
             if (empty($_SESSION['csrf_token'])) {
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
             }
@@ -436,12 +419,14 @@ class AssetController extends AuthController {
             $base = $ctx['base'];
             $loggedFirstname = $ctx['loggedFirstname'];
             $loggedPosition  = $ctx['loggedPosition'];
-        $notificationData = $this->loadNotifications();
+            $notificationData = $this->loadNotifications();
 
-        $count = $notificationData['count'];
-        $notifications = $notificationData['notifications'];
-            // legacy view variable names
-            $group_name = $group['groupName'] ?? '';
+            $count = $notificationData['count'];
+            $notifications = $notificationData['notifications'];
+            $group_id = 0;
+            $groups = $assetModel->fetchAllAssets(); // Load all groups for dropdown
+            
+            // Load the add item view
             require_once __DIR__ . '/../../Views/admin/asset/add_item.php';
             return;
         }
@@ -452,7 +437,7 @@ class AssetController extends AuthController {
             $posted_token = $_POST['csrf_token'] ?? '';
             if (empty($posted_token) || $posted_token !== ($_SESSION['csrf_token'] ?? '')) {
                 $_SESSION['flash_error'] = 'Invalid CSRF token.';
-                $this->redirect('/admin/assets/item?group_id=' . $group_id);
+                $this->redirect('/admin/assets/add');
                 return;
             }
 
@@ -460,11 +445,12 @@ class AssetController extends AuthController {
             $serialNumber   = trim($_POST['serialNumber'] ?? '');
             $itemInfo       = trim($_POST['itemInfo'] ?? '');
             $year_purchased = trim($_POST['year_purchased'] ?? '');
+            $group_id       = isset($_POST['group_id']) ? (int) $_POST['group_id'] : 0;
             $createdBy      = $_SESSION['username'] ?? ($_SESSION['account_id'] ?? 'system');
 
-            if ($serialNumber === '' || $itemInfo === '' || $year_purchased === '') {
-                $_SESSION['flash_error'] = 'Please fill all required fields.';
-                $this->redirect('/admin/assets/item?group_id=' . $group_id);
+            if ($serialNumber === '' || $itemInfo === '' || $year_purchased === '' || $group_id <= 0) {
+                $_SESSION['flash_error'] = 'Please fill all required fields including selecting a group.';
+                $this->redirect('/admin/assets/add');
                 return;
             }
 
@@ -476,14 +462,14 @@ class AssetController extends AuthController {
                     $logger->log('Add Asset', 'Asset Inventory', "Asset ID: {$newId}", $_SESSION['username'] ?? 'Unknown User');
 
                     $_SESSION['flash_success'] = 'New asset added successfully.';
-                    $this->redirect('/admin/assets/item?group_id=' . $group_id);
+                    $this->redirect('/admin/assets');
                     return;
                 }
 
                 throw new \Exception('Failed to add item.');
             } catch (\Throwable $e) {
                 $_SESSION['flash_error'] = 'Error adding asset: ' . $e->getMessage();
-                $this->redirect('/admin/assets/item?group_id=' . $group_id);
+                $this->redirect('/admin/assets/add');
                 return;
             }
         }
@@ -564,7 +550,6 @@ class AssetController extends AuthController {
 
             $targets = $assetModel->getAssetNotificationTargets($inventoryID);
             $notificationModel = new NotificationModel();
-            $base = $this->getLoggedUserContext()['base'];
 
             // 👔 Notify department head only
             if (!empty($targets['head_account_id'])) {
@@ -573,7 +558,7 @@ class AssetController extends AuthController {
                     "Asset {$targets['assetNumber']} details were updated.",
                     'fa-edit',
                     'warning',
-                    $base . '/head/dashboard',
+                    '/head/dashboard',
                     $inventoryID
                 );
             }
@@ -664,7 +649,6 @@ class AssetController extends AuthController {
 
                 $targets = $assetModel->getAssetNotificationTargets($inventoryId);
                 $notificationModel = new NotificationModel();
-                $base = $this->getLoggedUserContext()['base'];
 
                 // 👤 Notify employee who received asset
                 if (!empty($targets['employee_account_id'])) {
@@ -673,7 +657,7 @@ class AssetController extends AuthController {
                         "A new asset ({$targets['assetNumber']}) has been assigned to you.",
                         'fa-box',
                         'info',
-                        $base . '/employee/assets',
+                        '/employee/assets',
                         $inventoryId
                     );
                 }
@@ -685,7 +669,7 @@ class AssetController extends AuthController {
                         "Asset {$targets['assetNumber']} has been transferred to your department.",
                         'fa-exchange-alt',
                         'primary',
-                        $base . '/head/dashboard',
+                        '/head/dashboard',
                         $inventoryId
                     );
                 }

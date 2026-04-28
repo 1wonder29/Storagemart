@@ -200,11 +200,13 @@ $base = rtrim(BASE_URL, '/');
         <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
         <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
 
-        <!-- Page level custom scripts -->
-        <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
-        <script>const base = "<?= htmlspecialchars($base) ?>";</script>
-        <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/fetch_ticket_history.js"></script>
+        <!-- Set global BASE_URL for all scripts -->
+        <script>
+        window.BASE_URL = "<?= htmlspecialchars($base) ?>";
+        </script>
 
+        <!-- Page level custom scripts -->
+        <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/fetch_ticket_history.js"></script>
 
         <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>  
 

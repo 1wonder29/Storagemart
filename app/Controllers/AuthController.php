@@ -170,10 +170,19 @@ class AuthController {
             }
         }
 
-
+        // ✅ HANDLE FAILED LOGIN ATTEMPTS
         if (!$account) {
-            $_SESSION['loginMessage'] = "<font color='red'><br>Incorrect login details</font>";
-            $this->log('Login failed for ' . $username . ' — redirecting back to /login');
+            $failedAttempts = $this->model->getFailedAttempts($username);
+            $this->model->recordFailedAttempt($username);
+            $failedAttempts++;
+            
+            if ($failedAttempts >= 3) {
+                $_SESSION['loginMessage'] = "<font color='red'><br>Your account has been deactivated due to 3 failed login attempts. Please contact admin.</font>";
+                $this->log('Account deactivated for ' . $username . ' — 3 failed attempts');
+            } else {
+                $_SESSION['loginMessage'] = "<font color='red'><br>Incorrect login details (Attempt " . $failedAttempts . "/3)</font>";
+                $this->log('Login failed for ' . $username . ' — attempt ' . $failedAttempts . '/3');
+            }
             $this->redirect('/login');
         }
 
@@ -182,6 +191,9 @@ class AuthController {
             $this->log('Account inactive for ' . $username);
             $this->redirect('/login');
         }
+
+        // ✅ RESET FAILED ATTEMPTS ON SUCCESSFUL LOGIN
+        $this->model->resetFailedAttempts($username);
 
         // success: set session and redirect
         Session::regenerate();

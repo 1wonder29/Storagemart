@@ -208,12 +208,16 @@ $base = rtrim(BASE_URL, '/');
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.datatables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
-    <script>const base = "<?= htmlspecialchars($base) ?>";</script>
-    
-<script>
 
+    <script>
+    // Set global BASE_URL for all scripts including fetch_ticket_history.js
+    window.BASE_URL = "<?= htmlspecialchars($base) ?>";
+    </script>
+
+    <script>
 $(document).ready(function () {
+    // Global variable for base URL - inside ready to ensure jQuery is loaded
+    const base = "<?= htmlspecialchars($base) ?>";
 
     // ==============================
     // Initialize Tickets DataTable
@@ -228,12 +232,22 @@ $(document).ready(function () {
     // ==============================
     $('#ticketsTable').on("click", ".viewBtn", function () {
         const id = $(this).data("ticketid");
+        const status = $(this).data("status") || "";
 
         // Fill main ticket info
         $("#ticket_number").val($(this).data("ticketnum") || "");
         $("#employee").val($(this).data("employee") || "");
         $("#priority").val($(this).data("priority") || "");
-        $("#status").val($(this).data("status") || "");
+        $("#status").val(status);
+
+        // Show/hide PDF download button based on status
+        if (status.toLowerCase() === 'resolved') {
+            $("#downloadPdfBtn")
+                .attr("href", base + "/documents/download-ticket-pdf?id=" + id)
+                .removeClass("d-none");
+        } else {
+            $("#downloadPdfBtn").addClass("d-none");
+        }
 
         // Clear history table
         $("#ticketHistoryTable tbody").empty();
@@ -269,7 +283,7 @@ $(document).ready(function () {
     });
 
     // ==============================
-    // Rate Ticket Modal (DataTables safe)
+    // Rate Ticket Modal
     // ==============================
     $('#ticketsTable').on('click', '.rateBtn', function () {
         const ticketId = $(this).data('ticketid');
@@ -287,7 +301,6 @@ $(document).ready(function () {
     // Submit rating form via AJAX
     $(document).on('submit', '#rateTicketForm', function (e) {
         e.preventDefault();
-
         const form = $(this);
         const submitBtn = form.find('button[type="submit"]');
         submitBtn.prop('disabled', true).text('Submitting...');

@@ -107,8 +107,7 @@ class TicketController extends AuthController
         $recipients = $notificationModel->getTicketRecipients($department);
 
         // 🔗 Link IT users will click
-        $base = $this->getLoggedUserContext()['base'];
-        $actionUrl = $base . '/it/tickets';
+        $actionUrl = '/it/tickets';
 
         // 🔕 Do not notify the ticket filer
         $currentAccountId = (int) $_SESSION['account_id'];
@@ -288,13 +287,12 @@ class TicketController extends AuthController
                 require_once __DIR__ . '/../../Models/NotificationModel.php';
 
                 $notificationModel = new NotificationModel();
-                $base = $this->getLoggedUserContext()['base'];
                 $notificationModel->create(
                     (int) $receiverAccountId,
                     'Your ticket has been resolved. Click to rate IT support.',
                     'fa-star',
                     'success',
-                    $base . '/employee/tickets/rate?id=' . $ticketId,
+                    '/employee/tickets/rate?id=' . $ticketId,
                     $ticketId
                 );
 
@@ -331,6 +329,10 @@ class TicketController extends AuthController
             'performed_by'    => $_SESSION['account_id'],
             'performed_role'  => 'IT Staff'
         ]);
+
+        // =============================
+        // 4️⃣ Update history (no PDF generation)
+        // =============================
 
         $_SESSION['flash_success'] = "Ticket marked as {$status}.";
         $this->redirect('/it/tickets/in_progress');

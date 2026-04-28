@@ -58,6 +58,7 @@ $base = rtrim(BASE_URL, '/');
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Asset Management:</h6>
                         <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets">Assets Directory</a>
+                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/add">Add Item</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/branch/add">Add Branch</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/category/add">Add Category</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/group/add">Add Group</a>
@@ -191,8 +192,7 @@ document.querySelectorAll('.notification-item').forEach(item => {
         e.preventDefault();
 
         const notifId = this.dataset.id;
-        const relatedId = this.dataset.related; // ticket_id
-        const role = '<?= $_SESSION['usertype'] ?? '' ?>';
+        const actionUrl = this.href; // Get the actual action_url
 
         // mark as read
         fetch('<?= $base ?>/notifications/read', {
@@ -203,15 +203,9 @@ document.querySelectorAll('.notification-item').forEach(item => {
             this.classList.remove('notification-unread');
             this.classList.add('notification-read');
 
-            // 🔀 ROLE-BASED REDIRECT
-            if (relatedId) {
-                if (role === 'IT') {
-                    window.location.href = '<?= $base ?>/it/tickets';
-                } else if (role === 'ADMIN') {
-                    window.location.href = '<?= $base ?>/admin/tickets';
-                } else {
-                    window.location.href = '<?= $base ?>/employee/tickets';
-                }
+            // Redirect to the actual action_url stored in the database
+            if (actionUrl && actionUrl !== '#') {
+                window.location.href = actionUrl;
             }
         });
     });

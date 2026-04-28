@@ -116,14 +116,14 @@ class EmployeeTicketController extends AuthController
             if ($receiverType === 'ADMIN') {
                 $actionUrl = '/admin/tickets';
             } elseif ($receiverType === 'HEAD') {
-                $actionUrl = '/head/employee';
+                $actionUrl = '/head/tickets';
             } else {
                 $actionUrl = '/it/tickets';
             }
 
             $notificationModel->create(
                 $receiverAccountId,
-                'New IT Ticket Filed',
+                'New Ticket Filed by Employee',
                 'fa-ticket-alt',
                 'primary',
                 $actionUrl,

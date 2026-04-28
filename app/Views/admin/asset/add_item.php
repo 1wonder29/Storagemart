@@ -38,44 +38,55 @@ $base = rtrim(BASE_URL, '/');
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800"></h1>
+                    <h1 class="h3 mb-2 text-gray-800">Add Asset</h1>
 
                     <!-- DataTales Example -->
                     <div class="card shadow mb-4">
                         <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Add Asset</h6>
+                            <h6 class="m-0 font-weight-bold text-primary">Asset Details</h6>
                         </div>
                         <div class="card-body">
                             <div class="container mt-4">
-                        <form action="<?= htmlspecialchars($base) ?>/admin/assets/add?group_id=<?= (int)$group_id ?>" method="POST">
+                        <form action="<?= htmlspecialchars($base) ?>/admin/assets/add" method="POST">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                                <h1>Asset Details</h1>
-                                    <div class ="row mb-5">
-                                            <div class="col-md-6">
-                                                <label for = "itemInfo" class ="form-label">Item general info</label>
-                                                <textarea id ="itemInfo" name="itemInfo" class="form-control" rows="6" maxlength="1000" required></textarea>
-                                                <small class="form-text text-muted">Maximum 1000 characters.</small>
-                                            </div>
-                                            <div class="col-md-6">
-                                            <label for = "serialNumber" class ="form-label">Serial Number</label>
-                                                <input type="text" name="serialNumber" class="form-control" id="serialNumber" placeholder="Serial Number" required>
-                                            </div>
+                            
+                                <h3>Asset Information</h3>
+                                
+                                <div class ="row mb-5">
+                                    <div class="col-md-6">
+                                        <label for="group_id" class="form-label">Asset Group <span class="text-danger">*</span></label>
+                                        <select id="group_id" name="group_id" class="form-control" required>
+                                            <option value="">-- Select a Group --</option>
+                                        </select>
                                     </div>
-
-                                    <div class ="row mb-5">
-                                        <div class="col-md-6">
-                                            <label for = "year_purchased" class ="form-label">Year purchased</label>
-                                                <input type="text" name="year_purchased" class="form-control" id="year_purchased" placeholder="Year purchased" required>
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
-                                    <button type="button" class="btn btn-danger"
-                                        onclick="window.location.href='<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= htmlspecialchars($_GET['group_id'] ?? '0') ?>'">
-                                        Cancel
-                                    </button>
-
                                 </div>
-                            </form>
+
+                                <div class ="row mb-5">
+                                        <div class="col-md-6">
+                                            <label for = "itemInfo" class ="form-label">Item general info</label>
+                                            <textarea id ="itemInfo" name="itemInfo" class="form-control" rows="6" maxlength="1000" required></textarea>
+                                            <small class="form-text text-muted">Maximum 1000 characters.</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                        <label for = "serialNumber" class ="form-label">Serial Number</label>
+                                            <input type="text" name="serialNumber" class="form-control" id="serialNumber" placeholder="Serial Number" required>
+                                        </div>
+                                </div>
+
+                                <div class ="row mb-5">
+                                    <div class="col-md-6">
+                                        <label for = "year_purchased" class ="form-label">Year purchased</label>
+                                            <input type="text" name="year_purchased" class="form-control" id="year_purchased" placeholder="Year purchased" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
+                                <button type="button" class="btn btn-danger"
+                                    onclick="window.location.href='<?= htmlspecialchars($base) ?>/admin/assets'">
+                                    Cancel
+                                </button>
+
+                            </div>
+                        </form>
                         </div>
                     </div>
                     
@@ -127,6 +138,35 @@ $base = rtrim(BASE_URL, '/');
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
     <!-- Custom scripts for all pages-->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+
+    <script>
+        // Fetch and populate groups dropdown
+        fetch('<?= htmlspecialchars($base) ?>/admin/assets')
+            .then(response => response.text())
+            .catch(error => {
+                console.error('Error loading groups:', error);
+                // Fallback: load groups inline if available
+                loadGroupsInline();
+            });
+
+        function loadGroupsInline() {
+            // Groups will be loaded from the server via Fetch or can be embedded here
+            const groupSelect = document.getElementById('group_id');
+            const dummyGroups = <?= isset($groups) ? json_encode($groups ?? []) : '[]'; ?>;
+            
+            dummyGroups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.group_id;
+                option.textContent = group.groupName + ' (' + group.categoryName + ')';
+                groupSelect.appendChild(option);
+            });
+        }
+
+        // Load groups on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGroupsInline();
+        });
+    </script>
 </body>
 
 </html>

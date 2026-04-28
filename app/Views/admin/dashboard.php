@@ -46,67 +46,75 @@ $base = rtrim(BASE_URL, '/');
 
                         <!-- Users Card -->
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                USERS</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $userCount; ?></div>
+                            <a href="/admin/account" style="text-decoration: none; color: inherit;">
+                                <div class="card border-left-primary shadow h-100 py-2" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)';" onmouseout="this.style.transform='translateY(0)';">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                    USERS</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $userCount; ?></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
 
                         <!-- Ticket Card  -->
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Tickets</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $ticketCount; ?></div>
+                            <a href="/admin/tickets" style="text-decoration: none; color: inherit;">
+                                <div class="card border-left-success shadow h-100 py-2" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)';" onmouseout="this.style.transform='translateY(0)';">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                    Tickets</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $ticketCount; ?></div>
+                                            </div>
+                                            
                                         </div>
-                                        
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                         <!-- Assets Card -->
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Asset</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $assetCount; ?></div>
+                            <a href="/admin/assets" style="text-decoration: none; color: inherit;">
+                                <div class="card border-left-success shadow h-100 py-2" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)';" onmouseout="this.style.transform='translateY(0)';">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                    Asset</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $assetCount; ?></div>
+                                            </div>
+                                            
                                         </div>
-                                        
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                         
                         <!-- On-going Tickets Card -->
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-warning shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">On-going Ticket
-                                            </div>
-                                            <div class="row no-gutters align-items-center">
-                                                <div class="col-auto">
-                                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800"><?php echo $ticketOngoing;?></div>
+                            <a href="/admin/pendings" style="text-decoration: none; color: inherit;">
+                                <div class="card border-left-warning shadow h-100 py-2" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)';" onmouseout="this.style.transform='translateY(0)';">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">On-going Ticket
+                                                </div>
+                                                <div class="row no-gutters align-items-center">
+                                                    <div class="col-auto">
+                                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800"><?php echo $ticketOngoing;?></div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
 
         </div>

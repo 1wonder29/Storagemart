@@ -18,6 +18,7 @@ SELECT
     t.priority,
     t.date_filed,
     t.status,
+    e.employee_id,
     e.firstname AS emp_firstname,
     e.middlename AS emp_middlename,
     e.lastname AS emp_lastname,
@@ -28,8 +29,10 @@ SELECT
     tt.result,
     tt.remarks,
     tt.date_performed,
+    tt.performed_by,
     it.firstname AS it_firstname,
-    it.lastname AS it_lastname
+    it.lastname AS it_lastname,
+    it.position AS it_position
 FROM tbltickets t
 JOIN tblemployee e ON t.employee_id = e.employee_id
 JOIN tblbranch b ON e.branch_id = b.branch_id
@@ -45,20 +48,19 @@ JOIN tblemployee it ON tt.performed_by = it.employee_id
 WHERE t.ticket_id = ?
 ";
 
-$stmt = mysqli_prepare($link, $sql);
-mysqli_stmt_bind_param($stmt, "i", $ticket_id);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-if (!$result || mysqli_num_rows($result) === 0) {
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$ticket_id]);
+$data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$data) {
     die('No data found for this ticket.');
 }
-$data = mysqli_fetch_assoc($result);
-mysqli_stmt_close($stmt);
 
 $fullname = trim($data['emp_firstname'] . ' ' . $data['emp_lastname']);
 $performedby = trim($data['it_firstname'] . ' ' . $data['it_lastname']);
 $date_filed = date('F d, Y', strtotime($data['date_filed']));
 $date_performed = date('F d, Y', strtotime($data['date_performed']));
+$today_date = date('F d, Y');
 
 $templatePath = __DIR__ . '/template_technical.docx';
 if (!file_exists($templatePath)) {
@@ -66,6 +68,8 @@ if (!file_exists($templatePath)) {
 }
 
 $template = new TemplateProcessor($templatePath);
+
+// Set regular ticket information
 $template->setValue('date_filed', htmlspecialchars($date_filed));
 $template->setValue('fullname', htmlspecialchars($fullname));
 $template->setValue('branchName', htmlspecialchars($data['branchName']));

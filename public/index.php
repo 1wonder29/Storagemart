@@ -94,7 +94,7 @@ if (strpos($uri, '/admin') === 0) {
     } elseif ($sub === 'tickets') {
         $ticket->ticket();
     } elseif ($sub === 'tickets/history') {
-        $ticket->index();
+        $ticket->history();
     } elseif ($sub === 'tickets/update-assignment' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $ticket->updateAssignment();
     } elseif ($sub === 'tickets/add') {

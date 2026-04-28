@@ -158,12 +158,16 @@ $base = rtrim(BASE_URL, '/');
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.datatables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
-    <script>const base = "<?= htmlspecialchars($base) ?>";</script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/fetch_ticket_history.js"></script>
+
+    <script>
+    // Set global BASE_URL for all scripts including fetch_ticket_history.js
+    window.BASE_URL = "<?= htmlspecialchars($base) ?>";
+    </script>
 
     <script>
     $(document).ready(function () {
+        // Base URL inside ready block to ensure jQuery is loaded
+        const base = "<?= htmlspecialchars($base) ?>";
 
         function escapeHtml(text) {
             if (text === null || text === undefined) return "";
@@ -178,10 +182,21 @@ $base = rtrim(BASE_URL, '/');
         // View Ticket Modal
         $('#ticketsTable').on("click", ".viewBtn", function () {
             const id = $(this).data("ticketid");
+            const status = $(this).data("status") || "";
             $("#ticket_number").val($(this).data("ticketnum") || "");
             $("#employee").val($(this).data("employee") || "");
             $("#priority").val($(this).data("priority") || "");
-            $("#status").val($(this).data("status") || "");
+            $("#status").val(status);
+            
+            // Show/hide PDF download button based on status
+            if (status.toLowerCase() === 'resolved') {
+                $("#downloadPdfBtn")
+                    .attr("href", base + "/documents/download-ticket-pdf?id=" + id)
+                    .removeClass("d-none");
+            } else {
+                $("#downloadPdfBtn").addClass("d-none");
+            }
+            
             $("#ticketHistoryTable tbody").empty();
 
             $.getJSON(base + "/head/tickets/history/fetch", { ticket_id: id })

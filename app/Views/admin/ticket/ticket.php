@@ -268,13 +268,22 @@ $base = rtrim(BASE_URL, '/');
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
 
     <!-- Page level custom scripts -->
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
     <script>
-        window.BASE_URL = "<?= htmlspecialchars($base) ?>";
+    // Set global BASE_URL for all scripts including fetch_ticket_history.js
+    window.BASE_URL = "<?= htmlspecialchars($base) ?>";
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            // Base URL inside ready block
+            const BASE_URL = "<?= htmlspecialchars($base) ?>";
+        
+        // Reserved for future use
+        }); // Close $(document).ready()
     </script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/fetch_ticket_history.js"></script>
-    <script src='<?= htmlspecialchars($base) ?>/assets/js/edit_ticket_action.js'></script>  
-        <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>                             
+    <script src='<?= htmlspecialchars($base) ?>/assets/js/edit_ticket_action.js'></script>
+    <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 
 </html>

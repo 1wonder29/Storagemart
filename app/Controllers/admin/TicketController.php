@@ -51,28 +51,32 @@ class TicketController extends AuthController
             session_start();
         }
 
+        header('Content-Type: application/json; charset=utf-8');
+
         // Auth check – only ADMIN allowed (same rule as ticket())
         if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
             http_response_code(403);
-            header('Content-Type: application/json');
             echo json_encode(['error' => 'Unauthorized']);
-            return;
+            exit;
         }
-
-        header('Content-Type: application/json');
 
         $ticketId = isset($_GET['ticket_id']) ? (int) $_GET['ticket_id'] : 0;
 
         if ($ticketId <= 0) {
             http_response_code(400);
             echo json_encode([]);
-            return;
+            exit;
         }
 
-        $ticketModel = new Ticket();
-        $history = $ticketModel->fetchTicketHistory($ticketId); // we’ll add this next
-
-        echo json_encode($history);
+        try {
+            $ticketModel = new Ticket();
+            $history = $ticketModel->fetchTicketHistory($ticketId);
+            echo json_encode($history ?: []);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to fetch ticket history']);
+        }
+        exit;
     }
 
     public function updateAssignment()

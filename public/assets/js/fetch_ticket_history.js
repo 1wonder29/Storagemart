@@ -20,7 +20,8 @@
   });
 
   // --- Modal history table (inside modal) ---
-  // Replace your current viewBtn handler with this ready-to-paste block
+  // Wrap all jQuery code in document.ready to ensure jQuery is loaded
+$(document).ready(function() {
 let historyDT = null;
 
 $(document).on('click', '.viewBtn', function () {
@@ -36,7 +37,8 @@ $(document).on('click', '.viewBtn', function () {
   $('#ticket_number').val($(this).data('ticketnum') || '');
   $('#employee').val($(this).data('employee') || '');
   $('#priority').val($(this).data('priority') || '');
-  $('#status').val($(this).data('status') || '');
+  const status = $(this).data('status') || '';
+  $('#status').val(status);
 
   // 1) Clear previous rows and safely destroy previous DataTable
   try {
@@ -110,3 +112,5 @@ $(document).on('click', '.viewBtn', function () {
     }
   });
 });
+
+}); // End of $(document).ready()

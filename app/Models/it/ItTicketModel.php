@@ -277,5 +277,39 @@ class ItTicketModel extends BaseModel
         return $accountId ? (int)$accountId : null;
     }
 
+    /**
+     * Insert PDF generation record for a resolved ticket
+     * 
+     * @param int $ticketId Ticket ID
+     * @param string $filename PDF filename
+     * @param string $path Relative path to PDF file
+     * @param int $generatedBy User ID who triggered generation
+     * @param string $role User role
+     * @param int $fileSize File size in bytes
+     * @return bool Success or failure
+     */
+    public function insertTicketPdf($ticketId, $filename, $path, $generatedBy, $role = 'IT', $fileSize = null)
+    {
+        try {
+            $sql = "INSERT INTO tblticket_pdfs (ticket_id, pdf_filename, pdf_path, generated_by, role, file_size, is_active, date_generated)
+                    VALUES (:ticket_id, :filename, :path, :generated_by, :role, :file_size, 1, NOW())";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $result = $stmt->execute([
+                ':ticket_id'    => $ticketId,
+                ':filename'     => $filename,
+                ':path'         => $path,
+                ':generated_by' => $generatedBy,
+                ':role'         => $role,
+                ':file_size'    => $fileSize
+            ]);
+            
+            return $result && $stmt->rowCount() > 0;
+        } catch (\Exception $e) {
+            error_log("Error inserting PDF record: " . $e->getMessage());
+            return false;
+        }
+    }
+
 
 }
