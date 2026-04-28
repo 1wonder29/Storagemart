@@ -1,7 +1,19 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// Error handling - disabled for production
+$isProduction = getenv('APP_ENV') === 'production' || !isset($_SERVER['HTTP_HOST']) || strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') === false;
+
+if ($isProduction) {
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    ini_set('log_errors', 1);
+    ini_set('error_log', __DIR__ . '/../app/logs/php_errors.log');
+    error_reporting(E_ALL);
+} else {
+    // Development: show errors
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+}
 if (php_sapi_name() === 'cli-server') {
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $file = __DIR__ . $path;

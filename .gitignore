@@ -1,1 +1,15 @@
 node_modules
+.env
+.env.local
+.env.*.local
+.vscode/
+.idea/
+*.log
+app/logs/
+public/debug.log
+*.swp
+*.swo
+*~
+.DS_Store
+vendor/
+composer.lock
