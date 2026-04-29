@@ -194,6 +194,10 @@ if (strpos($uri, '/employee') === 0) {
         $ticket->rate();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $ticket->storeRating();
+    } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $ticket->downloadTechnicalRecord();
+    } elseif ($sub === 'tickets/upload-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->uploadTechnicalReport();
     } else {
         http_response_code(404);
         echo "Employee page not found.";
@@ -217,6 +221,8 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
         $it->dashboard();
     } elseif ($sub === 'profile') {
         $it->profile();
+    } elseif ($sub === 'uploads') {
+        $it->viewUploads();
     } elseif ($sub === 'assets') {
         $asset->asset();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {

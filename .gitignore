@@ -7,6 +7,11 @@ node_modules
 *.log
 app/logs/
 public/debug.log
+public/assets/generatePDF/*.docx
+public/assets/generatePDF/*.pdf
+public/assets/generatePDF/*.jpg
+public/assets/generatePDF/*.png
+public/assets/tickets/
 *.swp
 *.swo
 *~

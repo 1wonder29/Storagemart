@@ -165,6 +165,40 @@ class EmployeeTicket extends BaseModel
         return $stmt->fetchColumn();
     }
 
+    /**
+     * Fetch a single ticket by ID with all details
+     * 
+     * @param int $ticketId
+     * @return array|false Ticket data or false if not found
+     */
+    public function fetchTicketById(int $ticketId)
+    {
+        $sql = "
+            SELECT 
+                t.ticket_id,
+                t.employee_id,
+                t.ticket_number,
+                t.concern_details,
+                t.priority,
+                t.date_filed,
+                t.status,
+                t.remarks,
+                e.firstname AS emp_firstname,
+                e.lastname AS emp_lastname,
+                b.branchName
+            FROM {$this->tbltickets} t
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+            WHERE t.ticket_id = :ticket_id
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ticket_id' => (int)$ticketId]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: false;
+    }
+
     public function fetchTicketsByDepartment(string $department): array
     {
         $sql = "

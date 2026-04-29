@@ -45,6 +45,13 @@ $base = rtrim(BASE_URL, '/');
                 </a>
             </li>
 
+            <li class="nav-item <?= ($activePage === 'uploads') ? 'active' : '' ?>">
+                <a class="nav-link" href="<?= htmlspecialchars($base)?>/it/uploads">
+                    <i class="fas fa-file-upload"></i>
+                    <span>Employee Uploads</span>
+                </a>
+            </li>
+
             <hr class="sidebar-divider">
 
             <div class="sidebar-heading">Addons</div>

@@ -43,6 +43,12 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 ?>
+<div class="mb-3">
+    <button type="button" class="btn btn-info btn-sm" id="downloadTechRecordBtn" data-ticketid="<?= (int)$ticketId ?>">
+        <i class="fas fa-download"></i> Download Technical Record
+    </button>
+</div>
+
 <form method="POST" action="<?= htmlspecialchars($base) ?>/employee/tickets/rate" id="rateTicketForm">
     <input type="hidden" name="ticket_id" value="<?= (int)$ticketId ?>">
 
@@ -65,4 +71,16 @@ $base = rtrim(BASE_URL, '/');
 
     <button type="submit" class="btn btn-primary btn-block">Submit Rating</button>
 </form>
+
+<script>
+$(document).on('click', '#downloadTechRecordBtn', function () {
+    const ticketId = $(this).data('ticketid');
+    if (!ticketId) {
+        alert('Invalid ticket ID');
+        return;
+    }
+    const base = "<?= htmlspecialchars($base) ?>";
+    window.location.href = base + '/employee/tickets/download-record?id=' + ticketId;
+});
+</script>
 <?php endif; ?>

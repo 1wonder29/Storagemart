@@ -47,6 +47,83 @@ class PdfGeneratorService
     }
     
     /**
+     * Generate Technical Record (DOCX) for a ticket - On-demand version
+     * 
+     * Generates a technical report document for employees to download
+     * The document contains full ticket details, technical work performed, and resolution info
+     * Generated on-the-fly (not stored in database)
+     * 
+     * @param int $ticketId The ID of the ticket to generate DOCX for
+     * @param int $employeeId The ID of the employee requesting the record
+     * 
+     * @return array|false Returns array with 'success', 'filename', 'path', 'file_size' on success
+     *                     Returns false on failure
+     */
+    public function generateTechnicalRecordDocx($ticketId, $employeeId)
+    {
+        try {
+            // Fetch ticket and technical data
+            $ticketData = $this->getTicketData($ticketId);
+            
+            if (!$ticketData) {
+                $this->logError("No ticket data found for ticket_id: {$ticketId}");
+                return false;
+            }
+            
+            // Verify ticket belongs to the employee
+            if ((int)$ticketData['employee_id'] !== (int)$employeeId) {
+                $this->logError("Employee {$employeeId} attempted to access ticket {$ticketId} belonging to employee {$ticketData['employee_id']}");
+                return false;
+            }
+            
+            // Verify ticket is resolved
+            if (strtolower($ticketData['status']) !== 'resolved') {
+                $this->logError("Cannot generate record for unresolved ticket: {$ticketId}");
+                return false;
+            }
+            
+            // Validate template exists
+            $templateFile = $this->templatePath . '/template_technical.docx';
+            if (!file_exists($templateFile)) {
+                $this->logError("Template file not found: {$templateFile}");
+                return false;
+            }
+            
+            // Process template with data
+            $template = new TemplateProcessor($templateFile);
+            $this->populateTemplate($template, $ticketData);
+            
+            // Generate filename with timestamp for freshness
+            $timestamp = date('YmdHis');
+            $sanitizedTicketNumber = preg_replace('/[^A-Za-z0-9_-]/', '', $ticketData['ticket_number']);
+            $filename = "technical_record_{$sanitizedTicketNumber}_{$timestamp}.docx";
+            $filepath = $this->outputPath . '/' . $filename;
+            
+            // Save document
+            $template->saveAs($filepath);
+            
+            // Verify file was created
+            if (!file_exists($filepath)) {
+                $this->logError("Failed to save document: {$filepath}");
+                return false;
+            }
+            
+            $fileSize = filesize($filepath);
+            
+            return [
+                'success' => true,
+                'filename' => $filename,
+                'filepath' => $filepath,
+                'file_size' => $fileSize
+            ];
+            
+        } catch (\Exception $e) {
+            $this->logError("Exception in generateTechnicalRecordDocx: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Generate Resolution PDF for a ticket
      * 
      * Automatically generates a technical report document when a ticket is resolved
@@ -123,6 +200,7 @@ class PdfGeneratorService
         $sql = "
             SELECT 
                 t.ticket_id,
+                t.employee_id,
                 t.ticket_number,
                 t.concern_details,
                 t.priority,

@@ -87,4 +87,29 @@ class itController extends AuthController{
         require __DIR__ . '/../../Views/it/profile/profile.php';
     }
 
+    public function viewUploads()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'IT') {
+            $_SESSION['loginMessage'] = 'Please log in as IT user.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $itModel = new IT();
+        $uploadsByDate = $itModel->getUploadsByDate();
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition  = $ctx['loggedPosition'];
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        require __DIR__ . '/../../Views/it/uploads.php';
+    }
+
 }

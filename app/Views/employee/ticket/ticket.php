@@ -94,6 +94,11 @@ $base = rtrim(BASE_URL, '/');
                                                     data-ticketid="<?= $row['ticket_id'] ?>">
                                                     <i class="fas fa-star"></i> Rate
                                                 </button>
+                                                <button class="btn btn-sm btn-info uploadBtn"
+                                                    data-ticketid="<?= $row['ticket_id'] ?>"
+                                                    data-ticketnum="<?= htmlspecialchars($row['ticket_number']) ?>">
+                                                    <i class="fas fa-upload"></i> Upload
+                                                </button>
                                                 <?php endif; ?>
                                             </td>
                                         </tr>
@@ -161,6 +166,9 @@ $base = rtrim(BASE_URL, '/');
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button class="btn btn-success" id="downloadRecordBtn" style="display: none;">
+                        <i class="fas fa-download"></i> Download Technical Record
+                    </button>
                     <button class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -196,6 +204,45 @@ $base = rtrim(BASE_URL, '/');
                             <textarea name="comment" class="form-control"></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">Submit Rating</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Technical Report Modal -->
+    <div class="modal fade" id="uploadReportModal" tabindex="-1" aria-labelledby="uploadReportLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="uploadReportLabel">
+                        <i class="fas fa-upload"></i> Upload Signed Technical Report
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong>Accepted Formats:</strong> PDF, DOCX, JPG, PNG (Max 10MB)
+                    </div>
+                    <form id="uploadReportForm">
+                        <input type="hidden" name="ticket_id" id="uploadTicketId" value="">
+                        
+                        <div class="form-group">
+                            <label for="reportFile">Select File</label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="reportFile" name="report_file" accept=".pdf,.docx,.jpg,.png" required>
+                                <label class="custom-file-label" for="reportFile">Choose file...</label>
+                            </div>
+                            <small class="form-text text-muted">
+                                File size must not exceed 10MB
+                            </small>
+                        </div>
+
+                        <div id="uploadMessage"></div>
+                        
+                        <button type="submit" class="btn btn-primary btn-block" id="uploadSubmitBtn">
+                            <i class="fas fa-upload"></i> Upload Report
+                        </button>
                     </form>
                 </div>
             </div>
@@ -240,13 +287,13 @@ $(document).ready(function () {
         $("#priority").val($(this).data("priority") || "");
         $("#status").val(status);
 
-        // Show/hide PDF download button based on status
+        // Show/hide download technical record button based on status
         if (status.toLowerCase() === 'resolved') {
-            $("#downloadPdfBtn")
-                .attr("href", base + "/documents/download-ticket-pdf?id=" + id)
-                .removeClass("d-none");
+            $("#downloadRecordBtn")
+                .data("ticketid", id)
+                .show();
         } else {
-            $("#downloadPdfBtn").addClass("d-none");
+            $("#downloadRecordBtn").hide();
         }
 
         // Clear history table
@@ -280,6 +327,127 @@ $(document).ready(function () {
             });
 
         $("#viewTicketModal").modal("show");
+    });
+
+    // ==============================
+    // Download Technical Record
+    // ==============================
+    $(document).on('click', '#downloadRecordBtn', function () {
+        const ticketId = $(this).data("ticketid");
+        if (!ticketId) {
+            alert('Invalid ticket ID');
+            return;
+        }
+
+        // Trigger download by navigating to the endpoint
+        window.location.href = base + '/employee/tickets/download-record?id=' + ticketId;
+    });
+
+    // ==============================
+    // Upload Technical Report
+    // ==============================
+    $('#ticketsTable').on('click', '.uploadBtn', function () {
+        const ticketId = $(this).data('ticketid');
+        const ticketNum = $(this).data('ticketnum');
+        
+        $('#uploadTicketId').val(ticketId);
+        $('#uploadReportForm')[0].reset();
+        $('#uploadMessage').html('');
+        $('.custom-file-label').text('Choose file...');
+        
+        $('#uploadReportModal').modal('show');
+    });
+
+    // Handle file input label update
+    $(document).on('change', '#reportFile', function () {
+        const fileName = $(this).val().split('\\').pop() || 'Choose file...';
+        $(this).siblings('.custom-file-label').text(fileName);
+    });
+
+    // Submit upload form
+    $(document).on('submit', '#uploadReportForm', function (e) {
+        e.preventDefault();
+        
+        const form = $(this)[0];
+        const ticketId = $('#uploadTicketId').val();
+        const fileInput = $('#reportFile')[0];
+        const submitBtn = $('#uploadSubmitBtn');
+        
+        if (!fileInput.files.length) {
+            $('#uploadMessage').html('<div class="alert alert-warning">Please select a file</div>');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        
+        if (file.size > maxSize) {
+            $('#uploadMessage').html('<div class="alert alert-danger">File size exceeds 10MB limit</div>');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('ticket_id', ticketId);
+        formData.append('report_file', file);
+
+        console.log('Upload starting - File:', file.name, 'Size:', file.size, 'Type:', file.type);
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+        $('#uploadMessage').html('');
+
+        $.ajax({
+            url: base + '/employee/tickets/upload-report',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function (response) {
+                console.log('Upload success:', response);
+                if (response.success) {
+                    $('#uploadMessage').html(
+                        '<div class="alert alert-success">' +
+                        '<i class="fas fa-check-circle"></i> ' + response.message +
+                        '</div>'
+                    );
+                    setTimeout(function () {
+                        $('#uploadReportModal').modal('hide');
+                        location.reload();
+                    }, 1500);
+                } else {
+                    console.error('Upload failed:', response.message);
+                    $('#uploadMessage').html(
+                        '<div class="alert alert-danger">' +
+                        '<i class="fas fa-exclamation-circle"></i> ' + response.message +
+                        '</div>'
+                    );
+                    submitBtn.prop('disabled', false).html('<i class="fas fa-upload"></i> Upload Report');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('AJAX Error:', {status: status, error: error, xhr: xhr});
+                console.error('Response text:', xhr.responseText);
+                let errorMsg = 'An error occurred during upload';
+                
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        errorMsg = response.message;
+                    }
+                } catch (e) {
+                    // Response is not JSON, use status text
+                    if (xhr.statusText) {
+                        errorMsg = 'Error (' + xhr.status + '): ' + xhr.statusText;
+                    }
+                }
+                
+                $('#uploadMessage').html(
+                    '<div class="alert alert-danger">' +
+                    '<i class="fas fa-exclamation-circle"></i> ' + errorMsg +
+                    '</div>'
+                );
+                submitBtn.prop('disabled', false).html('<i class="fas fa-upload"></i> Upload Report');
+            }
+        });
     });
 
     // ==============================
