@@ -75,6 +75,7 @@ $base = rtrim(BASE_URL, '/');
                                         <option value="">-- Select User Type --</option>
                                         <option value="ADMIN">Admin</option>
                                         <option value="HEAD">Head</option>
+                                        <option value="HR">HR</option>
                                         <option value="EMPLOYEE">Employee</option>
                                         <option value="IT">Information Technology</option>
                                         </select>

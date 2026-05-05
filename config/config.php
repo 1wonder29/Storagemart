@@ -8,7 +8,14 @@ function loadEnv($file = __DIR__ . '/../.env') {
             if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
                 [$key, $value] = explode('=', $line, 2);
                 $key = trim($key);
-                $value = trim($value, '" \t\n\r\0\x0B');
+                // CRITICAL FIX: Only trim whitespace and quotes properly, don't use character class
+                // that includes letters like 't' or 'r'
+                $value = trim($value);
+                // Remove surrounding quotes if present
+                if ((substr($value, 0, 1) === '"' && substr($value, -1) === '"') ||
+                    (substr($value, 0, 1) === "'" && substr($value, -1) === "'")) {
+                    $value = substr($value, 1, -1);
+                }
                 if (!isset($_ENV[$key])) {
                     putenv("$key=$value");
                 }
@@ -18,7 +25,24 @@ function loadEnv($file = __DIR__ . '/../.env') {
 }
 loadEnv();
 
-define('BASE_URL', getenv('BASE_URL') ?: '');
+$baseUrl = getenv('BASE_URL') ?: '';
+
+// CRITICAL SECURITY: Ensure BASE_URL never has a port that could cause CORS issues
+// If somehow BASE_URL got set to localhost:8000 or similar, strip the port
+if (!empty($baseUrl) && strpos($baseUrl, ':') !== false) {
+    // Extract just the scheme and host, remove port
+    $parsed = parse_url($baseUrl);
+    $scheme = $parsed['scheme'] ?? 'http';
+    $host = $parsed['host'] ?? '';
+    $path = $parsed['path'] ?? '';
+    if (!empty($host)) {
+        error_log("WARNING: BASE_URL had port. Original: $baseUrl");
+        $baseUrl = "$scheme://$host$path";
+        error_log("WARNING: BASE_URL stripped. Now: $baseUrl");
+    }
+}
+
+define('BASE_URL', $baseUrl);
 
 $host = getenv('DB_HOST') ?: 'localhost';
 $port = getenv('DB_PORT') ?: '3306';

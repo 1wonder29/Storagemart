@@ -79,6 +79,7 @@ $base = rtrim(BASE_URL, '/');
                                             <option value="ADMIN" <?= (($account['usertype'] ?? '') === 'ADMIN') ? 'selected' : '' ?>>Admin</option>
                                             <option value="IT" <?= (($account['usertype'] ?? '') === 'IT') ? 'selected' : '' ?>>Information Technology</option>
                                             <option value="HEAD" <?= (($account['usertype'] ?? '') === 'HEAD') ? 'selected' : '' ?>>Head</option>
+                                            <option value="HR" <?= (($account['usertype'] ?? '') === 'HR') ? 'selected' : '' ?>>HR</option>
                                             <option value="EMPLOYEE" <?= (($account['usertype'] ?? '') === 'EMPLOYEE') ? 'selected' : '' ?>>Employee</option>
                                         </select>
                                     </div>

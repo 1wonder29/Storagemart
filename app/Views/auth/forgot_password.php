@@ -29,7 +29,7 @@ $base = rtrim(BASE_URL, '/');
                 <div class="message"><?= $forgotMessage ?></div>
             <?php endif; ?>
 
-            <form action="<?= htmlspecialchars($base) ?>/forgot-password" method="POST" autocomplete="off">
+            <form action="/forgot-password" method="POST" autocomplete="off">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['forgot_csrf'] ?? '') ?>">
 
                 <label for="username">Username</label>
@@ -73,7 +73,7 @@ $base = rtrim(BASE_URL, '/');
                 <button type="submit">RESET PASSWORD</button>
 
                 <div class="forgot-password">
-                    <a href="<?= htmlspecialchars($base) ?>/login">Back to login</a>
+                    <a href="/login">Back to login</a>
                 </div>
             </form>
         </div>

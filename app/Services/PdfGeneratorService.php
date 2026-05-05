@@ -37,12 +37,17 @@ class PdfGeneratorService
     {
         global $pdo;
         $this->db = $database ?? $pdo;
-        $this->templatePath = $_SERVER['DOCUMENT_ROOT'] . '/assets/generatePDF';
-        $this->outputPath = $_SERVER['DOCUMENT_ROOT'] . '/assets/tickets/pdfs';
+        
+        // Determine document root path (3 levels up from Services/PdfGeneratorService.php to project root)
+        $projectRoot = dirname(dirname(dirname(__FILE__)));
+        $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? $projectRoot . '/public';
+        
+        $this->templatePath = $documentRoot . '/assets/generatePDF';
+        $this->outputPath = $documentRoot . '/assets/tickets/pdfs';
         
         // Ensure output directory exists
         if (!is_dir($this->outputPath)) {
-            mkdir($this->outputPath, 0755, true);
+            @mkdir($this->outputPath, 0755, true);
         }
     }
     
@@ -289,6 +294,184 @@ class PdfGeneratorService
         $logFile = $logDir . '/pdf_generation.log';
         $timestamp = date('Y-m-d H:i:s');
         @error_log("[{$timestamp}] {$message}\n", 3, $logFile);
+    }
+
+    /**
+     * Generate Accountability Form for HR
+     * 
+     * Generates a DOCX accountability form using the template
+     * Shows employee details, assigned IT assets, and uniforms
+     * 
+     * @param array $employee Employee information
+     * @param array $assets List of assigned assets
+     * @param array $uniforms List of assigned uniforms
+     * @return void Outputs DOCX file as download
+     */
+    public function generateAccountabilityForm($employee, $assets, $uniforms)
+    {
+        try {
+            // Path to accountability template
+            $templateFile = $this->templatePath . '/template_accountability.docx';
+            
+            if (!file_exists($templateFile)) {
+                throw new \Exception("Template file not found: {$templateFile}");
+            }
+            
+            // Create template processor
+            $template = new TemplateProcessor($templateFile);
+            
+            // Prepare employee data
+            $fullname = trim($employee['firstname'] . ' ' . ($employee['middlename'] ? $employee['middlename'] . ' ' : '') . $employee['lastname']);
+            $employee_id = $employee['employee_id'];
+            $department = $employee['department'] ?? 'N/A';
+            $position = $employee['position'] ?? 'N/A';
+            $date_issued = date('F d, Y');
+            
+            // Fill in employee information
+            try {
+                $template->setValue('name', htmlspecialchars($fullname));
+            } catch (\Exception $e) {
+                $this->logError("Could not set 'name': " . $e->getMessage());
+            }
+            
+            try {
+                $template->setValue('employee_id', htmlspecialchars($employee_id));
+            } catch (\Exception $e) {
+                $this->logError("Could not set 'employee_id': " . $e->getMessage());
+            }
+            
+            try {
+                $template->setValue('department', htmlspecialchars($department));
+            } catch (\Exception $e) {
+                $this->logError("Could not set 'department': " . $e->getMessage());
+            }
+            
+            try {
+                $template->setValue('position', htmlspecialchars($position));
+            } catch (\Exception $e) {
+                $this->logError("Could not set 'position': " . $e->getMessage());
+            }
+            
+            try {
+                $template->setValue('date_issued', htmlspecialchars($date_issued));
+            } catch (\Exception $e) {
+                $this->logError("Could not set 'date_issued': " . $e->getMessage());
+            }
+            
+            // Fill in IT Assets - with graceful handling for missing template variables
+            if (!empty($assets)) {
+                try {
+                    // Only clone if the row exists in the template
+                    $template->cloneRow('itemInfo', count($assets), true);
+                    $i = 1;
+                    foreach ($assets as $asset) {
+                        try {
+                            $template->setValue("dateissued#{$i}", htmlspecialchars($date_issued));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("itemInfo#{$i}", htmlspecialchars($asset['itemInfo'] ?? 'N/A'));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("assetCode#{$i}", htmlspecialchars($asset['assetCode'] ?? 'N/A'));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("assetNumber#{$i}", htmlspecialchars($asset['assetNumber'] ?? 'N/A'));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("serialNumber#{$i}", htmlspecialchars($asset['serialNumber'] ?? 'N/A'));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("createdby#{$i}", htmlspecialchars($_SESSION['username'] ?? 'HR'));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("dateReturned#{$i}", '');
+                        } catch (\Exception $e) {}
+                        $i++;
+                    }
+                } catch (\Exception $e) {
+                    $this->logError("Could not clone asset rows: " . $e->getMessage());
+                    // Try to set at least the basic values
+                    try {
+                        $template->setValue('itemInfo', htmlspecialchars(implode(', ', array_map(function($a) { return $a['itemInfo'] ?? 'N/A'; }, $assets))));
+                    } catch (\Exception $e2) {}
+                }
+            } else {
+                // Handle no assets case
+                try {
+                    $template->setValue('itemInfo', 'No assets assigned');
+                } catch (\Exception $e) {}
+            }
+            
+            // Fill in Uniforms - with graceful handling for missing template variables
+            if (!empty($uniforms)) {
+                try {
+                    // Only clone if the row exists in the template
+                    $template->cloneRow('uniform_type', count($uniforms), true);
+                    $j = 1;
+                    foreach ($uniforms as $uniform) {
+                        try {
+                            $template->setValue("dateissued#{$j}", htmlspecialchars($date_issued));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("uniform_type#{$j}", htmlspecialchars($uniform['uniform_type'] ?? 'N/A'));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("size#{$j}", htmlspecialchars($uniform['size'] ?? 'N/A'));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("color#{$j}", htmlspecialchars($uniform['color'] ?? 'N/A'));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("quantity_issued#{$j}", htmlspecialchars($uniform['quantity_issued'] ?? '0'));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("createdby#{$j}", htmlspecialchars($_SESSION['username'] ?? 'HR'));
+                        } catch (\Exception $e) {}
+                        try {
+                            $template->setValue("dateReturned#{$j}", '');
+                        } catch (\Exception $e) {}
+                        $j++;
+                    }
+                } catch (\Exception $e) {
+                    $this->logError("Could not clone uniform rows: " . $e->getMessage());
+                    // Try to set at least the basic values
+                    try {
+                        $template->setValue('uniform_type', htmlspecialchars(implode(', ', array_map(function($u) { return $u['uniform_type'] ?? 'N/A'; }, $uniforms))));
+                    } catch (\Exception $e2) {}
+                }
+            } else {
+                // Handle no uniforms case
+                try {
+                    $template->setValue('uniform_type', 'No uniforms assigned');
+                } catch (\Exception $e) {}
+            }
+            
+            // Generate filename
+            $filename = 'accountability_form_' . $employee_id . '_' . date('YmdHis') . '.docx';
+            $filepath = $this->outputPath . '/' . $filename;
+            
+            // Save document
+            $template->saveAs($filepath);
+            
+            if (!file_exists($filepath)) {
+                throw new \Exception("Failed to save document: {$filepath}");
+            }
+            
+            // Send as download
+            header("Content-Description: File Transfer");
+            header("Content-Disposition: attachment; filename=" . basename($filepath));
+            header("Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            header("Content-Length: " . filesize($filepath));
+            readfile($filepath);
+            
+            // Clean up temporary file after sending
+            unlink($filepath);
+            exit;
+            
+        } catch (\Exception $e) {
+            $this->logError("Error in generateAccountabilityForm: " . $e->getMessage());
+            throw $e;
+        }
     }
 }
 ?>

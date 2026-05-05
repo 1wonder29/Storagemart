@@ -501,5 +501,30 @@ class Asset extends BaseModel {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function deleteGroup(int $groupId): bool
+    {
+        try {
+            $this->pdo->beginTransaction();
+
+            // Delete all inventory items for this group
+            $sql = "DELETE FROM {$this->tblassets} WHERE group_id = :group_id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([':group_id' => $groupId]);
+
+            // Delete the group itself
+            $sql = "DELETE FROM {$this->tblgroup} WHERE group_id = :group_id";
+            $stmt = $this->pdo->prepare($sql);
+            $success = $stmt->execute([':group_id' => $groupId]);
+
+            $this->pdo->commit();
+            return $success;
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            return false;
+        }
+    }
+
     
 }

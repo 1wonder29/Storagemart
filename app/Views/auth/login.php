@@ -30,8 +30,8 @@ $base = rtrim(BASE_URL, '/');
                 <div class="message"><?= $loginMessage ?></div>
             <?php endif; ?>
 
-            <!-- Use the base path so action will be correct even when project is in a subfolder -->
-            <form action="<?= htmlspecialchars($base) ?>/login-post" method="POST">
+            <!-- Use relative paths to ensure correct domain/port -->
+            <form action="/login-post" method="POST">
                 <label for="username">Username</label>
                 <input 
                     type="text"
@@ -53,7 +53,7 @@ $base = rtrim(BASE_URL, '/');
                 <button type="submit" name="btnLogin">LOG IN</button>
 
                 <div class="forgot-password">
-                    <a href="<?= htmlspecialchars($base) ?>/forgot-password">Forgot password?</a>
+                    <a href="/forgot-password">Forgot password?</a>
                 </div>
             </form>
         </div>

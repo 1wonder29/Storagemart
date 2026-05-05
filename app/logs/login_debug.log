@@ -3371,3 +3371,435 @@
 [2026-04-22 07:41:08] Stored password appears hashed; using password_verify
 [2026-04-22 07:41:08] password_verify succeeded
 [2026-04-22 07:41:08] Login successful for smiran.kenneth; usertype=IT
+[2026-04-28 08:57:28] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 08:57:28] Attempt login for username='Dan'
+[2026-04-28 08:57:29] findByUsername returned: FOUND
+[2026-04-28 08:57:29] Stored password appears hashed; using password_verify
+[2026-04-28 08:57:29] password_verify failed
+[2026-04-28 08:57:29] Account deactivated for Dan — 3 failed attempts
+[2026-04-28 08:57:40] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 08:57:40] Attempt login for username='admin'
+[2026-04-28 08:57:40] findByUsername returned: FOUND
+[2026-04-28 08:57:40] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 08:57:40] Plaintext compare failed
+[2026-04-28 08:57:40] Login failed for admin — attempt 1/3
+[2026-04-28 08:57:50] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 08:57:50] Attempt login for username='admin'
+[2026-04-28 08:57:50] findByUsername returned: FOUND
+[2026-04-28 08:57:50] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 08:57:50] Plaintext compare succeeded
+[2026-04-28 08:57:50] Login successful for admin; usertype=ADMIN
+[2026-04-28 08:58:15] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 08:58:15] Attempt login for username='Dan'
+[2026-04-28 08:58:15] findByUsername returned: FOUND
+[2026-04-28 08:58:15] Stored password appears hashed; using password_verify
+[2026-04-28 08:58:15] password_verify failed
+[2026-04-28 08:58:15] Account deactivated for Dan — 3 failed attempts
+[2026-04-28 08:58:31] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 08:58:31] Attempt login for username='kenneth'
+[2026-04-28 08:58:31] findByUsername returned: NOT FOUND
+[2026-04-28 08:58:31] Login failed for kenneth — attempt 1/3
+[2026-04-28 08:58:44] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 08:58:44] Attempt login for username='Dan'
+[2026-04-28 08:58:44] findByUsername returned: FOUND
+[2026-04-28 08:58:44] Stored password appears hashed; using password_verify
+[2026-04-28 08:58:44] password_verify failed
+[2026-04-28 08:58:44] Account deactivated for Dan — 3 failed attempts
+[2026-04-28 08:58:49] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 08:58:49] Attempt login for username='admin'
+[2026-04-28 08:58:49] findByUsername returned: FOUND
+[2026-04-28 08:58:49] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 08:58:49] Plaintext compare succeeded
+[2026-04-28 08:58:49] Login successful for admin; usertype=ADMIN
+[2026-04-28 09:00:01] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 09:00:01] Attempt login for username='Dan'
+[2026-04-28 09:00:01] findByUsername returned: FOUND
+[2026-04-28 09:00:01] Stored password appears hashed; using password_verify
+[2026-04-28 09:00:01] password_verify failed
+[2026-04-28 09:00:01] Account deactivated for Dan — 3 failed attempts
+[2026-04-28 09:00:12] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 09:00:12] Attempt login for username='Dan'
+[2026-04-28 09:00:12] findByUsername returned: FOUND
+[2026-04-28 09:00:12] Stored password appears hashed; using password_verify
+[2026-04-28 09:00:12] password_verify failed
+[2026-04-28 09:00:12] Account deactivated for Dan — 3 failed attempts
+[2026-04-28 09:00:15] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 09:00:15] Attempt login for username='admin'
+[2026-04-28 09:00:15] findByUsername returned: FOUND
+[2026-04-28 09:00:15] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 09:00:15] Plaintext compare succeeded
+[2026-04-28 09:00:16] Login successful for admin; usertype=ADMIN
+[2026-04-28 09:00:47] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 09:00:47] Attempt login for username='Dan'
+[2026-04-28 09:00:47] findByUsername returned: FOUND
+[2026-04-28 09:00:47] Stored password appears hashed; using password_verify
+[2026-04-28 09:00:47] password_verify succeeded
+[2026-04-28 09:00:47] Account inactive for Dan
+[2026-04-28 09:00:53] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 09:00:53] Attempt login for username='admin'
+[2026-04-28 09:00:53] findByUsername returned: FOUND
+[2026-04-28 09:00:53] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 09:00:53] Plaintext compare succeeded
+[2026-04-28 09:00:53] Login successful for admin; usertype=ADMIN
+[2026-04-28 09:01:32] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 09:01:32] Attempt login for username='Dan'
+[2026-04-28 09:01:32] findByUsername returned: FOUND
+[2026-04-28 09:01:32] Stored password appears hashed; using password_verify
+[2026-04-28 09:01:32] password_verify succeeded
+[2026-04-28 09:01:32] Login successful for Dan; usertype=IT
+[2026-04-28 11:15:37] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:15:37] Attempt login for username='Dan'
+[2026-04-28 11:15:37] findByUsername returned: FOUND
+[2026-04-28 11:15:37] Stored password appears hashed; using password_verify
+[2026-04-28 11:15:37] password_verify failed
+[2026-04-28 11:15:37] Login failed for Dan — attempt 1/3
+[2026-04-28 11:16:11] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:16:11] Attempt login for username='Dan'
+[2026-04-28 11:16:11] findByUsername returned: FOUND
+[2026-04-28 11:16:11] Stored password appears hashed; using password_verify
+[2026-04-28 11:16:11] password_verify failed
+[2026-04-28 11:16:11] Login failed for Dan — attempt 2/3
+[2026-04-28 11:16:16] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:16:16] Attempt login for username='Dan'
+[2026-04-28 11:16:16] findByUsername returned: FOUND
+[2026-04-28 11:16:16] Stored password appears hashed; using password_verify
+[2026-04-28 11:16:16] password_verify failed
+[2026-04-28 11:16:16] Account deactivated for Dan — 3 failed attempts
+[2026-04-28 11:16:28] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:16:28] Attempt login for username='admin'
+[2026-04-28 11:16:28] findByUsername returned: FOUND
+[2026-04-28 11:16:28] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 11:16:28] Plaintext compare succeeded
+[2026-04-28 11:16:28] Login successful for admin; usertype=ADMIN
+[2026-04-28 11:17:01] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:17:01] Attempt login for username='Dan'
+[2026-04-28 11:17:01] findByUsername returned: FOUND
+[2026-04-28 11:17:01] Stored password appears hashed; using password_verify
+[2026-04-28 11:17:01] password_verify succeeded
+[2026-04-28 11:17:01] Login successful for Dan; usertype=IT
+[2026-04-28 11:17:58] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:17:58] Attempt login for username='admin'
+[2026-04-28 11:17:58] findByUsername returned: FOUND
+[2026-04-28 11:17:58] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 11:17:58] Plaintext compare succeeded
+[2026-04-28 11:17:58] Login successful for admin; usertype=ADMIN
+[2026-04-28 11:19:43] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:19:43] Attempt login for username='admin'
+[2026-04-28 11:19:43] findByUsername returned: FOUND
+[2026-04-28 11:19:43] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 11:19:43] Plaintext compare succeeded
+[2026-04-28 11:19:43] Login successful for admin; usertype=ADMIN
+[2026-04-28 11:20:14] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:20:14] Attempt login for username='smiran.head'
+[2026-04-28 11:20:14] findByUsername returned: FOUND
+[2026-04-28 11:20:14] Stored password appears hashed; using password_verify
+[2026-04-28 11:20:14] password_verify succeeded
+[2026-04-28 11:20:14] Login successful for smiran.head; usertype=HEAD
+[2026-04-28 11:21:01] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:21:01] Attempt login for username='admin'
+[2026-04-28 11:21:01] findByUsername returned: FOUND
+[2026-04-28 11:21:01] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 11:21:01] Plaintext compare succeeded
+[2026-04-28 11:21:01] Login successful for admin; usertype=ADMIN
+[2026-04-28 11:24:27] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:24:27] Attempt login for username='storagemart.danmangaban@gmail.com'
+[2026-04-28 11:24:27] findByUsername returned: FOUND
+[2026-04-28 11:24:27] Stored password appears hashed; using password_verify
+[2026-04-28 11:24:27] password_verify succeeded
+[2026-04-28 11:24:27] Login successful for storagemart.danmangaban@gmail.com; usertype=EMPLOYEE
+[2026-04-28 11:31:12] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:31:12] Attempt login for username='admin'
+[2026-04-28 11:31:12] findByUsername returned: FOUND
+[2026-04-28 11:31:12] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 11:31:12] Plaintext compare succeeded
+[2026-04-28 11:31:12] Login successful for admin; usertype=ADMIN
+[2026-04-28 11:31:36] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:31:36] Attempt login for username='storagemart.alvinsantos@gmail.com'
+[2026-04-28 11:31:36] findByUsername returned: FOUND
+[2026-04-28 11:31:36] Stored password appears hashed; using password_verify
+[2026-04-28 11:31:36] password_verify succeeded
+[2026-04-28 11:31:36] Login successful for storagemart.alvinsantos@gmail.com; usertype=EMPLOYEE
+[2026-04-28 11:32:46] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:32:46] Attempt login for username='admin'
+[2026-04-28 11:32:46] findByUsername returned: FOUND
+[2026-04-28 11:32:46] Stored password appears plain; performing direct compare (legacy)
+[2026-04-28 11:32:46] Plaintext compare succeeded
+[2026-04-28 11:32:46] Login successful for admin; usertype=ADMIN
+[2026-04-28 11:33:19] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-28 11:33:19] Attempt login for username='smiran.kenneth'
+[2026-04-28 11:33:19] findByUsername returned: FOUND
+[2026-04-28 11:33:19] Stored password appears hashed; using password_verify
+[2026-04-28 11:33:19] password_verify succeeded
+[2026-04-28 11:33:19] Login successful for smiran.kenneth; usertype=IT
+[2026-04-29 03:40:04] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 03:40:04] Attempt login for username='admin'
+[2026-04-29 03:40:04] findByUsername returned: FOUND
+[2026-04-29 03:40:04] Stored password appears plain; performing direct compare (legacy)
+[2026-04-29 03:40:04] Plaintext compare succeeded
+[2026-04-29 03:40:04] Login successful for admin; usertype=ADMIN
+[2026-04-29 03:40:29] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 03:40:29] Attempt login for username='storagemart.alvinsantos@gmail.com'
+[2026-04-29 03:40:29] findByUsername returned: FOUND
+[2026-04-29 03:40:29] Stored password appears hashed; using password_verify
+[2026-04-29 03:40:29] password_verify succeeded
+[2026-04-29 03:40:29] Login successful for storagemart.alvinsantos@gmail.com; usertype=EMPLOYEE
+[2026-04-29 07:14:45] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 07:14:45] Attempt login for username='Dan'
+[2026-04-29 07:14:45] findByUsername returned: FOUND
+[2026-04-29 07:14:45] Stored password appears hashed; using password_verify
+[2026-04-29 07:14:45] password_verify succeeded
+[2026-04-29 07:14:45] Login successful for Dan; usertype=IT
+[2026-04-29 07:15:24] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 07:15:24] Attempt login for username='smiran.kenneth'
+[2026-04-29 07:15:24] findByUsername returned: FOUND
+[2026-04-29 07:15:24] Stored password appears hashed; using password_verify
+[2026-04-29 07:15:25] password_verify succeeded
+[2026-04-29 07:15:25] Login successful for smiran.kenneth; usertype=IT
+[2026-04-29 07:16:11] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 07:16:11] Attempt login for username='admin'
+[2026-04-29 07:16:11] findByUsername returned: FOUND
+[2026-04-29 07:16:11] Stored password appears plain; performing direct compare (legacy)
+[2026-04-29 07:16:11] Plaintext compare succeeded
+[2026-04-29 07:16:11] Login successful for admin; usertype=ADMIN
+[2026-04-29 07:16:55] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 07:16:55] Attempt login for username='storagemart.alvinsantos@gmail.com'
+[2026-04-29 07:16:55] findByUsername returned: FOUND
+[2026-04-29 07:16:55] Stored password appears hashed; using password_verify
+[2026-04-29 07:16:55] password_verify succeeded
+[2026-04-29 07:16:55] Login successful for storagemart.alvinsantos@gmail.com; usertype=EMPLOYEE
+[2026-04-29 07:17:33] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 07:17:33] Attempt login for username='Dan'
+[2026-04-29 07:17:33] findByUsername returned: FOUND
+[2026-04-29 07:17:33] Stored password appears hashed; using password_verify
+[2026-04-29 07:17:33] password_verify failed
+[2026-04-29 07:17:33] Login failed for Dan — attempt 1/3
+[2026-04-29 07:17:43] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 07:17:43] Attempt login for username='Dan'
+[2026-04-29 07:17:43] findByUsername returned: FOUND
+[2026-04-29 07:17:43] Stored password appears hashed; using password_verify
+[2026-04-29 07:17:43] password_verify succeeded
+[2026-04-29 07:17:43] Login successful for Dan; usertype=IT
+[2026-04-29 07:22:31] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 07:22:31] Attempt login for username='admin'
+[2026-04-29 07:22:31] findByUsername returned: FOUND
+[2026-04-29 07:22:31] Stored password appears plain; performing direct compare (legacy)
+[2026-04-29 07:22:31] Plaintext compare succeeded
+[2026-04-29 07:22:31] Login successful for admin; usertype=ADMIN
+[2026-04-29 07:22:59] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 07:22:59] Attempt login for username='storagemart.alvinsantos@gmail.com'
+[2026-04-29 07:22:59] findByUsername returned: FOUND
+[2026-04-29 07:22:59] Stored password appears hashed; using password_verify
+[2026-04-29 07:22:59] password_verify succeeded
+[2026-04-29 07:22:59] Login successful for storagemart.alvinsantos@gmail.com; usertype=EMPLOYEE
+[2026-04-29 07:26:40] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 07:26:40] Attempt login for username='Dan'
+[2026-04-29 07:26:40] findByUsername returned: FOUND
+[2026-04-29 07:26:40] Stored password appears hashed; using password_verify
+[2026-04-29 07:26:40] password_verify succeeded
+[2026-04-29 07:26:40] Login successful for Dan; usertype=IT
+[2026-04-29 08:45:08] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-29 08:45:08] Attempt login for username='Dan'
+[2026-04-29 08:45:08] findByUsername returned: FOUND
+[2026-04-29 08:45:08] Stored password appears hashed; using password_verify
+[2026-04-29 08:45:08] password_verify succeeded
+[2026-04-29 08:45:08] Login successful for Dan; usertype=IT
+[2026-04-30 03:55:42] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 03:55:42] Attempt login for username='hr_test'
+[2026-04-30 03:55:42] findByUsername returned: FOUND
+[2026-04-30 03:55:42] Stored password appears hashed; using password_verify
+[2026-04-30 03:55:42] password_verify succeeded
+[2026-04-30 03:55:42] Login successful for hr_test; usertype=HR
+[2026-04-30 03:55:53] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 03:55:53] Attempt login for username='Dan'
+[2026-04-30 03:55:53] findByUsername returned: FOUND
+[2026-04-30 03:55:53] Stored password appears hashed; using password_verify
+[2026-04-30 03:55:53] password_verify succeeded
+[2026-04-30 03:55:53] Login successful for Dan; usertype=IT
+[2026-04-30 03:56:21] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 03:56:21] Attempt login for username='hr_test'
+[2026-04-30 03:56:21] findByUsername returned: FOUND
+[2026-04-30 03:56:21] Stored password appears hashed; using password_verify
+[2026-04-30 03:56:21] password_verify succeeded
+[2026-04-30 03:56:21] Login successful for hr_test; usertype=HR
+[2026-04-30 04:04:44] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:04:44] Attempt login for username='Dan'
+[2026-04-30 04:04:44] findByUsername returned: FOUND
+[2026-04-30 04:04:44] Stored password appears hashed; using password_verify
+[2026-04-30 04:04:44] password_verify succeeded
+[2026-04-30 04:04:44] Login successful for Dan; usertype=IT
+[2026-04-30 04:05:30] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:05:30] Attempt login for username='hr_test'
+[2026-04-30 04:05:30] findByUsername returned: FOUND
+[2026-04-30 04:05:30] Stored password appears hashed; using password_verify
+[2026-04-30 04:05:30] password_verify succeeded
+[2026-04-30 04:05:30] Login successful for hr_test; usertype=HR
+[2026-04-30 04:05:31] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:05:31] Attempt login for username='Dan'
+[2026-04-30 04:05:31] findByUsername returned: FOUND
+[2026-04-30 04:05:31] Stored password appears hashed; using password_verify
+[2026-04-30 04:05:32] password_verify succeeded
+[2026-04-30 04:05:32] Login successful for Dan; usertype=IT
+[2026-04-30 04:05:51] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:05:51] Attempt login for username='hr_test'
+[2026-04-30 04:05:51] findByUsername returned: FOUND
+[2026-04-30 04:05:51] Stored password appears hashed; using password_verify
+[2026-04-30 04:05:51] password_verify succeeded
+[2026-04-30 04:05:51] Login successful for hr_test; usertype=HR
+[2026-04-30 04:19:53] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:19:53] Attempt login for username='hr_test'
+[2026-04-30 04:19:53] findByUsername returned: FOUND
+[2026-04-30 04:19:53] Stored password appears hashed; using password_verify
+[2026-04-30 04:19:53] password_verify succeeded
+[2026-04-30 04:19:53] Login successful for hr_test; usertype=HR
+[2026-04-30 04:19:54] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:19:54] Attempt login for username='Dan'
+[2026-04-30 04:19:54] findByUsername returned: FOUND
+[2026-04-30 04:19:54] Stored password appears hashed; using password_verify
+[2026-04-30 04:19:55] password_verify succeeded
+[2026-04-30 04:19:55] Login successful for Dan; usertype=IT
+[2026-04-30 04:20:08] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:20:08] Attempt login for username='admin'
+[2026-04-30 04:20:08] findByUsername returned: FOUND
+[2026-04-30 04:20:08] Stored password appears plain; performing direct compare (legacy)
+[2026-04-30 04:20:08] Plaintext compare succeeded
+[2026-04-30 04:20:08] Login successful for admin; usertype=ADMIN
+[2026-04-30 04:22:33] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:22:33] Attempt login for username='Dan'
+[2026-04-30 04:22:33] findByUsername returned: FOUND
+[2026-04-30 04:22:33] Stored password appears hashed; using password_verify
+[2026-04-30 04:22:34] password_verify succeeded
+[2026-04-30 04:22:34] Login successful for Dan; usertype=HR
+[2026-04-30 04:22:35] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:22:35] Attempt login for username='Dan'
+[2026-04-30 04:22:35] findByUsername returned: FOUND
+[2026-04-30 04:22:35] Stored password appears hashed; using password_verify
+[2026-04-30 04:22:35] password_verify succeeded
+[2026-04-30 04:22:35] Login successful for Dan; usertype=HR
+[2026-04-30 04:22:36] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:22:36] Attempt login for username='Dan'
+[2026-04-30 04:22:36] findByUsername returned: FOUND
+[2026-04-30 04:22:36] Stored password appears hashed; using password_verify
+[2026-04-30 04:22:36] password_verify succeeded
+[2026-04-30 04:22:36] Login successful for Dan; usertype=HR
+[2026-04-30 04:22:37] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:22:37] Attempt login for username='Dan'
+[2026-04-30 04:22:37] findByUsername returned: FOUND
+[2026-04-30 04:22:37] Stored password appears hashed; using password_verify
+[2026-04-30 04:22:37] password_verify succeeded
+[2026-04-30 04:22:37] Login successful for Dan; usertype=HR
+[2026-04-30 04:27:24] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-04-30 04:27:24] Attempt login for username='Dan'
+[2026-04-30 04:27:24] findByUsername returned: FOUND
+[2026-04-30 04:27:24] Stored password appears hashed; using password_verify
+[2026-04-30 04:27:24] password_verify succeeded
+[2026-04-30 04:27:24] Login successful for Dan; usertype=HR
+[2026-05-04 04:41:38] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 04:41:38] Attempt login for username='Dan'
+[2026-05-04 04:41:38] findByUsername returned: FOUND
+[2026-05-04 04:41:38] Stored password appears hashed; using password_verify
+[2026-05-04 04:41:38] password_verify succeeded
+[2026-05-04 04:41:38] Login successful for Dan; usertype=HR
+[2026-05-04 05:17:51] Entered login() method. METHOD=POST POST=[]
+[2026-05-04 05:17:51] btnLogin not set in POST — possible form issue. POST=[]
+[2026-05-04 05:17:59] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 05:17:59] Attempt login for username='hr_test'
+[2026-05-04 05:17:59] findByUsername returned: FOUND
+[2026-05-04 05:17:59] Stored password appears hashed; using password_verify
+[2026-05-04 05:17:59] password_verify succeeded
+[2026-05-04 05:17:59] Login successful for hr_test; usertype=HR
+[2026-05-04 05:18:46] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 05:18:46] Attempt login for username='Dan'
+[2026-05-04 05:18:46] findByUsername returned: FOUND
+[2026-05-04 05:18:46] Stored password appears hashed; using password_verify
+[2026-05-04 05:18:46] password_verify succeeded
+[2026-05-04 05:18:46] Login successful for Dan; usertype=HR
+[2026-05-04 05:21:21] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 05:21:21] Attempt login for username='hr_test'
+[2026-05-04 05:21:21] findByUsername returned: FOUND
+[2026-05-04 05:21:21] Stored password appears hashed; using password_verify
+[2026-05-04 05:21:21] password_verify succeeded
+[2026-05-04 05:21:21] Login successful for hr_test; usertype=HR
+[2026-05-04 05:25:58] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 05:25:58] Attempt login for username='hr_test'
+[2026-05-04 05:25:58] findByUsername returned: FOUND
+[2026-05-04 05:25:58] Stored password appears hashed; using password_verify
+[2026-05-04 05:25:58] password_verify succeeded
+[2026-05-04 05:25:58] Login successful for hr_test; usertype=HR
+[2026-05-04 05:26:09] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 05:26:09] Attempt login for username='hr_test'
+[2026-05-04 05:26:09] findByUsername returned: FOUND
+[2026-05-04 05:26:09] Stored password appears hashed; using password_verify
+[2026-05-04 05:26:09] password_verify succeeded
+[2026-05-04 05:26:09] Login successful for hr_test; usertype=HR
+[2026-05-04 05:26:17] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 05:26:17] Attempt login for username='hr_test'
+[2026-05-04 05:26:17] findByUsername returned: FOUND
+[2026-05-04 05:26:17] Stored password appears hashed; using password_verify
+[2026-05-04 05:26:17] password_verify succeeded
+[2026-05-04 05:26:17] Login successful for hr_test; usertype=HR
+[2026-05-04 05:27:19] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 05:27:19] Attempt login for username='hr_test'
+[2026-05-04 05:27:19] findByUsername returned: FOUND
+[2026-05-04 05:27:19] Stored password appears hashed; using password_verify
+[2026-05-04 05:27:19] password_verify succeeded
+[2026-05-04 05:27:19] Login successful for hr_test; usertype=HR
+[2026-05-04 05:27:28] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 05:27:28] Attempt login for username='hr_test'
+[2026-05-04 05:27:28] findByUsername returned: FOUND
+[2026-05-04 05:27:28] Stored password appears hashed; using password_verify
+[2026-05-04 05:27:28] password_verify succeeded
+[2026-05-04 05:27:28] Login successful for hr_test; usertype=HR
+[2026-05-04 05:28:33] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 05:28:33] Attempt login for username='hr_test'
+[2026-05-04 05:28:33] findByUsername returned: FOUND
+[2026-05-04 05:28:33] Stored password appears hashed; using password_verify
+[2026-05-04 05:28:34] password_verify succeeded
+[2026-05-04 05:28:34] Login successful for hr_test; usertype=HR
+[2026-05-04 09:48:00] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 09:48:00] Attempt login for username='admin'
+[2026-05-04 09:48:00] findByUsername returned: FOUND
+[2026-05-04 09:48:00] Stored password appears plain; performing direct compare (legacy)
+[2026-05-04 09:48:00] Plaintext compare succeeded
+[2026-05-04 09:48:00] Login successful for admin; usertype=ADMIN
+[2026-05-04 09:53:10] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 09:53:10] Attempt login for username='storagemart.alvinsantos@gmail.com'
+[2026-05-04 09:53:10] findByUsername returned: FOUND
+[2026-05-04 09:53:10] Stored password appears hashed; using password_verify
+[2026-05-04 09:53:10] password_verify succeeded
+[2026-05-04 09:53:10] Login successful for storagemart.alvinsantos@gmail.com; usertype=EMPLOYEE
+[2026-05-04 09:55:02] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 09:55:02] Attempt login for username='admin'
+[2026-05-04 09:55:02] findByUsername returned: FOUND
+[2026-05-04 09:55:02] Stored password appears plain; performing direct compare (legacy)
+[2026-05-04 09:55:02] Plaintext compare succeeded
+[2026-05-04 09:55:02] Login successful for admin; usertype=ADMIN
+[2026-05-04 10:00:29] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-04 10:00:29] Attempt login for username='Dan'
+[2026-05-04 10:00:29] findByUsername returned: FOUND
+[2026-05-04 10:00:29] Stored password appears hashed; using password_verify
+[2026-05-04 10:00:30] password_verify succeeded
+[2026-05-04 10:00:30] Login successful for Dan; usertype=HR
+[2026-05-05 04:39:53] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-05 04:39:53] Attempt login for username='Dan'
+[2026-05-05 04:39:53] findByUsername returned: FOUND
+[2026-05-05 04:39:53] Stored password appears hashed; using password_verify
+[2026-05-05 04:39:53] password_verify failed
+[2026-05-05 04:39:53] Login failed for Dan — attempt 1/3
+[2026-05-05 04:40:05] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-05 04:40:05] Attempt login for username='Dan'
+[2026-05-05 04:40:05] findByUsername returned: FOUND
+[2026-05-05 04:40:05] Stored password appears hashed; using password_verify
+[2026-05-05 04:40:05] password_verify succeeded
+[2026-05-05 04:40:05] Login successful for Dan; usertype=HR
+[2026-05-05 05:31:30] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-05 05:31:30] Attempt login for username='admin'
+[2026-05-05 05:31:30] findByUsername returned: FOUND
+[2026-05-05 05:31:30] Stored password appears plain; performing direct compare (legacy)
+[2026-05-05 05:31:30] Plaintext compare succeeded
+[2026-05-05 05:31:30] Login successful for admin; usertype=ADMIN
+[2026-05-05 07:30:14] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-05 07:30:14] Attempt login for username='admin'
+[2026-05-05 07:30:14] findByUsername returned: FOUND
+[2026-05-05 07:30:14] Stored password appears plain; performing direct compare (legacy)
+[2026-05-05 07:30:14] Plaintext compare succeeded
+[2026-05-05 07:30:14] Login successful for admin; usertype=ADMIN

@@ -89,6 +89,11 @@ $base = rtrim(BASE_URL, '/');
                                                             <i class="fas fa-eye fa-sm fa-fw mr-2 text-black-400"></i>
                                                             View
                                                         </a>
+                                                        <!-- Delete -->
+                                                        <a class="dropdown-item" href="<?= htmlspecialchars($base) ?>/admin/assets/group/delete?group_id=<?= $row['group_id']; ?>" onclick="return confirm('Are you sure you want to delete this asset group?');">
+                                                            <i class="fas fa-trash fa-sm fa-fw mr-2 text-danger"></i>
+                                                            Delete
+                                                        </a>
                                                     </div>
                                             </td>
 

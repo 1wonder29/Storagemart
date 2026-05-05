@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../AuthController.php';
 require_once __DIR__ . '/../../Models/admin/Account.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
+require_once __DIR__ . '/../../Models/admin/AuditTrail.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 
 class AdminController extends AuthController
@@ -73,12 +74,33 @@ class AdminController extends AuthController
                 $id = (int)($_POST['id'] ?? 0);
 
                 if ($id > 0) {
+                    // Fetch account details before deletion for audit trail
+                    $accountDetails = $accountModel->fetchAccountById($id);
+                    
                     $logger = new Logger();
                     $ok = $accountModel->deleteById($id);
 
                     if ($ok) {
-                        $logger->log("Deleted Account", "Account Management", $id, $_SESSION['username'] ?? 'Unknown');
-                        $_SESSION['flash'] = "Account #{$id} deleted.";
+                        // Use enhanced audit logging with details
+                        $username = $accountDetails['username'] ?? 'Unknown';
+                        $auditDetails = [
+                            'account_id' => $id,
+                            'username' => $username,
+                            'usertype' => $accountDetails['usertype'] ?? 'Unknown',
+                            'status' => $accountDetails['status'] ?? 'Unknown',
+                            'deleted_at' => date('Y-m-d H:i:s'),
+                            'deleted_by' => $_SESSION['username'] ?? 'Unknown'
+                        ];
+                        
+                        $logger->logDelete(
+                            "Account #{$id} ({$username}) deleted",
+                            "Account Management",
+                            (string)$id,
+                            $auditDetails,
+                            $_SESSION['username'] ?? 'Unknown'
+                        );
+                        
+                        $_SESSION['flash'] = "Account #{$id} has been permanently deleted and logged in audit trail.";
                     } else {
                         $_SESSION['flash'] = "Failed to delete account #{$id}.";
                     }
@@ -488,6 +510,104 @@ class AdminController extends AuthController
         $notifications = $notificationData['notifications'];
 
         require __DIR__ . '/../../Views/admin/profile/profile.php';
+    }
+
+    /* ------------------------------------------------------
+     * AUDIT TRAIL / ACTIVITY LOG
+     * ------------------------------------------------------*/
+    public function auditTrail()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $_SESSION['loginMessage'] = 'Please log in as admin.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $auditTrail = new AuditTrail();
+        
+        // Pagination
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? min(100, (int)$_GET['limit']) : 50;
+        $offset = ($page - 1) * $limit;
+        
+        // Filter type
+        $filterType = $_GET['type'] ?? 'all'; // 'all', 'deletes', 'by-module', 'by-user', 'by-date'
+        $module = $_GET['module'] ?? null;
+        $performer = $_GET['performer'] ?? null;
+        $startDate = $_GET['start_date'] ?? null;
+        $endDate = $_GET['end_date'] ?? null;
+        $searchTerm = $_GET['search'] ?? null;
+
+        // Fetch logs based on filter
+        $logs = [];
+        $totalCount = 0;
+
+        if ($filterType === 'deletes') {
+            $logs = $auditTrail->getAdminDeleteLogs($limit, $offset);
+            $totalCount = $auditTrail->countDeleteLogs();
+        } elseif ($filterType === 'by-module' && $module) {
+            $logs = $auditTrail->getAuditLogsByModule($module, $limit, $offset);
+            $totalCount = $auditTrail->countAuditLogs($module);
+        } elseif ($filterType === 'by-user' && $performer) {
+            $logs = $auditTrail->getAuditsByPerformer($performer, $limit, $offset);
+        } elseif ($filterType === 'by-date' && $startDate && $endDate) {
+            $logs = $auditTrail->getAuditsByDateRange($startDate, $endDate, $limit, $offset);
+        } elseif ($filterType === 'search' && $searchTerm) {
+            $logs = $auditTrail->searchAuditLogs($searchTerm, $limit, $offset);
+        } else {
+            $logs = $auditTrail->getAllAuditLogs($limit, $offset);
+            $totalCount = $auditTrail->countAuditLogs();
+        }
+
+        // Get summaries for dashboard
+        $deletesSummary = $auditTrail->getDeleteLogsSummary();
+        $recentDeletes = $auditTrail->getRecentDeleteActions(7);
+
+        // Calculate pagination
+        $totalPages = ceil($totalCount / $limit);
+
+        // Layout context
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        require __DIR__ . '/../../Views/admin/audit/audit_trail.php';
+    }
+
+    /**
+     * API endpoint to fetch audit log details via AJAX
+     */
+    public function auditDetail()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        header('Content-Type: application/json');
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+
+        $recordId = $_GET['record_id'] ?? null;
+        if (!$recordId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing record_id parameter']);
+            exit;
+        }
+
+        $auditTrail = new AuditTrail();
+        $trail = $auditTrail->getRecordAuditTrail($recordId);
+
+        echo json_encode(['success' => true, 'data' => $trail]);
+        exit;
     }
 }
 

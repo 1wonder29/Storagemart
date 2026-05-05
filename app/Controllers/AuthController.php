@@ -29,14 +29,20 @@ class AuthController {
 
     // Base-aware redirect helper
     protected function redirect($path) {
-        // if $path already starts with '/', append to base
-        if ($path[0] === '/') {
-            $target = rtrim($this->base, '/') . $path;
+        // Use relative redirect to preserve current domain and port
+        // This ensures that redirects work correctly whether accessed via localhost, localhost:8000, or any other domain
+        if ($this->base === '/' || $this->base === '') {
+            // No base path, use relative URL
+            header('Location: ' . $path);
         } else {
-            // relative path: join with base
-            $target = rtrim($this->base, '/') . '/' . $path;
+            // With base path, prepend base
+            if ($path[0] === '/') {
+                $target = rtrim($this->base, '/') . $path;
+            } else {
+                $target = rtrim($this->base, '/') . '/' . $path;
+            }
+            header('Location: ' . $target);
         }
-        header('Location: ' . $target);
         exit;
     }
 
@@ -217,6 +223,9 @@ class AuthController {
             case 'IT':
                 $this->redirect('/it/dashboard');
                 break;
+            case 'HR':
+                $this->redirect('/hr/dashboard');
+                break;
             default:
                 $this->redirect('/accounts');
                 break;
@@ -282,6 +291,19 @@ class AuthController {
 
         if (strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
             $_SESSION['loginMessage'] = 'Access denied. Admins only.';
+            $this->redirect('/login');
+        }
+    }
+
+    protected function requireHR()
+    {
+        if (empty($_SESSION['account_id'])) {
+            $_SESSION['loginMessage'] = 'Please log in to continue.';
+            $this->redirect('/login');
+        }
+
+        if (strtoupper($_SESSION['usertype'] ?? '') !== 'HR') {
+            $_SESSION['loginMessage'] = 'Access denied. HR only.';
             $this->redirect('/login');
         }
     }

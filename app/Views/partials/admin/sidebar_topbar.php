@@ -80,6 +80,13 @@ $base = rtrim(BASE_URL, '/');
                     <span>Pendings</span></a>
             </li>
 
+            <!-- Nav Item - Audit Trail -->
+            <li class="nav-item <?= ($activePage === 'audit_trail') ? 'active' : '' ?>">
+                <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/audit-trail">
+                    <i class="fas fa-fw fa-history"></i>
+                    <span>Audit Trail</span></a>
+            </li>
+
             <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">
 

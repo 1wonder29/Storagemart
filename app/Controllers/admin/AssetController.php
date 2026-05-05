@@ -792,4 +792,59 @@ class AssetController extends AuthController {
         require_once __DIR__ . '/../../Views/admin/asset/transfer_history.php';
     }
 
+    // Delete Asset Group Here
+    public function deleteGroup()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $_SESSION['flash_error'] = 'Unauthorized access.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $groupId = isset($_GET['group_id']) ? (int) $_GET['group_id'] : 0;
+        if ($groupId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid group ID.';
+            $this->redirect('/admin/assets');
+            return;
+        }
+
+        $assetModel = new Asset();
+
+        // Check if group exists
+        $group = $assetModel->fetchGroupById($groupId);
+        if (!$group) {
+            $_SESSION['flash_error'] = 'Group not found.';
+            $this->redirect('/admin/assets');
+            return;
+        }
+
+        try {
+            $ok = $assetModel->deleteGroup($groupId);
+
+            if ($ok) {
+                $logger = new Logger();
+                $logger->log(
+                    'Delete Group',
+                    'Group Management',
+                    $group['groupName'],
+                    $_SESSION['username'] ?? 'Unknown User'
+                );
+
+                $_SESSION['flash_success'] = 'Asset group and its items deleted successfully.';
+                $this->redirect('/admin/assets');
+                return;
+            }
+
+            throw new \Exception('Failed to delete group.');
+        } catch (\Throwable $e) {
+            $_SESSION['flash_error'] = 'Error deleting group: ' . $e->getMessage();
+            $this->redirect('/admin/assets');
+            return;
+        }
+    }
+
 }

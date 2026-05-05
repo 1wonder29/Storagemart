@@ -14,6 +14,15 @@ if ($isProduction) {
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
 }
+
+// CRITICAL: Ensure all URLs use scheme-relative or path-relative URLs
+// This prevents port mismatches when accessed from iframes or different domains
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+
+// Debug: Log the actual request details
+error_log('Request: ' . ($_SERVER['REQUEST_METHOD'] ?? 'NA') . ' ' . ($_SERVER['REQUEST_URI'] ?? 'NA') . ' from ' . ($_SERVER['HTTP_HOST'] ?? 'NA'));
+
 if (php_sapi_name() === 'cli-server') {
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $file = __DIR__ . $path;
@@ -35,7 +44,12 @@ $uri = '/' . trim($uri, '/');
 // ROUTES
 // HOME ROUTE
 if ($uri === '/' || $uri === '') {
-    header('Location: ' . rtrim(BASE_URL, '/') . '/login');
+    // Use relative redirect to preserve current domain and port
+    if (BASE_URL === '' || BASE_URL === '/') {
+        header('Location: /login');
+    } else {
+        header('Location: ' . rtrim(BASE_URL, '/') . '/login');
+    }
     exit;
 }
 
@@ -129,6 +143,8 @@ if (strpos($uri, '/admin') === 0) {
         $asset->group();
     } elseif ($sub === 'assets/group/update') {
         $asset->updateGroup();
+    } elseif ($sub === 'assets/group/delete') {
+        $asset->deleteGroup();
     } elseif ($sub === 'assets/item') {
         $asset->item();
     } elseif ($sub === 'assets/add') {
@@ -153,6 +169,10 @@ if (strpos($uri, '/admin') === 0) {
         $ticket->decline();
     } elseif ($sub === 'assets/view') {
         $admin->view_asset();
+    } elseif ($sub === 'audit-trail') {
+        $admin->auditTrail();
+    } elseif ($sub === 'audit-detail') {
+        $admin->auditDetail();
     } else {
         http_response_code(404);
         echo "Admin page not found.";
@@ -299,6 +319,69 @@ if (strpos($uri, '/head') === 0) {
     } else {
         http_response_code(404);
         echo "Head page not found.";
+    }
+    exit;
+}
+
+// HR PREFIX routes
+if (strpos($uri, '/hr') === 0) {
+    require_once __DIR__ . '/../app/Controllers/hr/HrController.php';
+    require_once __DIR__ . '/../app/Controllers/hr/UniformController.php';
+
+    $hr = new HrController();
+    $uniform = new UniformController();
+
+    $sub = trim(substr($uri, strlen('/hr')), '/');
+
+    if ($sub === '' || $sub === 'dashboard') {
+        $hr->dashboard();
+    } elseif ($sub === 'employees') {
+        $hr->employees();
+    } elseif (strpos($sub, 'employees/detail/') === 0) {
+        $employeeId = (int) substr($sub, strlen('employees/detail/'));
+        $hr->employeeDetail($employeeId);
+    } elseif (strpos($sub, 'employees/accountability/') === 0) {
+        $employeeId = (int) substr($sub, strlen('employees/accountability/'));
+        $hr->downloadAccountabilityForm($employeeId);
+    } elseif (strpos($sub, 'employees/search') === 0) {
+        $hr->searchEmployees();
+    } elseif ($sub === 'uniforms') {
+        $uniform->list();
+    } elseif ($sub === 'uniforms/add') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $uniform->addForm();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $uniform->add();
+        }
+    } elseif (strpos($sub, 'uniforms/edit/') === 0) {
+        $uniformId = (int) substr($sub, strlen('uniforms/edit/'));
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $uniform->editForm($uniformId);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $uniform->edit($uniformId);
+        }
+    } elseif (strpos($sub, 'uniforms/delete/') === 0) {
+        $uniformId = (int) substr($sub, strlen('uniforms/delete/'));
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $uniform->deleteConfirm($uniformId);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $uniform->delete($uniformId);
+        }
+    } elseif (strpos($sub, 'uniforms/search') === 0) {
+        $uniform->search();
+    } elseif (strpos($sub, 'uniforms/assign') === 0) {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $uniform->assignForm();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $uniform->assign();
+        }
+    } elseif ($sub === 'uniforms/get-by-type') {
+        $uniform->getUniformsByType();
+    } elseif ($sub === 'uniforms/reorder-alerts') {
+        $uniform->getReorderAlerts();
+    } else {
+        http_response_code(404);
+        echo "HR page not found.";
     }
     exit;
 }
