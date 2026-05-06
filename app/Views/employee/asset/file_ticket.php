@@ -46,17 +46,17 @@ $base = rtrim(BASE_URL, '/');
                             <div class="container mt-4">
                                 <form action="<?= htmlspecialchars($base) ?>/employee/assets/file_ticket" method="POST">
                                     <input type="hidden" name="branch_id" value="<?= htmlspecialchars($inventory['branch_id'] ?? '') ?>">
-                                    <input type="hidden" name="inventory_id" value="<?= htmlspecialchars($inventory['inventory_id'] ?? '') ?>">
+                                    <input type="hidden" name="inventory_id" value="<?= htmlspecialchars($inventory['inventory_id'] ?? '0') ?>">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
                             <h1>Employee Details</h1>
                                 <div class="row mb-5">
                                     <div class="col-md-6">
                                         <label for="employee_id" class="form-label">Employee ID</label>
-                                        <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Employee ID" value="<?= htmlspecialchars($inventory['employee_id'] ?? '') ?>" readonly>
+                                        <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Employee ID" value="<?= htmlspecialchars($inventory['employee_id'] ?? $loggedFirstname ?? '') ?>" readonly>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="fullname" class="form-label">Fullname</label>
-                                        <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" value="<?= htmlspecialchars($inventory['fullname'] ?? '')  ?>" readonly>
+                                        <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" value="<?= htmlspecialchars($inventory['fullname'] ?? $loggedFirstname ?? '')  ?>" readonly>
                                     </div>
                                     </div>
                                     <div class ="row mb-5">
@@ -69,6 +69,7 @@ $base = rtrim(BASE_URL, '/');
                                         <input type="text" class="form-control" id="branchName" name="branchName" placeholder="Branch" value="<?= htmlspecialchars($inventory['branchName'] ?? '') ?>" readonly>
                                     </div>
                                     </div>
+                                <?php if (!empty($inventory['inventory_id'])): ?>
                                 <hr></hr>
                                 <h1>Asset Details</h1>
                                 <div class="row mb-5">
@@ -81,6 +82,7 @@ $base = rtrim(BASE_URL, '/');
                                         <input type="text" class="form-control" id="groupName" name="groupName" placeholder="Model" value="<?= htmlspecialchars($inventory['groupName'] ?? '') ?>"  readonly>
                                     </div>
                                     </div>
+                                <?php endif; ?>
                                 <h1>Ticket Concerns</h1>
                                     <div class ="row mb-5">
                                             <div class ="col-md-6">

@@ -1,5 +1,11 @@
 <?php
 
+// SET TIMEZONE FIRST - before any other code
+// This ensures all date() calls use the correct timezone
+if (function_exists('date_default_timezone_set')) {
+    date_default_timezone_set('Asia/Manila');
+}
+
 // Load environment variables from .env
 function loadEnv($file = __DIR__ . '/../.env') {
     if (file_exists($file)) {
@@ -55,6 +61,8 @@ try {
     $pdo = new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     ]);
+    // Set database session timezone to match application timezone
+    $pdo->exec("SET time_zone = '+08:00'");
 } catch (PDOException $e) {
     // Log the error securely
     error_log('Database connection failed: ' . $e->getMessage());

@@ -23,7 +23,7 @@ $base = rtrim(BASE_URL, '/');
             <div class="card shadow">
                 <div class="card-body">
                     <form method="GET" action="<?= htmlspecialchars($base) ?>/hr/uniforms/search" class="form-inline mb-3">
-                        <input type="text" name="q" class="form-control mr-2" value="<?= htmlspecialchars($searchTerm ?? '') ?>" placeholder="Search by type, color, or supplier..." required>
+                        <input type="text" name="q" class="form-control mr-2" value="<?= htmlspecialchars($searchTerm ?? '') ?>" placeholder="Search by type or size..." required>
                         <button type="submit" class="btn btn-primary">Search</button>
                         <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-secondary ml-2">View All</a>
                     </form>
@@ -37,24 +37,19 @@ $base = rtrim(BASE_URL, '/');
                                     <tr>
                                         <th>Uniform Type</th>
                                         <th>Size</th>
-                                        <th>Color</th>
                                         <th>Quantity</th>
                                         <th>Level</th>
-                                        <th>Cost</th>
-                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($uniforms as $uniform): 
-                                        $statusBadgeColor = ($uniform['status'] === 'ACTIVE') ? 'success' : 'danger';
                                         $levelPercentage = ($uniform['quantity_in_stock'] / $uniform['reorder_level']) * 100;
                                         $levelColor = ($levelPercentage > 100) ? 'success' : (($levelPercentage > 50) ? 'warning' : 'danger');
                                     ?>
                                         <tr>
                                             <td><strong><?= htmlspecialchars($uniform['uniform_type']) ?></strong></td>
                                             <td><?= htmlspecialchars($uniform['size']) ?></td>
-                                            <td><?= htmlspecialchars($uniform['color']) ?></td>
                                             <td><?= (int)$uniform['quantity_in_stock'] ?></td>
                                             <td>
                                                 <div class="progress" style="height: 20px;">
@@ -64,12 +59,6 @@ $base = rtrim(BASE_URL, '/');
                                                         <?= (int)$levelPercentage ?>%
                                                     </div>
                                                 </div>
-                                            </td>
-                                            <td><?= number_format($uniform['cost_per_unit'], 2) ?></td>
-                                            <td>
-                                                <span class="badge badge-<?= $statusBadgeColor ?>">
-                                                    <?= htmlspecialchars($uniform['status']) ?>
-                                                </span>
                                             </td>
                                             <td>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/edit/<?= $uniform['uniform_id'] ?>" class="btn btn-sm btn-primary">

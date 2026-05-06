@@ -92,17 +92,13 @@ class UniformController extends AuthController {
             $data = [
                 'uniform_type' => trim($_POST['uniform_type'] ?? ''),
                 'size' => trim($_POST['size'] ?? ''),
-                'color' => trim($_POST['color'] ?? ''),
                 'quantity_in_stock' => (int) ($_POST['quantity_in_stock'] ?? 0),
-                'cost_per_unit' => $_POST['cost_per_unit'] ?? null,
-                'supplier' => trim($_POST['supplier'] ?? ''),
                 'reorder_level' => (int) ($_POST['reorder_level'] ?? 5),
-                'status' => $_POST['status'] ?? 'ACTIVE',
                 'createdby' => $_SESSION['username'] ?? 'system'
             ];
 
             // Validate required fields
-            if (empty($data['uniform_type']) || empty($data['size']) || empty($data['color'])) {
+            if (empty($data['uniform_type']) || empty($data['size'])) {
                 $_SESSION['errorMessage'] = 'Please fill in all required fields.';
                 $this->redirect('/hr/uniforms/add');
             }
@@ -174,24 +170,20 @@ class UniformController extends AuthController {
             $data = [
                 'uniform_type' => trim($_POST['uniform_type'] ?? ''),
                 'size' => trim($_POST['size'] ?? ''),
-                'color' => trim($_POST['color'] ?? ''),
                 'quantity_in_stock' => (int) ($_POST['quantity_in_stock'] ?? 0),
-                'cost_per_unit' => $_POST['cost_per_unit'] ?? null,
-                'supplier' => trim($_POST['supplier'] ?? ''),
                 'reorder_level' => (int) ($_POST['reorder_level'] ?? 5),
-                'status' => $_POST['status'] ?? 'ACTIVE',
                 'updated_by' => $_SESSION['username'] ?? 'system'
             ];
 
             // Validate required fields
-            if (empty($data['uniform_type']) || empty($data['size']) || empty($data['color'])) {
+            if (empty($data['uniform_type']) || empty($data['size'])) {
                 $_SESSION['errorMessage'] = 'Please fill in all required fields.';
                 $this->redirect('/hr/uniforms/edit/' . $uniformId);
             }
 
             if ($this->uniformModel->updateUniform($uniformId, $data)) {
                 $this->hrModel->logAction('EDITED_UNIFORM', null, $uniformId, $_SESSION['account_id'], 
-                    "Updated uniform: {$data['uniform_type']} - {$data['size']} - {$data['color']}");
+                    "Updated uniform: {$data['uniform_type']} - {$data['size']}");
                 
                 $_SESSION['successMessage'] = 'Uniform updated successfully!';
                 $this->redirect('/hr/uniforms');

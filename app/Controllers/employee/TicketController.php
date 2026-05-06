@@ -67,32 +67,39 @@ class EmployeeTicketController extends AuthController
             return;
         }
 
-        $model = new EmployeeTicket();
-
-        // normalize priority
-        $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
-        if (!in_array($priority, ['Low','Medium','High'], true)) $priority = 'Low';
-
-        $ticketId = $model->createTicket([
-            'employee_id'     => (int)$employeeId,
-            'inventory_id'    => (int)($_POST['inventory_id'] ?? 0),
-            'branch_id'       => (int)($_POST['branch_id'] ?? 0),
-            'department'      => trim($_POST['department'] ?? ''),
-            'category'        => trim($_POST['category'] ?? ''),
-            'concern_details' => trim($_POST['concern_details'] ?? ''),
-            'priority'        => $priority,
-            'created_by'      => $accountId
-        ]);
-
-        /* ✅ GET EMPLOYEE DEPARTMENT SAFELY */
+        /* ✅ GET EMPLOYEE DETAILS FIRST */
         $employee = $employeeModel->getEmployeeById($employeeId);
         $department = $employee['department'] ?? null;
+        $employeeBranchId = $employee['branch_id'] ?? 0;
 
         if (!$department) {
             $_SESSION['flash_error'] = "Unable to determine department.";
             $this->redirect('/employee/assets');
             return;
         }
+
+        $model = new EmployeeTicket();
+
+        // normalize priority
+        $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
+        if (!in_array($priority, ['Low','Medium','High'], true)) $priority = 'Low';
+
+        // Use employee's branch if not provided in POST
+        $branchId = (int)($_POST['branch_id'] ?? 0);
+        if ($branchId === 0) {
+            $branchId = $employeeBranchId;
+        }
+
+        $ticketId = $model->createTicket([
+            'employee_id'     => (int)$employeeId,
+            'inventory_id'    => (int)($_POST['inventory_id'] ?? 0),
+            'branch_id'       => $branchId,
+            'department'      => trim($_POST['department'] ?? $department),
+            'category'        => trim($_POST['category'] ?? ''),
+            'concern_details' => trim($_POST['concern_details'] ?? ''),
+            'priority'        => $priority,
+            'created_by'      => $accountId
+        ]);
 
         require_once __DIR__ . '/../../Models/NotificationModel.php';
 

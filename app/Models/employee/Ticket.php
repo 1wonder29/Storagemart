@@ -56,7 +56,7 @@ class EmployeeTicket extends BaseModel
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             ':employee_id'     => $data['employee_id'],
-            ':inventory_id'    => $data['inventory_id'],
+            ':inventory_id'    => (int)$data['inventory_id'] > 0 ? (int)$data['inventory_id'] : null,
             ':branch_id'       => $data['branch_id'],
             ':department'      => $data['department'],
             ':category'        => $data['category'],

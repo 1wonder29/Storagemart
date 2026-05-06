@@ -51,46 +51,15 @@ $uniform = $uniform ?? null;
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="color" class="form-label">Color <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="color" name="color" 
-                                       value="<?= $uniform ? htmlspecialchars($uniform['color']) : '' ?>" 
-                                       placeholder="e.g., Blue, Red, White" required>
-                            </div>
-                            <div class="col-md-6">
                                 <label for="quantity_in_stock" class="form-label">Quantity in Stock <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="quantity_in_stock" name="quantity_in_stock" 
                                        value="<?= $uniform ? (int)$uniform['quantity_in_stock'] : 0 ?>" min="0" required>
                             </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="cost_per_unit" class="form-label">Cost per Unit ($)</label>
-                                <input type="number" class="form-control" id="cost_per_unit" name="cost_per_unit" 
-                                       value="<?= $uniform && $uniform['cost_per_unit'] ? (float)$uniform['cost_per_unit'] : '' ?>" 
-                                       min="0" step="0.01" placeholder="10.50">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="supplier" class="form-label">Supplier</label>
-                                <input type="text" class="form-control" id="supplier" name="supplier" 
-                                       value="<?= $uniform ? htmlspecialchars($uniform['supplier'] ?? '') : '' ?>" 
-                                       placeholder="Supplier name">
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="reorder_level" class="form-label">Reorder Level</label>
                                 <input type="number" class="form-control" id="reorder_level" name="reorder_level" 
                                        value="<?= $uniform ? (int)$uniform['reorder_level'] : 5 ?>" min="0">
                                 <small class="form-text text-muted">Alert when stock falls below this level</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="status" class="form-label">Status</label>
-                                <select class="form-control" id="status" name="status">
-                                    <option value="ACTIVE" <?= ($uniform && $uniform['status'] === 'ACTIVE') || !$uniform ? 'selected' : '' ?>>ACTIVE</option>
-                                    <option value="DISCONTINUED" <?= $uniform && $uniform['status'] === 'DISCONTINUED' ? 'selected' : '' ?>>DISCONTINUED</option>
-                                </select>
                             </div>
                         </div>
 

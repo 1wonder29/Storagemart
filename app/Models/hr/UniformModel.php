@@ -83,12 +83,12 @@ class UniformModel extends HRModel {
 
     /**
      * Add new uniform record
-     * @param array $data - uniform_type, size, color, quantity_in_stock, cost_per_unit, supplier, reorder_level, status, createdby
+     * @param array $data - uniform_type, size, quantity_in_stock, reorder_level, createdby
      * @return int|false - uniform_id on success, false on failure
      */
     public function addUniform(array $data): int|false {
         try {
-            $required = ['uniform_type', 'size', 'color', 'quantity_in_stock', 'createdby'];
+            $required = ['uniform_type', 'size', 'quantity_in_stock', 'createdby'];
             foreach ($required as $field) {
                 if (!isset($data[$field]) || $data[$field] === '') {
                     error_log("UniformModel::addUniform missing field: $field");
@@ -97,19 +97,15 @@ class UniformModel extends HRModel {
             }
 
             $sql = "INSERT INTO {$this->tbluniform_inventory} 
-                    (uniform_type, size, color, quantity_in_stock, cost_per_unit, supplier, reorder_level, status, createdby, datecreated)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                    (uniform_type, size, quantity_in_stock, reorder_level, createdby, datecreated)
+                    VALUES (?, ?, ?, ?, ?, NOW())";
             
             $stmt = $this->pdo->prepare($sql);
             $success = $stmt->execute([
                 $data['uniform_type'],
                 $data['size'],
-                $data['color'],
                 (int) $data['quantity_in_stock'],
-                $data['cost_per_unit'] ?? null,
-                $data['supplier'] ?? null,
                 (int) ($data['reorder_level'] ?? 5),
-                $data['status'] ?? 'ACTIVE',
                 $data['createdby']
             ]);
 
@@ -135,7 +131,7 @@ class UniformModel extends HRModel {
             $updates = [];
             $params = [];
 
-            $allowedFields = ['uniform_type', 'size', 'color', 'quantity_in_stock', 'cost_per_unit', 'supplier', 'reorder_level', 'status'];
+            $allowedFields = ['uniform_type', 'size', 'quantity_in_stock', 'reorder_level'];
             
             foreach ($allowedFields as $field) {
                 if (isset($data[$field])) {

@@ -54,11 +54,8 @@ $base = rtrim(BASE_URL, '/');
                                     <tr>
                                         <th>Type</th>
                                         <th>Size</th>
-                                        <th>Color</th>
                                         <th>In Stock</th>
                                         <th>Reorder Level</th>
-                                        <th>Cost/Unit</th>
-                                        <th>Status</th>
                                         <th>Stock Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -68,11 +65,8 @@ $base = rtrim(BASE_URL, '/');
                                         <tr>
                                             <td><?= htmlspecialchars($uniform['uniform_type']) ?></td>
                                             <td><?= htmlspecialchars($uniform['size']) ?></td>
-                                            <td><?= htmlspecialchars($uniform['color']) ?></td>
                                             <td><?= (int)$uniform['quantity_in_stock'] ?></td>
                                             <td><?= (int)$uniform['reorder_level'] ?></td>
-                                            <td><?= $uniform['cost_per_unit'] ? '$' . number_format($uniform['cost_per_unit'], 2) : '-' ?></td>
-                                            <td><span class="badge bg-<?= ($uniform['status'] === 'ACTIVE') ? 'success' : 'secondary' ?>"><?= htmlspecialchars($uniform['status']) ?></span></td>
                                             <td><span class="badge bg-<?= ($uniform['stock_status'] === 'NEEDS_REORDER') ? 'warning' : 'info' ?>"><?= htmlspecialchars($uniform['stock_status']) ?></span></td>
                                             <td>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/edit/<?= $uniform['uniform_id'] ?>" 

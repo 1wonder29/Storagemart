@@ -215,7 +215,8 @@ class TicketController extends AuthController
 
         $ticketModel = new ItTicketModel();
 
-        $tickets = $ticketModel->getInProgressTickets();
+        // Get tickets assigned to this IT staff member
+        $tickets = $ticketModel->getInProgressTickets($employeeId);
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
         $loggedFirstname = $ctx['loggedFirstname'];
