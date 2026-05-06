@@ -59,7 +59,7 @@ $base = rtrim(BASE_URL, '/');
                                     </div>
                                     <div class="col-md-6">
                                         <label for="fullname" class="form-label">Fullname</label>
-                                        <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" value="<?= htmlspecialchars($inventory['fullname'] ?? '') ?>" readonly>
+                                        <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" value="<?= htmlspecialchars(!empty($inventory) ? ($inventory['fullname'] ?? ($inventory['lastname'] . ', ' . $inventory['firstname'] . ' ' . ($inventory['middlename'] ?? ''))) : '') ?>" readonly>
                                     </div>
                                     </div>
                                     <div class ="row mb-5">

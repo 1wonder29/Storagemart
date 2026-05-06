@@ -52,11 +52,11 @@ $base = rtrim(BASE_URL, '/');
                                 <div class="row mb-5">
                                     <div class="col-md-6">
                                         <label for="employee_id" class="form-label">Employee ID</label>
-                                        <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Employee ID" value="<?= htmlspecialchars($inventory['employee_id'] ?? $loggedFirstname ?? '') ?>" readonly>
+                                        <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Employee ID" value="<?= htmlspecialchars($inventory['employee_id'] ?? '') ?>" readonly>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="fullname" class="form-label">Fullname</label>
-                                        <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" value="<?= htmlspecialchars($inventory['fullname'] ?? $loggedFirstname ?? '')  ?>" readonly>
+                                        <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" value="<?= htmlspecialchars(!empty($inventory) ? ($inventory['fullname'] ?? ($inventory['lastname'] . ', ' . $inventory['firstname'] . ' ' . ($inventory['middlename'] ?? ''))) : '') ?>" readonly>
                                     </div>
                                     </div>
                                     <div class ="row mb-5">
