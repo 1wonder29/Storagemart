@@ -18,8 +18,29 @@ class TicketController extends AuthController
 
         $inventory_id = (int)($_GET['inventory_id'] ?? 0);
 
+        $itModel = new IT();
         $model = new ItTicketModel();
         $inventory = $model->getInventoryDetailsByInventoryId($inventory_id);
+
+        // If no inventory selected, populate with logged-in user's employee details
+        if (empty($inventory) && !empty($_SESSION['account_id'])) {
+            $employeeId = $itModel->getEmployeeIdByAccountId((int)$_SESSION['account_id']);
+            if ($employeeId) {
+                $empData = $itModel->getEmployeeById($employeeId);
+                if ($empData) {
+                    $inventory = [
+                        'employee_id' => $empData['employee_id'] ?? '',
+                        'fullname' => ($empData['lastname'] ?? '') . ', ' . ($empData['firstname'] ?? '') . ' ' . ($empData['middlename'] ?? ''),
+                        'department' => $empData['department'] ?? '',
+                        'branch_id' => $empData['branch_id'] ?? '',
+                        'branchName' => '',
+                        'inventory_id' => '',
+                        'assetNumber' => '',
+                        'groupName' => ''
+                    ];
+                }
+            }
+        }
 
         // Prepare base + loggeduser
         $ctx = $this->getLoggedUserContext();

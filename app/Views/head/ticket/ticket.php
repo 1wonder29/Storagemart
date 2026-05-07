@@ -37,8 +37,11 @@ $base = rtrim(BASE_URL, '/');
 
             <div class="container-fluid">
                 <div class="card shadow mb-4">
-                    <div class="card-header py-3">
+                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">List of Tickets</h6>
+                        <a href="<?= htmlspecialchars($base) ?>/head/tickets/create" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Add Ticket
+                        </a>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">

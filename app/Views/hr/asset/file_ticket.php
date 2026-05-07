@@ -11,7 +11,7 @@ $base = rtrim(BASE_URL, '/');
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Storage Mart | File Ticket Employee</title>
+    <title>storagemart | File Ticket HR</title>
 
     <!-- Custom fonts for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -31,16 +31,12 @@ $base = rtrim(BASE_URL, '/');
     <!-- Page Wrapper -->
     <div id="wrapper">
         <?php 
-        $activePage = 'assets';
-        require_once __DIR__ . '/../../partials/it/sidebar_topbar.php';?>
+        $activePage = 'tickets';
+        require_once __DIR__ . '/../../partials/hr/sidebar_topbar.php';?>
                 <!-- End of Topbar -->
 
                 <!-- Begin Page Content -->
                 <div class="container-fluid">
-
-                    <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800"></h1>
-                    <p class="mb-4">"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."</p>
 
                     <!-- DataTales Example -->
                     <div class="card shadow mb-4">
@@ -49,19 +45,19 @@ $base = rtrim(BASE_URL, '/');
                         </div>
                         <div class="card-body">
                             <div class="container mt-4">
-                                <form action="<?= htmlspecialchars($base) ?>/it/assets/file_ticket" method="POST">
+                                <form action="<?= htmlspecialchars($base) ?>/hr/assets/file_ticket" method="POST">
                                     <input type="hidden" name="branch_id" value="<?= htmlspecialchars($inventory['branch_id'] ?? '') ?>">
-                                    <input type="hidden" name="inventory_id" value="<?= htmlspecialchars($inventory['inventory_id'] ?? '') ?>">
+                                    <input type="hidden" name="inventory_id" value="<?= htmlspecialchars($inventory['inventory_id'] ?? '0') ?>">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
                             <h1>Employee Details</h1>
                                 <div class="row mb-5">
                                     <div class="col-md-6">
                                         <label for="employee_id" class="form-label">Employee ID</label>
-                                        <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Employee ID" value="<?= htmlspecialchars($inventory['employee_id'] ?? '') ?>" readonly>
+                                        <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Employee ID" value="<?= htmlspecialchars($inventory['employee_id'] ?? $loggedFirstname ?? '') ?>" readonly>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="fullname" class="form-label">Fullname</label>
-                                        <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" value="<?= htmlspecialchars($inventory['fullname'] ?? '') ?>" readonly>
+                                        <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" value="<?= htmlspecialchars($inventory['fullname'] ?? $loggedFirstname ?? '') ?>" readonly>
                                     </div>
                                     </div>
                                     <div class ="row mb-5">
@@ -74,6 +70,7 @@ $base = rtrim(BASE_URL, '/');
                                         <input type="text" class="form-control" id="branchName" name="branchName" placeholder="Branch" value="<?= htmlspecialchars($inventory['branchName'] ?? '') ?>" readonly>
                                     </div>
                                     </div>
+                                <?php if (!empty($inventory['inventory_id'])): ?>
                                 <hr></hr>
                                 <h1>Asset Details</h1>
                                 <div class="row mb-5">
@@ -86,6 +83,7 @@ $base = rtrim(BASE_URL, '/');
                                         <input type="text" class="form-control" id="groupName" name="groupName" placeholder="Model" value="<?= htmlspecialchars($inventory['groupName'] ?? '') ?>"  readonly>
                                     </div>
                                     </div>
+                                <?php endif; ?>
                                 <h1>Ticket Concerns</h1>
                                     <div class ="row mb-5">
                                             <div class ="col-md-6">
@@ -117,7 +115,7 @@ $base = rtrim(BASE_URL, '/');
                                     </div>
 
                                     <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
-                                    <a href="<?= htmlspecialchars($base) ?>/it/assets" class="btn btn-danger">Cancel</a>
+                                    <a href="<?= htmlspecialchars($base) ?>/hr/tickets" class="btn btn-danger">Cancel</a>
                                     </form>
                                 </div>
 
@@ -152,24 +150,6 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom scripts for all pages-->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-<script>
-document.getElementById("employee_id").addEventListener("change", function() {
-    var selectedOption = this.options[this.selectedIndex];
-    if (selectedOption.value !== "") {
-        document.getElementById("lastname").value = selectedOption.getAttribute("data-lastname");
-        document.getElementById("firstname").value = selectedOption.getAttribute("data-firstname");
-        document.getElementById("middlename").value = selectedOption.getAttribute("data-middlename");
-        document.getElementById("branch").value = selectedOption.getAttribute("data-branch");
-        document.getElementById("department").value = selectedOption.getAttribute("data-department");
-    } else {
-        document.getElementById("lastname").value = "";
-        document.getElementById("firstname").value = "";
-        document.getElementById("middlename").value = "";
-        document.getElementById("branch").value = "";
-        document.getElementById("department").value = "";
-    }
-});
-</script>
 
 </body>
 

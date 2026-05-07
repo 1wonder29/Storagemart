@@ -29,6 +29,16 @@
       console.error("DataTable init error:", err);
     }
 
+    // Detect which module we're in to construct the correct fetch URL
+    let fetchUrl = base + "/employee/tickets/history/fetch"; // default
+    if (window.location.pathname.includes("/it/")) {
+      fetchUrl = base + "/it/tickets/history/fetch";
+    } else if (window.location.pathname.includes("/head/")) {
+      fetchUrl = base + "/head/tickets/history/fetch";
+    } else if (window.location.pathname.includes("/hr/")) {
+      fetchUrl = base + "/hr/tickets/history/fetch";
+    }
+
     // Attach click handler for "View" buttons (delegated in case rows are replaced)
     $(document).on("click", ".viewBtn", function () {
       const id = $(this).data("ticketid");
@@ -42,7 +52,7 @@
       $("#ticketHistoryTable tbody").empty();
 
       // fetch history JSON (expects JSON array)
-      $.getJSON(base + "/employee/tickets/history/fetch", { ticket_id: id })
+      $.getJSON(fetchUrl, { ticket_id: id })
         .done(function (data) {
           if (Array.isArray(data) && data.length > 0) {
             data.forEach((row) => {

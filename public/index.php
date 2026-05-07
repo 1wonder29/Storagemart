@@ -310,6 +310,8 @@ if (strpos($uri, '/head') === 0) {
         $headTicket->index();
     } elseif ($sub === 'tickets/create') {
         $headTicket->create();
+    } elseif ($sub === 'tickets/history/fetch') {
+        $headTicket->fetchHistory();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $headTicket->rate();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -327,9 +329,11 @@ if (strpos($uri, '/head') === 0) {
 if (strpos($uri, '/hr') === 0) {
     require_once __DIR__ . '/../app/Controllers/hr/HrController.php';
     require_once __DIR__ . '/../app/Controllers/hr/UniformController.php';
+    require_once __DIR__ . '/../app/Controllers/hr/HrTicketController.php';
 
     $hr = new HrController();
     $uniform = new UniformController();
+    $ticket = new HrTicketController();
 
     $sub = trim(substr($uri, strlen('/hr')), '/');
 
@@ -345,6 +349,16 @@ if (strpos($uri, '/hr') === 0) {
         $hr->downloadAccountabilityForm($employeeId);
     } elseif (strpos($sub, 'employees/search') === 0) {
         $hr->searchEmployees();
+    } elseif ($sub === 'tickets') {
+        $ticket->index();
+    } elseif ($sub === 'tickets/create') {
+        $ticket->create();
+    } elseif ($sub === 'tickets/history/fetch') {
+        $ticket->fetchHistory();
+    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $ticket->create();
+    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->store();
     } elseif ($sub === 'uniforms') {
         $uniform->list();
     } elseif ($sub === 'uniforms/add') {
