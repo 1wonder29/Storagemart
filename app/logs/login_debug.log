@@ -3941,3 +3941,15 @@
 [2026-05-07 14:37:59] Stored password appears hashed; using password_verify
 [2026-05-07 14:37:59] password_verify succeeded
 [2026-05-07 14:37:59] Login successful for Dan; usertype=HEAD
+[2026-05-07 15:06:00] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-07 15:06:00] Attempt login for username='admin'
+[2026-05-07 15:06:00] findByUsername returned: FOUND
+[2026-05-07 15:06:00] Stored password appears plain; performing direct compare (legacy)
+[2026-05-07 15:06:00] Plaintext compare succeeded
+[2026-05-07 15:06:00] Login successful for admin; usertype=ADMIN
+[2026-05-07 15:06:33] Entered login() method. METHOD=POST POST=["txtUsername","txtPassword","btnLogin"]
+[2026-05-07 15:06:33] Attempt login for username='smiran.employee'
+[2026-05-07 15:06:33] findByUsername returned: FOUND
+[2026-05-07 15:06:33] Stored password appears hashed; using password_verify
+[2026-05-07 15:06:33] password_verify succeeded
+[2026-05-07 15:06:33] Login successful for smiran.employee; usertype=HR
