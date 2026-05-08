@@ -227,5 +227,60 @@ class EmployeeTicket extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function getAllTickets(): array
+    {
+        $sql = "
+            SELECT 
+                t.ticket_id,
+                t.ticket_number,
+                t.concern_details,
+                t.category,
+                t.priority,
+                t.status,
+                t.date_filed,
+                b.branchName,
+                CONCAT(e.lastname, ', ', e.firstname) AS employee_name
+            FROM {$this->tbltickets} t
+            INNER JOIN {$this->tblemployee} e 
+                ON t.employee_id = e.employee_id
+            LEFT JOIN {$this->tblbranch} b
+                ON e.branch_id = b.branch_id
+            ORDER BY t.date_filed DESC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function getTicketsByCreatedBy(int $createdByAccountId): array
+    {
+        $sql = "
+            SELECT 
+                t.ticket_id,
+                t.ticket_number,
+                t.concern_details,
+                t.category,
+                t.priority,
+                t.status,
+                t.date_filed,
+                b.branchName,
+                CONCAT(e.lastname, ', ', e.firstname) AS employee_name
+            FROM {$this->tbltickets} t
+            INNER JOIN {$this->tblemployee} e 
+                ON t.employee_id = e.employee_id
+            LEFT JOIN {$this->tblbranch} b
+                ON e.branch_id = b.branch_id
+            WHERE t.created_by = ?
+            ORDER BY t.date_filed DESC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$createdByAccountId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
 
 }

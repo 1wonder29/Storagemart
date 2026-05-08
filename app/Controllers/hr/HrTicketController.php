@@ -26,17 +26,9 @@ class HrTicketController extends AuthController
             exit('Unauthorized');
         }
 
-        $employee = $employeeModel->getEmployeeById((int)$user['employee_id']);
-        $department = $employee['department'] ?? null;
-
-        if (!$department) {
-            $_SESSION['flash_error'] = 'Department not found.';
-            $this->redirect('/hr/dashboard');
-            return;
-        }
-
+        // Get only tickets created by this HR account
         $ticketModel = new EmployeeTicket();
-        $tickets = $ticketModel->fetchTicketsByDepartment($department);
+        $tickets = $ticketModel->getTicketsByCreatedBy((int)$_SESSION['account_id']);
 
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
@@ -218,18 +210,31 @@ class HrTicketController extends AuthController
 
     public function fetchHistory()
     {
+        header('Content-Type: application/json');
+        
         if (!isset($_GET['ticket_id'])) {
-            echo json_encode([]);
+            echo json_encode(['success' => false, 'data' => []]);
             return;
         }
 
-        $ticketId = (int)$_GET['ticket_id'];
+        try {
+            $ticketId = (int)$_GET['ticket_id'];
 
-        $model = new EmployeeTicket();
-        $history = $model->getTicketHistory($ticketId);
+            $model = new EmployeeTicket();
+            $history = $model->getTicketHistory($ticketId);
 
-        header('Content-Type: application/json');
-        echo json_encode($history);
+            echo json_encode([
+                'success' => true,
+                'data' => $history ?? []
+            ]);
+        } catch (\Throwable $e) {
+            error_log('HrTicketController::fetchHistory error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'data' => []
+            ]);
+        }
     }
 }
 ?>

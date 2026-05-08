@@ -310,8 +310,6 @@ if (strpos($uri, '/head') === 0) {
         $headTicket->index();
     } elseif ($sub === 'tickets/create') {
         $headTicket->create();
-    } elseif ($sub === 'tickets/history/fetch') {
-        $headTicket->fetchHistory();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $headTicket->rate();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -333,7 +331,7 @@ if (strpos($uri, '/hr') === 0) {
 
     $hr = new HrController();
     $uniform = new UniformController();
-    $ticket = new HrTicketController();
+    $hrTicket = new HrTicketController();
 
     $sub = trim(substr($uri, strlen('/hr')), '/');
 
@@ -349,16 +347,6 @@ if (strpos($uri, '/hr') === 0) {
         $hr->downloadAccountabilityForm($employeeId);
     } elseif (strpos($sub, 'employees/search') === 0) {
         $hr->searchEmployees();
-    } elseif ($sub === 'tickets') {
-        $ticket->index();
-    } elseif ($sub === 'tickets/create') {
-        $ticket->create();
-    } elseif ($sub === 'tickets/history/fetch') {
-        $ticket->fetchHistory();
-    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-        $ticket->create();
-    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $ticket->store();
     } elseif ($sub === 'uniforms') {
         $uniform->list();
     } elseif ($sub === 'uniforms/add') {
@@ -393,6 +381,15 @@ if (strpos($uri, '/hr') === 0) {
         $uniform->getUniformsByType();
     } elseif ($sub === 'uniforms/reorder-alerts') {
         $uniform->getReorderAlerts();
+    } elseif ($sub === 'tickets' || $sub === 'tickets/index') {
+        $hrTicket->index();
+    } elseif ($sub === 'tickets/create') {
+        $hrTicket->create();
+    } elseif ($sub === 'tickets/store') {
+        $hrTicket->store();
+    } elseif (strpos($sub, 'tickets/fetch-history/') === 0) {
+        $_GET['ticket_id'] = (int) substr($sub, strlen('tickets/fetch-history/'));
+        $hrTicket->fetchHistory();
     } else {
         http_response_code(404);
         echo "HR page not found.";
