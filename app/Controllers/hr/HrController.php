@@ -52,6 +52,8 @@ class HrController extends AuthController {
             $totalEmployees = $this->employeeModel->getTotalEmployeeCount();
             $uniformStats = $this->uniformModel->getAssignmentStats();
             $uniformsNeedingReorder = count($this->uniformModel->getUniformsNeedingReorder());
+            $employeesWithUniforms = $this->uniformModel->getEmployeesWithUniforms(10);
+            $totalEmployeesWithUniforms = $this->uniformModel->getTotalEmployeesWithUniforms();
             $recentLogs = $this->hrModel->getRecentLogs(7);
             $notifications = $this->notificationModel->getLatest($accountId, 10);
 
@@ -71,12 +73,60 @@ class HrController extends AuthController {
 
         try {
             $page = max(1, (int) ($_GET['page'] ?? 1));
-            $limit = 20;
+            $allowedLimits = [10, 20, 50, 100];
+            $rawLimit = strtolower(trim((string) ($_GET['limit'] ?? '20')));
+            $showAll = $rawLimit === 'all';
+
+            $limit = (int) $rawLimit;
+            if (!$showAll && !in_array($limit, $allowedLimits, true)) {
+                $limit = 20;
+            }
             $offset = ($page - 1) * $limit;
 
-            $employees = $this->employeeModel->getAllEmployees($offset, $limit);
-            $totalCount = $this->employeeModel->getTotalEmployeeCount();
-            $totalPages = ceil($totalCount / $limit);
+            $allowedSorts = [
+                'lastname_asc',
+                'lastname_desc',
+                'firstname_asc',
+                'firstname_desc',
+                'department_asc',
+                'position_asc'
+            ];
+
+            $sort = trim($_GET['sort'] ?? 'lastname_asc');
+            if (!in_array($sort, $allowedSorts, true)) {
+                $sort = 'lastname_asc';
+            }
+
+            $startsWith = strtoupper(trim($_GET['starts_with'] ?? ''));
+            if (strlen($startsWith) !== 1 || !ctype_alpha($startsWith)) {
+                $startsWith = '';
+            }
+
+            $status = strtoupper(trim($_GET['status'] ?? ''));
+            if (!in_array($status, ['ACTIVE', 'INACTIVE'], true)) {
+                $status = '';
+            }
+
+            $filters = [
+                'department' => trim($_GET['department'] ?? ''),
+                'branch' => trim($_GET['branch'] ?? ''),
+                'status' => $status,
+                'starts_with' => $startsWith,
+                'sort' => $sort
+            ];
+
+            $totalCount = $this->employeeModel->getFilteredEmployeeCount($filters);
+
+            if ($showAll) {
+                $limit = max(1, $totalCount);
+                $page = 1;
+                $offset = 0;
+            }
+
+            $employees = $this->employeeModel->getFilteredEmployees($offset, $limit, $filters);
+            $totalPages = $showAll ? 1 : max(1, (int) ceil($totalCount / $limit));
+            $departments = $this->employeeModel->getDistinctDepartments();
+            $branches = $this->employeeModel->getDistinctBranches();
 
             require __DIR__ . '/../../Views/hr/employees/list.php';
         } catch (\Throwable $e) {

@@ -525,6 +525,27 @@ class Asset extends BaseModel {
             return false;
         }
     }
-
     
+    public function deleteItem(int $inventoryId): bool
+    {
+        try {
+            $this->pdo->beginTransaction();
+
+            // Remove any assignment records related to this inventory first
+            $stmt = $this->pdo->prepare("DELETE FROM {$this->tblassign} WHERE inventory_id = :inventory_id");
+            $stmt->execute([':inventory_id' => $inventoryId]);
+
+            // Then remove the inventory row itself
+            $stmt2 = $this->pdo->prepare("DELETE FROM {$this->tblassets} WHERE inventory_id = :inventory_id");
+            $success = $stmt2->execute([':inventory_id' => $inventoryId]);
+
+            $this->pdo->commit();
+            return (bool) $success;
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            return false;
+        }
+    }
 }

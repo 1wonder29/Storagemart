@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../Models/hr/HRModel.php';
 require_once __DIR__ . '/../../Models/hr/UniformModel.php';
 require_once __DIR__ . '/../../Models/hr/EmployeeModel.php';
 require_once __DIR__ . '/../../Models/NotificationModel.php';
+require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 
 /**
  * UniformController - Manages uniform inventory
@@ -106,8 +107,15 @@ class UniformController extends AuthController {
             $uniformId = $this->uniformModel->addUniform($data);
 
             if ($uniformId) {
-                $this->hrModel->logAction('ADDED_UNIFORM', null, $uniformId, $_SESSION['account_id'], 
-                    "Added uniform: {$data['uniform_type']} - {$data['size']} - {$data['color']}");
+                // Log to audit trail via ActivityLogger
+                ActivityLogger::create('HR - Uniforms', (string)$uniformId, 
+                    "New uniform added: {$data['uniform_type']} - Size {$data['size']}", 
+                    $_SESSION['username'] ?? 'system', [
+                        'uniform_type' => $data['uniform_type'],
+                        'size' => $data['size'],
+                        'quantity_in_stock' => $data['quantity_in_stock'],
+                        'reorder_level' => $data['reorder_level']
+                    ]);
                 
                 $_SESSION['successMessage'] = 'Uniform added successfully!';
                 $this->redirect('/hr/uniforms');
@@ -182,8 +190,15 @@ class UniformController extends AuthController {
             }
 
             if ($this->uniformModel->updateUniform($uniformId, $data)) {
-                $this->hrModel->logAction('EDITED_UNIFORM', null, $uniformId, $_SESSION['account_id'], 
-                    "Updated uniform: {$data['uniform_type']} - {$data['size']}");
+                // Log to audit trail via ActivityLogger
+                ActivityLogger::update('HR - Uniforms', (string)$uniformId, 
+                    "Uniform updated: {$data['uniform_type']} - Size {$data['size']}", 
+                    $_SESSION['username'] ?? 'system', [
+                        'uniform_type' => $data['uniform_type'],
+                        'size' => $data['size'],
+                        'quantity_in_stock' => $data['quantity_in_stock'],
+                        'reorder_level' => $data['reorder_level']
+                    ]);
                 
                 $_SESSION['successMessage'] = 'Uniform updated successfully!';
                 $this->redirect('/hr/uniforms');
@@ -244,8 +259,16 @@ class UniformController extends AuthController {
             }
 
             if ($this->uniformModel->deleteUniform($uniformId)) {
-                $this->hrModel->logAction('DELETED_UNIFORM', null, $uniformId, $_SESSION['account_id'], 
-                    "Deleted uniform: {$uniform['uniform_type']} - {$uniform['size']} - {$uniform['color']}");
+                // Log to audit trail via ActivityLogger
+                ActivityLogger::delete('HR - Uniforms', (string)$uniformId, 
+                    "Uniform deleted: {$uniform['uniform_type']} - Size {$uniform['size']} - Color {$uniform['color']}", 
+                    $_SESSION['username'] ?? 'system', [
+                        'uniform_id' => $uniformId,
+                        'uniform_type' => $uniform['uniform_type'],
+                        'size' => $uniform['size'],
+                        'color' => $uniform['color'],
+                        'quantity_in_stock' => $uniform['quantity_in_stock']
+                    ]);
                 
                 $_SESSION['successMessage'] = 'Uniform deleted successfully!';
                 $this->redirect('/hr/uniforms');
@@ -382,7 +405,7 @@ class UniformController extends AuthController {
                 $this->redirect('/hr/uniforms/assign');
             }
 
-            // Verify uniform exists and has sufficient stock
+            // Verify primary uniform exists and has sufficient stock
             $uniform = $this->uniformModel->getUniformById($uniformId);
             if (!$uniform) {
                 $_SESSION['errorMessage'] = 'Uniform not found.';
@@ -394,7 +417,7 @@ class UniformController extends AuthController {
                 $this->redirect('/hr/uniforms/assign');
             }
 
-            // Assign uniform
+            // Assign primary uniform
             $result = $this->uniformModel->assignUniform(
                 $employeeId,
                 $uniformId,
@@ -413,17 +436,128 @@ class UniformController extends AuthController {
                     $_SESSION['account_id'],
                     "Assigned {$quantityIssued}x {$uniform['uniform_type']} to {$employee['firstname']} {$employee['lastname']}"
                 );
-
-                $_SESSION['successMessage'] = 'Uniform assigned successfully!';
             } else {
                 $_SESSION['errorMessage'] = 'Failed to assign uniform.';
+                $this->redirect('/hr/uniforms/assign');
             }
 
+            // Process additional specific uniforms
+            foreach ($_POST as $key => $value) {
+                if (preg_match('/^specific_uniform_id_(\d+)$/', $key, $matches)) {
+                    $specificUniformId = (int) $value;
+                    $specificQuantity = (int) ($_POST['specific_quantity_' . $matches[1]] ?? 1);
+
+                    if ($specificUniformId <= 0 || $specificQuantity <= 0) {
+                        continue;
+                    }
+
+                    // Verify uniform exists and has sufficient stock
+                    $specificUniform = $this->uniformModel->getUniformById($specificUniformId);
+                    if (!$specificUniform) {
+                        continue;
+                    }
+
+                    if ($specificUniform['quantity_in_stock'] < $specificQuantity) {
+                        $_SESSION['warningMessage'] = 'Warning: Insufficient stock for ' . $specificUniform['uniform_type'];
+                        continue;
+                    }
+
+                    // Assign additional uniform
+                    $specificResult = $this->uniformModel->assignUniform(
+                        $employeeId,
+                        $specificUniformId,
+                        $specificQuantity,
+                        $condition,
+                        $remarks,
+                        $_SESSION['account_id']
+                    );
+
+                    if ($specificResult) {
+                        // Log action
+                        $this->hrModel->logAction(
+                            'ASSIGNED_UNIFORM',
+                            $employeeId,
+                            $specificUniformId,
+                            $_SESSION['account_id'],
+                            "Assigned {$specificQuantity}x {$specificUniform['uniform_type']} to {$employee['firstname']} {$employee['lastname']}"
+                        );
+                    }
+                }
+            }
+
+            $_SESSION['successMessage'] = 'Uniforms assigned successfully!';
             $this->redirect('/hr/uniforms/assign');
         } catch (\Throwable $e) {
             error_log('UniformController::assign error: ' . $e->getMessage());
             $_SESSION['errorMessage'] = 'Error assigning uniform: ' . $e->getMessage();
             $this->redirect('/hr/uniforms/assign');
+        }
+    }
+
+    /**
+     * Show return confirmation for an assignment
+     */
+    public function returnConfirm($assignmentId) {
+        $this->requireHR();
+
+        try {
+            $assignmentId = (int) $assignmentId;
+            $assignment = $this->uniformModel->getAssignmentById($assignmentId);
+
+            if (!$assignment) {
+                $_SESSION['errorMessage'] = 'Assignment not found.';
+                $this->redirect('/hr/employees');
+            }
+
+            $notifications = $this->notificationModel->getLatest($_SESSION['account_id'] ?? 0, 10);
+            require __DIR__ . '/../../Views/hr/uniforms/return_confirm.php';
+        } catch (\Throwable $e) {
+            error_log('UniformController::returnConfirm error: ' . $e->getMessage());
+            $_SESSION['errorMessage'] = 'Error loading return confirmation: ' . $e->getMessage();
+            $this->redirect('/hr/employees');
+        }
+    }
+
+    /**
+     * Process return of an assignment (POST)
+     */
+    public function processReturn($assignmentId) {
+        $this->requireHR();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/hr/employees');
+        }
+
+        try {
+            $assignmentId = (int) $assignmentId;
+            $assignment = $this->uniformModel->getAssignmentById($assignmentId);
+
+            if (!$assignment) {
+                $_SESSION['errorMessage'] = 'Assignment not found.';
+                $this->redirect('/hr/employees');
+            }
+
+            $result = $this->uniformModel->returnAssignment($assignmentId, (int) ($_SESSION['account_id'] ?? 0));
+
+            if ($result) {
+                $this->hrModel->logAction('RETURNED_UNIFORM', $assignment['employee_id'] ?? null, $assignment['uniform_id'] ?? null, $_SESSION['account_id'] ?? 0,
+                    "Returned assignment: {$assignmentId}");
+                $_SESSION['successMessage'] = 'Uniform returned successfully.';
+            } else {
+                $_SESSION['errorMessage'] = 'Failed to process return.';
+            }
+
+            // Redirect back to employee detail if possible
+            $employeeId = (int) ($assignment['employee_id'] ?? 0);
+            if ($employeeId > 0) {
+                $this->redirect('/hr/employees/detail/' . $employeeId);
+            } else {
+                $this->redirect('/hr/uniforms');
+            }
+        } catch (\Throwable $e) {
+            error_log('UniformController::return error: ' . $e->getMessage());
+            $_SESSION['errorMessage'] = 'Error processing return: ' . $e->getMessage();
+            $this->redirect('/hr/employees');
         }
     }
 }

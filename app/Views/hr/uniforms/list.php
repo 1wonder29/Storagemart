@@ -28,7 +28,6 @@ $base = rtrim(BASE_URL, '/');
                     </a>
                 </div>
             </div>
-
             <h1 class="h3 mb-4 text-gray-800">Uniform Inventory</h1>
 
             <!-- Reorder Alert -->
@@ -57,6 +56,7 @@ $base = rtrim(BASE_URL, '/');
                                         <th>In Stock</th>
                                         <th>Reorder Level</th>
                                         <th>Stock Status</th>
+                                        <th>Return</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -68,6 +68,11 @@ $base = rtrim(BASE_URL, '/');
                                             <td><?= (int)$uniform['quantity_in_stock'] ?></td>
                                             <td><?= (int)$uniform['reorder_level'] ?></td>
                                             <td><span class="badge bg-<?= ($uniform['stock_status'] === 'NEEDS_REORDER') ? 'warning' : 'info' ?>"><?= htmlspecialchars($uniform['stock_status']) ?></span></td>
+                                            <td>
+                                                <span class="btn btn-sm btn-info" title="Active uniforms to return">
+                                                    <?= (int)($uniform['return_count'] ?? 0) ?>
+                                                </span>
+                                            </td>
                                             <td>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/edit/<?= $uniform['uniform_id'] ?>" 
                                                    class="btn btn-sm btn-primary">

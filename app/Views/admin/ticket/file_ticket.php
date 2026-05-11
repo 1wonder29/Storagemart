@@ -85,6 +85,14 @@ $base = rtrim(BASE_URL, '/');
                                     </div>
                                     </div>
                                 <h1>Ticket Details</h1>
+                                <div class="alert alert-info" role="alert">
+                                    <h6 class="alert-heading"><strong>Priority Levels Legend:</strong></h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Low:</strong> Non-urgent issues that can be resolved during regular maintenance.</li>
+                                        <li><strong>Medium:</strong> Issues that should be addressed within a reasonable timeframe.</li>
+                                        <li><strong>High:</strong> Urgent issues requiring immediate attention.</li>
+                                    </ul>
+                                </div>
                                     <div class="row mb-5">
                                         <div class="col-md-6">
                                             <label for="department" class="form-label">Assign to</label>

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../Models/admin/Account.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Models/admin/AuditTrail.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
+require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 
 class AdminController extends AuthController
 {
@@ -77,28 +78,21 @@ class AdminController extends AuthController
                     // Fetch account details before deletion for audit trail
                     $accountDetails = $accountModel->fetchAccountById($id);
                     
-                    $logger = new Logger();
                     $ok = $accountModel->deleteById($id);
 
                     if ($ok) {
-                        // Use enhanced audit logging with details
+                        // Log deletion via ActivityLogger
                         $username = $accountDetails['username'] ?? 'Unknown';
-                        $auditDetails = [
-                            'account_id' => $id,
-                            'username' => $username,
-                            'usertype' => $accountDetails['usertype'] ?? 'Unknown',
-                            'status' => $accountDetails['status'] ?? 'Unknown',
-                            'deleted_at' => date('Y-m-d H:i:s'),
-                            'deleted_by' => $_SESSION['username'] ?? 'Unknown'
-                        ];
-                        
-                        $logger->logDelete(
-                            "Account #{$id} ({$username}) deleted",
-                            "Account Management",
-                            (string)$id,
-                            $auditDetails,
-                            $_SESSION['username'] ?? 'Unknown'
-                        );
+                        ActivityLogger::delete('Admin - Accounts', (string)$id,
+                            "Account deleted: {$username} ({$accountDetails['usertype']})",
+                            $_SESSION['username'] ?? 'Unknown', [
+                                'account_id' => $id,
+                                'username' => $username,
+                                'usertype' => $accountDetails['usertype'] ?? 'Unknown',
+                                'status' => $accountDetails['status'] ?? 'Unknown',
+                                'deleted_at' => date('Y-m-d H:i:s'),
+                                'deleted_by' => $_SESSION['username'] ?? 'Unknown'
+                            ]);
                         
                         $_SESSION['flash'] = "Account #{$id} has been permanently deleted and logged in audit trail.";
                     } else {
@@ -191,8 +185,16 @@ class AdminController extends AuthController
                     throw new Exception("Failed updating records.");
                 }
 
-                $logger = new Logger($pdo);
-                $logger->log("Updated Account", "Employee Management", $dataEmp['employee_id'], $_SESSION['username']);
+                // Log update via ActivityLogger
+                ActivityLogger::update('Admin - Accounts', (string)$dataAcc['account_id'],
+                    "Account updated: {$dataAcc['username']} ({$dataAcc['usertype']})",
+                    $_SESSION['username'] ?? 'Unknown', [
+                        'username' => $dataAcc['username'],
+                        'usertype' => $dataAcc['usertype'],
+                        'status' => $dataAcc['status'],
+                        'email' => $dataEmp['email'],
+                        'department' => $dataEmp['department']
+                    ]);
 
                 if ($pdo instanceof PDO) $pdo->commit();
 
@@ -385,13 +387,17 @@ class AdminController extends AuthController
                 }
 
                 // log
-                $logger = new Logger($pdo);
-                $logger->log(
-                    'Create Account',
-                    'Employee Management',
-                    $newEmployeeId,
-                    $_SESSION['username'] ?? 'SYSTEM'
-                );
+                ActivityLogger::create('Admin - Accounts', (string)$newAccountId,
+                    "New account created: {$old['username']} ({$old['usertype']})",
+                    $_SESSION['username'] ?? 'Unknown', [
+                        'username' => $old['username'],
+                        'usertype' => $old['usertype'],
+                        'employee_id' => $newEmployeeId,
+                        'firstname' => $old['firstname'],
+                        'lastname' => $old['lastname'],
+                        'email' => $old['email'],
+                        'department' => $old['department']
+                    ]);
 
                 if ($pdo instanceof PDO) $pdo->commit();
 

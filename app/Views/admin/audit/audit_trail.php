@@ -381,6 +381,32 @@ $base = rtrim(BASE_URL, '/');
     <!-- Custom scripts for all pages-->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/storagemart.min.js"></script>
 
+    <!-- Audit Detail Modal -->
+    <div class="modal fade" id="auditDetailModal" tabindex="-1" role="dialog" aria-labelledby="auditDetailLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="auditDetailLabel">
+                        <i class="fas fa-history"></i> Detailed Audit Trail
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="auditDetailContent">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function viewDetails(recordId) {
             event.preventDefault();
@@ -390,26 +416,95 @@ $base = rtrim(BASE_URL, '/');
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.data.length > 0) {
-                        let html = '<table class="table table-sm"><thead><tr><th>Date</th><th>Time</th><th>Action</th><th>Module</th></tr></thead><tbody>';
+                        let html = `
+                            <div class="alert alert-info">
+                                <h6><strong>Record ID:</strong> ${escapeHtml(recordId)}</h6>
+                                <p class="mb-0"><strong>Total Activities:</strong> ${data.data.length}</p>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th width="12%">Date</th>
+                                            <th width="10%">Time</th>
+                                            <th width="25%">Action</th>
+                                            <th width="15%">Module</th>
+                                            <th width="15%">Performed By</th>
+                                            <th width="23%">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+                        
                         data.data.forEach(log => {
+                            const action = escapeHtml(log.action || '');
+                            const isDelete = action.includes('[DELETE]');
+                            const actionClass = isDelete ? 'text-danger font-weight-bold' : 'text-dark';
+                            
+                            // Try to parse metadata if it exists
+                            let details = '';
+                            try {
+                                if (log.metadata) {
+                                    const meta = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
+                                    if (meta) {
+                                        details = '<small>';
+                                        if (meta.before || meta.after) {
+                                            details += '<strong>Changes:</strong><br/>';
+                                            if (meta.before) details += '<em>Before:</em> ' + escapeHtml(JSON.stringify(meta.before, null, 2)) + '<br/>';
+                                            if (meta.after) details += '<em>After:</em> ' + escapeHtml(JSON.stringify(meta.after, null, 2)) + '<br/>';
+                                        } else {
+                                            details += escapeHtml(JSON.stringify(meta, null, 2));
+                                        }
+                                        details += '</small>';
+                                    }
+                                }
+                            } catch (e) {
+                                details = '<small class="text-muted">No additional details</small>';
+                            }
+                            
+                            if (!details) {
+                                details = '<small class="text-muted">No additional details</small>';
+                            }
+                            
                             html += `<tr>
-                                <td>${escapeHtml(log.datelog)}</td>
-                                <td>${escapeHtml(log.timelog)}</td>
-                                <td>${escapeHtml(log.action)}</td>
-                                <td>${escapeHtml(log.module)}</td>
+                                <td><strong>${escapeHtml(log.datelog || 'N/A')}</strong></td>
+                                <td class="text-muted small">${escapeHtml(log.timelog || 'N/A')}</td>
+                                <td class="${actionClass}">${action}</td>
+                                <td><span class="badge badge-info">${escapeHtml(log.module || 'N/A')}</span></td>
+                                <td><strong>${escapeHtml(log.performedby || 'System')}</strong></td>
+                                <td>${details}</td>
                             </tr>`;
                         });
-                        html += '</tbody></table>';
-                        alert('Audit Trail for Record ID: ' + recordId + '\n\nClick OK to see detailed history');
-                        console.log(html);
+                        
+                        html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                        
+                        document.getElementById('auditDetailContent').innerHTML = html;
+                        $('#auditDetailModal').modal('show');
                     } else {
-                        alert('No audit trail found for this record');
+                        document.getElementById('auditDetailContent').innerHTML = `
+                            <div class="alert alert-warning" role="alert">
+                                <i class="fas fa-info-circle"></i> No audit trail found for Record ID: ${escapeHtml(recordId)}
+                            </div>
+                        `;
+                        $('#auditDetailModal').modal('show');
                     }
                 })
-                .catch(error => alert('Error fetching details: ' + error));
+                .catch(error => {
+                    document.getElementById('auditDetailContent').innerHTML = `
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-circle"></i> Error fetching audit details: ${escapeHtml(error.message)}
+                        </div>
+                    `;
+                    $('#auditDetailModal').modal('show');
+                });
         }
 
         function escapeHtml(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;

@@ -113,10 +113,10 @@ $base = rtrim(BASE_URL, '/');
                                     <tr>
                                         <th>Type</th>
                                         <th>Size</th>
-                                        <th>Color</th>
                                         <th>Quantity</th>
                                         <th>Issued</th>
                                         <th>Condition</th>
+                                        <th>Return</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -124,10 +124,17 @@ $base = rtrim(BASE_URL, '/');
                                         <tr>
                                             <td><?= htmlspecialchars($unif['uniform_type']) ?></td>
                                             <td><?= htmlspecialchars($unif['size']) ?></td>
-                                            <td><?= htmlspecialchars($unif['color']) ?></td>
                                             <td><?= $unif['quantity_issued'] ?></td>
                                             <td><?= date('M d, Y', strtotime($unif['date_issued'])) ?></td>
                                             <td><?= htmlspecialchars($unif['condition_upon_issue'] ?? '-') ?></td>
+                                            <td>
+                                                <form method="post"
+                                                      action="<?= htmlspecialchars($base) ?>/hr/uniforms/return/<?= $unif['assignment_id'] ?>"
+                                                      onsubmit="return confirm('Return this uniform now?');"
+                                                      style="display:inline;">
+                                                    <button type="submit" class="btn btn-sm btn-primary">Return</button>
+                                                </form>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>

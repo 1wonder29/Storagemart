@@ -274,4 +274,171 @@ class EmployeeModel extends HRModel {
             return [];
         }
     }
+
+    /**
+     * Get employees with dynamic filters and sorting
+     * @param int $offset
+     * @param int $limit
+     * @param array $filters
+     * @return array
+     */
+    public function getFilteredEmployees(int $offset = 0, int $limit = 20, array $filters = []): array {
+        try {
+            [$whereSql, $params] = $this->buildEmployeeFilterConditions($filters);
+            $orderBy = $this->getEmployeeSortOrder($filters['sort'] ?? 'lastname_asc');
+
+            $sql = "SELECT 
+                        e.employee_id,
+                        e.account_id,
+                        e.firstname,
+                        e.lastname,
+                        e.middlename,
+                        e.position,
+                        e.department,
+                        e.email,
+                        b.branchName,
+                        a.usertype,
+                        a.status
+                    FROM {$this->tblemployee} e
+                    LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+                    LEFT JOIN {$this->tblaccounts} a ON e.account_id = a.account_id
+                    {$whereSql}
+                    ORDER BY {$orderBy}
+                    LIMIT ? OFFSET ?";
+
+            $stmt = $this->pdo->prepare($sql);
+            $index = 1;
+            foreach ($params as $value) {
+                $stmt->bindValue($index++, $value, PDO::PARAM_STR);
+            }
+            $stmt->bindValue($index++, $limit, PDO::PARAM_INT);
+            $stmt->bindValue($index, $offset, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log('EmployeeModel::getFilteredEmployees error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get total employee count based on current filters
+     * @param array $filters
+     * @return int
+     */
+    public function getFilteredEmployeeCount(array $filters = []): int {
+        try {
+            [$whereSql, $params] = $this->buildEmployeeFilterConditions($filters);
+
+            $sql = "SELECT COUNT(*)
+                    FROM {$this->tblemployee} e
+                    LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+                    LEFT JOIN {$this->tblaccounts} a ON e.account_id = a.account_id
+                    {$whereSql}";
+
+            $stmt = $this->pdo->prepare($sql);
+            $index = 1;
+            foreach ($params as $value) {
+                $stmt->bindValue($index++, $value, PDO::PARAM_STR);
+            }
+            $stmt->execute();
+
+            return (int) $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            error_log('EmployeeModel::getFilteredEmployeeCount error: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Get distinct departments for filter dropdown
+     * @return array
+     */
+    public function getDistinctDepartments(): array {
+        try {
+            $sql = "SELECT DISTINCT e.department
+                    FROM {$this->tblemployee} e
+                    WHERE e.department IS NOT NULL AND e.department <> ''
+                    ORDER BY e.department";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        } catch (\Throwable $e) {
+            error_log('EmployeeModel::getDistinctDepartments error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get distinct branches for filter dropdown
+     * @return array
+     */
+    public function getDistinctBranches(): array {
+        try {
+            $sql = "SELECT DISTINCT b.branchName
+                    FROM {$this->tblbranch} b
+                    INNER JOIN {$this->tblemployee} e ON e.branch_id = b.branch_id
+                    WHERE b.branchName IS NOT NULL AND b.branchName <> ''
+                    ORDER BY b.branchName";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        } catch (\Throwable $e) {
+            error_log('EmployeeModel::getDistinctBranches error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Build reusable filter SQL conditions for employee queries
+     * @param array $filters
+     * @return array
+     */
+    private function buildEmployeeFilterConditions(array $filters): array {
+        $conditions = [];
+        $params = [];
+
+        if (!empty($filters['department'])) {
+            $conditions[] = 'e.department = ?';
+            $params[] = $filters['department'];
+        }
+
+        if (!empty($filters['branch'])) {
+            $conditions[] = 'b.branchName = ?';
+            $params[] = $filters['branch'];
+        }
+
+        if (!empty($filters['status'])) {
+            $conditions[] = 'a.status = ?';
+            $params[] = $filters['status'];
+        }
+
+        if (!empty($filters['starts_with'])) {
+            $conditions[] = '(e.lastname LIKE ? OR e.firstname LIKE ?)';
+            $params[] = $filters['starts_with'] . '%';
+            $params[] = $filters['starts_with'] . '%';
+        }
+
+        $whereSql = empty($conditions) ? '' : 'WHERE ' . implode(' AND ', $conditions);
+        return [$whereSql, $params];
+    }
+
+    /**
+     * Convert sort key to safe ORDER BY clause
+     * @param string $sort
+     * @return string
+     */
+    private function getEmployeeSortOrder(string $sort): string {
+        $sortMap = [
+            'lastname_asc' => 'e.lastname ASC, e.firstname ASC',
+            'lastname_desc' => 'e.lastname DESC, e.firstname DESC',
+            'firstname_asc' => 'e.firstname ASC, e.lastname ASC',
+            'firstname_desc' => 'e.firstname DESC, e.lastname DESC',
+            'department_asc' => 'e.department ASC, e.lastname ASC',
+            'position_asc' => 'e.position ASC, e.lastname ASC'
+        ];
+
+        return $sortMap[$sort] ?? $sortMap['lastname_asc'];
+    }
 }

@@ -3,6 +3,7 @@
     require_once __DIR__ . '/../../Models/admin/Asset.php';
     require_once __DIR__ . '/../../Models/admin/Logger.php';
     require_once __DIR__ . '/../../Helpers/Session.php';
+    require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 
 class AssetController extends AuthController {
     // Asset Management Page
@@ -84,8 +85,14 @@ class AssetController extends AuthController {
             $id = $assetModel->addBranch($branchName, $branchCode, $branchAddress, $createdBy);
 
             if ($id) {
-                $logger = new Logger();
-                $logger->log('Add Branch', 'Branch Management',$branchName,($_SESSION['username'] ?? 'Unknown User'));
+                // Log branch creation via ActivityLogger
+                ActivityLogger::create('Admin - Assets', (string)$id,
+                    "New branch added: {$branchName} ({$branchCode})",
+                    $_SESSION['username'] ?? 'Unknown', [
+                        'branch_name' => $branchName,
+                        'branch_code' => $branchCode,
+                        'branch_address' => $branchAddress
+                    ]);
                 $_SESSION['flash_success'] = 'New branch added successfully.';
                 $this->redirect('/admin/assets');
                 exit;
@@ -143,8 +150,13 @@ class AssetController extends AuthController {
             $id = $assetModel->addCategory($categoryName, $ic_code, $createdBy);
 
             if ($id) {
-                $logger = new Logger();
-                $logger->log('Add Category', 'Category Management',$categoryName,($_SESSION['username'] ?? 'Unknown User'));
+                // Log category creation via ActivityLogger
+                ActivityLogger::create('Admin - Assets', (string)$id,
+                    "New asset category added: {$categoryName}",
+                    $_SESSION['username'] ?? 'Unknown', [
+                        'category_name' => $categoryName,
+                        'ic_code' => $ic_code
+                    ]);
                 $_SESSION['flash_success'] = 'New category added successfully.';
                 $this->redirect('/admin/assets');
                 exit;
@@ -212,8 +224,15 @@ class AssetController extends AuthController {
             $id = $assetModel->addGroup($groupName, $description, $category_id, $ic_code, $createdBy);
 
             if ($id) {
-                $logger = new Logger();
-                $logger->log('Add Group', 'Group Management', $groupName, ($_SESSION['username'] ?? 'Unknown User'));
+                // Log group creation via ActivityLogger
+                ActivityLogger::create('Admin - Assets', (string)$id,
+                    "New asset group added: {$groupName}",
+                    $_SESSION['username'] ?? 'Unknown', [
+                        'group_name' => $groupName,
+                        'description' => $description,
+                        'category_id' => $category_id,
+                        'ic_code' => $ic_code
+                    ]);
                 $_SESSION['flash_success'] = 'New group added successfully.';
                 $this->redirect('/admin/assets');
                 exit;
@@ -314,13 +333,14 @@ class AssetController extends AuthController {
             $ok = $assetModel->updateGroup($groupId, $groupName, $description);
 
             if ($ok) {
-                $logger = new Logger();
-                $logger->log(
-                    'Update Group',
-                    'Group Management',
-                    $groupName,
-                    $_SESSION['username'] ?? 'Unknown User'
-                );
+                // Log group update via ActivityLogger
+                ActivityLogger::update('Admin - Assets', (string)$groupId,
+                    "Asset group updated: {$groupName}",
+                    $_SESSION['username'] ?? 'Unknown', [
+                        'group_id' => $groupId,
+                        'group_name' => $groupName,
+                        'description' => $description
+                    ]);
 
                 $_SESSION['flash_success'] = 'Group updated successfully.';
                 $this->redirect('/admin/assets');
@@ -790,6 +810,56 @@ class AssetController extends AuthController {
         $notifications = $notificationData['notifications'];
         // expose $inventory and $assignments to the view
         require_once __DIR__ . '/../../Views/admin/asset/transfer_history.php';
+    }
+
+    // Delete an inventory item
+    public function deleteItem()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $_SESSION['flash_error'] = 'Unauthorized access.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $inventoryId = isset($_GET['inventory_id']) ? (int) $_GET['inventory_id'] : 0;
+        if ($inventoryId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid inventory id.';
+            $this->redirect('/admin/assets');
+            return;
+        }
+
+        $assetModel = new Asset();
+
+        // fetch inventory to obtain group_id for redirect and logging
+        $inventory = $assetModel->fetchInventoryById($inventoryId);
+        if (!$inventory) {
+            $_SESSION['flash_error'] = 'Item not found.';
+            $this->redirect('/admin/assets');
+            return;
+        }
+
+        try {
+            $ok = $assetModel->deleteItem($inventoryId);
+
+            if ($ok) {
+                $logger = new Logger();
+                $logger->log('Delete Item', 'Asset Inventory', "Inventory {$inventoryId}", $_SESSION['username'] ?? 'Unknown User');
+
+                $_SESSION['flash_success'] = 'Asset item deleted successfully.';
+                $this->redirect('/admin/assets/item?group_id=' . (int)($inventory['group_id'] ?? 0));
+                return;
+            }
+
+            throw new \Exception('Failed to delete item.');
+        } catch (\Throwable $e) {
+            $_SESSION['flash_error'] = 'Error deleting item: ' . $e->getMessage();
+            $this->redirect('/admin/assets/item?group_id=' . (int)($inventory['group_id'] ?? 0));
+            return;
+        }
     }
 
     // Delete Asset Group Here

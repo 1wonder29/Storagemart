@@ -103,6 +103,10 @@ $base = rtrim(BASE_URL, '/');
                                                             <i class="fas fa-history fa-sm fa-fw mr-2 text-black-400"></i>
                                                             Transfer History
                                                         </a>
+                                                        <a class="dropdown-item" href="<?= htmlspecialchars($base) ?>/admin/assets/item/delete?inventory_id=<?= $row['inventory_id']; ?>" onclick="return confirm('Are you sure you want to delete this item?');">
+                                                            <i class="fas fa-trash fa-sm fa-fw mr-2 text-danger"></i>
+                                                            Delete
+                                                        </a>
                                                     </div>
                                             </td>
 

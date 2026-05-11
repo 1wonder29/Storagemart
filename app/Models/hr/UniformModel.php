@@ -32,6 +32,10 @@ class UniformModel extends HRModel {
                         status,
                         datecreated,
                         createdby,
+                                                (SELECT COUNT(*)
+                                                 FROM {$this->tbluniform_assignment} ua
+                                                 WHERE ua.uniform_id = {$this->tbluniform_inventory}.uniform_id
+                                                     AND ua.date_returned IS NULL) AS return_count,
                         CASE WHEN quantity_in_stock <= reorder_level THEN 'NEEDS_REORDER' ELSE 'OK' END as stock_status
                     FROM {$this->tbluniform_inventory}
                     ORDER BY uniform_type, size, color
@@ -83,7 +87,7 @@ class UniformModel extends HRModel {
 
     /**
      * Add new uniform record
-     * @param array $data - uniform_type, size, quantity_in_stock, reorder_level, createdby
+     * @param array $data - uniform_type, size, quantity_in_stock, createdby (required); color, cost_per_unit, supplier, reorder_level, status (optional)
      * @return int|false - uniform_id on success, false on failure
      */
     public function addUniform(array $data): int|false {
@@ -97,15 +101,19 @@ class UniformModel extends HRModel {
             }
 
             $sql = "INSERT INTO {$this->tbluniform_inventory} 
-                    (uniform_type, size, quantity_in_stock, reorder_level, createdby, datecreated)
-                    VALUES (?, ?, ?, ?, ?, NOW())";
+                    (uniform_type, size, color, quantity_in_stock, cost_per_unit, supplier, reorder_level, status, createdby, datecreated)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
             
             $stmt = $this->pdo->prepare($sql);
             $success = $stmt->execute([
                 $data['uniform_type'],
                 $data['size'],
+                $data['color'] ?? '',
                 (int) $data['quantity_in_stock'],
+                $data['cost_per_unit'] ?? null,
+                $data['supplier'] ?? null,
                 (int) ($data['reorder_level'] ?? 5),
+                $data['status'] ?? 'ACTIVE',
                 $data['createdby']
             ]);
 
@@ -131,7 +139,7 @@ class UniformModel extends HRModel {
             $updates = [];
             $params = [];
 
-            $allowedFields = ['uniform_type', 'size', 'quantity_in_stock', 'reorder_level'];
+            $allowedFields = ['uniform_type', 'size', 'color', 'quantity_in_stock', 'cost_per_unit', 'supplier', 'reorder_level', 'status'];
             
             foreach ($allowedFields as $field) {
                 if (isset($data[$field])) {
@@ -220,7 +228,13 @@ class UniformModel extends HRModel {
     public function searchUniforms(string $searchTerm): array {
         try {
             $term = '%' . $searchTerm . '%';
-            $sql = "SELECT * FROM {$this->tbluniform_inventory}
+                $sql = "SELECT 
+                    ui.*,
+                    (SELECT COUNT(*)
+                     FROM {$this->tbluniform_assignment} ua
+                     WHERE ua.uniform_id = ui.uniform_id
+                       AND ua.date_returned IS NULL) AS return_count
+                    FROM {$this->tbluniform_inventory} ui
                     WHERE uniform_type LIKE ? OR color LIKE ? OR size LIKE ?
                     ORDER BY uniform_type, size, color";
             
@@ -270,6 +284,13 @@ class UniformModel extends HRModel {
             return [];
         }
     }
+
+    /**
+     * Get active (not returned) assignments for a given uniform
+     * @param int $uniformId
+     * @return array
+     */
+    
 
     /**
      * Get uniforms by type
@@ -325,6 +346,133 @@ class UniformModel extends HRModel {
         } catch (\Throwable $e) {
             error_log('UniformModel::assignUniform error: ' . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Get assignment by ID
+     * @param int $assignmentId
+     * @return array|null
+     */
+    public function getAssignmentById(int $assignmentId): ?array {
+        try {
+            $sql = "SELECT ua.*, ui.uniform_type, ui.size, ui.color, ui.uniform_id, ua.quantity_issued FROM {$this->tbluniform_assignment} ua
+                    LEFT JOIN {$this->tbluniform_inventory} ui ON ua.uniform_id = ui.uniform_id
+                    WHERE ua.assignment_id = ? LIMIT 1";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$assignmentId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (\Throwable $e) {
+            error_log('UniformModel::getAssignmentById error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Mark assignment as returned and increment uniform stock
+     * @param int $assignmentId
+     * @param int $processedBy
+     * @return bool
+     */
+    public function returnAssignment(int $assignmentId, int $processedBy): bool {
+        try {
+            $this->pdo->beginTransaction();
+
+            $assignment = $this->getAssignmentById($assignmentId);
+            if (!$assignment) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            if (!empty($assignment['date_returned'])) {
+                // already returned
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            $quantity = (int) ($assignment['quantity_issued'] ?? 0);
+            $uniformId = (int) $assignment['uniform_id'];
+
+            // mark assignment returned
+            $sql = "UPDATE {$this->tbluniform_assignment} SET date_returned = CURDATE() WHERE assignment_id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $ok = $stmt->execute([$assignmentId]);
+
+            if (!$ok) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            // increment stock
+            $sql2 = "UPDATE {$this->tbluniform_inventory} SET quantity_in_stock = quantity_in_stock + ?, date_updated = NOW() WHERE uniform_id = ?";
+            $stmt2 = $this->pdo->prepare($sql2);
+            $ok2 = $stmt2->execute([$quantity, $uniformId]);
+
+            if (!$ok2) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            $this->pdo->commit();
+            return true;
+        } catch (\Throwable $e) {
+            error_log('UniformModel::returnAssignment error: ' . $e->getMessage());
+            try { $this->pdo->rollBack(); } catch (\Throwable $_) {}
+            return false;
+        }
+    }
+
+    /**
+     * Get employees with assigned uniforms (active assignments only)
+     * @param int $limit
+     * @return array
+     */
+    public function getEmployeesWithUniforms(int $limit = 20): array {
+        try {
+            $sql = "SELECT 
+                        e.employee_id,
+                        e.firstname,
+                        e.lastname,
+                        e.position,
+                        e.department,
+                        COUNT(ua.assignment_id) as uniform_count,
+                        GROUP_CONCAT(CONCAT(ui.uniform_type, ' (', ui.size, ' - ', ui.color, ')') SEPARATOR ', ') as uniforms_assigned
+                    FROM {$this->tblemployee} e
+                    INNER JOIN {$this->tbluniform_assignment} ua ON e.employee_id = ua.employee_id
+                    INNER JOIN {$this->tbluniform_inventory} ui ON ua.uniform_id = ui.uniform_id
+                    WHERE ua.date_returned IS NULL
+                    GROUP BY e.employee_id
+                    ORDER BY e.lastname, e.firstname
+                    LIMIT ?";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log('UniformModel::getEmployeesWithUniforms error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get total count of employees with assigned uniforms
+     * @return int
+     */
+    public function getTotalEmployeesWithUniforms(): int {
+        try {
+            $sql = "SELECT COUNT(DISTINCT e.employee_id) 
+                    FROM {$this->tblemployee} e
+                    INNER JOIN {$this->tbluniform_assignment} ua ON e.employee_id = ua.employee_id
+                    WHERE ua.date_returned IS NULL";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            return (int) $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            error_log('UniformModel::getTotalEmployeesWithUniforms error: ' . $e->getMessage());
+            return 0;
         }
     }
 

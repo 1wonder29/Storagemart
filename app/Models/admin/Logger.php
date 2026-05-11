@@ -185,4 +185,110 @@ class Logger {
         
         return 0;
     }
+
+    /**
+     * Generic activity logging - works for all types of activities
+     * Replaces the need for specific methods - use this for all operations
+     * @param string $operationType CREATE, READ, UPDATE, DELETE, LOGIN, LOGOUT, FAILED_LOGIN, etc.
+     * @param string $module Module/feature name (Admin, HR, Employee, IT, Head, Authentication, etc.)
+     * @param string $recordId ID of the affected record (or user ID for auth events)
+     * @param string $description Detailed description of the action
+     * @param string $performedby Username or ID of who performed the action
+     * @param array $metadata Optional additional data to track (JSON stored)
+     * @return bool
+     */
+    public function logActivity($operationType, $module, $recordId, $description, $performedby = '', $metadata = []) {
+        $date = date('Y-m-d');
+        $time = date('H:i:s');
+        
+        // Format action with operation type marker
+        $action = "[{$operationType}] {$description}";
+        
+        // Append metadata if provided
+        if (!empty($metadata)) {
+            if (is_array($metadata)) {
+                $metadata = json_encode($metadata);
+            }
+            $action .= " | Data: " . substr($metadata, 0, 150);
+        }
+        
+        if ($this->pdo) {
+            $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute([$date, $time, $action, $module, $recordId, $performedby]);
+        }
+        if ($this->link) {
+            $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
+            if ($stmt = mysqli_prepare($this->link, $sql)) {
+                mysqli_stmt_bind_param($stmt, 'ssssss', $date, $time, $action, $module, $recordId, $performedby);
+                $ok = mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+                return (bool)$ok;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Specialized logging for LOGIN events
+     * @param string $username Username
+     * @param bool $success Whether login was successful
+     * @param string $reason Reason for failure (if applicable)
+     * @param array $details Additional details (IP, browser, etc.)
+     * @return bool
+     */
+    public function logLogin($username, $success = true, $reason = '', $details = []) {
+        $operationType = $success ? 'LOGIN' : 'FAILED_LOGIN';
+        $description = $success ? "Successful login for user {$username}" : "Failed login attempt for user {$username}" . ($reason ? " - {$reason}" : "");
+        return $this->logActivity($operationType, 'Authentication', $username, $description, $username, $details);
+    }
+
+    /**
+     * Specialized logging for LOGOUT events
+     * @param string $username Username
+     * @return bool
+     */
+    public function logLogout($username) {
+        return $this->logActivity('LOGOUT', 'Authentication', $username, "User {$username} logged out", $username);
+    }
+
+    /**
+     * Specialized logging for CRUD operations
+     * @param string $operation CREATE, UPDATE, DELETE
+     * @param string $module Module name
+     * @param string|int $recordId Record ID
+     * @param string $description Description of the operation
+     * @param string $performedby User who performed the action
+     * @param array $changes For UPDATE: old values and new values
+     * @return bool
+     */
+    public function logCRUDOperation($operation, $module, $recordId, $description, $performedby, $changes = []) {
+        return $this->logActivity($operation, $module, $recordId, $description, $performedby, $changes);
+    }
+
+    /**
+     * Get logs by activity type
+     * @param string $operationType (LOGIN, DELETE, CREATE, etc.)
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function getLogsByActivityType($operationType, $limit = 50, $offset = 0) {
+        return $this->getAuditLogs("[{$operationType}]", null, $limit, $offset);
+    }
+
+    /**
+     * Get recent activities across all modules
+     * @param int $limit Number of recent entries
+     * @return array
+     */
+    public function getRecentActivities($limit = 100) {
+        if ($this->pdo) {
+            $sql = "SELECT * FROM {$this->table} ORDER BY datelog DESC, timelog DESC LIMIT " . (int)$limit;
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+        return [];
+    }
 }

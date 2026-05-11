@@ -81,6 +81,16 @@ $base = rtrim(BASE_URL, '/');
                         </div>
                     </div>
                 </div>
+
+                <!-- Employees with Assigned Uniforms Card -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-danger shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Employees with Uniforms</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $totalEmployeesWithUniforms ?? 0 ?></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="row">
@@ -128,6 +138,63 @@ $base = rtrim(BASE_URL, '/');
                                         <hr class="my-1">
                                     <?php endforeach; ?>
                                 </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employees with Assigned Uniforms -->
+            <div class="row mt-4">
+                <div class="col-lg-12 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Employees with Assigned Uniforms</h6>
+                            <?php if ($totalEmployeesWithUniforms > 0): ?>
+                                <span class="badge badge-primary"><?= $totalEmployeesWithUniforms ?> Total</span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="card-body">
+                            <?php if (empty($employeesWithUniforms)): ?>
+                                <p class="text-muted">No employees with assigned uniforms</p>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Employee Name</th>
+                                                <th>Position</th>
+                                                <th>Department</th>
+                                                <th>Uniforms</th>
+                                                <th>Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($employeesWithUniforms as $employee): ?>
+                                                <tr>
+                                                    <td>
+                                                        <strong><?= htmlspecialchars($employee['firstname'] . ' ' . $employee['lastname']) ?></strong>
+                                                    </td>
+                                                    <td><?= htmlspecialchars($employee['position'] ?? 'N/A') ?></td>
+                                                    <td><?= htmlspecialchars($employee['department'] ?? 'N/A') ?></td>
+                                                    <td>
+                                                        <small><?= htmlspecialchars($employee['uniforms_assigned'] ?? 'N/A') ?></small>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge badge-info"><?= $employee['uniform_count'] ?></span>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <?php if ($totalEmployeesWithUniforms > 10): ?>
+                                    <div class="mt-3 text-center">
+                                        <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments" class="btn btn-sm btn-primary">
+                                            View All Assignments
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>

@@ -62,32 +62,37 @@ $base = rtrim(BASE_URL, '/');
                             </select>
                         </div>
 
-                        <!-- Uniform Type Selection -->
+                        <!-- Select Specific Uniform -->
                         <div class="form-group">
-                            <label for="uniform_type"><strong>Select Uniform Type</strong></label>
+                            <label for="uniform_type"><strong>Select Specific Uniform</strong></label>
                             <select class="form-control" id="uniform_type" required>
-                                <option value="">-- Choose a uniform type --</option>
+                                <option value="">-- Select a type first --</option>
                                 <?php foreach ($uniformTypes as $type): ?>
                                     <option value="<?= htmlspecialchars($type) ?>">
                                         <?= htmlspecialchars($type) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-
-                        <!-- Uniform Selection -->
-                        <div class="form-group">
-                            <label for="uniform_id"><strong>Select Specific Uniform</strong></label>
-                            <select class="form-control" id="uniform_id" name="uniform_id" required disabled>
+                            <select class="form-control mt-2" id="uniform_id" name="uniform_id" required disabled>
                                 <option value="">-- Select a type first --</option>
                             </select>
                             <small class="form-text text-muted">Showing: Size, Color, Available Stock</small>
                         </div>
 
-                        <!-- Quantity -->
+                        <!-- Quantity to Issue -->
                         <div class="form-group">
                             <label for="quantity_issued"><strong>Quantity to Issue</strong></label>
                             <input type="number" class="form-control" id="quantity_issued" name="quantity_issued" value="1" min="1" required>
+                        </div>
+
+                        <!-- Additional Specific Uniforms Container -->
+                        <div id="specialistUniformsContainer"></div>
+
+                        <!-- Add More Button -->
+                        <div class="form-group">
+                            <button type="button" class="btn btn-sm btn-success" id="addMoreBtn">
+                                <i class="fas fa-plus"></i> Add more specific uniform
+                            </button>
                         </div>
 
                         <!-- Condition -->
@@ -146,7 +151,9 @@ $base = rtrim(BASE_URL, '/');
 
     <script>
     $(document).ready(function() {
-        // When uniform type is selected, populate uniform dropdown
+        let specificCount = 0;
+
+        // Handle primary uniform type change
         $('#uniform_type').change(function() {
             var uniformType = $(this).val();
             var uniformSelect = $('#uniform_id');
@@ -181,7 +188,7 @@ $base = rtrim(BASE_URL, '/');
             });
         });
 
-        // Update quantity max based on available stock
+        // Update quantity max based on available stock for primary uniform
         $('#uniform_id').change(function() {
             var selected = $(this).find('option:selected').text();
             var match = selected.match(/Stock: (\d+)/);
@@ -192,6 +199,75 @@ $base = rtrim(BASE_URL, '/');
                     $('#quantity_issued').val(1);
                 }
             }
+        });
+
+        // Handle additional uniform type change
+        $(document).on('change', '[name^="specific_uniform_type_"]', function() {
+            var uniformType = $(this).val();
+            var container = $(this).closest('.specific-uniform-item');
+            var uniformSelect = container.find('[name^="specific_uniform_id_"]');
+            
+            if (uniformType === '') {
+                uniformSelect.html('<option value="">-- Select a type first --</option>').prop('disabled', true);
+                return;
+            }
+
+            $.ajax({
+                url: '<?= htmlspecialchars($base) ?>/hr/uniforms/get-by-type',
+                type: 'GET',
+                data: { type: uniformType },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data.length > 0) {
+                        var html = '<option value="">-- Choose a uniform --</option>';
+                        $.each(response.data, function(index, uniform) {
+                            html += '<option value="' + uniform.uniform_id + '">';
+                            html += uniform.uniform_type + ' - Size: ' + uniform.size + ', Color: ' + uniform.color;
+                            html += ' (Stock: ' + uniform.quantity_in_stock + ')';
+                            html += '</option>';
+                        });
+                        uniformSelect.html(html).prop('disabled', false);
+                    } else {
+                        uniformSelect.html('<option value="">No uniforms available</option>').prop('disabled', true);
+                    }
+                },
+                error: function() {
+                    uniformSelect.html('<option value="">Error loading uniforms</option>').prop('disabled', true);
+                }
+            });
+        });
+
+        // Add more specific uniform
+        $('#addMoreBtn').click(function(e) {
+            e.preventDefault();
+            specificCount++;
+            var html = '<div class="specific-uniform-item form-group" style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin-bottom: 15px; position: relative;">';
+            html += '<button type="button" class="btn btn-sm btn-danger remove-specific" style="position: absolute; top: 10px; right: 10px;" title="Remove this uniform">';
+            html += '<i class="fas fa-times"></i></button>';
+            html += '<label for="specific_uniform_type_' + specificCount + '"><strong>Select Specific Uniform</strong></label>';
+            html += '<select class="form-control mb-2" id="specific_uniform_type_' + specificCount + '" name="specific_uniform_type_' + specificCount + '">';
+            html += '<option value="">-- Select a type first --</option>';
+            <?php foreach ($uniformTypes as $type): ?>
+                html += '<option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>';
+            <?php endforeach; ?>
+            html += '</select>';
+            html += '<select class="form-control mb-2" id="specific_uniform_id_' + specificCount + '" name="specific_uniform_id_' + specificCount + '" disabled>';
+            html += '<option value="">-- Select a type first --</option>';
+            html += '</select>';
+            html += '<small class="form-text text-muted">Showing: Size, Color, Available Stock</small>';
+            html += '<div class="mt-2">';
+            html += '<label for="specific_quantity_' + specificCount + '"><strong>Quantity</strong></label>';
+            html += '<input type="number" class="form-control" id="specific_quantity_' + specificCount + '" name="specific_quantity_' + specificCount + '" value="1" min="1">';
+            html += '</div>';
+            html += '</div>';
+            
+            $('#specialistUniformsContainer').append(html);
+        });
+
+        // Remove specific uniform
+        $(document).on('click', '.remove-specific', function(e) {
+            e.preventDefault();
+            $(this).closest('.specific-uniform-item').remove();
         });
     });
     </script>

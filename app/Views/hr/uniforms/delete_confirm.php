@@ -33,7 +33,7 @@ $base = rtrim(BASE_URL, '/');
                             <h6 class="m-0 font-weight-bold">Delete Uniform</h6>
                         </div>
                         <div class="card-body">
-                            <p class="mb-3"><strong>Uniform:</strong> <?= htmlspecialchars($uniform['uniform_type'] . ' - ' . $uniform['size'] . ' - ' . $uniform['color']) ?></p>
+                            <p class="mb-3"><strong>Uniform:</strong> <?= htmlspecialchars($uniform['uniform_type'] . ' - ' . $uniform['size']) ?></p>
                             
                             <?php if ($isInUse): ?>
                                 <div class="alert alert-warning">

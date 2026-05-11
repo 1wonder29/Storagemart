@@ -2,6 +2,7 @@
 // app/Controllers/AuthController.php
 
 require_once __DIR__ . '/../Helpers/Session.php';
+require_once __DIR__ . '/../Helpers/ActivityLogger.php';
 require_once __DIR__ . '/../Models/admin/Account.php';
 
 class AuthController {
@@ -119,6 +120,10 @@ class AuthController {
             $this->redirect('/forgot-password');
         }
 
+        // Log password reset to audit trail
+        ActivityLogger::action('PASSWORD_RESET', 'Authentication', (string)$account['account_id'], 
+            "Password reset for {$username}", $username);
+
         unset($_SESSION['forgot_old_username'], $_SESSION['forgot_old_email']);
         $_SESSION['loginMessage'] = "<span style='color:green'>Password reset successful. You can now log in.</span>";
         $this->redirect('/login');
@@ -182,6 +187,9 @@ class AuthController {
             $this->model->recordFailedAttempt($username);
             $failedAttempts++;
             
+            // Log failed login to audit trail
+            ActivityLogger::login($username, false, 'Invalid credentials (Attempt ' . $failedAttempts . '/3)');
+            
             if ($failedAttempts >= 3) {
                 $_SESSION['loginMessage'] = "<font color='red'><br>Your account has been deactivated due to 3 failed login attempts. Please contact admin.</font>";
                 $this->log('Account deactivated for ' . $username . ' — 3 failed attempts');
@@ -208,6 +216,9 @@ class AuthController {
         $_SESSION['usertype']   = $account['usertype'] ?? '';
 
         $this->log("Login successful for {$username}; usertype=" . ($_SESSION['usertype'] ?? 'N/A'));
+        
+        // Log login to audit trail
+        ActivityLogger::login($username, true);
 
         // BASE-AWARE redirects to routes (not to view files)
         switch (strtoupper($_SESSION['usertype'] ?? '')) {
@@ -233,6 +244,9 @@ class AuthController {
     }
 
     public function logout() {
+        $username = $_SESSION['username'] ?? 'unknown';
+        // Log logout to audit trail before destroying session
+        ActivityLogger::logout($username);
         Session::destroy();
         $this->redirect('/login');
     }

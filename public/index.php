@@ -147,6 +147,8 @@ if (strpos($uri, '/admin') === 0) {
         $asset->deleteGroup();
     } elseif ($sub === 'assets/item') {
         $asset->item();
+    } elseif ($sub === 'assets/item/delete') {
+        $asset->deleteItem();
     } elseif ($sub === 'assets/add') {
         $asset->addItem();
     } elseif ($sub === 'assets/item/edit' && $_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -371,12 +373,24 @@ if (strpos($uri, '/hr') === 0) {
         }
     } elseif (strpos($sub, 'uniforms/search') === 0) {
         $uniform->search();
+    } elseif (strpos($sub, 'uniforms/return_confirm/') === 0) {
+        $assignmentId = (int) substr($sub, strlen('uniforms/return_confirm/'));
+        $uniform->returnConfirm($assignmentId);
+    } elseif (strpos($sub, 'uniforms/return/') === 0) {
+        $assignmentId = (int) substr($sub, strlen('uniforms/return/'));
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $uniform->processReturn($assignmentId);
+        } else {
+            http_response_code(405);
+            echo "Method not allowed.";
+        }
     } elseif (strpos($sub, 'uniforms/assign') === 0) {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $uniform->assignForm();
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uniform->assign();
         }
+    
     } elseif ($sub === 'uniforms/get-by-type') {
         $uniform->getUniformsByType();
     } elseif ($sub === 'uniforms/reorder-alerts') {

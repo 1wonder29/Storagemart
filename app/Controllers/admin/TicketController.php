@@ -3,6 +3,7 @@ require_once __DIR__ . '/../AuthController.php';
 require_once __DIR__ . '/../../Models/admin/Account.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
+require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 require_once __DIR__ . '/../../Models/admin/Ticket.php';
 
 class TicketController extends AuthController
@@ -361,14 +362,17 @@ class TicketController extends AuthController
                 ]);
             }
 
-            // 3) Log with Logger
-            $logger = new Logger();
-            $logger->log(
-                'Create',
-                'Ticket Management',
-                $ticketId,
-                $_SESSION['username'] ?? 'Unknown'
-            );
+            // 3) Log with ActivityLogger
+            ActivityLogger::create('Admin - Tickets', (string)$ticketId,
+                "New ticket created for employee #{$employee_id}: {$concern_details}",
+                $_SESSION['username'] ?? 'Unknown', [
+                    'employee_id' => $employee_id,
+                    'inventory_id' => $inventory_id,
+                    'category' => $category,
+                    'priority' => $priority,
+                    'assigned_to' => $assigned_to,
+                    'concern_details' => substr($concern_details, 0, 100)
+                ]);
 
             // 4) Flash + redirect
             $_SESSION['flash_success'] = 'New Ticket successfully created!';
@@ -435,6 +439,15 @@ class TicketController extends AuthController
         $ok = $ticketModel->approveAndAssign($ticket_id, $assigned_to, $accountID, $remarks);
 
     if ($ok) {
+        // Log ticket approval
+        ActivityLogger::action('APPROVE', 'Admin - Tickets', (string)$ticket_id,
+            "Ticket #{$ticket_id} approved and assigned to employee #{$assigned_to}",
+            $_SESSION['username'] ?? 'Unknown', [
+                'ticket_id' => $ticket_id,
+                'assigned_to' => $assigned_to,
+                'remarks' => $remarks
+            ]);
+
         require_once __DIR__ . '/../../Models/NotificationModel.php';
 
         $targets = $ticketModel->getApprovalNotificationTargets($ticket_id);
@@ -503,6 +516,15 @@ class TicketController extends AuthController
         $ok = $ticketModel->declineTicket($ticket_id, $decline_reason, $remarks, $accountID);
 
     if ($ok) {
+        // Log ticket decline
+        ActivityLogger::action('REJECT', 'Admin - Tickets', (string)$ticket_id,
+            "Ticket #{$ticket_id} declined: {$decline_reason}",
+            $_SESSION['username'] ?? 'Unknown', [
+                'ticket_id' => $ticket_id,
+                'decline_reason' => $decline_reason,
+                'remarks' => $remarks
+            ]);
+
         require_once __DIR__ . '/../../Models/NotificationModel.php';
 
         $targets = $ticketModel->getApprovalNotificationTargets($ticket_id);
