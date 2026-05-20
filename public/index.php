@@ -164,6 +164,10 @@ if (strpos($uri, '/admin') === 0) {
         $ticket->decline();
     } elseif ($sub === 'assets/view') {
         $admin->view_asset();
+    } elseif ($sub === 'audit-trail') {
+        $admin->auditTrail();
+    } elseif ($sub === 'audit-trail/detail') {
+        $admin->auditDetail();
     } else {
         http_response_code(404);
         echo "Admin page not found.";
