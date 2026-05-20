@@ -185,6 +185,24 @@ class AdminController extends AuthController
                     throw new Exception("Failed updating records.");
                 }
 
+                // Handle AOM branch assignments
+                if ($dataAcc['usertype'] === 'AOM') {
+                    require_once __DIR__ . '/../../Models/aom/AOMModel.php';
+                    $aomModel = new AOMModel();
+                    $branch_ids = isset($_POST['aom_branch_ids']) ? (array)$_POST['aom_branch_ids'] : [];
+                    $admin_employee_id = $_SESSION['employee_id'] ?? null;
+                    
+                    $ok_branches = $aomModel->updateAOMBranchAssignments(
+                        $dataEmp['employee_id'],
+                        $branch_ids,
+                        $admin_employee_id
+                    );
+                    
+                    if (!$ok_branches) {
+                        throw new Exception("Failed updating branch assignments.");
+                    }
+                }
+
                 // Log update via ActivityLogger
                 ActivityLogger::update('Admin - Accounts', (string)$dataAcc['account_id'],
                     "Account updated: {$dataAcc['username']} ({$dataAcc['usertype']})",
@@ -235,6 +253,14 @@ class AdminController extends AuthController
         $branches = method_exists($accountModel, 'fetchBranches')
             ? $accountModel->fetchBranches()
             : [];
+
+        // Load AOM branch assignments if this is an AOM account
+        $aom_assigned_branches = [];
+        if (($account['usertype'] ?? '') === 'AOM' && !empty($employee['employee_id'])) {
+            require_once __DIR__ . '/../../Models/aom/AOMModel.php';
+            $aomModel = new AOMModel();
+            $aom_assigned_branches = $aomModel->getAssignedBranches($employee['employee_id']);
+        }
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));

@@ -113,7 +113,7 @@ class EmployeeTicketController extends AuthController
 
         $ticketId = $model->createTicket([
             'employee_id'     => (int)$employeeId,
-            'inventory_id'    => (int)($_POST['inventory_id'] ?? 0),
+            'inventory_id'    => !empty($_POST['inventory_id']) ? (int)$_POST['inventory_id'] : null,
             'branch_id'       => $branchId,
             'department'      => trim($_POST['department'] ?? $department),
             'category'        => trim($_POST['category'] ?? ''),

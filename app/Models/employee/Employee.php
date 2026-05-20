@@ -248,6 +248,28 @@ class Employee extends BaseModel{
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    /**
+     * Employees in a branch (for HR / ticket filing pickers).
+     */
+    public function listEmployeesByBranchId(int $branchId): array
+    {
+        if ($branchId <= 0) {
+            return [];
+        }
+        try {
+            $sql = "SELECT e.employee_id, e.firstname, e.lastname, e.department, e.position
+                    FROM {$this->tblemployee} e
+                    WHERE e.branch_id = :bid
+                    ORDER BY e.lastname ASC, e.firstname ASC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([':bid' => $branchId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log('Employee::listEmployeesByBranchId error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     /* =========================================================
        ASSETS & TICKETS (MODALS)
     ========================================================= */

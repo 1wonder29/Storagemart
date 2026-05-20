@@ -125,7 +125,7 @@ $base = rtrim(BASE_URL, '/');
 
                         <?php endif; ?>
 
-                        <a class="dropdown-item text-center small text-gray-500" href="#">
+                        <a class="dropdown-item text-center small text-gray-500" href="<?= htmlspecialchars($base) ?>/notifications">
                             Show All Alerts
                         </a>
                     </div>
@@ -154,29 +154,46 @@ $base = rtrim(BASE_URL, '/');
                     </ul>
                 </nav>
 <script>
-document.querySelectorAll('.notification-item').forEach(item => {
-    item.addEventListener('click', function (e) {
-        e.preventDefault();
+(function () {
+    function updateBadgeAfterRead() {
+        const badge = document.querySelector('#alertsDropdown .badge-counter');
+        if (!badge) return;
+        const txt = (badge.textContent || '').trim();
+        const n = parseInt(txt, 10);
+        if (Number.isFinite(n)) {
+            const next = Math.max(0, n - 1);
+            if (next <= 0) badge.remove();
+            else badge.textContent = String(next);
+        }
+    }
 
-        const url = this.href;
-        const notifId = this.dataset.id;
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
 
-        // Mark as read in database
-        fetch('<?= htmlspecialchars($base) ?>/notifications/read', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'id=' + encodeURIComponent(notifId)
-        }).then(() => {
-            // Update UI immediately (do NOT remove)
-            this.classList.remove('notification-unread');
-            this.classList.add('notification-read');
+            const url = this.href;
+            const notifId = this.dataset.id;
 
-            // Redirect IT to target page
-            window.location.href = url;
+            if (!notifId) {
+                if (url && url !== '#') window.location.href = url;
+                return;
+            }
+
+            fetch('<?= htmlspecialchars($base) ?>/notifications/read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'id=' + encodeURIComponent(notifId)
+            }).then(() => {
+                this.classList.remove('notification-unread');
+                this.classList.add('notification-read');
+                updateBadgeAfterRead();
+
+                if (url && url !== '#') window.location.href = url;
+            }).catch(() => {
+                if (url && url !== '#') window.location.href = url;
+            });
         });
     });
-});
+})();
 </script>
 

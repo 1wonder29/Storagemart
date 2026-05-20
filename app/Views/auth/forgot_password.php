@@ -79,8 +79,5 @@ $base = rtrim(BASE_URL, '/');
         </div>
     </main>
 
-    <footer class="footer">
-        <p>&copy; 2025 storagemart. All rights reserved. For Internal Use Only.</p>
-    </footer>
 </body>
 </html>

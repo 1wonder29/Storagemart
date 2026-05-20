@@ -96,7 +96,7 @@ class TicketController extends AuthController
 
         $ticketId = $ticketModel->createTicket([
             'employee_id'     => (int)$employeeId,
-            'inventory_id'    => (int)($_POST['inventory_id'] ?? 0),
+            'inventory_id'    => !empty($_POST['inventory_id']) ? (int)$_POST['inventory_id'] : null,
             'branch_id'       => (int)($_POST['branch_id'] ?? 0),
             'department'      => trim($_POST['department'] ?? ''),
             'category'        => trim($_POST['category'] ?? ''),
@@ -356,6 +356,71 @@ class TicketController extends AuthController
         // 4️⃣ Update history (no PDF generation)
         // =============================
 
+        // =============================
+        // 5️⃣ Handle technical report upload if provided
+        // =============================
+        if ($status === 'Resolved' && isset($_FILES['report_file']) && $_FILES['report_file']['error'] === UPLOAD_ERR_OK) {
+            try {
+                $uploadedFile = $_FILES['report_file'];
+                $allowedExtensions = ['pdf', 'docx', 'doc', 'jpg', 'jpeg', 'png'];
+                $maxFileSize = 10 * 1024 * 1024;
+
+                // Get file extension
+                $originalName = basename($uploadedFile['name']);
+                $fileExt = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+                // Validate file extension
+                if (in_array($fileExt, $allowedExtensions)) {
+                    // Validate file size
+                    if ($uploadedFile['size'] <= $maxFileSize && $uploadedFile['size'] > 0) {
+                        // Get ticket number
+                        $ticket = $ticketModel->fetchTicketById($ticketId);
+                        $ticketNumber = $ticket['ticket_number'] ?? "TICKET_{$ticketId}";
+                        
+                        // Generate filename
+                        $sanitizedTicketNumber = preg_replace('/[^A-Za-z0-9_-]/', '', $ticketNumber);
+                        $timestamp = date('YmdHis');
+                        $randomId = substr(md5(uniqid()), 0, 8);
+                        $storedFilename = "report_{$sanitizedTicketNumber}_{$timestamp}_{$randomId}.{$fileExt}";
+
+                        // Setup directory
+                        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/assets/generatePDF';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0755, true);
+                        }
+
+                        $uploadPath = $uploadDir . '/' . $storedFilename;
+
+                        // Move file
+                        if (move_uploaded_file($uploadedFile['tmp_name'], $uploadPath)) {
+                            // Record in database
+                            require_once __DIR__ . '/../../Models/employee/UploadModel.php';
+                            $uploadModel = new TicketUploadModel();
+
+                            $fileMime = '';
+                            if (function_exists('finfo_file')) {
+                                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                                $fileMime = finfo_file($finfo, $uploadPath);
+                                finfo_close($finfo);
+                            }
+
+                            $uploadModel->recordUpload(
+                                $ticketId,
+                                $employeeId,
+                                $originalName,
+                                $storedFilename,
+                                filesize($uploadPath),
+                                $fileMime ?: 'application/octet-stream'
+                            );
+                        }
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Error uploading technical report: " . $e->getMessage());
+                // Don't block ticket update if upload fails
+            }
+        }
+
         $_SESSION['flash_success'] = "Ticket marked as {$status}.";
         $this->redirect('/it/tickets/in_progress');
     }
@@ -382,5 +447,178 @@ class TicketController extends AuthController
         $notifications = $notificationData['notifications'];
 
         require __DIR__ . '/../../Views/it/ticket/resolve.php';
+    }
+
+    /**
+     * Upload technical report for a ticket
+     */
+    public function uploadTechnicalReport()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        header('Content-Type: application/json');
+
+        try {
+            // Authenticate user
+            if (empty($_SESSION['account_id'])) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+                exit;
+            }
+
+            // Validate request method
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+                exit;
+            }
+
+            // Get employee ID
+            $employeeModel = new Employee();
+            $employeeId = $employeeModel->getEmployeeIdByAccountId((int)$_SESSION['account_id']);
+
+            if (!$employeeId) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Employee not found']);
+                exit;
+            }
+
+            // Validate ticket ID
+            $ticketId = (int) ($_POST['ticket_id'] ?? 0);
+            if (!$ticketId) {
+                echo json_encode(['success' => false, 'message' => 'Invalid ticket ID']);
+                exit;
+            }
+
+            // Verify ticket exists and is assigned to this IT person
+            $ticketModel = new ItTicketModel();
+            $ticket = $ticketModel->fetchTicketById($ticketId);
+
+            if (!$ticket) {
+                echo json_encode(['success' => false, 'message' => 'Ticket not found']);
+                exit;
+            }
+
+            // Check if IT person is assigned to this ticket
+            $assignedTo = $ticketModel->getAssignedTo($ticketId);
+            if ($assignedTo === null || (int)$assignedTo !== (int)$employeeId) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'You are not assigned to this ticket']);
+                exit;
+            }
+
+            // Verify ticket is resolved
+            if (strtolower($ticket['status']) !== 'resolved') {
+                echo json_encode(['success' => false, 'message' => 'Only resolved tickets can have reports uploaded']);
+                exit;
+            }
+
+            // Validate file upload
+            if (!isset($_FILES['report_file']) || $_FILES['report_file']['error'] !== UPLOAD_ERR_OK) {
+                $errorCode = $_FILES['report_file']['error'] ?? 'unknown';
+                error_log("Upload error - Error code: {$errorCode}");
+                echo json_encode(['success' => false, 'message' => 'No file uploaded or upload error occurred']);
+                exit;
+            }
+
+            $uploadedFile = $_FILES['report_file'];
+            $allowedMimes = [
+                'application/pdf',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-word.document.macroEnabled.12',
+                'application/msword',
+                'application/zip',
+                'image/jpeg',
+                'image/jpg',
+                'image/png'
+            ];
+            $allowedExtensions = ['pdf', 'docx', 'doc', 'jpg', 'jpeg', 'png'];
+            $maxFileSize = 10 * 1024 * 1024;
+
+            // Get file extension
+            $originalName = basename($uploadedFile['name']);
+            $fileExt = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+            // Validate file extension
+            if (!in_array($fileExt, $allowedExtensions)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid file type']);
+                exit;
+            }
+
+            // Validate MIME type
+            $fileMime = '';
+            if (function_exists('finfo_file')) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $fileMime = finfo_file($finfo, $uploadedFile['tmp_name']);
+                finfo_close($finfo);
+            } else {
+                $fileMime = $uploadedFile['type'] ?? '';
+            }
+
+            // Validate file size
+            if ($uploadedFile['size'] > $maxFileSize) {
+                echo json_encode(['success' => false, 'message' => 'File size exceeds 10MB']);
+                exit;
+            }
+
+            if ($uploadedFile['size'] === 0) {
+                echo json_encode(['success' => false, 'message' => 'File is empty']);
+                exit;
+            }
+
+            // Generate filename
+            $sanitizedTicketNumber = preg_replace('/[^A-Za-z0-9_-]/', '', $ticket['ticket_number']);
+            $timestamp = date('YmdHis');
+            $randomId = substr(md5(uniqid()), 0, 8);
+            $storedFilename = "report_{$sanitizedTicketNumber}_{$timestamp}_{$randomId}.{$fileExt}";
+
+            // Setup directory
+            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/assets/generatePDF';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $uploadPath = $uploadDir . '/' . $storedFilename;
+
+            // Move file
+            if (!move_uploaded_file($uploadedFile['tmp_name'], $uploadPath)) {
+                error_log("Upload move failed: {$uploadPath}");
+                echo json_encode(['success' => false, 'message' => 'Failed to save file']);
+                exit;
+            }
+
+            // Record in database
+            require_once __DIR__ . '/../../Models/employee/UploadModel.php';
+            $uploadModel = new TicketUploadModel();
+
+            $uploadId = $uploadModel->recordUpload(
+                $ticketId,
+                $employeeId,
+                $originalName,
+                $storedFilename,
+                filesize($uploadPath),
+                $fileMime ?: 'application/octet-stream'
+            );
+
+            if (!$uploadId) {
+                @unlink($uploadPath);
+                echo json_encode(['success' => false, 'message' => 'Failed to record upload']);
+                exit;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Report uploaded successfully',
+                'upload_id' => $uploadId,
+                'filename' => $originalName
+            ]);
+            exit;
+
+        } catch (Exception $e) {
+            error_log("Exception in uploadTechnicalReport: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Server error']);
+            exit;
+        }
     }
 }

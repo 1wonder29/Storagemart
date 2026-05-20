@@ -58,11 +58,6 @@ $base = rtrim(BASE_URL, '/');
             </form>
         </div>
     </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; 2025 storagemart. All rights reserved. For Internal Use Only.</p>
-    </footer>
     <script src="<?= htmlspecialchars($base) ?>/assets/author/ouaaa.js"></script>
 </body>
 </html>

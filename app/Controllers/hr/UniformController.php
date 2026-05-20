@@ -495,6 +495,31 @@ class UniformController extends AuthController {
     }
 
     /**
+     * Show all assignments for a specific uniform
+     */
+    public function assignments($uniformId) {
+        $this->requireHR();
+
+        try {
+            $uniformId = (int) $uniformId;
+            $uniform = $this->uniformModel->getUniformById($uniformId);
+
+            if (!$uniform) {
+                $_SESSION['errorMessage'] = 'Uniform not found.';
+                $this->redirect('/hr/uniforms');
+            }
+
+            $assignments = $this->uniformModel->getAssignmentsByUniformId($uniformId);
+            $notifications = $this->notificationModel->getLatest($_SESSION['account_id'] ?? 0, 10);
+            require __DIR__ . '/../../Views/hr/uniforms/assignments.php';
+        } catch (\Throwable $e) {
+            error_log('UniformController::assignments error: ' . $e->getMessage());
+            $_SESSION['errorMessage'] = 'Error loading assignments: ' . $e->getMessage();
+            $this->redirect('/hr/uniforms');
+        }
+    }
+
+    /**
      * Show return confirmation for an assignment
      */
     public function returnConfirm($assignmentId) {

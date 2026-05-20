@@ -22,7 +22,7 @@ $base = rtrim(BASE_URL, '/');
     <!-- Custom styles for this template -->
         <!-- Custom styles for this template -->
         <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-        <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png" type="image/png">
+        <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
         <!-- Custom styles for this page -->
         <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 

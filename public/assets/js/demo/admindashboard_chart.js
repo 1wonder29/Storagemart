@@ -1,7 +1,9 @@
 // Chart.js v3+ defaults (SB Admin look)
-Chart.defaults.font.family =
-  'Nunito, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-Chart.defaults.color = '#858796';
+if (window.Chart) {
+  Chart.defaults.font.family =
+    'Nunito, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+  Chart.defaults.color = '#858796';
+}
 
 // Center text plugin
 const centerText = {
@@ -19,7 +21,10 @@ const centerText = {
     ctx.fillStyle = '#5a5c69';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(total, x, y);
+    ctx.fillText(total, x, y - 8);
+    ctx.font = '600 12px Nunito';
+    ctx.fillStyle = '#858796';
+    ctx.fillText('tickets', x, y + 12);
     ctx.restore();
   }
 };
@@ -28,13 +33,21 @@ const centerText = {
 var ctx = document.getElementById("ticketChart");
 
 if (ctx && window.ticketData) {
+  // Register plugin once (Chart.js v3+)
+  if (window.Chart && typeof Chart.register === 'function' && !Chart.registry.plugins.get('centerText')) {
+    Chart.register(centerText);
+  }
+
+  const raw = Array.isArray(window.ticketData) ? window.ticketData.map(n => Number(n) || 0) : [];
+  const total = raw.reduce((a, b) => a + b, 0);
+  const chartData = total > 0 ? raw : [1, 1, 1]; // empty-state placeholder
+
   new Chart(ctx, {
     type: 'doughnut',
-     // ✅ REGISTER PLUGIN
     data: {
-      labels: ["Total Tickets", "Resolved", "Resolved"],
+      labels: ["Assigned", "In Progress", "Resolved"],
       datasets: [{
-        data: window.ticketData,
+        data: chartData,
         backgroundColor: ['#36b9cc','#1cc88a', '#f6c23e'],
         hoverBackgroundColor: ['#2c9faf','#17a673','#dda20a'],
         borderColor: "rgba(234, 236, 244, 1)",
@@ -62,7 +75,10 @@ if (ctx && window.ticketData) {
           caretPadding: 10,
           callbacks: {
             label: function(context) {
-              return `${context.label}: ${context.parsed}`;
+              if (total <= 0) return 'No data yet';
+              const value = Number(context.parsed) || 0;
+              const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+              return `${context.label}: ${value} (${pct}%)`;
             }
           }
         }

@@ -32,10 +32,9 @@ class UniformModel extends HRModel {
                         status,
                         datecreated,
                         createdby,
-                                                (SELECT COUNT(*)
-                                                 FROM {$this->tbluniform_assignment} ua
-                                                 WHERE ua.uniform_id = {$this->tbluniform_inventory}.uniform_id
-                                                     AND ua.date_returned IS NULL) AS return_count,
+                        COALESCE(quantity_returned, 0) AS quantity_returned,
+                        COALESCE(quantity_damaged, 0) AS quantity_damaged,
+                        COALESCE(quantity_lost, 0) AS quantity_lost,
                         CASE WHEN quantity_in_stock <= reorder_level THEN 'NEEDS_REORDER' ELSE 'OK' END as stock_status
                     FROM {$this->tbluniform_inventory}
                     ORDER BY uniform_type, size, color
@@ -473,6 +472,40 @@ class UniformModel extends HRModel {
         } catch (\Throwable $e) {
             error_log('UniformModel::getTotalEmployeesWithUniforms error: ' . $e->getMessage());
             return 0;
+        }
+    }
+
+    /**
+     * Get all assignments for a specific uniform (both active and returned)
+     * @param int $uniformId
+     * @return array
+     */
+    public function getAssignmentsByUniformId(int $uniformId): array {
+        try {
+            $sql = "SELECT 
+                        ua.assignment_id,
+                        ua.employee_id,
+                        ua.uniform_id,
+                        ua.quantity_issued,
+                        ua.date_issued,
+                        ua.date_returned,
+                        ua.condition_upon_issue,
+                        ua.condition_upon_return,
+                        ua.remarks,
+                        e.firstname,
+                        e.lastname,
+                        CONCAT(e.firstname, ' ', e.lastname) as employee_name
+                    FROM {$this->tbluniform_assignment} ua
+                    LEFT JOIN {$this->tblemployee} e ON ua.employee_id = e.employee_id
+                    WHERE ua.uniform_id = ?
+                    ORDER BY ua.date_issued DESC, ua.assignment_id DESC";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$uniformId]);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?? [];
+        } catch (\Throwable $e) {
+            error_log('UniformModel::getAssignmentsByUniformId error: ' . $e->getMessage());
+            return [];
         }
     }
 

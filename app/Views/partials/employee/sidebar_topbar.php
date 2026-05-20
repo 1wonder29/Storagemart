@@ -122,7 +122,7 @@ $base = rtrim(BASE_URL, '/');
 
                         <?php endif; ?>
 
-                        <a class="dropdown-item text-center small text-gray-500" href="#">
+                        <a class="dropdown-item text-center small text-gray-500" href="<?= htmlspecialchars($base) ?>/notifications">
                             Show All Alerts
                         </a>
                     </div>

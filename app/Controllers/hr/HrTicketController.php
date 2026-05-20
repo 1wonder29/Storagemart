@@ -26,9 +26,17 @@ class HrTicketController extends AuthController
             exit('Unauthorized');
         }
 
-        // Get only tickets created by this HR account
+        $employee = $employeeModel->getEmployeeById((int)$user['employee_id']);
+        $department = $employee['department'] ?? null;
+
+        if (!$department) {
+            $_SESSION['flash_error'] = 'Department not found.';
+            $this->redirect('/hr/dashboard');
+            return;
+        }
+
         $ticketModel = new EmployeeTicket();
-        $tickets = $ticketModel->getTicketsByCreatedBy((int)$_SESSION['account_id']);
+        $tickets = $ticketModel->fetchTicketsByDepartment($department);
 
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
@@ -144,7 +152,7 @@ class HrTicketController extends AuthController
 
         $ticketId = $model->createTicket([
             'employee_id'     => (int)$employeeId,
-            'inventory_id'    => (int)($_POST['inventory_id'] ?? 0),
+            'inventory_id'    => !empty($_POST['inventory_id']) ? (int)$_POST['inventory_id'] : null,
             'branch_id'       => $branchId,
             'department'      => trim($_POST['department'] ?? $department),
             'category'        => trim($_POST['category'] ?? ''),
@@ -210,31 +218,384 @@ class HrTicketController extends AuthController
 
     public function fetchHistory()
     {
-        header('Content-Type: application/json');
-        
         if (!isset($_GET['ticket_id'])) {
-            echo json_encode(['success' => false, 'data' => []]);
+            echo json_encode([]);
             return;
         }
 
-        try {
-            $ticketId = (int)$_GET['ticket_id'];
+        $ticketId = (int)$_GET['ticket_id'];
 
-            $model = new EmployeeTicket();
-            $history = $model->getTicketHistory($ticketId);
+        $model = new EmployeeTicket();
+        $history = $model->getTicketHistory($ticketId);
 
-            echo json_encode([
-                'success' => true,
-                'data' => $history ?? []
-            ]);
-        } catch (\Throwable $e) {
-            error_log('HrTicketController::fetchHistory error: ' . $e->getMessage());
-            echo json_encode([
-                'success' => false,
-                'error' => $e->getMessage(),
-                'data' => []
-            ]);
+        header('Content-Type: application/json');
+        echo json_encode($history);
+    }
+
+    public function ticketDetail()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id'])) {
+            $this->redirect('/login');
+            return;
         }
+
+        $ticketId = (int)($_GET['id'] ?? 0);
+        if ($ticketId === 0) {
+            $_SESSION['flash_error'] = 'Invalid ticket ID.';
+            $this->redirect('/hr/tickets');
+            return;
+        }
+
+        $model = new EmployeeTicket();
+        $ticket = $model->fetchTicketById($ticketId);
+
+        if (!$ticket) {
+            $_SESSION['flash_error'] = 'Ticket not found.';
+            $this->redirect('/hr/tickets');
+            return;
+        }
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        $history = $model->getTicketHistory($ticketId);
+
+        require __DIR__ . '/../../Views/hr/ticket/ticket-detail.php';
+    }
+
+    public function employeesByBranchAjax()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $branchId = (int)($_GET['branch_id'] ?? 0);
+        if ($branchId === 0) {
+            echo json_encode(['error' => 'Branch ID is required']);
+            return;
+        }
+
+        $empModel = new Employee();
+        $employees = $empModel->listEmployeesByBranchId($branchId);
+
+        header('Content-Type: application/json');
+        echo json_encode($employees ?: []);
+    }
+
+    public function downloadTechnicalRecord()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        // Authenticate user
+        if (empty($_SESSION['account_id'])) {
+            http_response_code(401);
+            echo 'Unauthorized';
+            exit;
+        }
+
+        // Validate ticket ID
+        $ticketId = (int) ($_GET['id'] ?? 0);
+        if (!$ticketId) {
+            http_response_code(400);
+            echo 'Invalid ticket ID';
+            exit;
+        }
+
+        // Get employee ID from account
+        $employeeModel = new Employee();
+        $employeeId = $employeeModel->getEmployeeIdByAccountId((int)$_SESSION['account_id']);
+
+        if (!$employeeId) {
+            http_response_code(401);
+            echo 'Employee not found';
+            exit;
+        }
+
+        // Load PDF generation service
+        require_once __DIR__ . '/../../Services/PdfGeneratorService.php';
+        $pdfService = new PdfGeneratorService();
+
+        // Generate technical record on-demand
+        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $employeeId);
+
+        if (!$result || !$result['success']) {
+            http_response_code(404);
+            echo 'Unable to generate technical record. Please ensure the ticket is resolved.';
+            exit;
+        }
+
+        // Stream file download
+        $filepath = $result['filepath'];
+        $filename = $result['filename'];
+
+        if (!file_exists($filepath)) {
+            http_response_code(404);
+            echo 'File not found';
+            exit;
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
+        header('Content-Length: ' . filesize($filepath));
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        readfile($filepath);
+        exit;
+    }
+
+    public function uploadTechnicalReport()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        header('Content-Type: application/json');
+
+        try {
+            // Authenticate user
+            if (empty($_SESSION['account_id'])) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+                exit;
+            }
+
+            // Validate request method
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+                exit;
+            }
+
+            // Get employee ID
+            $employeeModel = new Employee();
+            $employeeId = $employeeModel->getEmployeeIdByAccountId((int)$_SESSION['account_id']);
+
+            if (!$employeeId) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Employee not found']);
+                exit;
+            }
+
+            // Validate ticket ID
+            $ticketId = (int) ($_POST['ticket_id'] ?? 0);
+            if (!$ticketId) {
+                echo json_encode(['success' => false, 'message' => 'Invalid ticket ID']);
+                exit;
+            }
+
+            // Verify ticket exists
+            $ticketModel = new EmployeeTicket();
+            $ticket = $ticketModel->fetchTicketById($ticketId);
+
+            if (!$ticket) {
+                echo json_encode(['success' => false, 'message' => 'Ticket not found']);
+                exit;
+            }
+
+            // Verify ticket is resolved
+            if (strtolower($ticket['status']) !== 'resolved') {
+                echo json_encode(['success' => false, 'message' => 'Only resolved tickets can have reports uploaded']);
+                exit;
+            }
+
+            // Validate file upload
+            if (!isset($_FILES['report_file']) || $_FILES['report_file']['error'] !== UPLOAD_ERR_OK) {
+                $errorCode = $_FILES['report_file']['error'] ?? 'unknown';
+                error_log("Upload error - Error code: {$errorCode}");
+                echo json_encode(['success' => false, 'message' => 'No file uploaded or upload error occurred']);
+                exit;
+            }
+
+            $file = $_FILES['report_file'];
+            $allowedMimes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $fileMime = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+
+            if (!in_array($fileMime, $allowedMimes)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid file type. Allowed: PDF, DOCX, DOC, JPG, PNG']);
+                exit;
+            }
+
+            if ($file['size'] > 10485760) { // 10MB
+                echo json_encode(['success' => false, 'message' => 'File size exceeds 10MB limit']);
+                exit;
+            }
+
+            // Create uploads directory if it doesn't exist
+            $uploadsDir = __DIR__ . '/../../uploads/technical_reports';
+            if (!is_dir($uploadsDir)) {
+                mkdir($uploadsDir, 0755, true);
+            }
+
+            // Generate unique filename
+            $filename = 'ticket_' . $ticketId . '_' . time() . '_' . basename($file['name']);
+            $filepath = $uploadsDir . '/' . $filename;
+
+            // Move uploaded file
+            if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+                echo json_encode(['success' => false, 'message' => 'Failed to save uploaded file']);
+                exit;
+            }
+
+            // Store in database
+            $relativeFilepath = 'uploads/technical_reports/' . $filename;
+            $ticketModel->updateTechnicalReportPath($ticketId, $relativeFilepath);
+
+            echo json_encode(['success' => true, 'message' => 'Technical report uploaded successfully']);
+            exit;
+
+        } catch (Exception $e) {
+            error_log("Error uploading technical report: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'An error occurred during upload']);
+            exit;
+        }
+    }
+
+    public function rate()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $ticketId = (int) ($_GET['id'] ?? 0);
+        if (!$ticketId) {
+            http_response_code(400);
+            echo 'Invalid ticket.';
+            return;
+        }
+
+        $employeeModel = new Employee();
+        $employeeId = $employeeModel->getEmployeeIdByAccountId((int)$_SESSION['account_id']);
+
+        require_once __DIR__ . '/../../Models/hr/TicketRatingModel.php';
+        $ratingModel = new HRTicketRatingModel();
+        $alreadyRated = $ratingModel->hasRated($ticketId, $employeeId);
+
+        if ($alreadyRated) {
+            http_response_code(200);
+            echo '<div class="alert alert-info"><i class="fas fa-check-circle"></i> You have already rated this ticket.</div>';
+            return;
+        }
+
+        // Return just the form HTML for modal
+        echo '
+        <form id="rateTicketForm" method="POST">
+            <input type="hidden" name="ticket_id" value="' . (int)$ticketId . '">
+            
+            <div class="form-group">
+                <label class="font-weight-bold mb-3">How would you rate your experience?</label>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
+                    <span class="star" data-value="1" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Poor">★</span>
+                    <span class="star" data-value="2" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Fair">★</span>
+                    <span class="star" data-value="3" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Good">★</span>
+                    <span class="star" data-value="4" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Very Good">★</span>
+                    <span class="star" data-value="5" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Excellent">★</span>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 0.9rem;" id="ratingText">Click to select rating</p>
+                <select name="rating" id="ratingSelect" style="display: none;" required></select>
+            </div>
+
+            <div class="form-group">
+                <label class="font-weight-bold">Comments (optional)</label>
+                <textarea name="comment" class="form-control" placeholder="Share your feedback..." style="min-height: 80px;"></textarea>
+            </div>
+
+            <div class="text-right">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-paper-plane"></i> Submit Rating
+                </button>
+            </div>
+        </form>
+
+        <script>
+            $(".star").on("click", function() {
+                const rating = $(this).data("value");
+                $("#ratingSelect").val(rating);
+                $(".star").css("color", "#ddd");
+                $(this).prevAll(".star").andSelf().css("color", "#ffc107");
+                $("#ratingText").text(rating + " star" + (rating > 1 ? "s" : ""));
+            });
+        </script>
+        ';
+    }
+
+    public function storeRating()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        header('Content-Type: application/json');
+
+        require_once __DIR__ . '/../../Models/employee/Employee.php';
+        require_once __DIR__ . '/../../Models/hr/TicketRatingModel.php';
+        require_once __DIR__ . '/../../Models/employee/Ticket.php';
+
+        $accountId = (int) ($_SESSION['account_id'] ?? 0);
+        $ticketId  = (int) ($_POST['ticket_id'] ?? 0);
+
+        if (!$ticketId) {
+            echo json_encode(['success' => false, 'message' => 'Invalid ticket.']);
+            exit;
+        }
+
+        // account_id → employee_id
+        $employeeModel = new Employee();
+        $employeeId = $employeeModel->getEmployeeIdByAccountId($accountId);
+
+        if (!$employeeId) {
+            echo json_encode(['success' => false, 'message' => 'Employee not found.']);
+            exit;
+        }
+
+        // get IT assigned to ticket
+        $ticketModel = new EmployeeTicket();
+        $itId = $ticketModel->getAssignedTo($ticketId);
+
+        if (!$itId) {
+            echo json_encode(['success' => false, 'message' => 'Ticket is not assigned yet.']);
+            exit;
+        }
+
+        $ratingModel = new HRTicketRatingModel();
+
+        // prevent double rating
+        if ($ratingModel->hasRated($ticketId, $employeeId)) {
+            echo json_encode(['success' => false, 'message' => 'You already rated this ticket.']);
+            exit;
+        }
+
+        // validate rating
+        $rating = (int)($_POST['rating'] ?? 0);
+        if ($rating < 1 || $rating > 5) {
+            echo json_encode(['success' => false, 'message' => 'Invalid rating value.']);
+            exit;
+        }
+
+        // save rating
+        try {
+            $ratingModel->create(
+                $ticketId,
+                $employeeId,
+                $itId,
+                $rating,
+                $_POST['comment'] ?? ''
+            );
+            echo json_encode(['success' => true, 'message' => 'Thank you for rating IT support!']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error saving rating: ' . $e->getMessage()]);
+        }
+        exit;
     }
 }
 ?>

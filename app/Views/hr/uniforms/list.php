@@ -56,7 +56,9 @@ $base = rtrim(BASE_URL, '/');
                                         <th>In Stock</th>
                                         <th>Reorder Level</th>
                                         <th>Stock Status</th>
-                                        <th>Return</th>
+                                        <th>Pending Return</th>
+                                        <th>Damaged</th>
+                                        <th>Lost</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -69,8 +71,21 @@ $base = rtrim(BASE_URL, '/');
                                             <td><?= (int)$uniform['reorder_level'] ?></td>
                                             <td><span class="badge bg-<?= ($uniform['stock_status'] === 'NEEDS_REORDER') ? 'warning' : 'info' ?>"><?= htmlspecialchars($uniform['stock_status']) ?></span></td>
                                             <td>
-                                                <span class="btn btn-sm btn-info" title="Active uniforms to return">
-                                                    <?= (int)($uniform['return_count'] ?? 0) ?>
+                                                <?php $pendingReturn = (int) ($uniform['quantity_returned'] ?? 0); ?>
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments/<?= (int) $uniform['uniform_id'] ?>"
+                                                   class="btn btn-sm btn-warning"
+                                                   title="View pending returns">
+                                                    <?= $pendingReturn ?>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="btn btn-sm btn-danger" title="Damaged uniforms">
+                                                    <?= (int) ($uniform['quantity_damaged'] ?? 0) ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="btn btn-sm btn-dark" title="Lost uniforms">
+                                                    <?= (int) ($uniform['quantity_lost'] ?? 0) ?>
                                                 </span>
                                             </td>
                                             <td>

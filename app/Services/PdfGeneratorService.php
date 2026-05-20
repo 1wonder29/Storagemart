@@ -328,122 +328,48 @@ class PdfGeneratorService
             $date_issued = date('F d, Y');
             
             // Fill in employee information
-            try {
-                $template->setValue('name', htmlspecialchars($fullname));
-            } catch (\Exception $e) {
-                $this->logError("Could not set 'name': " . $e->getMessage());
-            }
+            $template->setValue('name', htmlspecialchars($fullname));
+            $template->setValue('employee_id', htmlspecialchars($employee_id));
+            $template->setValue('department', htmlspecialchars($department));
+            $template->setValue('position', htmlspecialchars($position));
+            $template->setValue('date_issued', htmlspecialchars($date_issued));
             
-            try {
-                $template->setValue('employee_id', htmlspecialchars($employee_id));
-            } catch (\Exception $e) {
-                $this->logError("Could not set 'employee_id': " . $e->getMessage());
-            }
-            
-            try {
-                $template->setValue('department', htmlspecialchars($department));
-            } catch (\Exception $e) {
-                $this->logError("Could not set 'department': " . $e->getMessage());
-            }
-            
-            try {
-                $template->setValue('position', htmlspecialchars($position));
-            } catch (\Exception $e) {
-                $this->logError("Could not set 'position': " . $e->getMessage());
-            }
-            
-            try {
-                $template->setValue('date_issued', htmlspecialchars($date_issued));
-            } catch (\Exception $e) {
-                $this->logError("Could not set 'date_issued': " . $e->getMessage());
-            }
-            
-            // Fill in IT Assets - with graceful handling for missing template variables
+            // Fill in IT Assets
             if (!empty($assets)) {
-                try {
-                    // Only clone if the row exists in the template
-                    $template->cloneRow('itemInfo', count($assets), true);
-                    $i = 1;
-                    foreach ($assets as $asset) {
-                        try {
-                            $template->setValue("dateissued#{$i}", htmlspecialchars($date_issued));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("itemInfo#{$i}", htmlspecialchars($asset['itemInfo'] ?? 'N/A'));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("assetCode#{$i}", htmlspecialchars($asset['assetCode'] ?? 'N/A'));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("assetNumber#{$i}", htmlspecialchars($asset['assetNumber'] ?? 'N/A'));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("serialNumber#{$i}", htmlspecialchars($asset['serialNumber'] ?? 'N/A'));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("createdby#{$i}", htmlspecialchars($_SESSION['username'] ?? 'HR'));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("dateReturned#{$i}", '');
-                        } catch (\Exception $e) {}
-                        $i++;
-                    }
-                } catch (\Exception $e) {
-                    $this->logError("Could not clone asset rows: " . $e->getMessage());
-                    // Try to set at least the basic values
-                    try {
-                        $template->setValue('itemInfo', htmlspecialchars(implode(', ', array_map(function($a) { return $a['itemInfo'] ?? 'N/A'; }, $assets))));
-                    } catch (\Exception $e2) {}
+                $template->cloneRow('itemInfo', count($assets));
+                $i = 1;
+                foreach ($assets as $asset) {
+                    $template->setValue("itemInfo#{$i}", htmlspecialchars($asset['itemInfo'] ?? 'N/A'));
+                    $template->setValue("assetCode#{$i}", htmlspecialchars($asset['assetCode'] ?? 'N/A'));
+                    $template->setValue("assetNumber#{$i}", htmlspecialchars($asset['assetNumber'] ?? 'N/A'));
+                    $template->setValue("serialNumber#{$i}", htmlspecialchars($asset['serialNumber'] ?? 'N/A'));
+                    $i++;
                 }
             } else {
                 // Handle no assets case
-                try {
-                    $template->setValue('itemInfo', 'No assets assigned');
-                } catch (\Exception $e) {}
+                $template->setValue('itemInfo', 'No assets assigned');
+                $template->setValue('assetCode', '');
+                $template->setValue('assetNumber', '');
+                $template->setValue('serialNumber', '');
             }
             
-            // Fill in Uniforms - with graceful handling for missing template variables
+            // Fill in Uniforms
             if (!empty($uniforms)) {
-                try {
-                    // Only clone if the row exists in the template
-                    $template->cloneRow('uniform_type', count($uniforms), true);
-                    $j = 1;
-                    foreach ($uniforms as $uniform) {
-                        try {
-                            $template->setValue("dateissued#{$j}", htmlspecialchars($date_issued));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("uniform_type#{$j}", htmlspecialchars($uniform['uniform_type'] ?? 'N/A'));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("size#{$j}", htmlspecialchars($uniform['size'] ?? 'N/A'));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("color#{$j}", htmlspecialchars($uniform['color'] ?? 'N/A'));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("quantity_issued#{$j}", htmlspecialchars($uniform['quantity_issued'] ?? '0'));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("createdby#{$j}", htmlspecialchars($_SESSION['username'] ?? 'HR'));
-                        } catch (\Exception $e) {}
-                        try {
-                            $template->setValue("dateReturned#{$j}", '');
-                        } catch (\Exception $e) {}
-                        $j++;
-                    }
-                } catch (\Exception $e) {
-                    $this->logError("Could not clone uniform rows: " . $e->getMessage());
-                    // Try to set at least the basic values
-                    try {
-                        $template->setValue('uniform_type', htmlspecialchars(implode(', ', array_map(function($u) { return $u['uniform_type'] ?? 'N/A'; }, $uniforms))));
-                    } catch (\Exception $e2) {}
+                $template->cloneRow('uniform_type', count($uniforms));
+                $j = 1;
+                foreach ($uniforms as $uniform) {
+                    $template->setValue("uniform_type#{$j}", htmlspecialchars($uniform['uniform_type'] ?? 'N/A'));
+                    $template->setValue("size#{$j}", htmlspecialchars($uniform['size'] ?? 'N/A'));
+                    $template->setValue("color#{$j}", htmlspecialchars($uniform['color'] ?? 'N/A'));
+                    $template->setValue("quantity_issued#{$j}", htmlspecialchars($uniform['quantity_issued'] ?? '0'));
+                    $j++;
                 }
             } else {
                 // Handle no uniforms case
-                try {
-                    $template->setValue('uniform_type', 'No uniforms assigned');
-                } catch (\Exception $e) {}
+                $template->setValue('uniform_type', 'No uniforms assigned');
+                $template->setValue('size', '');
+                $template->setValue('color', '');
+                $template->setValue('quantity_issued', '');
             }
             
             // Generate filename

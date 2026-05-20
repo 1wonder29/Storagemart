@@ -237,8 +237,16 @@ class AuthController {
             case 'HR':
                 $this->redirect('/hr/dashboard');
                 break;
+            case 'AOM':
+                $this->redirect('/aom/dashboard');
+                break;
+            case 'OM':
+                $this->redirect('/om/dashboard');
+                break;
             default:
-                $this->redirect('/accounts');
+                // Unknown user type - redirect back to login
+                $_SESSION['loginMessage'] = 'Unknown user type. Please contact administrator.';
+                $this->redirect('/login');
                 break;
         }
     }

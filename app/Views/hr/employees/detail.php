@@ -128,12 +128,8 @@ $base = rtrim(BASE_URL, '/');
                                             <td><?= date('M d, Y', strtotime($unif['date_issued'])) ?></td>
                                             <td><?= htmlspecialchars($unif['condition_upon_issue'] ?? '-') ?></td>
                                             <td>
-                                                <form method="post"
-                                                      action="<?= htmlspecialchars($base) ?>/hr/uniforms/return/<?= $unif['assignment_id'] ?>"
-                                                      onsubmit="return confirm('Return this uniform now?');"
-                                                      style="display:inline;">
-                                                    <button type="submit" class="btn btn-sm btn-primary">Return</button>
-                                                </form>
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/return_confirm/<?= $unif['assignment_id'] ?>"
+                                                   class="btn btn-sm btn-primary">Return</a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

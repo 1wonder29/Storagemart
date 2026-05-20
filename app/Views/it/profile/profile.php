@@ -51,7 +51,15 @@ $fullName = trim(($profile['lastname'] ?? '') . ', ' . ($profile['firstname'] ??
             </div>
         </div>
     </div>
+
+    </div>
+    <!-- End of Main Content -->
+
 </div>
+<!-- End of Content Wrapper -->
+
+</div>
+<!-- End of Page Wrapper -->
 
 <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">

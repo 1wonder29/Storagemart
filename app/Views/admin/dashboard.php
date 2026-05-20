@@ -117,6 +117,67 @@ $base = rtrim(BASE_URL, '/');
                             </a>
                         </div>
 
+                    </div>
+                    <!-- End Content Row -->
+
+                    <!-- Dashboard Details Row -->
+                    <div class="row">
+                        <div class="col-xl-7 col-lg-7">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Overview</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div style="height: 320px;">
+                                        <canvas id="adminOverviewChart"></canvas>
+                                    </div>
+                                    <div class="small text-muted mt-2">
+                                        Distribution based on current totals.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-5 col-lg-5">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="list-group">
+                                        <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="<?= htmlspecialchars($base) ?>/admin/account">
+                                            <span><i class="fas fa-fw fa-user mr-2 text-gray-400"></i>Manage Accounts</span>
+                                            <i class="fas fa-chevron-right text-gray-400"></i>
+                                        </a>
+                                        <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="<?= htmlspecialchars($base) ?>/admin/tickets">
+                                            <span><i class="fas fa-ticket-alt mr-2 text-gray-400"></i>View Tickets</span>
+                                            <i class="fas fa-chevron-right text-gray-400"></i>
+                                        </a>
+                                        <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="<?= htmlspecialchars($base) ?>/admin/pendings">
+                                            <span><i class="fas fa-fw fa-table mr-2 text-gray-400"></i>On-going Tickets</span>
+                                            <i class="fas fa-chevron-right text-gray-400"></i>
+                                        </a>
+                                        <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="<?= htmlspecialchars($base) ?>/admin/assets">
+                                            <span><i class="fas fa-archive mr-2 text-gray-400"></i>Assets Directory</span>
+                                            <i class="fas fa-chevron-right text-gray-400"></i>
+                                        </a>
+                                        <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="<?= htmlspecialchars($base) ?>/admin/audit-trail">
+                                            <span><i class="fas fa-fw fa-history mr-2 text-gray-400"></i>Audit Trail</span>
+                                            <i class="fas fa-chevron-right text-gray-400"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End Dashboard Details Row -->
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
         </div>
         <!-- End of Content Wrapper -->
 
@@ -157,12 +218,16 @@ $base = rtrim(BASE_URL, '/');
     <!-- Custom scripts for all pages-->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
 
-    <!-- Page level plugins -->
-    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/chart.js/Chart.min.js"></script>
-
-    <!-- Page level custom scripts -->
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/chart-area-demo.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/chart-pie-demo.js"></script>
+    <script>
+        window.adminOverviewData = {
+            users: <?= (int)($userCount ?? 0) ?>,
+            tickets: <?= (int)($ticketCount ?? 0) ?>,
+            assets: <?= (int)($assetCount ?? 0) ?>,
+            ongoing: <?= (int)($ticketOngoing ?? 0) ?>
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_overview.js"></script>
 </body>
 
 </html>

@@ -303,7 +303,7 @@ class TicketController extends AuthController
 
         // from POST
         $employee_id      = (int)($_POST['employee_id'] ?? 0);
-        $inventory_id     = (int)($_POST['inventory_id'] ?? 0);
+        $inventory_id     = !empty($_POST['inventory_id']) ? (int)$_POST['inventory_id'] : null;
         $branch_id        = (int)($_POST['branch_id'] ?? 0);
         $department       = trim($_POST['department'] ?? '');
         $category         = trim($_POST['category'] ?? '');

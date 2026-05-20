@@ -22,7 +22,7 @@ $base = rtrim(BASE_URL, '/');
     <!-- Custom styles for this template -->
         <!-- Custom styles for this template -->
         <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-        <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png" type="image/png">
+        <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
         <!-- Custom styles for this page -->
         <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 
@@ -46,11 +46,13 @@ $base = rtrim(BASE_URL, '/');
 
                 <!-- Main content -->
                 <div class="card shadow mb-4">
-                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 font-weight-bold text-primary">List of Tickets</h6>
-                        <a href="<?= htmlspecialchars($base) ?>/employee/tickets/create" class="btn btn-primary btn-sm">
+                    <div class="d-flex flex-column align-items-end" style="gap: 10px; margin-right: 40px; margin-top: 40px;">
+                        <a href="<?= htmlspecialchars($base) ?>/employee/assets/file_ticket" class="btn btn-primary" style="width:160px;">
                             <i class="fas fa-plus"></i> Add Ticket
                         </a>
+                    </div>
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">List of Tickets</h6>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">

@@ -1,8 +1,9 @@
 <?php
 
+require_once __DIR__ . '/AuthController.php';
 require_once __DIR__ . '/../Models/NotificationModel.php';
 
-class NotificationController
+class NotificationController extends AuthController
 {
     public function getData($accountId)
     {
@@ -30,5 +31,30 @@ class NotificationController
         $model->markAsRead($notificationId, $userId);
 
         echo json_encode(['success' => true]);
+    }
+
+    public function index()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id'])) {
+            $_SESSION['loginMessage'] = 'Please log in to view notifications.';
+            $this->redirect('/login');
+        }
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition  = $ctx['loggedPosition'];
+
+        $model = new NotificationModel();
+        $userId = (int)$_SESSION['account_id'];
+        $count = $model->getUnreadCount($userId);
+        $notifications = $model->getLatest($userId, 50);
+
+        // choose sidebar/topbar based on role (used by the view)
+        $role = strtoupper($_SESSION['usertype'] ?? '');
+
+        require __DIR__ . '/../Views/notifications/index.php';
     }
 }

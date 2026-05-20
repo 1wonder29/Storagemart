@@ -31,11 +31,11 @@ $base = rtrim(BASE_URL, '/');
                         <h1 class="h3 mb-0 text-gray-800">IT Dashboard</h1>
                     </div>
 
-                    <div class="row">
+                    <div class="row align-items-stretch">
                         <!-- Assets Card -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets" style="text-decoration: none; color: inherit;">
-                                <div class="card border-left-primary shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s; padding: 0;">
+                        <div class="col-xl-4 col-md-6 mb-4">
+                            <a class="sm-card-link" href="<?= htmlspecialchars($base) ?>/it/tickets">
+                                <div class="card border-left-primary shadow h-100 py-2">
                                     <div class="card-body">
                                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                             Tickets
@@ -49,9 +49,9 @@ $base = rtrim(BASE_URL, '/');
                         </div>
 
                         <!-- Tickets Card -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" style="text-decoration: none; color: inherit;">
-                                <div class="card border-left-success shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s;">
+                        <div class="col-xl-4 col-md-6 mb-4">
+                            <a class="sm-card-link" href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress">
+                                <div class="card border-left-success shadow h-100 py-2">
                                     <div class="card-body">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                             On Going Tickets
@@ -65,9 +65,9 @@ $base = rtrim(BASE_URL, '/');
                         </div>
 
                         <!-- Ongoing Tickets -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" style="text-decoration: none; color: inherit;">
-                                <div class="card border-left-warning shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s;">
+                        <div class="col-xl-4 col-md-6 mb-4">
+                            <a class="sm-card-link" href="<?= htmlspecialchars($base) ?>/it/tickets/resolve">
+                                <div class="card border-left-warning shadow h-100 py-2">
                                     <div class="card-body">
                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                             Resolve
@@ -80,18 +80,16 @@ $base = rtrim(BASE_URL, '/');
                             </a>
                         </div>
                     </div>
-                </div>
-                <!--User Dashboard-->
-                <div class="container-fluid">
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                    <!-- User Dashboard -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-2">
                         <h1 class="h3 mb-0 text-gray-800">My Dashboard</h1>
                     </div>
 
-                    <div class="row">
+                    <div class="row align-items-stretch">
                         <!-- Assets Card -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <a href="<?= htmlspecialchars($base) ?>/it/assets" style="text-decoration: none; color: inherit;">
-                                <div class="card border-left-primary shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s;">
+                        <div class="col-xl-4 col-md-6 mb-4">
+                            <a class="sm-card-link" href="<?= htmlspecialchars($base) ?>/it/assets">
+                                <div class="card border-left-primary shadow h-100 py-2">
                                     <div class="card-body">
                                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                             My Assets
@@ -105,9 +103,9 @@ $base = rtrim(BASE_URL, '/');
                         </div>
 
                         <!-- Tickets Card -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets" style="text-decoration: none; color: inherit;">
-                                <div class="card border-left-success shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s;">
+                        <div class="col-xl-4 col-md-6 mb-4">
+                            <a class="sm-card-link" href="<?= htmlspecialchars($base) ?>/it/tickets">
+                                <div class="card border-left-success shadow h-100 py-2">
                                     <div class="card-body">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                             My Tickets
@@ -121,9 +119,9 @@ $base = rtrim(BASE_URL, '/');
                         </div>
 
                         <!-- Ongoing Tickets -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" style="text-decoration: none; color: inherit;">
-                                <div class="card border-left-warning shadow h-100 py-2" style="cursor: pointer; transition: transform 0.2s;">
+                        <div class="col-xl-4 col-md-6 mb-4">
+                            <a class="sm-card-link" href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress">
+                                <div class="card border-left-warning shadow h-100 py-2">
                                     <div class="card-body">
                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                             My On-going Tickets
@@ -136,9 +134,8 @@ $base = rtrim(BASE_URL, '/');
                             </a>
                         </div>
                     </div>
-                </div>
-            <div class="container-fluid px-3">
-                <div class="row">
+
+                    <div class="row">
 
                     <!-- Ticket Status Pie Chart -->
                     <div class="col-xl-4 col-lg-5">
@@ -193,9 +190,15 @@ $base = rtrim(BASE_URL, '/');
                 </div>
             </div>    
                 <!-- End Page Content -->
+
             </div>
+            <!-- End of Main Content -->
+
         </div>
+        <!-- End of Content Wrapper -->
+
     </div>
+    <!-- End of Page Wrapper -->
 
     <!-- Scroll to Top -->
     <a class="scroll-to-top rounded" href="#page-top">

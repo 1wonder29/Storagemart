@@ -22,7 +22,7 @@ $base = rtrim(BASE_URL, '/');
     <!-- Custom styles for this template -->
         <!-- Custom styles for this template -->
         <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-        <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png" type="image/png">
+        <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
         <!-- Custom styles for this page -->
         <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 
@@ -122,59 +122,6 @@ $base = rtrim(BASE_URL, '/');
         <i class="fas fa-angle-up"></i>
     </a>
 
-    <!-- View Ticket Modal -->
-    <div class="modal fade" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="viewTicketLabel">Ticket Details</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Ticket Number</label>
-                            <input type="text" id="ticket_number" class="form-control" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label>Status</label>
-                            <input type="text" id="status" class="form-control" readonly>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Employee</label>
-                            <input type="text" id="employee" class="form-control" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label>Priority</label>
-                            <input type="text" id="priority" class="form-control" readonly>
-                        </div>
-                    </div>
-
-                    <h6 class="mt-4">History Records</h6>
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="ticketHistoryTable" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Action Taken</th>
-                                    <th>Technician</th>
-                                    <th>Old Status</th>
-                                    <th>New Status</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Bootstrap core JavaScript-->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -190,69 +137,20 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Page level custom scripts -->
     <script>
-        // Set global BASE_URL for all scripts
-        window.BASE_URL = "<?= htmlspecialchars($base) ?>";
-    </script>
-
-    <script>
-$(document).ready(function() {
-    const base = "<?= htmlspecialchars($base) ?>";
-
-    // Initialize Tickets DataTable
-    var ticketsTable = $("#ticketsTable").DataTable({
-        responsive: true,
-        pageLength: 10,
-        "order": [[6, 'desc']]
-    });
-
-    // View Ticket Modal Handler
-    $('#ticketsTable').on("click", ".viewBtn", function() {
-        const id = $(this).data("ticketid");
-        const status = $(this).data("status") || "";
-
-        // Fill ticket info
-        $("#ticket_number").val($(this).data("ticketnum") || "");
-        $("#employee").val($(this).data("employee") || "");
-        $("#priority").val($(this).data("priority") || "");
-        $("#status").val(status);
-
-        // Clear previous history records
-        $("#ticketHistoryTable tbody").empty();
-
-        // Fetch history records
-        if (id) {
-            $.ajax({
-                url: base + '/hr/tickets/fetch-history/' + id,
-                method: 'GET',
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success && response.data) {
-                        response.data.forEach(function(record) {
-                            const row = `
-                                <tr>
-                                    <td>${record.action_taken || '-'}</td>
-                                    <td>${record.technician_name || '-'}</td>
-                                    <td>${record.old_status || '-'}</td>
-                                    <td>${record.new_status || '-'}</td>
-                                    <td>${record.date || '-'}</td>
-                                </tr>
-                            `;
-                            $("#ticketHistoryTable tbody").append(row);
-                        });
-                    } else {
-                        $("#ticketHistoryTable tbody").html('<tr><td colspan="5" class="text-center">No history records found</td></tr>');
-                    }
-                },
-                error: function() {
-                    $("#ticketHistoryTable tbody").html('<tr><td colspan="5" class="text-center text-danger">Error loading history</td></tr>');
-                }
+        // DataTables initialization
+        $(document).ready(function() {
+            $('#ticketsTable').DataTable({
+                "order": [[6, 'desc']]
             });
-        }
+        });
 
-        // Show modal
-        $('#viewTicketModal').modal('show');
-    });
-});
+        // View Ticket
+        $(document).on("click", ".viewBtn", function () {
+            const ticketId = $(this).data("ticketid");
+            if (ticketId) {
+                window.location.href = "<?= htmlspecialchars($base) ?>/hr/tickets/view?id=" + ticketId;
+            }
+        });
     </script>
 
 </body>

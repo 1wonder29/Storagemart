@@ -74,8 +74,8 @@ class ItTicketModel extends BaseModel
             SELECT 
                 t.ticket_id,
                 t.ticket_number,
-                CONCAT(e.lastname, ', ', e.firstname, ' ', LEFT(e.middlename, 1), '.') AS employee_name,
-                CONCAT(g.groupName, ' - ', i.itemInfo) AS asset,
+                CONCAT(e.lastname, ', ', e.firstname, ' ', LEFT(IFNULL(e.middlename, ''), 1), '.') AS employee_name,
+                CONCAT(IFNULL(g.groupName, 'N/A'), ' - ', IFNULL(i.itemInfo, 'N/A')) AS asset,
                 b.branchName,
                 tt.technical_purpose,
                 tt.action_taken,
@@ -83,13 +83,13 @@ class ItTicketModel extends BaseModel
                 tt.remarks,
                 tt.date_performed
             FROM {$this->tbltickets} t
-            JOIN {$this->tbltechnical} tt ON t.ticket_id = tt.ticket_id
+            LEFT JOIN {$this->tbltechnical} tt ON t.ticket_id = tt.ticket_id
             JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            JOIN {$this->tblassets} i ON t.inventory_id = i.inventory_id
+            LEFT JOIN {$this->tblassets} i ON t.inventory_id = i.inventory_id
             LEFT JOIN {$this->tblgroup} g ON i.group_id = g.group_id
             JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
             WHERE t.status = 'Resolved'
-            ORDER BY tt.date_performed DESC
+            ORDER BY COALESCE(tt.date_performed, t.last_updated) DESC
         ";
 
         return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);

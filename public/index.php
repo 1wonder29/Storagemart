@@ -14,15 +14,6 @@ if ($isProduction) {
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
 }
-
-// CRITICAL: Ensure all URLs use scheme-relative or path-relative URLs
-// This prevents port mismatches when accessed from iframes or different domains
-header('X-Frame-Options: SAMEORIGIN');
-header('X-Content-Type-Options: nosniff');
-
-// Debug: Log the actual request details
-error_log('Request: ' . ($_SERVER['REQUEST_METHOD'] ?? 'NA') . ' ' . ($_SERVER['REQUEST_URI'] ?? 'NA') . ' from ' . ($_SERVER['HTTP_HOST'] ?? 'NA'));
-
 if (php_sapi_name() === 'cli-server') {
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $file = __DIR__ . $path;
@@ -44,12 +35,7 @@ $uri = '/' . trim($uri, '/');
 // ROUTES
 // HOME ROUTE
 if ($uri === '/' || $uri === '') {
-    // Use relative redirect to preserve current domain and port
-    if (BASE_URL === '' || BASE_URL === '/') {
-        header('Location: /login');
-    } else {
-        header('Location: ' . rtrim(BASE_URL, '/') . '/login');
-    }
+    header('Location: ' . rtrim(BASE_URL, '/') . '/login');
     exit;
 }
 
@@ -95,6 +81,13 @@ if ($uri === '/notifications/read' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// NOTIFICATIONS LIST PAGE
+if ($uri === '/notifications' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Controllers/NotificationController.php';
+    (new NotificationController())->index();
+    exit;
+}
+
 // ADMIN PREFIX routes
 if (strpos($uri, '/admin') === 0) {
     require_once __DIR__ . '/../app/Controllers/admin/AdminController.php';
@@ -137,18 +130,18 @@ if (strpos($uri, '/admin') === 0) {
         $asset->asset();
     } elseif ($sub === 'assets/branch/add') {
         $asset->branch();
+    } elseif ($sub === 'assets/branch/list' || $sub === 'assets/category/list' || $sub === 'assets/group/list') {
+        $asset->referenceLists();
+    } elseif ($sub === 'assets/reference') {
+        $asset->referenceLists();
     } elseif ($sub === 'assets/category/add') {
         $asset->category();
     } elseif ($sub === 'assets/group/add') {
         $asset->group();
     } elseif ($sub === 'assets/group/update') {
         $asset->updateGroup();
-    } elseif ($sub === 'assets/group/delete') {
-        $asset->deleteGroup();
     } elseif ($sub === 'assets/item') {
         $asset->item();
-    } elseif ($sub === 'assets/item/delete') {
-        $asset->deleteItem();
     } elseif ($sub === 'assets/add') {
         $asset->addItem();
     } elseif ($sub === 'assets/item/edit' && $_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -171,10 +164,6 @@ if (strpos($uri, '/admin') === 0) {
         $ticket->decline();
     } elseif ($sub === 'assets/view') {
         $admin->view_asset();
-    } elseif ($sub === 'audit-trail') {
-        $admin->auditTrail();
-    } elseif ($sub === 'audit-detail') {
-        $admin->auditDetail();
     } else {
         http_response_code(404);
         echo "Admin page not found.";
@@ -316,6 +305,10 @@ if (strpos($uri, '/head') === 0) {
         $headTicket->rate();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $headTicket->storeRating();
+    } elseif ($sub === 'tickets/history') {
+        $headTicket->index();
+    } elseif ($sub === 'tickets/history/fetch') {
+        $headTicket->fetchHistory();
     } elseif ($sub === 'employee') {
         $head->department();
     } else {
@@ -349,6 +342,36 @@ if (strpos($uri, '/hr') === 0) {
         $hr->downloadAccountabilityForm($employeeId);
     } elseif (strpos($sub, 'employees/search') === 0) {
         $hr->searchEmployees();
+    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $hrTicket->create();
+    } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $hrTicket->store();
+    } elseif (strpos($sub, 'tickets/fetch-history/') === 0) {
+        $pathId = (int) substr($sub, strlen('tickets/fetch-history/'));
+        $hrTicket->fetchHistory($pathId > 0 ? $pathId : null);
+    } elseif ($sub === 'tickets/employees-by-branch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $hrTicket->employeesByBranchAjax();
+    } elseif ($sub === 'tickets/create') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $hrTicket->create();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $hrTicket->store();
+        } else {
+            http_response_code(405);
+            echo 'Method not allowed.';
+        }
+    } elseif (strpos($sub, 'tickets/view') === 0) {
+        $hrTicket->ticketDetail();
+    } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $hrTicket->downloadTechnicalRecord();
+    } elseif ($sub === 'tickets/upload-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $hrTicket->uploadTechnicalReport();
+    } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $hrTicket->rate();
+    } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $hrTicket->storeRating();
+    } elseif ($sub === 'tickets') {
+        $hrTicket->index();
     } elseif ($sub === 'uniforms') {
         $uniform->list();
     } elseif ($sub === 'uniforms/add') {
@@ -373,6 +396,19 @@ if (strpos($uri, '/hr') === 0) {
         }
     } elseif (strpos($sub, 'uniforms/search') === 0) {
         $uniform->search();
+    } elseif ($sub === 'uniforms/reorder-alerts') {
+        $uniform->getReorderAlerts();
+    } elseif ($sub === 'uniforms/get-by-type' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $uniform->getUniformsByType();
+    } elseif ($sub === 'uniforms/assign') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $uniform->assignForm();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $uniform->assign();
+        }
+    } elseif (strpos($sub, 'uniforms/assignments/') === 0) {
+        $uniformId = (int) substr($sub, strlen('uniforms/assignments/'));
+        $uniform->assignments($uniformId);
     } elseif (strpos($sub, 'uniforms/return_confirm/') === 0) {
         $assignmentId = (int) substr($sub, strlen('uniforms/return_confirm/'));
         $uniform->returnConfirm($assignmentId);
@@ -380,33 +416,129 @@ if (strpos($uri, '/hr') === 0) {
         $assignmentId = (int) substr($sub, strlen('uniforms/return/'));
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uniform->processReturn($assignmentId);
-        } else {
-            http_response_code(405);
-            echo "Method not allowed.";
         }
-    } elseif (strpos($sub, 'uniforms/assign') === 0) {
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $uniform->assignForm();
-        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $uniform->assign();
-        }
-    
-    } elseif ($sub === 'uniforms/get-by-type') {
-        $uniform->getUniformsByType();
-    } elseif ($sub === 'uniforms/reorder-alerts') {
-        $uniform->getReorderAlerts();
-    } elseif ($sub === 'tickets' || $sub === 'tickets/index') {
-        $hrTicket->index();
-    } elseif ($sub === 'tickets/create') {
-        $hrTicket->create();
-    } elseif ($sub === 'tickets/store') {
-        $hrTicket->store();
-    } elseif (strpos($sub, 'tickets/fetch-history/') === 0) {
-        $_GET['ticket_id'] = (int) substr($sub, strlen('tickets/fetch-history/'));
-        $hrTicket->fetchHistory();
     } else {
         http_response_code(404);
         echo "HR page not found.";
+    }
+    exit;
+}
+
+// AOM PREFIX routes - Area Operation Manager
+if ($uri === '/aom' || strpos($uri, '/aom/') === 0) {
+    require_once __DIR__ . '/../app/Controllers/aom/AOMController.php';
+
+    $aom = new AOMController();
+    $sub = trim(substr($uri, strlen('/aom')), '/');
+
+    if ($sub === '' || $sub === 'dashboard') {
+        $aom->dashboard();
+    } elseif ($sub === 'profile') {
+        // Profile page (if needed)
+        http_response_code(501);
+        exit("Coming soon");
+    } elseif ($sub === 'employees') {
+        $aom->employees();
+    } elseif (strpos($sub, 'employees/detail') === 0) {
+        $aom->employeeDetail();
+    } elseif ($sub === 'branches') {
+        // List branches - similar to dashboard
+        $aom->dashboard();
+    } elseif (strpos($sub, 'branches/detail') === 0) {
+        $aom->branchDetail();
+    } elseif ($sub === 'tickets') {
+        $aom->tickets();
+    } elseif ($sub === 'tickets/create') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $aom->createTicketForm();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $aom->submitTicket();
+        }
+    } elseif (strpos($sub, 'tickets/view') === 0) {
+        $aom->ticketDetail();
+    } elseif ($sub === 'tickets/update-status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $aom->updateTicketStatus();
+    } elseif ($sub === 'api/employees-by-branch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        // AJAX endpoint to get employees in a branch
+        $aom->getEmployeesByBranchAjax();
+    } else {
+        http_response_code(404);
+        echo "AOM page not found.";
+    }
+    exit;
+}
+
+// OM PREFIX routes - Operation Manager
+if ($uri === '/om' || strpos($uri, '/om/') === 0) {
+    require_once __DIR__ . '/../app/Controllers/om/OMController.php';
+    require_once __DIR__ . '/../app/Controllers/om/OMTicketController.php';
+
+    $sub = trim(substr($uri, strlen('/om')), '/');
+
+    // Handle ticket routes
+    if (strpos($sub, 'tickets') === 0) {
+        $omTicket = new OMTicketController();
+        
+        if ($sub === 'tickets') {
+            $omTicket->index();
+        } elseif ($sub === 'tickets/create') {
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                $omTicket->create();
+            } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $omTicket->store();
+            }
+        } elseif (strpos($sub, 'tickets/view') === 0) {
+            $omTicket->view();
+        } elseif ($sub === 'tickets/upload-technical-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $omTicket->uploadTechnicalReport();
+        } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            $omTicket->rate();
+        } elseif ($sub === 'tickets/store-rating' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $omTicket->storeRating();
+        } elseif ($sub === 'tickets/download-technical-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            $omTicket->downloadTechnicalRecord();
+        } else {
+            http_response_code(404);
+            echo "OM Ticket page not found.";
+        }
+        exit;
+    }
+
+    // Handle non-ticket routes
+    $om = new OMController();
+
+    if ($sub === '' || $sub === 'dashboard') {
+        $om->dashboard();
+    } elseif ($sub === 'employees') {
+        $om->employees();
+    } elseif ($sub === 'assignments') {
+        $om->assignments();
+    } elseif ($sub === 'new-assignment') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $om->createAssignment();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $om->createAssignment();
+        }
+    } elseif (strpos($sub, 'edit-assignment') === 0) {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $om->updateAssignment();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $om->updateAssignment();
+        }
+    } elseif ($sub === 'deactivate-assignment' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $om->deactivateAssignment();
+    } elseif ($sub === 'api/unassigned-employees' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        // AJAX endpoint to get unassigned employees
+        $om->getUnassignedEmployees();
+    } elseif ($sub === 'api/aoms' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        // AJAX endpoint to get all AOMs
+        $om->getAOMs();
+    } elseif ($sub === 'api/employee-assignments' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        // AJAX endpoint to get employee assignments
+        $om->getEmployeeAssignments();
+    } else {
+        http_response_code(404);
+        echo "OM page not found.";
     }
     exit;
 }

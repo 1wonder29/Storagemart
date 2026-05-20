@@ -44,14 +44,6 @@ $base = rtrim(BASE_URL, '/');
                             <div class="card-header py-3">
                                 <h6 class="m-0 font-weight-bold text-primary">List of Item Assets</h6>
                             </div>
-                            <div class="d-flex flex-column align-items-end" style="gap: 10px; margin-right: 40px; margin-top: 40px;">
-                                        <a href="<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= htmlspecialchars($inventory['group_id']); ?>" 
-                                        class="btn btn-danger"
-                                        onclick="return confirm('Cancel transfer and return to the previous list?');">
-                                        Cancel
-                            </a>
-
-                            </div>
                             <div class="card-body">
                                 <div class="table-responsive">
                                         <?php if (empty($assignments)): ?>
@@ -68,16 +60,6 @@ $base = rtrim(BASE_URL, '/');
                                                 <th>Created By</th>
                                             </tr>
                                         </thead>
-                                        <tfoot>
-                                            <tr>
-                                                <th>Employee ID</th>
-                                                <th>Name</th>
-                                                <th>Transfer Details</th>
-                                                <th>Date Issued</th>
-                                                <th>Date Returned</th>
-                                                <th>Created By</th>
-                                            </tr>
-                                        </tfoot>
                                         <tbody>
                                             <?php foreach ($assignments as $row): ?>
                                             <tr>

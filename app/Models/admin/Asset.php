@@ -9,6 +9,7 @@ class Asset extends BaseModel {
     protected $tblassign = 'tblassets_assignment';
     protected $tblemployee = 'tblemployee';
     protected $tblaccounts = 'tblaccounts';
+    protected $tblseq = 'tblasset_sequence';
 
     
     public function fetchAllAssets(): array {
@@ -172,8 +173,8 @@ class Asset extends BaseModel {
         try {
             $this->pdo->beginTransaction();
 
-            // 1) get ic_code from group -> category
-            $sql = "SELECT c.ic_code
+            // 1) get ic_code and category_id from group -> category
+            $sql = "SELECT c.ic_code, c.category_id
                     FROM {$this->tblgroup} g
                     JOIN {$this->tblcategory} c ON g.category_id = c.category_id
                     WHERE g.group_id = :group_id
@@ -182,22 +183,39 @@ class Asset extends BaseModel {
             $stmt->execute([':group_id' => $groupId]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $ic_code = $row['ic_code'] ?? null;
+            $categoryId = isset($row['category_id']) ? (int)$row['category_id'] : null;
 
             if (empty($ic_code)) {
                 $this->pdo->rollBack();
                 return null;
             }
+            // 2) ensure a persistent per-category sequence table exists and allocate next sequence
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS {$this->tblseq} (
+                category_id INT PRIMARY KEY,
+                last_sequence INT NOT NULL,
+                ic_code VARCHAR(64),
+                datecreated DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
-            // 2) compute assetCode (sequential) and assetNumber
-            $stmt = $this->pdo->query("SELECT COUNT(*) AS cnt FROM {$this->tblassets}");
-            $countRow = $stmt->fetch(PDO::FETCH_ASSOC);
-            $total = (int)($countRow['cnt'] ?? 0);
-            $assetCode = $total + 1;
-            $assetCodePadded = str_pad($assetCode, 3, "0", STR_PAD_LEFT);
+            // fetch and lock the sequence row for this category
+            $seqStmt = $this->pdo->prepare("SELECT last_sequence FROM {$this->tblseq} WHERE category_id = :cid FOR UPDATE");
+            $seqStmt->execute([':cid' => $categoryId]);
+            $seqRow = $seqStmt->fetch(PDO::FETCH_ASSOC);
 
-            // use last 2 chars of provided year string (e.g. "2022" -> "22")
-            $yearshort = substr($year_purchased, -2);
-            $assetNumber = "{$ic_code}-{$yearshort}{$assetCodePadded}";
+            if ($seqRow) {
+                $lastSeq = (int)$seqRow['last_sequence'];
+                $newSeq = $lastSeq + 1;
+                $upd = $this->pdo->prepare("UPDATE {$this->tblseq} SET last_sequence = :ls WHERE category_id = :cid");
+                $upd->execute([':ls' => $newSeq, ':cid' => $categoryId]);
+            } else {
+                $newSeq = 1;
+                $ins = $this->pdo->prepare("INSERT INTO {$this->tblseq} (category_id, last_sequence, ic_code) VALUES (:cid, :ls, :ic)");
+                $ins->execute([':cid' => $categoryId, ':ls' => $newSeq, ':ic' => $ic_code]);
+            }
+
+            // Build assetCode and assetNumber using the per-category sequence
+            $assetCode = $newSeq;
+            $assetNumber = "{$ic_code}-" . str_pad($newSeq, 4, "0", STR_PAD_LEFT);
 
             // 3) insert into tblassets_inventory
             $sql = "INSERT INTO {$this->tblassets}
@@ -525,27 +543,6 @@ class Asset extends BaseModel {
             return false;
         }
     }
+
     
-    public function deleteItem(int $inventoryId): bool
-    {
-        try {
-            $this->pdo->beginTransaction();
-
-            // Remove any assignment records related to this inventory first
-            $stmt = $this->pdo->prepare("DELETE FROM {$this->tblassign} WHERE inventory_id = :inventory_id");
-            $stmt->execute([':inventory_id' => $inventoryId]);
-
-            // Then remove the inventory row itself
-            $stmt2 = $this->pdo->prepare("DELETE FROM {$this->tblassets} WHERE inventory_id = :inventory_id");
-            $success = $stmt2->execute([':inventory_id' => $inventoryId]);
-
-            $this->pdo->commit();
-            return (bool) $success;
-        } catch (\Throwable $e) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
-            return false;
-        }
-    }
 }

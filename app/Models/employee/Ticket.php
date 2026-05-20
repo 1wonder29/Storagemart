@@ -56,7 +56,7 @@ class EmployeeTicket extends BaseModel
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             ':employee_id'     => $data['employee_id'],
-            ':inventory_id'    => (int)$data['inventory_id'] > 0 ? (int)$data['inventory_id'] : null,
+            ':inventory_id'    => $data['inventory_id'],
             ':branch_id'       => $data['branch_id'],
             ':department'      => $data['department'],
             ':category'        => $data['category'],
@@ -227,60 +227,71 @@ class EmployeeTicket extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
-    public function getAllTickets(): array
+    public function fetchAllBranches(): array
     {
         $sql = "
-            SELECT 
-                t.ticket_id,
-                t.ticket_number,
-                t.concern_details,
-                t.category,
-                t.priority,
-                t.status,
-                t.date_filed,
-                b.branchName,
-                CONCAT(e.lastname, ', ', e.firstname) AS employee_name
-            FROM {$this->tbltickets} t
-            INNER JOIN {$this->tblemployee} e 
-                ON t.employee_id = e.employee_id
-            LEFT JOIN {$this->tblbranch} b
-                ON e.branch_id = b.branch_id
-            ORDER BY t.date_filed DESC
+            SELECT branch_id, branchName, branchCode
+            FROM {$this->tblbranch}
+            ORDER BY branchName ASC
         ";
-
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
-    public function getTicketsByCreatedBy(int $createdByAccountId): array
+    public function fetchAllTickets(): array
     {
         $sql = "
             SELECT 
-                t.ticket_id,
-                t.ticket_number,
-                t.concern_details,
-                t.category,
-                t.priority,
-                t.status,
-                t.date_filed,
+                t.ticket_id, 
+                t.ticket_number, 
+                CONCAT(e.lastname, ', ', e.firstname) AS employee_name,
+                t.category, 
+                t.priority, 
+                t.status, 
+                t.date_filed, 
                 b.branchName,
-                CONCAT(e.lastname, ', ', e.firstname) AS employee_name
+                t.concern_details
             FROM {$this->tbltickets} t
-            INNER JOIN {$this->tblemployee} e 
-                ON t.employee_id = e.employee_id
-            LEFT JOIN {$this->tblbranch} b
-                ON e.branch_id = b.branch_id
-            WHERE t.created_by = ?
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
             ORDER BY t.date_filed DESC
         ";
-
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$createdByAccountId]);
-
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function getTicketsByCreatedBy(int $accountId): array
+    {
+        $sql = "
+            SELECT 
+                t.ticket_id, 
+                t.ticket_number, 
+                CONCAT(e.lastname, ', ', e.firstname) AS employee_name,
+                t.category, 
+                t.priority, 
+                t.status, 
+                t.date_filed, 
+                b.branchName,
+                t.concern_details,
+                e.branch_id
+            FROM {$this->tbltickets} t
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+            WHERE t.created_by = :created_by
+            ORDER BY t.date_filed DESC
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':created_by' => $accountId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function updateTechnicalReportPath(int $ticketId, string $filepath): bool
+    {
+        $sql = "UPDATE {$this->tbltickets} SET technical_report_path = :filepath WHERE ticket_id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([':filepath' => $filepath, ':id' => $ticketId]);
+    }
 
 }

@@ -51,8 +51,16 @@ $(document).on('click', '.viewBtn', function () {
   historyDT = null;
   $('#ticketHistoryTable tbody').empty();
 
-  // 2) Show loading row and open modal (so user sees immediate feedback)
-  $('#ticketHistoryTable tbody').html('<tr><td colspan="5" class="text-center">Loading...</td></tr>');
+  // 2) Show loading row (must keep 5 cells for DataTables)
+  $('#ticketHistoryTable tbody').html(`
+    <tr>
+      <td class="text-center" colspan="1">Loading...</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  `);
   $('#viewTicketModal').modal('show');
 
   // 3) Fetch history
@@ -73,7 +81,16 @@ $(document).on('click', '.viewBtn', function () {
 
       // Validate response
       if (!Array.isArray(history) || history.length === 0) {
-        $('#ticketHistoryTable tbody').html('<tr><td colspan="5" class="text-center">No history found.</td></tr>');
+        // Keep 5 cells so DataTables doesn't warn about missing columns
+        $('#ticketHistoryTable tbody').html(`
+          <tr>
+            <td class="text-center">No history found.</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        `);
       } else {
         const rowsHtml = history.map(row => {
           const action = row.action_details || '';
@@ -108,7 +125,16 @@ $(document).on('click', '.viewBtn', function () {
     },
     error: function (xhr, status, err) {
       console.error('fetch_ticket_history error:', status, err, xhr);
-      $('#ticketHistoryTable tbody').html('<tr><td colspan="5" class="text-center text-danger">Failed to load history.</td></tr>');
+      // Keep 5 cells so DataTables doesn't warn about missing columns
+      $('#ticketHistoryTable tbody').html(`
+        <tr>
+          <td class="text-center text-danger">Failed to load history.</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      `);
     }
   });
 });
