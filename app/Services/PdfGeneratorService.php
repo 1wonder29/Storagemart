@@ -64,7 +64,7 @@ class PdfGeneratorService
      * @return array|false Returns array with 'success', 'filename', 'path', 'file_size' on success
      *                     Returns false on failure
      */
-    public function generateTechnicalRecordDocx($ticketId, $employeeId)
+    public function generateTechnicalRecordDocx($ticketId, $employeeId, $allowRequesterOverride = false)
     {
         try {
             // Fetch ticket and technical data
@@ -75,8 +75,8 @@ class PdfGeneratorService
                 return false;
             }
             
-            // Verify ticket belongs to the employee
-            if ((int)$ticketData['employee_id'] !== (int)$employeeId) {
+            // Verify ticket belongs to the employee unless caller requests override
+            if (!$allowRequesterOverride && (int)$ticketData['employee_id'] !== (int)$employeeId) {
                 $this->logError("Employee {$employeeId} attempted to access ticket {$ticketId} belonging to employee {$ticketData['employee_id']}");
                 return false;
             }

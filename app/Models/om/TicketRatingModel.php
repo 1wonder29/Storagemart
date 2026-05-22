@@ -16,7 +16,7 @@ class OMTicketRatingModel
         $stmt = $this->db->prepare("
             SELECT COUNT(*) 
             FROM ticket_ratings
-            WHERE ticket_id = ? AND om_id = ?
+            WHERE ticket_id = ? AND employee_id = ?
         ");
         $stmt->execute([(int)$ticketId, (int)$omId]);
 
@@ -27,7 +27,7 @@ class OMTicketRatingModel
     {
         $stmt = $this->db->prepare("
             INSERT INTO ticket_ratings
-                (ticket_id, om_id, it_id, rating, comment, created_at)
+                (ticket_id, employee_id, it_id, rating, comment, created_at)
             VALUES
                 (?, ?, ?, ?, ?, NOW())
         ");

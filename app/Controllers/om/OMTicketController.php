@@ -421,6 +421,20 @@ class OMTicketController extends AuthController
         $ratingModel = new OMTicketRatingModel();
         $alreadyRated = $ratingModel->hasRated($ticketId, $omId);
 
+        // Debug: if already rated, log database row
+        if ($alreadyRated) {
+            try {
+                $stmt = (new Employee())->getPDO()->prepare('SELECT * FROM ticket_ratings WHERE ticket_id = ? AND employee_id = ?');
+                $stmt->execute([$ticketId, $omId]);
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $logDir = __DIR__ . '/../../logs';
+                if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+                @file_put_contents($logDir . '/rating_debug.log', '[' . date('Y-m-d H:i:s') . "] OM alreadyRated row: " . json_encode($row) . "\n", FILE_APPEND);
+            } catch (Exception $e) {
+                @file_put_contents(__DIR__ . '/../../logs/rating_debug.log', '[' . date('Y-m-d H:i:s') . "] OM alreadyRated query failed: " . $e->getMessage() . "\n", FILE_APPEND);
+            }
+        }
+
         $base = rtrim(BASE_URL, '/');
 
         require __DIR__ . '/../../Views/om/ticket/rate.php';
@@ -520,7 +534,8 @@ class OMTicketController extends AuthController
         require_once __DIR__ . '/../../Services/PdfGeneratorService.php';
         $pdfService = new PdfGeneratorService();
 
-        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $omId, false);
+        // OM should be allowed to generate records for tickets they manage
+        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $omId, true);
 
         if (!$result || !$result['success']) {
             http_response_code(404);

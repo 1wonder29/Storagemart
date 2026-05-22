@@ -264,15 +264,49 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
 
     $(document).on('click', '.rateBtn', function () {
         const ticketId = $(this).data('ticketid');
-        const base = "<?= htmlspecialchars($base) ?>";
+        const baseRaw = "<?= htmlspecialchars($base) ?>";
+        const fullBase = (baseRaw && baseRaw.indexOf('http') === 0) ? baseRaw : (window.location.origin + (baseRaw || ''));
         
-        $.get(base + '/aom/tickets/rate?id=' + ticketId, function(html) {
-            const modalBody = $('<div>').html(html);
-            $('#rateTicketModalBody').html(html);
-            $('#rateTicketModal').modal('show');
-        }).fail(function() {
-            alert('Failed to load rating form. Please try again.');
-        });
+        $.get(fullBase + '/aom/tickets/rate?id=' + ticketId)
+            .done(function(html) {
+                // Insert HTML into modal body if present; otherwise fallback
+                const container = document.getElementById('rateTicketModalBody');
+                if (container) {
+                    container.innerHTML = html;
+
+                    // Execute any inline scripts in the returned HTML
+                    const scripts = Array.from(container.querySelectorAll('script'));
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        if (oldScript.src) {
+                            newScript.src = oldScript.src;
+                            if (oldScript.async) newScript.async = true;
+                            if (oldScript.defer) newScript.defer = true;
+                            document.body.appendChild(newScript);
+                        } else {
+                            newScript.textContent = oldScript.textContent;
+                            document.body.appendChild(newScript);
+                        }
+                    });
+
+                    $('#rateTicketModal').modal('show');
+                } else {
+                    // Fallback: open rating page in new tab or navigate if blocked
+                    const rateUrl = fullBase + '/aom/tickets/rate?id=' + encodeURIComponent(ticketId);
+                    const newWin = window.open(rateUrl, '_blank');
+                    if (!newWin) window.location.href = rateUrl;
+                }
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('Failed to load rating form', {jqXHR: jqXHR, textStatus: textStatus, errorThrown: errorThrown});
+                // Fallback: open the rating page in a new tab so user can still rate
+                const rateUrl = fullBase + '/aom/tickets/rate?id=' + encodeURIComponent(ticketId);
+                // Try to open new tab; if popup blocked, navigate current window
+                const newWin = window.open(rateUrl, '_blank');
+                if (!newWin) {
+                    window.location.href = rateUrl;
+                }
+            });
     });
     
     $(document).on('submit', '#rateTicketForm', function (e) {
@@ -281,16 +315,24 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
         const form = $(this);
         
         $.post(base + '/aom/tickets/rate', form.serialize(), function(response) {
-            const result = JSON.parse(response);
-            if (result.success) {
-                alert(result.message);
+            let result = response;
+            try {
+                if (typeof response === 'string') result = JSON.parse(response);
+            } catch (e) {
+                // leave as-is
+            }
+
+            if (result && result.success) {
+                alert(result.message || 'Rating submitted.');
                 $('#rateTicketModal').modal('hide');
                 location.reload();
             } else {
-                alert('Error: ' + result.message);
+                alert('Error: ' + ((result && result.message) ? result.message : 'Unknown error'));
             }
-        }).fail(function() {
-            alert('Failed to submit rating. Please try again.');
+        }).fail(function(jqXHR) {
+            let msg = 'Failed to submit rating. Please try again.';
+            try { if (jqXHR && jqXHR.responseText) msg += '\nServer: ' + jqXHR.status + ' ' + jqXHR.responseText; } catch(e){}
+            alert(msg);
         });
     });
 </script>

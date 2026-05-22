@@ -267,6 +267,7 @@ class HrTicketController extends AuthController
         $notifications = $notificationData['notifications'];
 
         $history = $model->getTicketHistory($ticketId);
+        $ticketHistory = $history;
 
         require __DIR__ . '/../../Views/hr/ticket/ticket-detail.php';
     }
@@ -496,14 +497,14 @@ class HrTicketController extends AuthController
             <div class="form-group">
                 <label class="font-weight-bold mb-3">How would you rate your experience?</label>
                 <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
-                    <span class="star" data-value="1" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Poor">★</span>
-                    <span class="star" data-value="2" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Fair">★</span>
-                    <span class="star" data-value="3" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Good">★</span>
-                    <span class="star" data-value="4" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Very Good">★</span>
-                    <span class="star" data-value="5" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Excellent">★</span>
+                    <span class="star" data-value="1" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Poor">★</span>
+                    <span class="star" data-value="2" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Fair">★</span>
+                    <span class="star" data-value="3" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Good">★</span>
+                    <span class="star" data-value="4" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Very Good">★</span>
+                    <span class="star" data-value="5" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Excellent">★</span>
                 </div>
                 <p style="text-align: center; color: #999; font-size: 0.9rem;" id="ratingText">Click to select rating</p>
-                <select name="rating" id="ratingSelect" style="display: none;" required></select>
+                <input type="hidden" name="rating" id="ratingSelect" value="">
             </div>
 
             <div class="form-group">
@@ -520,12 +521,26 @@ class HrTicketController extends AuthController
         </form>
 
         <script>
-            $(".star").on("click", function() {
+            $(".star").on("click keypress", function(e) {
+                if (e.type === "keypress" && e.which !== 13 && e.which !== 32) return; // Enter or Space
                 const rating = $(this).data("value");
                 $("#ratingSelect").val(rating);
                 $(".star").css("color", "#ddd");
-                $(this).prevAll(".star").andSelf().css("color", "#ffc107");
-                $("#ratingText").text(rating + " star" + (rating > 1 ? "s" : ""));
+                if ($.fn.addBack) {
+                    $(this).prevAll(".star").addBack().css("color", "#ffc107");
+                } else {
+                    $(this).prevAll(".star").andSelf().css("color", "#ffc107");
+                }
+                $("#ratingText").text(rating + " star" + (rating > 1 ? "s" : "")).css("color", "#666");
+            });
+
+            $("#rateTicketForm").on("submit", function(e) {
+                if (!$("#ratingSelect").val()) {
+                    e.preventDefault();
+                    $("#ratingText").text("Please select a rating").css("color", "#d9534f");
+                    $(".star").first().focus();
+                    return false;
+                }
             });
         </script>
         ';

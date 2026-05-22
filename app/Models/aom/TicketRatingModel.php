@@ -16,18 +16,35 @@ class AOMTicketRatingModel
         $stmt = $this->db->prepare("
             SELECT COUNT(*) 
             FROM ticket_ratings
-            WHERE ticket_id = ? AND aom_id = ?
+            WHERE ticket_id = ? AND employee_id = ?
         ");
         $stmt->execute([(int)$ticketId, (int)$aomId]);
 
         return $stmt->fetchColumn() > 0;
     }
 
+    public function getByTicketAndEmployee($ticketId, $aomId)
+    {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM ticket_ratings WHERE ticket_id = ? AND employee_id = ? LIMIT 1"
+        );
+        $stmt->execute([(int)$ticketId, (int)$aomId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function updateById($id, $rating, $comment = '')
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE ticket_ratings SET rating = ?, comment = ? WHERE id = ?"
+        );
+        return $stmt->execute([(int)$rating, trim($comment), (int)$id]);
+    }
+
     public function create($ticketId, $aomId, $itId, $rating, $comment = '')
     {
         $stmt = $this->db->prepare("
             INSERT INTO ticket_ratings
-                (ticket_id, aom_id, it_id, rating, comment, created_at)
+                (ticket_id, employee_id, it_id, rating, comment, created_at)
             VALUES
                 (?, ?, ?, ?, ?, NOW())
         ");

@@ -222,13 +222,28 @@ $base = rtrim(BASE_URL, '/');
         const ticketId = $(this).data('ticketid');
         const base = "<?= htmlspecialchars($base) ?>";
         
-        $.get(base + '/hr/tickets/rate?id=' + ticketId, function(html) {
-            const modalBody = $('<div>').html(html);
-            $('#rateTicketModalBody').html(html);
-            $('#rateTicketModal').modal('show');
-        }).fail(function() {
-            alert('Failed to load rating form. Please try again.');
-        });
+        $.get(base + '/hr/tickets/rate?id=' + ticketId)
+            .done(function(html) {
+                const container = document.getElementById('rateTicketModalBody');
+                container.innerHTML = html;
+                const scripts = Array.from(container.querySelectorAll('script'));
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    if (oldScript.src) {
+                        newScript.src = oldScript.src;
+                        if (oldScript.async) newScript.async = true;
+                        if (oldScript.defer) newScript.defer = true;
+                        document.body.appendChild(newScript);
+                    } else {
+                        newScript.textContent = oldScript.textContent;
+                        document.body.appendChild(newScript);
+                    }
+                });
+                $('#rateTicketModal').modal('show');
+            })
+            .fail(function() {
+                alert('Failed to load rating form. Please try again.');
+            });
     });
     
     $(document).on('submit', '#rateTicketForm', function (e) {

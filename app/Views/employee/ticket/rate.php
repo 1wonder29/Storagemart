@@ -20,24 +20,34 @@
         }
     </style>
     
-    <div id="alreadyRatedOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 9999; pointer-events: none;">
+    <div id="alreadyRatedOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 9999; pointer-events: auto;">
         <div class="popup-box" style="background: white; border-radius: 10px; padding: 50px 50px; text-align: center; box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15); max-width: 450px; border: 1px solid #e0e0e0; pointer-events: auto;">
             <h2 style="color: #333; margin-bottom: 20px; font-weight: 700; font-size: 1.8rem; margin-top: 0;">Thank You!</h2>
             <p style="font-size: 1rem; color: #666; margin-bottom: 35px; line-height: 1.6;">You already rated this ticket. 😊</p>
-            <button type="button" id="closeOverlay" style="padding: 12px 50px; font-size: 1rem; font-weight: 600; border: 2px solid #333; background: white; color: #333; border-radius: 5px; cursor: pointer; transition: all 0.3s;">Got it</button>
+            <button type="button" id="closeOverlay" onclick="(function(){try{if(window.jQuery&&jQuery('#rateTicketModal').length){jQuery('#rateTicketModal').modal('hide');}else if(document.getElementById('rateTicketModal')){document.getElementById('rateTicketModal').style.display='none';}else{window.history.back();}}catch(e){window.history.back();}})();" style="padding: 12px 50px; font-size: 1rem; font-weight: 600; border: 2px solid #333; background: white; color: #333; border-radius: 5px; cursor: pointer; transition: all 0.3s;">Got it</button>
         </div>
     </div>
     
     <script>
-        document.getElementById('closeOverlay').onclick = function() {
-            window.history.back();
-        }
-        document.getElementById('closeOverlay').onmouseover = function() {
-            this.style.background = '#f5f5f5';
-        }
-        document.getElementById('closeOverlay').onmouseout = function() {
-            this.style.background = 'white';
-        }
+        (function() {
+            var btn = document.getElementById('closeOverlay');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                try {
+                    if (window.jQuery && jQuery('#rateTicketModal').length) {
+                        jQuery('#rateTicketModal').modal('hide');
+                    } else if (document.getElementById('rateTicketModal')) {
+                        document.getElementById('rateTicketModal').style.display = 'none';
+                    } else {
+                        window.history.back();
+                    }
+                } catch (e) {
+                    window.history.back();
+                }
+            });
+            btn.addEventListener('mouseover', function() { this.style.background = '#f5f5f5'; });
+            btn.addEventListener('mouseout', function() { this.style.background = 'white'; });
+        })();
     </script>
 <?php else: ?>
 <?php
@@ -53,15 +63,16 @@ $base = rtrim(BASE_URL, '/');
     <input type="hidden" name="ticket_id" value="<?= (int)$ticketId ?>">
 
     <div class="form-group">
-        <label>Rating</label>
-        <select name="rating" class="form-control" required>
-            <option value="">Select rating</option>
-            <option value="5">★★★★★</option>
-            <option value="4">★★★★</option>
-            <option value="3">★★★</option>
-            <option value="2">★★</option>
-            <option value="1">★</option>
-        </select>
+        <label>How would you rate your experience?</label>
+        <div style="display: flex; gap: 10px; justify-content: center; margin: 15px 0;">
+            <span class="star" data-value="1" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Poor">★</span>
+            <span class="star" data-value="2" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Fair">★</span>
+            <span class="star" data-value="3" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Good">★</span>
+            <span class="star" data-value="4" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Very Good">★</span>
+            <span class="star" data-value="5" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Excellent">★</span>
+        </div>
+        <p style="text-align: center; color: #999; font-size: 0.9rem;" id="ratingText">Click to select rating</p>
+        <input type="hidden" name="rating" id="ratingSelect" value="">
     </div>
 
     <div class="form-group">
@@ -81,6 +92,31 @@ $(document).on('click', '#downloadTechRecordBtn', function () {
     }
     const base = "<?= htmlspecialchars($base) ?>";
     window.location.href = base + '/employee/tickets/download-record?id=' + ticketId;
+});
+</script>
+<script>
+$(function() {
+    $(".star").on("click keypress", function(e) {
+        if (e.type === 'keypress' && e.which !== 13 && e.which !== 32) return;
+        const rating = $(this).data('value');
+        $("#ratingSelect").val(rating);
+        $(".star").css("color", "#ddd");
+        if ($.fn.addBack) {
+            $(this).prevAll(".star").addBack().css("color", "#ffc107");
+        } else {
+            $(this).prevAll(".star").andSelf().css("color", "#ffc107");
+        }
+        $("#ratingText").text(rating + " star" + (rating > 1 ? "s" : "")).css("color", "#666");
+    });
+
+    $("#rateTicketForm").on("submit", function(e) {
+        if (!$("#ratingSelect").val()) {
+            e.preventDefault();
+            $("#ratingText").text("Please select a rating").css("color", "#d9534f");
+            $(".star").first().focus();
+            return false;
+        }
+    });
 });
 </script>
 <?php endif; ?>

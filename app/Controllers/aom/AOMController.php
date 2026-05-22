@@ -454,6 +454,57 @@ class AOMController extends AuthController
     }
 
     /**
+     * Download technical record (DOCX) for a ticket — allow AOM override
+     */
+    public function downloadTechnicalRecord()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $user = $this->requireAOM();
+        if (!$user) return;
+
+        $aom_employee_id = $user['employee_id'];
+
+        $ticketId = (int)($_GET['id'] ?? 0);
+        if ($ticketId <= 0) {
+            http_response_code(400);
+            echo 'Invalid ticket ID';
+            exit;
+        }
+
+        require_once __DIR__ . '/../../Services/PdfGeneratorService.php';
+        $pdfService = new PdfGeneratorService();
+
+        // Allow AOM to generate record for tickets in their branches
+        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $aom_employee_id, true);
+
+        if (!$result || !$result['success']) {
+            http_response_code(404);
+            echo 'Unable to generate technical record. Please ensure the ticket is resolved.';
+            exit;
+        }
+
+        $filepath = $result['filepath'];
+        $filename = $result['filename'];
+
+        if (!file_exists($filepath)) {
+            http_response_code(404);
+            echo 'File not found';
+            exit;
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
+        header('Content-Length: ' . filesize($filepath));
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        readfile($filepath);
+        exit;
+    }
+
+    /**
      * Update ticket status
      */
     public function updateTicketStatus()
@@ -504,5 +555,130 @@ class AOMController extends AuthController
             'success' => $success,
             'message' => $success ? 'Ticket status updated.' : 'Failed to update ticket status.'
         ]);
+    }
+
+    /**
+     * Show rating form (GET) for AOM and handle form submission (POST)
+     */
+    public function rate()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        // Debug log for rating form access
+        $debugLogDir = __DIR__ . '/../../logs';
+        if (!is_dir($debugLogDir)) @mkdir($debugLogDir, 0755, true);
+        $dbgFile = $debugLogDir . '/rating_debug.log';
+        $dbgMsg = '[' . date('Y-m-d H:i:s') . '] rate() called. account_id=' . ($_SESSION['account_id'] ?? 'null') . ' REQUEST_URI=' . ($_SERVER['REQUEST_URI'] ?? '') . "\n";
+        @file_put_contents($dbgFile, $dbgMsg, FILE_APPEND);
+
+        $user = $this->requireAOM();
+        if (!$user) {
+            @file_put_contents($dbgFile, '[' . date('Y-m-d H:i:s') . '] requireAOM failed\n', FILE_APPEND);
+            return;
+        }
+
+        $aom_employee_id = $user['employee_id'];
+
+        $ticketId = (int)($_GET['id'] ?? 0);
+        if (!$ticketId) {
+            http_response_code(400);
+            echo 'Invalid ticket.';
+            return;
+        }
+
+        require_once __DIR__ . '/../../Models/aom/TicketRatingModel.php';
+        $ratingModel = new AOMTicketRatingModel();
+        $alreadyRated = $ratingModel->hasRated($ticketId, $aom_employee_id);
+        $existingRating = null;
+
+        // If already rated, fetch the existing rating row for edit and log for debugging
+        if ($alreadyRated) {
+            try {
+                $existingRating = $ratingModel->getByTicketAndEmployee($ticketId, $aom_employee_id);
+                @file_put_contents($dbgFile, '[' . date('Y-m-d H:i:s') . "] alreadyRated row: " . json_encode($existingRating) . "\n", FILE_APPEND);
+            } catch (Exception $e) {
+                @file_put_contents($dbgFile, '[' . date('Y-m-d H:i:s') . "] alreadyRated query failed: " . $e->getMessage() . "\n", FILE_APPEND);
+            }
+        }
+
+        $base = rtrim(BASE_URL, '/');
+
+        require __DIR__ . '/../../Views/aom/ticket/rate.php';
+    }
+
+    public function storeRating()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $user = $this->requireAOM();
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
+
+        require_once __DIR__ . '/../../Models/aom/TicketRatingModel.php';
+
+        header('Content-Type: application/json');
+
+        $accountId = (int) ($_SESSION['account_id'] ?? 0);
+        $ticketId  = (int) ($_POST['ticket_id'] ?? 0);
+
+        if (!$ticketId) {
+            echo json_encode(['success' => false, 'message' => 'Invalid ticket.']);
+            exit;
+        }
+
+        $employeeModel = new Employee();
+        $aomId = $employeeModel->getEmployeeIdByAccountId($accountId);
+
+        if (!$aomId) {
+            echo json_encode(['success' => false, 'message' => 'AOM record not found.']);
+            exit;
+        }
+
+        $ticketModel = new AOMTicketModel();
+        $ticket = $ticketModel->getTicketByIdForAOM($ticketId, $aomId);
+
+        if (!$ticket) {
+            echo json_encode(['success' => false, 'message' => 'Ticket not found or unauthorized.']);
+            exit;
+        }
+
+        // Get assigned IT person
+        require_once __DIR__ . '/../../Models/employee/Ticket.php';
+        $empTicket = new EmployeeTicket();
+        $itId = $empTicket->getAssignedTo($ticketId);
+        if (!$itId) {
+            echo json_encode(['success' => false, 'message' => 'Ticket is not assigned yet.']);
+            exit;
+        }
+
+        $ratingModel = new AOMTicketRatingModel();
+        $existing = $ratingModel->getByTicketAndEmployee($ticketId, $aomId);
+        if ($existing) {
+            // update existing rating
+            $updated = $ratingModel->updateById($existing['id'], $_POST['rating'], $_POST['comment'] ?? '');
+            if ($updated) {
+                echo json_encode(['success' => true, 'message' => 'Your rating has been updated.']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to update rating.']);
+            }
+            exit;
+        }
+
+        $ratingModel->create(
+            $ticketId,
+            $aomId,
+            $itId,
+            $_POST['rating'],
+            $_POST['comment'] ?? ''
+        );
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Thank you for your feedback!'
+        ]);
+        exit;
     }
 }

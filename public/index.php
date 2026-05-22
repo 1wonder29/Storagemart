@@ -460,6 +460,12 @@ if ($uri === '/aom' || strpos($uri, '/aom/') === 0) {
         }
     } elseif (strpos($sub, 'tickets/view') === 0) {
         $aom->ticketDetail();
+    } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $aom->downloadTechnicalRecord();
+    } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $aom->rate();
+    } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $aom->storeRating();
     } elseif ($sub === 'tickets/update-status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $aom->updateTicketStatus();
     } elseif ($sub === 'api/employees-by-branch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -500,6 +506,9 @@ if ($uri === '/om' || strpos($uri, '/om/') === 0) {
         } elseif ($sub === 'tickets/store-rating' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $omTicket->storeRating();
         } elseif ($sub === 'tickets/download-technical-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            $omTicket->downloadTechnicalRecord();
+        } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            // Backwards-compatible route used in some views
             $omTicket->downloadTechnicalRecord();
         } else {
             http_response_code(404);

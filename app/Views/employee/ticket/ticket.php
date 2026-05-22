@@ -464,8 +464,29 @@ $(document).ready(function () {
         $('#rateTicketModal').modal('show');
         $.get(base + '/employee/tickets/rate', { id: ticketId })
             .done(function (html) {
-                $('#rateTicketModalBody').html(html);
-            })
+                    const container = document.getElementById('rateTicketModalBody');
+                    if (container) {
+                        container.innerHTML = html;
+                        const scripts = Array.from(container.querySelectorAll('script'));
+                        scripts.forEach(oldScript => {
+                            const newScript = document.createElement('script');
+                            if (oldScript.src) {
+                                newScript.src = oldScript.src;
+                                if (oldScript.async) newScript.async = true;
+                                if (oldScript.defer) newScript.defer = true;
+                                document.body.appendChild(newScript);
+                            } else {
+                                newScript.textContent = oldScript.textContent;
+                                document.body.appendChild(newScript);
+                            }
+                        });
+                    } else {
+                        // Fallback when modal container is missing
+                        const rateUrl = base + '/employee/tickets/rate?id=' + encodeURIComponent(ticketId);
+                        const newWin = window.open(rateUrl, '_blank');
+                        if (!newWin) window.location.href = rateUrl;
+                    }
+                })
             .fail(function () {
                 $('#rateTicketModalBody').html('<div class="alert alert-danger">Failed to load. Please try again.</div>');
             });
