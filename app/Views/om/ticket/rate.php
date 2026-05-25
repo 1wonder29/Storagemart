@@ -59,39 +59,29 @@ $base = rtrim(BASE_URL, '/');
     </button>
 </div>
 
-<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px;">
-    <div class="card" style="max-width: 500px; width: 100%; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); border: none; border-radius: 12px;">
-        <div class="card-body" style="padding: 40px;">
-            <h2 style="text-align: center; margin-bottom: 10px; color: #333; font-weight: 700;">Rate This Ticket</h2>
-            <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 0.95rem;">Help us improve our support quality</p>
+<form id="rateTicketForm">
+    <input type="hidden" name="ticket_id" value="<?= (int)$ticketId ?>">
 
-            <form method="POST" action="<?= htmlspecialchars($base) ?>/om/tickets/store-rating" id="rateTicketForm">
-                <input type="hidden" name="ticket_id" value="<?= (int)$ticketId ?>">
-
-                <div class="form-group">
-                    <label>Rating</label>
-                        <label>How would you rate your experience?</label>
-                        <div style="display: flex; gap: 10px; justify-content: center; margin: 15px 0;">
-                            <span class="star" data-value="1" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Poor">★</span>
-                            <span class="star" data-value="2" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Fair">★</span>
-                            <span class="star" data-value="3" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Good">★</span>
-                            <span class="star" data-value="4" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Very Good">★</span>
-                            <span class="star" data-value="5" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Excellent">★</span>
-                        </div>
-                        <p style="text-align: center; color: #999; font-size: 0.9rem;" id="ratingText">Click to select rating</p>
-                        <input type="hidden" name="rating" id="ratingSelect" value="">
-                </div>
-
-                <div class="form-group">
-                    <label>Comment (optional)</label>
-                    <textarea name="comment" class="form-control"></textarea>
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block">Submit Rating</button>
-            </form>
+    <div class="form-group">
+        <label>How would you rate your experience?</label>
+        <div style="display: flex; gap: 10px; justify-content: center; margin: 15px 0;">
+            <span class="star" data-value="1" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Poor">★</span>
+            <span class="star" data-value="2" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Fair">★</span>
+            <span class="star" data-value="3" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Good">★</span>
+            <span class="star" data-value="4" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Very Good">★</span>
+            <span class="star" data-value="5" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Excellent">★</span>
         </div>
+        <p style="text-align: center; color: #999; font-size: 0.9rem;" id="ratingText">Click to select rating</p>
+        <input type="hidden" name="rating" id="ratingSelect" value="">
     </div>
-</div>
+
+    <div class="form-group">
+        <label>Comment (optional)</label>
+        <textarea name="comment" class="form-control"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block">Submit Rating</button>
+</form>
 
 <script>
 $(document).on('click', '#downloadTechRecordBtn', function () {
@@ -120,12 +110,35 @@ $(function() {
     });
 
     $("#rateTicketForm").on("submit", function(e) {
+        e.preventDefault();
+        
         if (!$("#ratingSelect").val()) {
-            e.preventDefault();
             $("#ratingText").text("Please select a rating").css("color", "#d9534f");
             $(".star").first().focus();
             return false;
         }
+
+        const base = "<?= htmlspecialchars($base) ?>";
+        const form = $(this);
+        
+        $.ajax({
+            url: base + '/om/tickets/store-rating',
+            method: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(result) {
+                if (result.success) {
+                    alert(result.message);
+                    $('#rateTicketModal').modal('hide');
+                    setTimeout(function() { location.reload(); }, 500);
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            },
+            error: function() {
+                alert('Failed to submit rating. Please try again.');
+            }
+        });
     });
 });
 </script>

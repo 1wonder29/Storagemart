@@ -562,11 +562,15 @@ class UniformController extends AuthController {
                 $this->redirect('/hr/employees');
             }
 
-            $result = $this->uniformModel->returnAssignment($assignmentId, (int) ($_SESSION['account_id'] ?? 0));
+            // Capture condition and remarks from POST
+            $condition = trim($_POST['condition_upon_return'] ?? 'GOOD');
+            $remarks = trim($_POST['remarks'] ?? '');
+
+            $result = $this->uniformModel->returnAssignment($assignmentId, (int) ($_SESSION['account_id'] ?? 0), $condition, $remarks);
 
             if ($result) {
                 $this->hrModel->logAction('RETURNED_UNIFORM', $assignment['employee_id'] ?? null, $assignment['uniform_id'] ?? null, $_SESSION['account_id'] ?? 0,
-                    "Returned assignment: {$assignmentId}");
+                    "Returned assignment: {$assignmentId} (Condition: {$condition})");
                 $_SESSION['successMessage'] = 'Uniform returned successfully.';
             } else {
                 $_SESSION['errorMessage'] = 'Failed to process return.';
@@ -583,6 +587,62 @@ class UniformController extends AuthController {
             error_log('UniformController::return error: ' . $e->getMessage());
             $_SESSION['errorMessage'] = 'Error processing return: ' . $e->getMessage();
             $this->redirect('/hr/employees');
+        }
+    }
+
+    /**
+     * Show pending returns for approval
+     */
+    public function pendingReturns() {
+        $this->requireHR();
+
+        try {
+            $pendingReturns = $this->uniformModel->getPendingReturns();
+            $notifications = $this->notificationModel->getLatest($_SESSION['account_id'] ?? 0, 10);
+            require __DIR__ . '/../../Views/hr/uniforms/pending_returns.php';
+        } catch (\Throwable $e) {
+            error_log('UniformController::pendingReturns error: ' . $e->getMessage());
+            $_SESSION['errorMessage'] = 'Error loading pending returns: ' . $e->getMessage();
+            $this->redirect('/hr/uniforms');
+        }
+    }
+
+    /**
+     * Approve or reject a pending return
+     */
+    public function approveReturn() {
+        $this->requireHR();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/hr/uniforms/pending-returns');
+        }
+
+        try {
+            $returnId = (int) ($_POST['return_id'] ?? 0);
+            $action = trim($_POST['action'] ?? 'approve');
+
+            if ($returnId <= 0) {
+                $_SESSION['errorMessage'] = 'Invalid return ID.';
+                $this->redirect('/hr/uniforms/pending-returns');
+            }
+
+            $approvalStatus = ($action === 'approve') ? 'APPROVED' : 'REJECTED';
+            $result = $this->uniformModel->approveReturn($returnId, $approvalStatus, (int) ($_SESSION['account_id'] ?? 0));
+
+            if ($result) {
+                $status = ($action === 'approve') ? 'approved' : 'rejected';
+                $this->hrModel->logAction('PROCESSED_UNIFORM_RETURN', null, null, $_SESSION['account_id'] ?? 0,
+                    "Return #{$returnId} has been {$status}");
+                $_SESSION['successMessage'] = "Return has been {$status} successfully.";
+            } else {
+                $_SESSION['errorMessage'] = 'Failed to process return approval.';
+            }
+
+            $this->redirect('/hr/uniforms/pending-returns');
+        } catch (\Throwable $e) {
+            error_log('UniformController::approveReturn error: ' . $e->getMessage());
+            $_SESSION['errorMessage'] = 'Error processing approval: ' . $e->getMessage();
+            $this->redirect('/hr/uniforms/pending-returns');
         }
     }
 }

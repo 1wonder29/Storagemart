@@ -369,12 +369,14 @@ class UniformModel extends HRModel {
     }
 
     /**
-     * Mark assignment as returned and increment uniform stock
+     * Mark assignment as returned and track in pending returns
      * @param int $assignmentId
      * @param int $processedBy
+     * @param string $condition Condition upon return (GOOD, FAIR, USED, DAMAGED, LOST)
+     * @param string $remarks Optional remarks about the return
      * @return bool
      */
-    public function returnAssignment(int $assignmentId, int $processedBy): bool {
+    public function returnAssignment(int $assignmentId, int $processedBy, string $condition = 'GOOD', string $remarks = ''): bool {
         try {
             $this->pdo->beginTransaction();
 
@@ -392,19 +394,22 @@ class UniformModel extends HRModel {
 
             $quantity = (int) ($assignment['quantity_issued'] ?? 0);
             $uniformId = (int) $assignment['uniform_id'];
+            $employeeId = (int) ($assignment['employee_id'] ?? 0);
+            $condition = strtoupper(trim($condition)) ?: 'GOOD';
+            $remarks = trim($remarks);
 
-            // mark assignment returned
-            $sql = "UPDATE {$this->tbluniform_assignment} SET date_returned = CURDATE() WHERE assignment_id = ?";
+            // 1) Mark assignment as returned and store the condition
+            $sql = "UPDATE {$this->tbluniform_assignment} SET date_returned = CURDATE(), condition_upon_return = ? WHERE assignment_id = ?";
             $stmt = $this->pdo->prepare($sql);
-            $ok = $stmt->execute([$assignmentId]);
+            $ok = $stmt->execute([$condition, $assignmentId]);
 
             if (!$ok) {
                 $this->pdo->rollBack();
                 return false;
             }
 
-            // increment stock
-            $sql2 = "UPDATE {$this->tbluniform_inventory} SET quantity_in_stock = quantity_in_stock + ?, date_updated = NOW() WHERE uniform_id = ?";
+            // 2) Add to pending returns (all returns go to pending first for inspection)
+            $sql2 = "UPDATE {$this->tbluniform_inventory} SET quantity_returned = COALESCE(quantity_returned, 0) + ?, date_updated = NOW() WHERE uniform_id = ?";
             $stmt2 = $this->pdo->prepare($sql2);
             $ok2 = $stmt2->execute([$quantity, $uniformId]);
 
@@ -413,12 +418,145 @@ class UniformModel extends HRModel {
                 return false;
             }
 
+            // 3) Record the return in tbluniform_returns for HR review and processing
+            $sql3 = "INSERT INTO tbluniform_returns 
+                    (assignment_id, uniform_id, employee_id, quantity_returned, condition_upon_return, remarks, date_returned, processed_by, return_status, createdby, datecreated)
+                    VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, 'PENDING', ?, NOW())";
+            $stmt3 = $this->pdo->prepare($sql3);
+            $ok3 = $stmt3->execute([$assignmentId, $uniformId, $employeeId, $quantity, $condition, $remarks, $processedBy, 'system']);
+
+            if (!$ok3) {
+                // Log the error but don't fail the transaction - the main return was processed
+                error_log('UniformModel::returnAssignment warning: Failed to create return record for assignment ' . $assignmentId);
+            }
+
             $this->pdo->commit();
             return true;
         } catch (\Throwable $e) {
             error_log('UniformModel::returnAssignment error: ' . $e->getMessage());
             try { $this->pdo->rollBack(); } catch (\Throwable $_) {}
             return false;
+        }
+    }
+
+    /**
+     * Approve a return and move uniform to appropriate inventory category
+     * @param int $returnId
+     * @param string $approvalStatus APPROVED or REJECTED
+     * @param int $approvedBy
+     * @return bool
+     */
+    public function approveReturn(int $returnId, string $approvalStatus = 'APPROVED', int $approvedBy = 0): bool {
+        try {
+            $this->pdo->beginTransaction();
+
+            // Get the return record
+            $sql = "SELECT * FROM tbluniform_returns WHERE return_id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$returnId]);
+            $return = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$return) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            $uniformId = (int) $return['uniform_id'];
+            $quantity = (int) $return['quantity_returned'];
+            $condition = strtoupper(trim($return['condition_upon_return']));
+
+            if ($approvalStatus === 'APPROVED') {
+                // Remove from pending returns
+                $sqlRemove = "UPDATE {$this->tbluniform_inventory} SET quantity_returned = COALESCE(quantity_returned, 0) - ? WHERE uniform_id = ?";
+                $stmtRemove = $this->pdo->prepare($sqlRemove);
+                $ok1 = $stmtRemove->execute([$quantity, $uniformId]);
+
+                if (!$ok1) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+
+                // Add to appropriate category based on condition
+                if (in_array($condition, ['GOOD', 'FAIR', 'USED'])) {
+                    // Return to stock
+                    $sqlAdd = "UPDATE {$this->tbluniform_inventory} SET quantity_in_stock = quantity_in_stock + ?, date_updated = NOW() WHERE uniform_id = ?";
+                } elseif ($condition === 'DAMAGED') {
+                    // Mark as damaged
+                    $sqlAdd = "UPDATE {$this->tbluniform_inventory} SET quantity_damaged = COALESCE(quantity_damaged, 0) + ?, date_updated = NOW() WHERE uniform_id = ?";
+                } elseif ($condition === 'LOST') {
+                    // Mark as lost
+                    $sqlAdd = "UPDATE {$this->tbluniform_inventory} SET quantity_lost = COALESCE(quantity_lost, 0) + ?, date_updated = NOW() WHERE uniform_id = ?";
+                } else {
+                    // Default: return to stock
+                    $sqlAdd = "UPDATE {$this->tbluniform_inventory} SET quantity_in_stock = quantity_in_stock + ?, date_updated = NOW() WHERE uniform_id = ?";
+                }
+
+                $stmtAdd = $this->pdo->prepare($sqlAdd);
+                $ok2 = $stmtAdd->execute([$quantity, $uniformId]);
+
+                if (!$ok2) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+            } else {
+                // REJECTED: Remove from pending returns only
+                $sqlRemove = "UPDATE {$this->tbluniform_inventory} SET quantity_returned = COALESCE(quantity_returned, 0) - ? WHERE uniform_id = ?";
+                $stmtRemove = $this->pdo->prepare($sqlRemove);
+                $ok1 = $stmtRemove->execute([$quantity, $uniformId]);
+
+                if (!$ok1) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+            }
+
+            // Update return record
+            $sqlUpdate = "UPDATE tbluniform_returns SET return_status = ?, approved_by = ?, processed_at = NOW() WHERE return_id = ?";
+            $stmtUpdate = $this->pdo->prepare($sqlUpdate);
+            $stmtUpdate->execute([$approvalStatus, $approvedBy, $returnId]);
+
+            $this->pdo->commit();
+            return true;
+        } catch (\Throwable $e) {
+            error_log('UniformModel::approveReturn error: ' . $e->getMessage());
+            try { $this->pdo->rollBack(); } catch (\Throwable $_) {}
+            return false;
+        }
+    }
+
+    /**
+     * Get pending returns for review
+     * @return array
+     */
+    public function getPendingReturns(): array {
+        try {
+            $sql = "SELECT 
+                        ur.return_id,
+                        ur.assignment_id,
+                        ur.uniform_id,
+                        ur.employee_id,
+                        ur.quantity_returned,
+                        ur.condition_upon_return,
+                        ur.remarks,
+                        ur.date_returned,
+                        ur.processed_by,
+                        ui.uniform_type,
+                        ui.size,
+                        ui.color,
+                        e.employee_name,
+                        e.email
+                    FROM tbluniform_returns ur
+                    LEFT JOIN {$this->tbluniform_inventory} ui ON ur.uniform_id = ui.uniform_id
+                    LEFT JOIN {$this->tblemployee} e ON ur.employee_id = e.employee_id
+                    WHERE ur.return_status = 'PENDING'
+                    ORDER BY ur.date_returned DESC";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log('UniformModel::getPendingReturns error: ' . $e->getMessage());
+            return [];
         }
     }
 

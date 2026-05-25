@@ -202,6 +202,19 @@ class TicketController extends AuthController
 
     public function fetchHistory()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        // Authenticate before returning any data
+        if (empty($_SESSION['account_id'])) {
+            http_response_code(401);
+            echo json_encode([]);
+            return;
+        }
+
         if (!isset($_GET['ticket_id'])) {
             echo json_encode([]);
             return;
@@ -212,7 +225,6 @@ class TicketController extends AuthController
         $model = new ItTicketModel();
         $history = $model->getTicketHistory($ticketId);
 
-        header('Content-Type: application/json');
         echo json_encode($history);
     }
 
@@ -591,18 +603,26 @@ class TicketController extends AuthController
             require_once __DIR__ . '/../../Models/employee/UploadModel.php';
             $uploadModel = new TicketUploadModel();
 
-            $uploadId = $uploadModel->recordUpload(
-                $ticketId,
-                $employeeId,
-                $originalName,
-                $storedFilename,
-                filesize($uploadPath),
-                $fileMime ?: 'application/octet-stream'
-            );
+            try {
+                $uploadId = $uploadModel->recordUpload(
+                    $ticketId,
+                    $employeeId,
+                    $originalName,
+                    $storedFilename,
+                    filesize($uploadPath),
+                    $fileMime ?: 'application/octet-stream'
+                );
+            } catch (Exception $dbErr) {
+                error_log("Database error recording upload: " . $dbErr->getMessage());
+                @unlink($uploadPath);
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $dbErr->getMessage()]);
+                exit;
+            }
 
             if (!$uploadId) {
                 @unlink($uploadPath);
-                echo json_encode(['success' => false, 'message' => 'Failed to record upload']);
+                error_log("Upload recording returned no ID for ticket $ticketId");
+                echo json_encode(['success' => false, 'message' => 'Failed to record upload in database']);
                 exit;
             }
 
@@ -616,8 +636,9 @@ class TicketController extends AuthController
 
         } catch (Exception $e) {
             error_log("Exception in uploadTechnicalReport: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Server error']);
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
             exit;
         }
     }

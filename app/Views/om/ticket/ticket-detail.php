@@ -161,9 +161,9 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                 </a>
                             </div>
                             <div class="mb-3">
-                                <a href="<?= htmlspecialchars($base) ?>/om/tickets/rate?id=<?= (int)($ticket['ticket_id'] ?? 0) ?>" class="btn btn-primary btn-block btn-sm">
+                                <button class="btn btn-primary btn-block btn-sm rateBtn" data-ticketid="<?= (int)($ticket['ticket_id'] ?? 0) ?>">
                                     <i class="fas fa-star"></i> Rate Ticket
-                                </a>
+                                </button>
                             </div>
                             <div>
                                 <a href="<?= htmlspecialchars($base) ?>/om/tickets" class="btn btn-block btn-secondary btn-sm">
@@ -185,6 +185,23 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
 
     </div>
 </div>
+</div>
+
+<!-- Modal for Rating -->
+<div class="modal fade" id="rateTicketModal" tabindex="-1" role="dialog" aria-labelledby="rateTicketModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rateTicketModalLabel">Rate This Ticket</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="rateTicketModalBody">
+                <!-- Form will be loaded here via AJAX -->
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
@@ -227,6 +244,34 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                     $btn.prop('disabled', false).find('i').removeClass('fa-spin');
                 }
             });
+        });
+
+        $(document).on('click', '.rateBtn', function () {
+            const ticketId = $(this).data('ticketid');
+            const base = "<?= htmlspecialchars($base) ?>";
+            
+            $.get(base + '/om/tickets/rate?id=' + ticketId)
+                .done(function(html) {
+                    const container = document.getElementById('rateTicketModalBody');
+                    container.innerHTML = html;
+                    const scripts = Array.from(container.querySelectorAll('script'));
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        if (oldScript.src) {
+                            newScript.src = oldScript.src;
+                            if (oldScript.async) newScript.async = true;
+                            if (oldScript.defer) newScript.defer = true;
+                            document.body.appendChild(newScript);
+                        } else {
+                            newScript.textContent = oldScript.textContent;
+                            document.body.appendChild(newScript);
+                        }
+                    });
+                    $('#rateTicketModal').modal('show');
+                })
+                .fail(function() {
+                    alert('Failed to load rating form. Please try again.');
+                });
         });
     });
 </script>

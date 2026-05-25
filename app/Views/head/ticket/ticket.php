@@ -149,6 +149,9 @@ $base = rtrim(BASE_URL, '/');
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <a id="downloadPdfBtn" class="btn btn-success d-none" download>
+                        <i class="fas fa-download"></i> Download Technical Report
+                    </a>
                     <button class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -194,7 +197,7 @@ $base = rtrim(BASE_URL, '/');
             // Show/hide PDF download button based on status
             if (status.toLowerCase() === 'resolved') {
                 $("#downloadPdfBtn")
-                    .attr("href", base + "/documents/download-ticket-pdf?id=" + id)
+                    .attr("href", base + "/head/tickets/download-record?id=" + id)
                     .removeClass("d-none");
             } else {
                 $("#downloadPdfBtn").addClass("d-none");

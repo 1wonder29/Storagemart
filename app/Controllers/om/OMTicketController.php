@@ -370,18 +370,26 @@ class OMTicketController extends AuthController
             require_once __DIR__ . '/../../Models/employee/UploadModel.php';
             $uploadModel = new TicketUploadModel();
 
-            $uploadId = $uploadModel->recordUpload(
-                $ticketId,
-                $employeeId,
-                $originalName,
-                $storedFilename,
-                filesize($uploadPath),
-                $fileMime ?: 'application/octet-stream'
-            );
+            try {
+                $uploadId = $uploadModel->recordUpload(
+                    $ticketId,
+                    $employeeId,
+                    $originalName,
+                    $storedFilename,
+                    filesize($uploadPath),
+                    $fileMime ?: 'application/octet-stream'
+                );
+            } catch (Exception $dbErr) {
+                error_log("Database error recording upload: " . $dbErr->getMessage());
+                @unlink($uploadPath);
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $dbErr->getMessage()]);
+                exit;
+            }
 
             if (!$uploadId) {
                 @unlink($uploadPath);
-                echo json_encode(['success' => false, 'message' => 'Failed to record upload']);
+                error_log("Upload recording returned no ID for ticket $ticketId");
+                echo json_encode(['success' => false, 'message' => 'Failed to record upload in database']);
                 exit;
             }
 
@@ -395,8 +403,9 @@ class OMTicketController extends AuthController
 
         } catch (Exception $e) {
             error_log("Exception in uploadTechnicalReport: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Server error']);
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
             exit;
         }
     }

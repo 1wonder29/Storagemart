@@ -620,7 +620,7 @@ class AdminController extends AuthController
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
-        header('Content-Type: application/json');
+        header('Content-Type: application/json; charset=utf-8');
 
         if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
             http_response_code(403);
@@ -639,6 +639,67 @@ class AdminController extends AuthController
         $trail = $auditTrail->getRecordAuditTrail($recordId);
 
         echo json_encode(['success' => true, 'data' => $trail]);
+        exit;
+    }
+
+    public function ratings()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        require_once __DIR__ . '/../../Models/admin/RatingsModel.php';
+
+        $ratingsModel = new RatingsModel();
+        $ratings = $ratingsModel->getAllRatings();
+        $stats = $ratingsModel->getOverallStats();
+        $itStaffPerformance = $ratingsModel->getItStaffPerformance();
+        $itStaffList = $ratingsModel->getAllItStaff();
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        require __DIR__ . '/../../Views/admin/ratings-dashboard.php';
+    }
+
+    public function ratingsData()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+
+        require_once __DIR__ . '/../../Models/admin/RatingsModel.php';
+
+        $ratingsModel = new RatingsModel();
+        
+        $filters = [
+            'start_date' => $_GET['start_date'] ?? '',
+            'end_date' => $_GET['end_date'] ?? '',
+            'it_id' => $_GET['it_id'] ?? '',
+            'rating' => $_GET['rating'] ?? ''
+        ];
+
+        $ratings = $ratingsModel->getAllRatings($filters);
+        
+        header('Content-Type: application/json');
+        echo json_encode($ratings);
         exit;
     }
 }

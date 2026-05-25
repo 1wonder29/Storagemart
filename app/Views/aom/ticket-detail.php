@@ -195,6 +195,23 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
 </div>
 </div>
 
+<!-- Modal for Rating -->
+<div class="modal fade" id="rateTicketModal" tabindex="-1" role="dialog" aria-labelledby="rateTicketModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rateTicketModalLabel">Rate This Ticket</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="rateTicketModalBody">
+                <!-- Form will be loaded here via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
@@ -314,25 +331,23 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
         const base = "<?= htmlspecialchars($base) ?>";
         const form = $(this);
         
-        $.post(base + '/aom/tickets/rate', form.serialize(), function(response) {
-            let result = response;
-            try {
-                if (typeof response === 'string') result = JSON.parse(response);
-            } catch (e) {
-                // leave as-is
+        $.ajax({
+            url: base + '/aom/tickets/rate',
+            method: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(result) {
+                if (result.success) {
+                    alert(result.message);
+                    $('#rateTicketModal').modal('hide');
+                    setTimeout(function() { location.reload(); }, 500);
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            },
+            error: function() {
+                alert('Failed to submit rating. Please try again.');
             }
-
-            if (result && result.success) {
-                alert(result.message || 'Rating submitted.');
-                $('#rateTicketModal').modal('hide');
-                location.reload();
-            } else {
-                alert('Error: ' + ((result && result.message) ? result.message : 'Unknown error'));
-            }
-        }).fail(function(jqXHR) {
-            let msg = 'Failed to submit rating. Please try again.';
-            try { if (jqXHR && jqXHR.responseText) msg += '\nServer: ' + jqXHR.status + ' ' + jqXHR.responseText; } catch(e){}
-            alert(msg);
         });
     });
 </script>

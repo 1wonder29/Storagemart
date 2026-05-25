@@ -52,6 +52,13 @@ $base = rtrim(BASE_URL, '/');
                 </a>
             </li>
 
+            <li class="nav-item <?= ($activePage === 'ratings') ? 'active' : '' ?>">
+                <a class="nav-link" href="<?= htmlspecialchars($base)?>/it/ratings">
+                    <i class="fas fa-star"></i>
+                    <span>My Ratings</span>
+                </a>
+            </li>
+
             <hr class="sidebar-divider">
 
             <div class="sidebar-heading">Addons</div>

@@ -218,6 +218,19 @@ class HrTicketController extends AuthController
 
     public function fetchHistory()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        // Authenticate before returning any data
+        if (empty($_SESSION['account_id'])) {
+            http_response_code(401);
+            echo json_encode([]);
+            return;
+        }
+
         if (!isset($_GET['ticket_id'])) {
             echo json_encode([]);
             return;
@@ -436,7 +449,7 @@ class HrTicketController extends AuthController
             }
 
             // Create uploads directory if it doesn't exist
-            $uploadsDir = __DIR__ . '/../../uploads/technical_reports';
+            $uploadsDir = $_SERVER['DOCUMENT_ROOT'] . '/assets/generatePDF';
             if (!is_dir($uploadsDir)) {
                 mkdir($uploadsDir, 0755, true);
             }
@@ -447,20 +460,64 @@ class HrTicketController extends AuthController
 
             // Move uploaded file
             if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+                error_log("Failed to move uploaded file from {$file['tmp_name']} to {$filepath}");
+                error_log("Directory exists: " . (is_dir(dirname($filepath)) ? 'yes' : 'no'));
+                error_log("Directory writable: " . (is_writable(dirname($filepath)) ? 'yes' : 'no'));
                 echo json_encode(['success' => false, 'message' => 'Failed to save uploaded file']);
                 exit;
             }
 
-            // Store in database
-            $relativeFilepath = 'uploads/technical_reports/' . $filename;
-            $ticketModel->updateTechnicalReportPath($ticketId, $relativeFilepath);
+            error_log("File successfully moved to: $filepath");
+
+            // Get HR employee ID
+            $employeeModel = new Employee();
+            $hrEmployeeId = $employeeModel->getEmployeeIdByAccountId((int)$_SESSION['account_id']);
+
+            // Record in tblticket_uploads (unified upload system)
+            require_once __DIR__ . '/../../Models/employee/UploadModel.php';
+            $uploadModel = new TicketUploadModel();
+
+            try {
+                $uploadId = $uploadModel->recordUpload(
+                    $ticketId,
+                    $hrEmployeeId,
+                    $file['name'],
+                    $filename,
+                    $file['size'],
+                    $fileMime ?: 'application/octet-stream'
+                );
+            } catch (Exception $dbErr) {
+                error_log("Database error recording upload: " . $dbErr->getMessage());
+                @unlink($filepath);
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $dbErr->getMessage()]);
+                exit;
+            }
+
+            if (!$uploadId) {
+                @unlink($filepath);
+                error_log("Upload recording returned no ID for ticket $ticketId");
+                echo json_encode(['success' => false, 'message' => 'Failed to record upload in database']);
+                exit;
+            }
+
+            // Also update technical_report_path for backward compatibility
+            $relativeFilepath = 'assets/generatePDF/' . $filename;
+            try {
+                $ticketModel->updateTechnicalReportPath($ticketId, $relativeFilepath);
+                error_log("Database update result: success");
+            } catch (Exception $dbError) {
+                error_log("Database update exception: " . $dbError->getMessage());
+                // Non-fatal error, continue
+            }
 
             echo json_encode(['success' => true, 'message' => 'Technical report uploaded successfully']);
             exit;
 
         } catch (Exception $e) {
             error_log("Error uploading technical report: " . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'An error occurred during upload']);
+            error_log("Exception code: " . $e->getCode());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
             exit;
         }
     }

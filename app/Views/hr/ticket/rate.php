@@ -59,13 +59,7 @@ $base = rtrim(BASE_URL, '/');
     </button>
 </div>
 
-    <div class="mb-3">
-    <button type="button" class="btn btn-info btn-sm" id="downloadTechRecordBtn" data-ticketid="<?= (int)$ticketId ?>">
-        <i class="fas fa-download"></i> Download Technical Record
-    </button>
-</div>
-
-<form method="POST" action="<?= htmlspecialchars($base) ?>/hr/tickets/rate" id="rateTicketForm">
+<form id="rateTicketForm">
     <input type="hidden" name="ticket_id" value="<?= (int)$ticketId ?>">
 
     <div class="form-group">
@@ -116,12 +110,35 @@ $(function() {
     });
 
     $("#rateTicketForm").on("submit", function(e) {
+        e.preventDefault();
+        
         if (!$("#ratingSelect").val()) {
-            e.preventDefault();
             $("#ratingText").text("Please select a rating").css("color", "#d9534f");
             $(".star").first().focus();
             return false;
         }
+
+        const base = "<?= htmlspecialchars($base) ?>";
+        const form = $(this);
+        
+        $.ajax({
+            url: base + '/hr/tickets/rate',
+            method: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(result) {
+                if (result.success) {
+                    alert(result.message);
+                    $('#rateTicketModal').modal('hide');
+                    setTimeout(function() { location.reload(); }, 500);
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            },
+            error: function() {
+                alert('Failed to submit rating. Please try again.');
+            }
+        });
     });
 });
 </script>

@@ -38,6 +38,18 @@ $base = rtrim(BASE_URL, '/');
                 </div>
             <?php endif; ?>
 
+            <!-- Pending Returns Alert -->
+            <div class="alert alert-info d-flex justify-content-between align-items-center" role="alert">
+                <div>
+                    <i class="fas fa-inbox"></i> 
+                    <strong>Pending Uniform Returns Awaiting Approval</strong>
+                    <p class="mb-0 small" style="margin-top: 5px;">Review and approve returned uniforms to update inventory counts</p>
+                </div>
+                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/pending-returns" class="btn btn-info btn-sm">
+                    <i class="fas fa-clock"></i> Review Pending Returns
+                </a>
+            </div>
+
             <!-- Uniforms Table -->
             <div class="card shadow">
                 <div class="card-header py-3">

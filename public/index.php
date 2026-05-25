@@ -166,8 +166,12 @@ if (strpos($uri, '/admin') === 0) {
         $admin->view_asset();
     } elseif ($sub === 'audit-trail') {
         $admin->auditTrail();
-    } elseif ($sub === 'audit-trail/detail') {
+    } elseif ($sub === 'audit-detail') {
         $admin->auditDetail();
+    } elseif ($sub === 'ratings') {
+        $admin->ratings();
+    } elseif ($sub === 'ratings/data') {
+        $admin->ratingsData();
     } else {
         http_response_code(404);
         echo "Admin page not found.";
@@ -258,6 +262,10 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
         $ticket->update();
     } elseif ($sub === 'tickets/resolve') {
         $ticket->resolve();
+    } elseif ($sub === 'tickets/upload-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->uploadTechnicalReport();
+    } elseif ($sub === 'ratings') {
+        $it->ratings();
     } else {
         http_response_code(404);
         echo "IT page not found.";
@@ -313,6 +321,8 @@ if (strpos($uri, '/head') === 0) {
         $headTicket->index();
     } elseif ($sub === 'tickets/history/fetch') {
         $headTicket->fetchHistory();
+    } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $headTicket->downloadTechnicalRecord();
     } elseif ($sub === 'employee') {
         $head->department();
     } else {
@@ -421,6 +431,10 @@ if (strpos($uri, '/hr') === 0) {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uniform->processReturn($assignmentId);
         }
+    } elseif ($sub === 'uniforms/pending-returns') {
+        $uniform->pendingReturns();
+    } elseif ($sub === 'uniforms/approve-return' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->approveReturn();
     } else {
         http_response_code(404);
         echo "HR page not found.";
@@ -468,6 +482,8 @@ if ($uri === '/aom' || strpos($uri, '/aom/') === 0) {
         $aom->storeRating();
     } elseif ($sub === 'tickets/update-status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $aom->updateTicketStatus();
+    } elseif ($sub === 'tickets/upload-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $aom->uploadReport();
     } elseif ($sub === 'api/employees-by-branch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         // AJAX endpoint to get employees in a branch
         $aom->getEmployeesByBranchAjax();
@@ -499,7 +515,10 @@ if ($uri === '/om' || strpos($uri, '/om/') === 0) {
             }
         } elseif (strpos($sub, 'tickets/view') === 0) {
             $omTicket->view();
+        } elseif ($sub === 'tickets/upload-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $omTicket->uploadTechnicalReport();
         } elseif ($sub === 'tickets/upload-technical-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Backwards-compatible route
             $omTicket->uploadTechnicalReport();
         } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
             $omTicket->rate();
@@ -552,6 +571,22 @@ if ($uri === '/om' || strpos($uri, '/om/') === 0) {
     } else {
         http_response_code(404);
         echo "OM page not found.";
+    }
+    exit;
+}
+
+// DOCUMENTS PREFIX routes - PDF downloads
+if (strpos($uri, '/documents') === 0) {
+    require_once __DIR__ . '/../app/Controllers/DocumentController.php';
+    $document = new DocumentController();
+    
+    $sub = trim(substr($uri, strlen('/documents')), '/');
+    
+    if ($sub === 'download-ticket-pdf' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $document->downloadTicketPdf();
+    } else {
+        http_response_code(404);
+        echo "Document endpoint not found.";
     }
     exit;
 }

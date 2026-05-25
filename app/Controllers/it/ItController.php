@@ -112,4 +112,44 @@ class itController extends AuthController{
         require __DIR__ . '/../../Views/it/uploads.php';
     }
 
+    public function ratings()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'IT') {
+            $this->redirect('/login');
+            return;
+        }
+
+        require_once __DIR__ . '/../../Models/it/IT.php';
+        require_once __DIR__ . '/../../Models/it/ItRatingsModel.php';
+
+        $itModel = new IT();
+        $itId = $itModel->getEmployeeIdByAccountId((int)$_SESSION['account_id']);
+
+        if (!$itId) {
+            $_SESSION['flash_error'] = 'Unable to load your ratings.';
+            $this->redirect('/it/dashboard');
+            return;
+        }
+
+        $ratingsModel = new ItRatingsModel();
+        $ratings = $ratingsModel->getRatingsForItPerson($itId);
+        $stats = $ratingsModel->getStatsForItPerson($itId);
+        $distribution = $ratingsModel->getRatingDistribution($itId);
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        require __DIR__ . '/../../Views/it/ratings-dashboard.php';
+    }
+
 }

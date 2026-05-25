@@ -93,10 +93,6 @@ $base = rtrim(BASE_URL, '/');
                                                     View
                                                 </button>
                                        <?php if (strtolower($row['status']) === 'resolved'): ?>
-                                                <button class="btn btn-sm btn-warning rateBtn"
-                                                    data-ticketid="<?= $row['ticket_id'] ?>">
-                                                    <i class="fas fa-star"></i> Rate
-                                                </button>
                                                 <button class="btn btn-sm btn-info uploadBtn"
                                                     data-ticketid="<?= $row['ticket_id'] ?>"
                                                     data-ticketnum="<?= htmlspecialchars($row['ticket_number']) ?>">

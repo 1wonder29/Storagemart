@@ -35,7 +35,6 @@ class OMModel
                 e.department,
                 e.branch_id,
                 b.branchName,
-                ba.assignment_id,
                 aom.employee_id as aom_id,
                 aom.firstname as aom_firstname,
                 aom.lastname as aom_lastname,
@@ -44,9 +43,8 @@ class OMModel
                 oea.assignment_date
             FROM tblemployee e
             LEFT JOIN tblbranch b ON e.branch_id = b.branch_id
-            LEFT JOIN tblbranch_assignments ba ON b.branch_id = ba.branch_id
-            LEFT JOIN tblemployee aom ON ba.aom_employee_id = aom.employee_id
-            LEFT JOIN tblom_employee_assignments oea ON e.employee_id = oea.employee_id
+            LEFT JOIN tblom_employee_assignments oea ON e.employee_id = oea.employee_id AND oea.is_active = 1
+            LEFT JOIN tblemployee aom ON oea.aom_id = aom.employee_id
         ";
 
         if ($omEmployeeId) {

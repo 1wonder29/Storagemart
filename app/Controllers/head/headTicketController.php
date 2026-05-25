@@ -304,6 +304,19 @@ class headTicketController extends AuthController
 
     public function fetchHistory()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        // Authenticate before returning any data
+        if (empty($_SESSION['account_id'])) {
+            http_response_code(401);
+            echo json_encode([]);
+            return;
+        }
+
         if (!isset($_GET['ticket_id'])) {
             echo json_encode([]);
             return;
@@ -314,7 +327,72 @@ class headTicketController extends AuthController
         $model = new EmployeeTicket();
         $history = $model->getTicketHistory($ticketId);
 
-        header('Content-Type: application/json');
         echo json_encode($history);
+    }
+
+    /**
+     * Download technical record (DOCX) for a resolved ticket
+     * 
+     * HEAD can download technical reports for tickets in their department
+     */
+    public function downloadTechnicalRecord()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id'])) {
+            http_response_code(401);
+            echo 'Unauthorized';
+            exit;
+        }
+
+        $ticketId = (int)($_GET['id'] ?? 0);
+        if ($ticketId <= 0) {
+            http_response_code(400);
+            echo 'Invalid ticket ID';
+            exit;
+        }
+
+        // Get HEAD employee details
+        $employeeModel = new Employee();
+        $user = $employeeModel->fetchUserDetails((int)$_SESSION['account_id']);
+        
+        if (!$user || strtoupper($user['usertype']) !== 'HEAD') {
+            http_response_code(403);
+            echo 'Access denied';
+            exit;
+        }
+
+        $headEmployeeId = (int)$user['employee_id'];
+
+        require_once __DIR__ . '/../../Services/PdfGeneratorService.php';
+        $pdfService = new PdfGeneratorService();
+
+        // Allow HEAD to generate record for tickets in their department
+        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $headEmployeeId, true);
+
+        if (!$result || !$result['success']) {
+            http_response_code(404);
+            echo 'Unable to generate technical record. Please ensure the ticket is resolved.';
+            exit;
+        }
+
+        $filepath = $result['filepath'];
+        $filename = $result['filename'];
+
+        if (!file_exists($filepath)) {
+            http_response_code(404);
+            echo 'File not found';
+            exit;
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
+        header('Content-Length: ' . filesize($filepath));
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        readfile($filepath);
+        exit;
     }
 }
