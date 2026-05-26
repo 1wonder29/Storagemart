@@ -87,6 +87,12 @@ $base = rtrim(BASE_URL, '/');
                                                                 <i class="fas fa-eye fa-sm fa-fw mr-2 text-black-400"></i>
                                                                 View Asset
                                                             </a>
+                                                            <div class="dropdown-divider"></div>
+                                                            <a class="dropdown-item text-danger" href="#" 
+                                                               onclick="confirmDeleteEmployee(event, <?= $row['employee_id']; ?>, '<?= htmlspecialchars($row['firstname'] . ' ' . $row['lastname']) ?>')">
+                                                                <i class="fas fa-trash fa-sm fa-fw mr-2"></i>
+                                                                Delete Employee
+                                                            </a>
                                                         </div>
                                                 </td>
                                         </tr>
@@ -142,6 +148,12 @@ $base = rtrim(BASE_URL, '/');
         </div>
     </div>
 
+    <!-- Delete Employee Form (hidden) -->
+    <form id="deleteEmployeeForm" method="POST" action="/admin/employee" style="display:none;">
+        <input type="hidden" name="action" value="delete">
+        <input type="hidden" name="employee_id" id="deleteEmployeeId">
+    </form>
+
     <!-- Bootstrap core JavaScript-->
     <script src="/assets/vendor/jquery/jquery.min.js"></script>
     <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -157,6 +169,18 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Page level custom scripts -->
     <script src="/assets/js/demo/datatables-demo.js"></script>
+
+    <!-- Delete Employee Confirmation Script -->
+    <script>
+        function confirmDeleteEmployee(event, employeeId, employeeName) {
+            event.preventDefault();
+            
+            if (confirm(`Are you sure you want to delete employee "${employeeName}"?\n\nThis action cannot be undone and will permanently remove all associated data.`)) {
+                document.getElementById('deleteEmployeeId').value = employeeId;
+                document.getElementById('deleteEmployeeForm').submit();
+            }
+        }
+    </script>
 </body>
 
 </html>

@@ -104,42 +104,7 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                     <?php endif; ?>
                 </div>
             </div>
-
-            <div class="col-lg-5">
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3 bg-primary">
-                        <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-edit"></i> Update Status</h6>
-                    </div>
-                    <div class="card-body">
-                        <div id="updateMsg" class="alert d-none" role="alert"></div>
-
-                        <form id="statusForm">
-                            <input type="hidden" name="ticket_id" value="<?= (int)($ticket['ticket_id'] ?? 0) ?>">
-                            <div class="form-group">
-                                <label class="small text-gray-600 font-weight-bold">New Status</label>
-                                <select class="form-control" name="status" required>
-                                    <?php
-                                    $statuses = ['Pending', 'In Progress', 'Resolved', 'Closed'];
-                                    $current = (string)($ticket['status'] ?? '');
-                                    foreach ($statuses as $s):
-                                    ?>
-                                        <option value="<?= htmlspecialchars($s) ?>"<?= ($current === $s) ? ' selected' : '' ?>>
-                                            <?= htmlspecialchars($s) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="small text-gray-600 font-weight-bold">Remarks</label>
-                                <textarea class="form-control" name="remarks" rows="3" placeholder="Optional remarks..."></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-block">
-                                <i class="fas fa-save"></i> Save
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
+            
                 <?php if (($ticket['status'] ?? '') === 'Resolved'): ?>
                     <div class="card shadow mb-4">
                         <div class="card-header py-3 bg-success">

@@ -468,6 +468,49 @@ class AdminController extends AuthController
 
         $accountModel = $this->model ?? new Account();
 
+        // Handle deletion
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (($_POST['action'] ?? '') === 'delete') {
+                $employeeId = (int)($_POST['employee_id'] ?? 0);
+
+                if ($employeeId > 0) {
+                    // Fetch employee details before deletion for audit trail
+                    $employees = $accountModel->fetchEmployee();
+                    $employeeDetails = null;
+                    foreach ($employees as $emp) {
+                        if ($emp['employee_id'] == $employeeId) {
+                            $employeeDetails = $emp;
+                            break;
+                        }
+                    }
+                    
+                    $ok = $accountModel->deleteEmployeeByEmployeeId($employeeId);
+
+                    if ($ok) {
+                        // Log deletion via ActivityLogger
+                        $empName = ($employeeDetails['firstname'] ?? 'Unknown') . ' ' . ($employeeDetails['lastname'] ?? '');
+                        ActivityLogger::delete('Admin - Employees', (string)$employeeId,
+                            "Employee deleted: {$empName}",
+                            $_SESSION['username'] ?? 'Unknown', [
+                                'employee_id' => $employeeId,
+                                'firstname' => $employeeDetails['firstname'] ?? 'Unknown',
+                                'lastname' => $employeeDetails['lastname'] ?? 'Unknown',
+                                'email' => $employeeDetails['email'] ?? 'Unknown',
+                                'department' => $employeeDetails['department'] ?? 'Unknown',
+                                'deleted_at' => date('Y-m-d H:i:s'),
+                                'deleted_by' => $_SESSION['username'] ?? 'Unknown'
+                            ]);
+                        
+                        $_SESSION['flash'] = "Employee #{$employeeId} has been permanently deleted and logged in audit trail.";
+                    } else {
+                        $_SESSION['flash'] = "Failed to delete employee #{$employeeId}.";
+                    }
+                }
+
+                $this->redirect('/admin/employee');
+            }
+        }
+
         // Use the tailored fetchEmployee() that returns branchName etc.
         $employees = method_exists($accountModel, 'fetchEmployee')
             ? $accountModel->fetchEmployee()

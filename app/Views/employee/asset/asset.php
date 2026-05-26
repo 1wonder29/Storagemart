@@ -45,12 +45,6 @@ $base = rtrim(BASE_URL, '/');
                             <div class="card-header py-3">
                                 <h6 class="m-0 font-weight-bold text-primary">My Assets</h6>
                             </div>
-                            <div class="d-flex flex-column align-items-end" style="gap: 10px; margin-right: 40px; margin-top: 40px;">
-                                <a href="<?= htmlspecialchars($base) ?>/assets/generatePDF/generate_accountability.php?employee_id=<?= $employee_id ?>" 
-                                class="btn btn-primary" style="width:260px;">
-                                <i class="fas fa-file-word"></i> Generate Accountability Form
-                                </a>
-                            </div>
                             <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-bordered" id="assetUser" width="100%" cellspacing="0">

@@ -53,11 +53,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 ?>
-<div class="mb-3">
-    <button type="button" class="btn btn-info btn-sm" id="downloadTechRecordBtn" data-ticketid="<?= (int)$ticketId ?>">
-        <i class="fas fa-download"></i> Download Technical Record
-    </button>
-</div>
 
 <form method="POST" action="<?= htmlspecialchars($base) ?>/employee/tickets/rate" id="rateTicketForm">
     <input type="hidden" name="ticket_id" value="<?= (int)$ticketId ?>">

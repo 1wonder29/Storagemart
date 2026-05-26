@@ -118,6 +118,37 @@ class Account extends BaseModel {
         }
     }
 
+    /**
+     * Delete employee by employee_id (cascades to related account)
+     */
+    public function deleteEmployeeByEmployeeId(int $employeeId): bool {
+        $employeeId = (int)$employeeId;
+        if ($employeeId <= 0) return false;
+        
+        try {
+            // Get account_id linked to this employee
+            $stmt = $this->pdo->prepare("SELECT account_id FROM {$this->tblemployee} WHERE employee_id = ? LIMIT 1");
+            $stmt->execute([$employeeId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $accountId = $result['account_id'] ?? null;
+            
+            // Delete employee record
+            $stmt = $this->pdo->prepare("DELETE FROM {$this->tblemployee} WHERE employee_id = ? LIMIT 1");
+            $ok = $stmt->execute([$employeeId]);
+            
+            // Delete associated account record if exists
+            if ($accountId) {
+                $stmt = $this->pdo->prepare("DELETE FROM {$this->table} WHERE account_id = ? LIMIT 1");
+                $stmt->execute([$accountId]);
+            }
+            
+            return $ok;
+        } catch (PDOException $e) {
+            error_log("Account::deleteEmployeeByEmployeeId error: " . $e->getMessage());
+            return false;
+        }
+    }
+
     // -----------------------
     // Update methods
     // -----------------------
