@@ -33,6 +33,7 @@ $base = rtrim(BASE_URL, '/');
         <div id="wrapper">
             <?php 
             $activePage = 'users';
+            $userSubPage = 'accounts';
             require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
                     <!-- End of Topbar -->
 

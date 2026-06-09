@@ -1,245 +1,366 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
+
+$totalTickets = count($tickets);
+$branches = [];
+$priorities = [];
+$statuses = [];
+$statusCounts = [];
+$thisMonth = 0;
+$now = time();
+
+foreach ($tickets as $t) {
+    $bn = trim((string) ($t['branchName'] ?? ''));
+    if ($bn !== '') {
+        $branches[$bn] = true;
+    }
+    $pr = trim((string) ($t['priority'] ?? ''));
+    if ($pr !== '') {
+        $priorities[$pr] = true;
+    }
+    $st = trim((string) ($t['status'] ?? ''));
+    if ($st !== '') {
+        $statuses[$st] = true;
+        $statusCounts[$st] = ($statusCounts[$st] ?? 0) + 1;
+    }
+    $df = strtotime((string) ($t['date_filed'] ?? ''));
+    if ($df && (int) date('Y', $df) === (int) date('Y', $now) && (int) date('n', $df) === (int) date('n', $now)) {
+        $thisMonth++;
+    }
+}
+
+ksort($branches);
+ksort($priorities);
+ksort($statuses);
+
+$openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 0) + ($statusCounts['On Hold'] ?? 0) + ($statusCounts['Reopened'] ?? 0);
 ?>
 <html lang="en">
-
 <head>
-
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <title>Storage Mart | IT My Tickets</title>
 
-    <title>Storage Mart Tickets - List of Tickets</title>
-
-    <!-- Custom fonts for this template -->
     <link href="<?= htmlspecialchars($base)?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-        rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-        <!-- Custom styles for this template -->
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
         <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+        <?php require_once __DIR__ . '/../../partials/it/theme_head.php'; ?>
         <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png" type="image/png">
-        <!-- Custom styles for this page -->
-        <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
-
+    <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/it-ticket-list.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
 
-    <!-- Page Wrapper -->
     <div id="wrapper">
-            <?php 
-            $activePage = 'tickets';
-            require_once __DIR__ . '/../../partials/it/sidebar_topbar.php';?>
+        <?php
+        $activePage = 'tickets';
+        require_once __DIR__ . '/../../partials/it/sidebar_topbar.php';
+        ?>
 
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
+        <div class="container-fluid it-ticket-page">
 
-                    <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800">List of Tickets</h1>
-
-
-                    <!-- Main conctent -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">List of Tickets</h6>
+            <div class="page-hero hero-my-tickets">
+                <div class="row align-items-center">
+                    <div class="col-lg-7">
+                        <h1><i class="fas fa-ticket-alt mr-2"></i>My Tickets</h1>
+                        <p>Tickets you filed — track status, view history, and follow up on open requests.</p>
+                        <div class="quick-nav mt-3">
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" class="btn btn-sm btn-outline-light mr-1">
+                                <i class="fas fa-spinner mr-1"></i> In Progress
+                            </a>
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" class="btn btn-sm btn-outline-light mr-1">
+                                <i class="fas fa-check-circle mr-1"></i> Resolved
+                            </a>
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/cancelled" class="btn btn-sm btn-outline-light">
+                                <i class="fas fa-ban mr-1"></i> Cancel History
+                            </a>
                         </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered" id="ticketsTable" width="100%" cellspacing="0">
-                                    <thead>
-                                        <tr>
-                                            <th>Ticket #</th>
-                                            <th>Concern Details</th>
-                                            <th>Branch</th>
-                                            <th>Category</th>
-                                            <th>Priority</th>
-                                            <th>Status</th>
-                                            <th>Date Filed</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tfoot>
-
-                                    </tfoot>
-                                    <tbody>
-                                        <?php foreach($tickets as $row): ?>
-                                            <tr>
-                                                <td><?= htmlspecialchars($row['ticket_number']) ?></td>
-                                                <td><?= htmlspecialchars($row['concern_details']) ?></td>
-                                                <td><?= htmlspecialchars($row['branchName']) ?></td>
-                                                <td><?= htmlspecialchars($row['category']) ?></td>
-                                                <td><?= htmlspecialchars($row['priority']) ?></td>
-                                                <td><?= htmlspecialchars($row['status']) ?></td>
-                                                <td><?= htmlspecialchars($row['date_filed']) ?></td>
-                                                <td>
-                                                    <a class="nav-link dropdown-toggle d-inline-block p-0" href="#" id="userDropdown<?= $row['ticket_id'] ?>" role="button"
-                                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <span class="d-none d-lg-inline text-gray-600">Action</span>
-                                                    </a>
-                                                    <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="userDropdown<?= $row['ticket_id'] ?>">
-                                                        <a href="<?= htmlspecialchars($base) ?>/it/tickets/view?id=<?= (int) ($row['ticket_id'] ?? 0) ?>" class="dropdown-item">
-                                                            <i class="fas fa-eye fa-sm fa-fw mr-2 text-info"></i> View Full Detail
-                                                        </a>
-                                                        <div class="dropdown-divider"></div>
-                                                        <a href="#" class="dropdown-item viewBtn"
-                                                            data-ticketid="<?= $row['ticket_id'] ?>"
-                                                            data-ticketnum="<?= htmlspecialchars($row['ticket_number']) ?>"
-                                                            data-employee="<?= htmlspecialchars($row['employee_name']) ?>"
-                                                            data-branch="<?= htmlspecialchars($row['branchName']) ?>"
-                                                            data-priority="<?= htmlspecialchars($row['priority']) ?>"
-                                                            data-status="<?= htmlspecialchars($row['status']) ?>">
-                                                            <i class="fas fa-history fa-sm fa-fw mr-2 text-black-400"></i> History
-                                                        </a>
-                                                        <div class="dropdown-divider"></div>
-                                                        <?php
-                                                        $ticketId = (int) ($row['ticket_id'] ?? 0);
-                                                        $ticketStatus = (string) ($row['status'] ?? '');
-                                                        $ticketNumber = (string) ($row['ticket_number'] ?? '');
-                                                        $btnClass = 'dropdown-item text-danger';
-                                                        require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
-                                                        ?>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="row mt-3 mt-lg-0">
+                            <div class="col-4">
+                                <div class="hero-stat">
+                                    <div class="stat-value"><?= (int) $totalTickets ?></div>
+                                    <div class="stat-label">Total</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="hero-stat">
+                                    <div class="stat-value"><?= (int) $openCount ?></div>
+                                    <div class="stat-label">Open</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="hero-stat">
+                                    <div class="stat-value"><?= (int) $thisMonth ?></div>
+                                    <div class="stat-label">This Month</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-        </div>
-        </div>
-        
-                </div>
-                <!-- /.container-fluid -->
-
             </div>
-            <!-- End of Main Content -->
 
-            <!-- Footer -->
-            <!-- End of Footer -->
+            <div class="filter-toolbar">
+                <div class="row align-items-end">
+                    <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                        <label for="myBranchFilter">Branch</label>
+                        <select id="myBranchFilter" class="form-control form-control-sm">
+                            <option value="">All Branches</option>
+                            <?php foreach (array_keys($branches) as $branch): ?>
+                                <option value="<?= htmlspecialchars($branch) ?>"><?= htmlspecialchars($branch) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                        <label for="myPriorityFilter">Priority</label>
+                        <select id="myPriorityFilter" class="form-control form-control-sm">
+                            <option value="">All Priorities</option>
+                            <?php foreach (array_keys($priorities) as $priority): ?>
+                                <option value="<?= htmlspecialchars($priority) ?>"><?= htmlspecialchars($priority) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                        <label for="myStatusFilter">Status</label>
+                        <select id="myStatusFilter" class="form-control form-control-sm">
+                            <option value="">All Statuses</option>
+                            <?php foreach (array_keys($statuses) as $status): ?>
+                                <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-sm-6 text-md-right">
+                        <button type="button" id="myClearFilters" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-undo mr-1"></i> Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card ticket-list-card shadow mb-4">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list-ul mr-1"></i> My Ticket History
+                    </h6>
+                    <span class="badge badge-primary"><?= (int) $totalTickets ?> ticket<?= $totalTickets === 1 ? '' : 's' ?></span>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($tickets)): ?>
+                        <div class="empty-state">
+                            <i class="fas fa-inbox d-block"></i>
+                            You haven't filed any tickets yet.
+                        </div>
+                    <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="ticketsTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Ticket</th>
+                                    <th>Concern</th>
+                                    <th>Branch</th>
+                                    <th>Priority / Status</th>
+                                    <th>Date Filed</th>
+                                    <th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                    <?php foreach ($tickets as $row):
+                                        $ticketId = (int) ($row['ticket_id'] ?? 0);
+                                        $status = (string) ($row['status'] ?? '');
+                                        $priority = (string) ($row['priority'] ?? '');
+                                        $date = it_ticket_format_date((string) ($row['date_filed'] ?? ''));
+                                    ?>
+                                        <tr>
+                                            <td>
+                                                <div class="ticket-id-wrap">
+                                                    <span class="ticket-id"><?= htmlspecialchars($row['ticket_number']) ?></span>
+                                                    <?php if (!empty($row['category'])): ?>
+                                                        <span class="category-pill"><?= htmlspecialchars($row['category']) ?></span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="concern-text" title="<?= htmlspecialchars($row['concern_details'] ?? '') ?>">
+                                                    <?= htmlspecialchars(it_ticket_truncate((string) ($row['concern_details'] ?? ''), 90)) ?: '—' ?>
+                                                </div>
+                                                <?php if (!empty($row['employee_name'])): ?>
+                                                    <div class="assignee-hint">
+                                                        <i class="fas fa-user mr-1"></i><?= htmlspecialchars($row['employee_name']) ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if (!empty($row['branchName'])): ?>
+                                                    <span class="branch-pill">
+                                                        <i class="fas fa-map-marker-alt mr-1"></i><?= htmlspecialchars($row['branchName']) ?>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="text-muted">—</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($priority !== ''): ?>
+                                                    <span class="priority-pill <?= it_ticket_priority_class($priority) ?>">
+                                                        <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                                <?php if ($status !== ''): ?>
+                                                    <span class="status-badge <?= it_ticket_status_class($status) ?> mt-1">
+                                                        <?= htmlspecialchars($status) ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="date-cell" data-order="<?= (int) $date['order'] ?>">
+                                                <div class="date-main"><?= htmlspecialchars($date['main']) ?></div>
+                                                <?php if ($date['time'] !== ''): ?>
+                                                    <div class="date-time"><?= htmlspecialchars($date['time']) ?></div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-right">
+                                                <div class="action-btn-group">
+                                                    <a href="<?= htmlspecialchars($base) ?>/it/tickets/view?id=<?= $ticketId ?>"
+                                                       class="btn btn-sm btn-outline-primary" title="View full detail">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-info viewBtn"
+                                                        title="View history"
+                                                        data-ticketid="<?= $ticketId ?>"
+                                                        data-ticketnum="<?= htmlspecialchars($row['ticket_number']) ?>"
+                                                        data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
+                                                        data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
+                                                        data-priority="<?= htmlspecialchars($priority) ?>"
+                                                        data-status="<?= htmlspecialchars($status) ?>">
+                                                        <i class="fas fa-history"></i>
+                                                    </button>
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="More actions">
+                                                            <i class="fas fa-ellipsis-v"></i>
+                                                        </button>
+                                                        <div class="dropdown-menu dropdown-menu-right shadow">
+                                                            <?php
+                                                            $ticketStatus = $status;
+                                                            $ticketNumber = (string) ($row['ticket_number'] ?? '');
+                                                            $btnClass = 'dropdown-item text-danger';
+                                                            require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
+                                                            ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
 
         </div>
-        <!-- End of Content Wrapper -->
-
     </div>
-    <!-- End of Page Wrapper -->
-    <!-- Logout Modal -->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
+
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Ready to Leave?</h5>
                     <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
+                        <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="<?=htmlspecialchars($base) ?>/logout">Logout</a>
+                    <a class="btn btn-primary" href="<?= htmlspecialchars($base) ?>/logout">Logout</a>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top">
-        <i class="fas fa-angle-up"></i>
-    </a>
-<!-- View Ticket Modal -->
-<div class="modal fade" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title" id="viewTicketLabel">Ticket History</h5>
-            <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label>Ticket Number</label>
-                    <input type="text" id="ticket_number" class="form-control" readonly>
-                </div>
-                <div class="col-md-6">
-                    <label>Status</label>
-                    <input type="text" id="status" class="form-control" readonly>
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label>Employee</label>
-                    <input type="text" id="employee" class="form-control" readonly>
-                </div>
-                <div class="col-md-6">
-                    <label>Priority</label>
-                    <input type="text" id="priority" class="form-control" readonly>
-                </div>
-            </div>
 
-                <h6 class="mt-4">History Records</h6>
-                <div class="table-responsive">
-                    <table class="table table-bordered" id="ticketHistoryTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>Action Taken</th>
-                                <th>Technician</th>
-                                <th>Old Status</th>
-                                <th>New Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+    <div class="modal fade" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="viewTicketLabel"><i class="fas fa-history mr-2"></i>Ticket History</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
                 </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="small text-muted text-uppercase">Ticket Number</label>
+                            <input type="text" id="ticket_number" class="form-control form-control-sm" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted text-uppercase">Status</label>
+                            <input type="text" id="status" class="form-control form-control-sm" readonly>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="small text-muted text-uppercase">Employee</label>
+                            <input type="text" id="employee" class="form-control form-control-sm" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted text-uppercase">Priority</label>
+                            <input type="text" id="priority" class="form-control form-control-sm" readonly>
+                        </div>
+                    </div>
 
-                <?php
-                $ticketId = 0;
-                $canPostComments = true;
-                require __DIR__ . '/../../partials/ticket/comments_section.php';
-                ?>
+                    <h6 class="mt-4 font-weight-bold text-gray-800">History Records</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered" id="ticketHistoryTable" width="100%" cellspacing="0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Action Taken</th>
+                                    <th>Technician</th>
+                                    <th>Old Status</th>
+                                    <th>New Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <?php
+                    $ticketId = 0;
+                    $canPostComments = true;
+                    require __DIR__ . '/../../partials/ticket/comments_section.php';
+                    ?>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="viewFullDetailLink" class="btn btn-info mr-auto">
+                        <i class="fas fa-external-link-alt"></i> View Full Detail
+                    </a>
+                    <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
             </div>
-        <div class="modal-footer">
-            <a href="#" id="viewFullDetailLink" class="btn btn-info mr-auto">
-                <i class="fas fa-external-link-alt"></i> View Full Detail
-            </a>
-            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
         </div>
     </div>
-  </div>
-</div>
-        <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
-        <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-        <!-- Core plugin JavaScript-->
-        <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
-
-        <!-- Custom scripts for all pages-->
-        <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-
-        <!-- Page level plugins -->
-        <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
-        <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-
-        <!-- Set global BASE_URL for all scripts -->
-        <script>
-        window.BASE_URL = "<?= htmlspecialchars($base) ?>";
-        const base = window.BASE_URL;
-        </script>
-
-        <!-- Page level custom scripts -->
-        <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/fetch_ticket_history.js"></script>
-        <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
-
-        <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
-        <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
-
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
+    <script>
+    window.BASE_URL = "<?= htmlspecialchars($base) ?>";
+    const base = window.BASE_URL;
+    </script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/it-my-tickets.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/fetch_ticket_history.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+    <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
+    <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
-
 </html>

@@ -1,5 +1,18 @@
 // Ticket Resolution Time Area Chart (Chart.js v3+)
 
+function itAreaChartTheme() {
+  const dark = document.documentElement.classList.contains('it-dark');
+  return {
+    dark: dark,
+    text: dark ? '#a8aeb8' : '#858796',
+    textStrong: dark ? '#e2e5ea' : '#5a5c69',
+    grid: dark ? 'rgba(56, 62, 72, 0.6)' : 'rgb(234, 236, 244)',
+    tooltipBg: dark ? '#2d323c' : '#fff',
+    tooltipBorder: dark ? '#383e48' : '#dddfeb',
+    fill: dark ? 'rgba(78, 115, 223, 0.12)' : 'rgba(78, 115, 223, 0.05)',
+  };
+}
+
 const areaCtx = document.getElementById("myAreaChart");
 
 if (areaCtx && window.ticketResolution) {
@@ -13,7 +26,9 @@ if (areaCtx && window.ticketResolution) {
   const safeSeries = hasData ? series : labels.map(() => 0);
   const avg = hasData ? (series.reduce((a, b) => a + b, 0) / series.length) : 0;
 
-  new Chart(areaCtx, {
+  const theme = itAreaChartTheme();
+
+  window.__itAreaChart = new Chart(areaCtx, {
     type: 'line',
     data: {
       labels,
@@ -23,7 +38,7 @@ if (areaCtx && window.ticketResolution) {
           data: safeSeries,
           tension: 0.3,
           fill: true,
-          backgroundColor: "rgba(78, 115, 223, 0.05)",
+          backgroundColor: theme.fill,
           borderColor: "rgba(78, 115, 223, 1)",
           borderWidth: 2,
           pointRadius: 4,
@@ -31,7 +46,7 @@ if (areaCtx && window.ticketResolution) {
           pointBackgroundColor: safeSeries.map(v =>
             v > SLA_DAYS ? '#e74a3b' : '#4e73df'
           ),
-          pointBorderColor: "#fff",
+          pointBorderColor: theme.dark ? '#252932' : '#fff',
         },
         {
           label: "SLA (1 day)",
@@ -56,12 +71,14 @@ if (areaCtx && window.ticketResolution) {
       plugins: {
         legend: {
           display: true,
-          position: 'bottom'
+          position: 'bottom',
+          labels: { color: theme.text }
         },
         tooltip: {
-          backgroundColor: "#fff",
-          bodyColor: "#858796",
-          borderColor: "#dddfeb",
+          backgroundColor: theme.tooltipBg,
+          titleColor: theme.textStrong,
+          bodyColor: theme.text,
+          borderColor: theme.tooltipBorder,
           borderWidth: 1,
           padding: 12,
           callbacks: {
@@ -79,20 +96,24 @@ if (areaCtx && window.ticketResolution) {
           grid: { display: false },
           ticks: {
             maxRotation: 45,
-            minRotation: 30
+            minRotation: 30,
+            color: theme.text
           }
         },
         y: {
           beginAtZero: true,
           suggestedMax: Math.max(SLA_DAYS + 0.25, ...safeSeries) || (SLA_DAYS + 0.25),
           ticks: {
+            color: theme.text,
             callback: value => value.toFixed(2) + ' days'
           },
           grid: {
-            color: "rgb(234, 236, 244)"
+            color: theme.grid
           }
         }
       }
     }
   });
+
+  document.dispatchEvent(new CustomEvent('it-charts-ready'));
 }

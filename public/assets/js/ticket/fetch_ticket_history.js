@@ -15,18 +15,19 @@
   }
 
   $(document).ready(function () {
-    // Initialize main tickets DataTable if not already initialized
-    try {
-      if (!$.fn.DataTable.isDataTable("#ticketsTable")) {
-        $("#ticketsTable").DataTable({
-          // keep defaults from your demo; add options if needed
-          responsive: true,
-          // you can add pageLength, order, columnDefs, etc.
-          pageLength: 10,
-        });
+    // IT My Tickets page manages its own DataTable init (it-my-tickets.js)
+    var $itMyTicketsTable = $(".it-ticket-page #ticketsTable");
+    if (!$itMyTicketsTable.length) {
+      try {
+        if (!$.fn.DataTable.isDataTable("#ticketsTable")) {
+          $("#ticketsTable").DataTable({
+            responsive: true,
+            pageLength: 10,
+          });
+        }
+      } catch (err) {
+        console.error("DataTable init error:", err);
       }
-    } catch (err) {
-      console.error("DataTable init error:", err);
     }
 
     // Detect which module we're in to construct the correct fetch URL

@@ -21,6 +21,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
@@ -31,25 +32,26 @@ $base = rtrim(BASE_URL, '/');
     <div id="wrapper">
             <?php 
             $activePage = 'assets';
+            $assetSubPage = 'directory';
             require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
 
-                    <!-- Begin Page Content -->
-                    <div class="container-fluid">
+                    <div class="container-fluid admin-assets-page">
 
-                        <!-- Page Heading -->
-                        <h1 class="h3 mb-2 text-gray-800">Tables</h1>
+                        <div class="page-hero hero-inventory">
+                            <h1><i class="fas fa-history mr-2"></i>Transfer History</h1>
+                            <p>Past assignments and returns recorded for this asset item.</p>
+                        </div>
 
-                        <!-- Main conctent -->
-                        <div class="card shadow mb-4">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">List of Item Assets</h6>
+                        <div class="card asset-list-card shadow mb-4">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-primary">Assignment History</h6>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body p-0">
                                 <div class="table-responsive">
                                         <?php if (empty($assignments)): ?>
                                             <div class="alert alert-info">No transfer history found for this asset.</div>
                                         <?php else: ?>
-                                    <table class="table table-bordered" id="asst-history" width="100%" cellspacing="0">
+                                    <table class="table table-hover mb-0" id="asst-history" width="100%" cellspacing="0">
                                         <thead>
                                             <tr>
                                                 <th>Employee ID</th>

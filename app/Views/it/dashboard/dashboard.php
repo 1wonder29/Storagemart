@@ -16,6 +16,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base)?>/assets/css/storagemart.css" rel="stylesheet">
+    <?php require_once __DIR__ . '/../../partials/it/theme_head.php'; ?>
 </head>
 
 <body id="page-top">

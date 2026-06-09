@@ -34,6 +34,7 @@ $base = rtrim(BASE_URL, '/');
                         <h6 class="collapse-header">Ticket:</h6>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/in_progress">In Progress</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/resolve">Resolve</a>
+                        <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/cancelled">Cancel History</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets">My Ticket</a>
                     </div>
                 </div>
@@ -83,6 +84,12 @@ $base = rtrim(BASE_URL, '/');
                     </button>
 
                     <ul class="navbar-nav ml-auto">
+                        <li class="nav-item no-arrow mx-1 d-flex align-items-center">
+                            <button type="button" id="itDarkModeToggle" class="btn btn-link nav-link py-2"
+                                    aria-label="Toggle dark mode" aria-pressed="false" title="Switch to dark mode">
+                                <i class="fas fa-moon" id="itDarkModeIcon"></i>
+                            </button>
+                        </li>
                         <div class="topbar-divider d-none d-sm-block"></div>
                 <li class="nav-item dropdown no-arrow mx-1">
                     <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown"
@@ -203,4 +210,6 @@ $base = rtrim(BASE_URL, '/');
     });
 })();
 </script>
+<?php if (!isset($base)) { $base = rtrim(BASE_URL, '/'); } ?>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/it-dark-mode.js"></script>
 

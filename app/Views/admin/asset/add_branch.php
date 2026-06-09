@@ -20,6 +20,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/input.css" rel="stylesheet">
     <!-- Custom styles for this page -->
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.bootstrap4.min.css" rel="stylesheet">
@@ -31,27 +32,25 @@ $base = rtrim(BASE_URL, '/');
     <!-- Page Wrapper -->
     <div id="wrapper">
             <?php 
-            $activePage = 'asset';
+            $activePage = 'assets';
+            $assetSubPage = 'add-branch';
             require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
 
-                    <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800"></h1>
+                <div class="container-fluid admin-assets-page">
 
+                    <div class="page-hero hero-form">
+                        <h1><i class="fas fa-map-marker-alt mr-2"></i>Add Branch</h1>
+                        <p>Register a new branch location for asset tracking and employee assignment.</p>
+                    </div>
 
-                    <!-- DataTales Example -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Add Branch</h6>
+                    <div class="card form-card shadow mb-4">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">Branch Details</h6>
                         </div>
                         <div class="card-body">
-                            <div class="container mt-4">
                         <form action="<?= rtrim($base, '/') ?>/admin/assets/branch/add" method="POST">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
-
-                                    
-                                <h1>Asset Branch</h1>
+                                <div class="form-section-title">Branch Information</div>
                                     <div class ="row mb-5">
                                             <div class="col-md-6">
                                             <label for = "branchName" class ="form-label">Branch Name</label>
@@ -70,11 +69,13 @@ $base = rtrim(BASE_URL, '/');
                                                 <small class="form-text text-muted">Maximum 1000 characters.</small>
                                             </div>
                                     </div>
-                                    <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
-                                    <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-danger">Cancel</a>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary" name="btnSubmit">
+                                            <i class="fas fa-save mr-1"></i> Save Branch
+                                        </button>
+                                        <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                                    </div>
                                     </form>
-                                </div>
-
                         </div>
                     </div>
                     

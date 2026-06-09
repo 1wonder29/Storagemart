@@ -21,6 +21,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/input.css" rel="stylesheet">
 
 </head>
@@ -31,26 +32,24 @@ $base = rtrim(BASE_URL, '/');
     <div id="wrapper">
             <?php 
             $activePage = 'assets';
+            $assetSubPage = 'add-item';
             require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
-                <!-- End of Topbar -->
 
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
+                <div class="container-fluid admin-assets-page">
 
-                    <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800">Add Asset</h1>
+                    <div class="page-hero hero-form">
+                        <h1><i class="fas fa-plus-circle mr-2"></i>Add Item</h1>
+                        <p>Register a new physical asset item and assign it to an existing asset group.</p>
+                    </div>
 
-                    <!-- DataTales Example -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Asset Details</h6>
+                    <div class="card form-card shadow mb-4">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">Asset Item Details</h6>
                         </div>
                         <div class="card-body">
-                            <div class="container mt-4">
                         <form action="<?= htmlspecialchars($base) ?>/admin/assets/add" method="POST">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                            
-                                <h3>Asset Information</h3>
+                                <div class="form-section-title">Item Information</div>
                                 
                                 <div class ="row mb-5">
                                     <div class="col-md-6">
@@ -79,13 +78,12 @@ $base = rtrim(BASE_URL, '/');
                                             <input type="text" name="year_purchased" class="form-control" id="year_purchased" placeholder="Year purchased" required>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
-                                <button type="button" class="btn btn-danger"
-                                    onclick="window.location.href='<?= htmlspecialchars($base) ?>/admin/assets'">
-                                    Cancel
-                                </button>
-
-                            </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary" name="btnSubmit">
+                                        <i class="fas fa-save mr-1"></i> Save Item
+                                    </button>
+                                    <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                                </div>
                         </form>
                         </div>
                     </div>

@@ -1,6 +1,10 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$ticketSubPage = $ticketSubPage ?? '';
+$userSubPage = $userSubPage ?? '';
+$assetSubPage = $assetSubPage ?? '';
 ?>
+<link href="<?= htmlspecialchars($base) ?>/assets/css/admin-sidebar.css" rel="stylesheet">
         <!-- Sidebar -->
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
@@ -26,42 +30,83 @@ $base = rtrim(BASE_URL, '/');
                 Interface
             </div>
 
-            <!-- Nav Item - Pages Collapse Menu -->
+            <!-- Nav Item - Users -->
             <li class="nav-item <?= ($activePage === 'users') ? 'active' : '' ?>">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                    aria-expanded="true" aria-controls="collapseTwo">
-                    <i class="fas fa-fw fa-user"></i>
-                    <span>Users</span>	
+                <a class="nav-link <?= ($activePage === 'users') ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapseUsers"
+                    aria-expanded="<?= ($activePage === 'users') ? 'true' : 'false' ?>" aria-controls="collapseUsers">
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>Users</span>
                 </a>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">User:</h6>
-                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/account">Accounts</a>
-                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/employee">Employee</a>
+                <div id="collapseUsers" class="collapse <?= ($activePage === 'users') ? 'show' : '' ?>" aria-labelledby="headingUsers" data-parent="#accordionSidebar">
+                    <div class="sidebar-submenu">
+                        <a class="sidebar-submenu-item <?= ($userSubPage === 'accounts') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/account">
+                            <i class="fas fa-id-card"></i>
+                            <span>Accounts</span>
+                        </a>
+                        <a class="sidebar-submenu-item <?= ($userSubPage === 'employee') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/employee">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Employee</span>
+                        </a>
                     </div>
                 </div>
             </li>
 			
             <li class="nav-item <?= ($activePage === 'tickets') ? 'active' : '' ?>">
-                <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/tickets">
+                <a class="nav-link <?= ($activePage === 'tickets') ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapseTickets"
+                    aria-expanded="<?= ($activePage === 'tickets') ? 'true' : 'false' ?>" aria-controls="collapseTickets">
                     <i class="fas fa-ticket-alt"></i>
                     <span>Ticket</span>
                 </a>
+                <div id="collapseTickets" class="collapse <?= ($activePage === 'tickets') ? 'show' : '' ?>" aria-labelledby="headingTickets" data-parent="#accordionSidebar">
+                    <div class="sidebar-submenu">
+                        <a class="sidebar-submenu-item <?= ($ticketSubPage === 'all') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/tickets">
+                            <i class="fas fa-list-ul"></i>
+                            <span>All Tickets</span>
+                        </a>
+                        <a class="sidebar-submenu-item <?= ($ticketSubPage === 'cancelled') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/tickets/cancelled">
+                            <i class="fas fa-ban"></i>
+                            <span>Cancel History</span>
+                        </a>
+                    </div>
+                </div>
             </li>
-            <li class="nav-item <?= in_array($activePage ?? '', ['assets', 'branch', 'category']) ? 'active' : '' ?>">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseAssets"
-                    aria-expanded="true" aria-controls="collapseAssets">
+            <li class="nav-item <?= in_array($activePage ?? '', ['assets', 'asset', 'branch', 'category']) ? 'active' : '' ?>">
+                <a class="nav-link <?= in_array($activePage ?? '', ['assets', 'asset', 'branch', 'category']) ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapseAssets"
+                    aria-expanded="<?= in_array($activePage ?? '', ['assets', 'asset', 'branch', 'category']) ? 'true' : 'false' ?>" aria-controls="collapseAssets">
                     <i class="fas fa-archive"></i>
                     <span>Assets Directory</span>
                 </a>
-                <div id="collapseAssets" class="collapse" aria-labelledby="headingAssets" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Asset Management:</h6>
-                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets">Assets Directory</a>
-                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/add">Add Item</a>
-                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/branch/add">Add Branch</a>
-                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/category/add">Add Category</a>
-                        <a class="collapse-item" href="<?= htmlspecialchars($base) ?>/admin/assets/group/add">Add Group</a>
+                <div id="collapseAssets" class="collapse <?= in_array($activePage ?? '', ['assets', 'asset', 'branch', 'category']) ? 'show' : '' ?>" aria-labelledby="headingAssets" data-parent="#accordionSidebar">
+                    <div class="sidebar-submenu">
+                        <a class="sidebar-submenu-item <?= ($assetSubPage === 'directory') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/assets">
+                            <i class="fas fa-th-list"></i>
+                            <span>Assets Directory</span>
+                        </a>
+                        <a class="sidebar-submenu-item <?= ($assetSubPage === 'add-item') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/assets/add">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Add Item</span>
+                        </a>
+                        <a class="sidebar-submenu-item <?= ($assetSubPage === 'add-branch') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/assets/branch/add">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Add Branch</span>
+                        </a>
+                        <a class="sidebar-submenu-item <?= ($assetSubPage === 'add-category') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/assets/category/add">
+                            <i class="fas fa-tags"></i>
+                            <span>Add Category</span>
+                        </a>
+                        <a class="sidebar-submenu-item <?= ($assetSubPage === 'add-group') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/assets/group/add">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Add Group</span>
+                        </a>
                     </div>
                 </div>
             </li>

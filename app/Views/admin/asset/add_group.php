@@ -21,6 +21,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/input.css" rel="stylesheet">
 
 </head>
@@ -31,21 +32,23 @@ $base = rtrim(BASE_URL, '/');
     <div id="wrapper">
             <?php 
             $activePage = 'assets';
+            $assetSubPage = 'add-group';
             require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
-                <!-- End of Topbar -->
 
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
-                    <h1 class="h3 mb-2 text-gray-800">Add Group Asset</h1>
-                    <p class="mb-4">Create a new asset group by filling out the information below.</p>
+                <div class="container-fluid admin-assets-page">
 
-                    <!-- Form to Add Group -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
+                    <div class="page-hero hero-form">
+                        <h1><i class="fas fa-layer-group mr-2"></i>Add Group</h1>
+                        <p>Create a new asset group by selecting a category and defining the model details.</p>
+                    </div>
+
+                    <div class="card form-card shadow mb-4">
+                        <div class="card-header">
                             <h6 class="m-0 font-weight-bold text-primary">Group Asset Details</h6>
                         </div>
                         <div class="card-body">
                                 <form action="<?= rtrim($base, '/') ?>/admin/assets/group/add" method="POST">
+                                <div class="form-section-title">Group Information</div>
                                 <div class="row mb-5">
                                     <div class="col-md-6">
                                         <label for="categoryName" class="form-label">Item Category</label>
@@ -81,8 +84,12 @@ $base = rtrim(BASE_URL, '/');
                                     </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
-                                <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-danger">Cancel</a>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary" name="btnSubmit">
+                                        <i class="fas fa-save mr-1"></i> Save Group
+                                    </button>
+                                    <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                                </div>
                             </form>
                         </div>
                     </div>

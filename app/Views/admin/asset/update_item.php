@@ -15,6 +15,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Main Styles -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/input.css" rel="stylesheet">
 </head>
 
@@ -24,29 +25,26 @@ $base = rtrim(BASE_URL, '/');
 
     <?php 
     $activePage = 'assets';
+    $assetSubPage = 'directory';
     require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';
     ?>
 
-    <!-- Content Wrapper -->
-    <div id="content-wrapper" class="d-flex flex-column">
-        <div id="content">
+            <div class="container-fluid admin-assets-page">
 
-            <!-- Page Content -->
-            <div class="container-fluid">
+                <div class="page-hero hero-form">
+                    <h1><i class="fas fa-edit mr-2"></i>Update Item</h1>
+                    <p>Edit asset item details, status, and serial number information.</p>
+                </div>
 
-                <!-- Page Heading -->
-                <h1 class="h3 mb-4 text-gray-800">Update Item Asset</h1>
-
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            Update Item Asset
-                        </h6>
+                <div class="card form-card shadow mb-4">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold text-primary">Update Item Asset</h6>
                     </div>
 
                     <div class="card-body">
 
                         <form action="<?= htmlspecialchars($base) ?>/admin/assets/item/update" method="POST">
+                            <div class="form-section-title">Item Details</div>
 
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                             <input type="hidden" name="inventory" value="<?= (int)($inventory['inventory_id'] ?? 0) ?>">
@@ -100,14 +98,15 @@ $base = rtrim(BASE_URL, '/');
                                 </div>
                             </div>
 
-                            <button type="submit" class="btn btn-primary">
-                                Submit
-                            </button>
-
-                            <a href="<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= (int)($inventory['group_id'] ?? ($_GET['group_id'] ?? 0)); ?>"
-                               class="btn btn-secondary">
-                                Cancel
-                            </a>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save mr-1"></i> Save Changes
+                                </button>
+                                <a href="<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= (int)($inventory['group_id'] ?? ($_GET['group_id'] ?? 0)); ?>"
+                                   class="btn btn-outline-secondary">
+                                    Cancel
+                                </a>
+                            </div>
 
                         </form>
 
@@ -115,8 +114,6 @@ $base = rtrim(BASE_URL, '/');
                 </div>
 
             </div>
-        </div>
-    </div>
 </div>
 
 <!-- Scroll to Top -->

@@ -2,7 +2,18 @@
 if (window.Chart) {
   Chart.defaults.font.family =
     'Nunito, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-  Chart.defaults.color = '#858796';
+  Chart.defaults.color = document.documentElement.classList.contains('it-dark') ? '#a8aeb8' : '#858796';
+}
+
+function itChartTheme() {
+  const dark = document.documentElement.classList.contains('it-dark');
+  return {
+    text: dark ? '#a8aeb8' : '#858796',
+    textStrong: dark ? '#e2e5ea' : '#5a5c69',
+    doughnutBorder: dark ? '#252932' : 'rgba(234, 236, 244, 1)',
+    tooltipBg: dark ? '#2d323c' : '#fff',
+    tooltipBorder: dark ? '#383e48' : '#dddfeb',
+  };
 }
 
 // Center text plugin
@@ -15,15 +26,16 @@ const centerText = {
 
     const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
     const { x, y } = meta.data[0];
+    const theme = itChartTheme();
 
     ctx.save();
     ctx.font = 'bold 22px Nunito';
-    ctx.fillStyle = '#5a5c69';
+    ctx.fillStyle = theme.textStrong;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(total, x, y - 8);
     ctx.font = '600 12px Nunito';
-    ctx.fillStyle = '#858796';
+    ctx.fillStyle = theme.text;
     ctx.fillText('tickets', x, y + 12);
     ctx.restore();
   }
@@ -42,7 +54,9 @@ if (ctx && window.ticketData) {
   const total = raw.reduce((a, b) => a + b, 0);
   const chartData = total > 0 ? raw : [1, 1, 1]; // empty-state placeholder
 
-  new Chart(ctx, {
+  const theme = itChartTheme();
+
+  window.__itTicketChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ["Assigned", "In Progress", "Resolved"],
@@ -50,7 +64,7 @@ if (ctx && window.ticketData) {
         data: chartData,
         backgroundColor: ['#36b9cc','#1cc88a', '#f6c23e'],
         hoverBackgroundColor: ['#2c9faf','#17a673','#dda20a'],
-        borderColor: "rgba(234, 236, 244, 1)",
+        borderColor: theme.doughnutBorder,
       }]
     },
     options: {
@@ -62,13 +76,15 @@ if (ctx && window.ticketData) {
           position: 'bottom',
           labels: {
             usePointStyle: true,
-            padding: 20
+            padding: 20,
+            color: theme.text
           }
         },
         tooltip: {
-          backgroundColor: "rgb(255,255,255)",
-          bodyColor: "#858796",
-          borderColor: '#dddfeb',
+          backgroundColor: theme.tooltipBg,
+          titleColor: theme.textStrong,
+          bodyColor: theme.text,
+          borderColor: theme.tooltipBorder,
           borderWidth: 1,
           padding: 15,
           displayColors: true,
@@ -86,4 +102,6 @@ if (ctx && window.ticketData) {
     }
 
   });
+
+  document.dispatchEvent(new CustomEvent('it-charts-ready'));
 }

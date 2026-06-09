@@ -21,6 +21,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/input.css" rel="stylesheet">
 
 </head>
@@ -31,27 +32,26 @@ $base = rtrim(BASE_URL, '/');
     <div id="wrapper">
             <?php 
             $activePage = 'assets';
+            $assetSubPage = 'directory';
             require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
 
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
+                <div class="container-fluid admin-assets-page">
 
-                    <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800"></h1>
+                    <div class="page-hero hero-form">
+                        <h1><i class="fas fa-exchange-alt mr-2"></i>Transfer Asset</h1>
+                        <p>Assign this asset item to an employee and record transfer details.</p>
+                    </div>
 
-
-                    <!-- DataTales Example -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Transfer Asset</h6>
+                    <div class="card form-card shadow mb-4">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">Transfer Details</h6>
                         </div>
                         <div class="card-body">
-                            <div class="container mt-4">
                             <form action="<?= htmlspecialchars($base) ?>/admin/assets/transfer?inventory_id=<?= (int)($inventory['inventory_id'] ?? 0) ?>" method="POST" id="transferForm">
                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                                 <input type="hidden" name="item_id" value="<?= (int)($inventory['inventory_id'] ?? 0) ?>">
                                 <input type="hidden" name="group_id" value="<?= (int)($inventory['group_id'] ?? 0) ?>">
-                                    <h1>Transfer Details</h1>
+                                    <div class="form-section-title">Assignment Information</div>
                                     <div class="row mb-5">
                                         <div class="col-md-6">
                                             <label for="employee_search" class="form-label">Search Employee</label>
@@ -75,12 +75,13 @@ $base = rtrim(BASE_URL, '/');
                                             </div>
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
-                                    <a class="btn btn-secondary" href="<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= (int)($inventory['group_id'] ?? 0) ?>">Cancel</a>
-
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary" name="btnSubmit">
+                                            <i class="fas fa-check mr-1"></i> Complete Transfer
+                                        </button>
+                                        <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= (int)($inventory['group_id'] ?? 0) ?>">Cancel</a>
+                                    </div>
                                     </form>
-                            </div>
-
                         </div>
                     </div>
                     

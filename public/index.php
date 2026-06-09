@@ -137,6 +137,8 @@ if (strpos($uri, '/admin') === 0) {
         $admin->profile();
     } elseif ($sub === 'tickets') {
         $ticket->ticket();
+    } elseif ($sub === 'tickets/cancelled') {
+        $ticket->cancelled();
     } elseif (strpos($sub, 'tickets/view') === 0) {
         $ticket->view();
     } elseif ($sub === 'tickets/history') {
@@ -299,6 +301,8 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
         $ticket->update();
     } elseif ($sub === 'tickets/resolve') {
         $ticket->resolve();
+    } elseif ($sub === 'tickets/cancelled') {
+        $ticket->cancelled();
     } elseif ($sub === 'tickets/upload-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $ticket->uploadTechnicalReport();
     } elseif ($sub === 'ratings') {

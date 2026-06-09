@@ -35,8 +35,11 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
     <?php if (empty($ticket)): ?>
         <div class="alert alert-warning">Ticket not found.</div>
     <?php else: ?>
+        <?php
+        $status = (string) ($ticket['status'] ?? 'Pending');
+        ?>
         <div class="row">
-            <div class="col-lg-7">
+            <div class="col-lg-8">
                 <div class="card shadow mb-4">
                     <div class="card-header py-3 bg-primary">
                         <h6 class="m-0 font-weight-bold text-white">
@@ -61,7 +64,7 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <div class="small text-gray-500 text-uppercase font-weight-bold">Status</div>
-                                <div class="h6 mb-0"><?= htmlspecialchars($ticket['status'] ?? '-') ?></div>
+                                <div class="h6 mb-0"><?= htmlspecialchars($status) ?></div>
                             </div>
                             <div class="col-md-4">
                                 <div class="small text-gray-500 text-uppercase font-weight-bold">Priority</div>
@@ -92,28 +95,17 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer bg-light">
-                        <?php
-                        $ticketId = (int) ($ticket['ticket_id'] ?? 0);
-                        $ticketStatus = (string) ($ticket['status'] ?? '');
-                        $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
-                        require __DIR__ . '/../partials/ticket/cancel_ticket_button.php';
-                        ?>
-                    </div>
-                    <?php if (($ticket['status'] ?? '') === 'Resolved'): ?>
-                        <div class="card-footer bg-light">
-                            <a href="<?= htmlspecialchars($base) ?>/aom/tickets/download-record?id=<?= (int)($ticket['ticket_id'] ?? 0) ?>" class="btn btn-sm btn-info">
-                                <i class="fas fa-download"></i> Download Technical Record
-                            </a>
-                            <button class="btn btn-sm btn-warning rateBtn" data-ticketid="<?= (int)($ticket['ticket_id'] ?? 0) ?>">
-                                <i class="fas fa-star"></i> Rate
-                            </button>
-                        </div>
-                    <?php endif; ?>
                 </div>
+
+                <?php
+                $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                $canPostComments = true;
+                require __DIR__ . '/../partials/ticket/comments_section.php';
+                ?>
             </div>
-            
-                <?php if (($ticket['status'] ?? '') === 'Resolved'): ?>
+
+            <div class="col-lg-4">
+                <?php if ($status === 'Resolved'): ?>
                     <div class="card shadow mb-4">
                         <div class="card-header py-3 bg-success">
                             <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-file-upload"></i> Technical Report</h6>
@@ -135,37 +127,81 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                 <?php endif; ?>
 
                 <div class="card shadow mb-4">
-                    <div class="card-header py-3 bg-primary">
-                        <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-history"></i> History</h6>
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Summary</h6>
                     </div>
                     <div class="card-body">
+                        <div class="mb-3">
+                            <p class="text-xs text-uppercase text-muted mb-1">Ticket ID</p>
+                            <p class="h6 mb-0"><?= (int) ($ticket['ticket_id'] ?? 0) ?></p>
+                        </div>
+                        <hr>
+                        <div class="mb-3">
+                            <p class="text-xs text-uppercase text-muted mb-1">Status</p>
+                            <p class="h6 mb-0">
+                                <?php
+                                $statusIcon = 'fa-circle text-secondary';
+                                if ($status === 'Pending') $statusIcon = 'fa-clock text-warning';
+                                elseif ($status === 'In Progress') $statusIcon = 'fa-spinner text-info';
+                                elseif ($status === 'Resolved') $statusIcon = 'fa-check-circle text-success';
+                                elseif ($status === 'Closed') $statusIcon = 'fa-times-circle text-dark';
+                                ?>
+                                <i class="fas <?= $statusIcon ?>"></i> <?= htmlspecialchars($status) ?>
+                            </p>
+                        </div>
+                        <hr>
+                        <?php if ($status === 'Resolved'): ?>
+                        <div class="mb-3">
+                            <a href="<?= htmlspecialchars($base) ?>/aom/tickets/download-record?id=<?= (int)($ticket['ticket_id'] ?? 0) ?>" class="btn btn-info btn-block btn-sm">
+                                <i class="fas fa-download"></i> Download Technical Record
+                            </a>
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-primary btn-block btn-sm rateBtn" data-ticketid="<?= (int)($ticket['ticket_id'] ?? 0) ?>">
+                                <i class="fas fa-star"></i> Rate Ticket
+                            </button>
+                        </div>
+                        <?php endif; ?>
+                        <div class="mb-3">
+                            <?php
+                            $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                            $ticketStatus = (string) ($ticket['status'] ?? '');
+                            $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
+                            $btnBlock = true;
+                            require __DIR__ . '/../partials/ticket/cancel_ticket_button.php';
+                            ?>
+                        </div>
+                        <div>
+                            <a href="<?= htmlspecialchars($base) ?>/aom/tickets" class="btn btn-block btn-secondary btn-sm">
+                                <i class="fas fa-arrow-left"></i> Back to Tickets
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-2">
+                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history"></i> Ticket History</h6>
+                    </div>
+                    <div class="card-body p-0" style="max-height: 320px; overflow-y: auto;">
                         <?php if (empty($ticketHistory)): ?>
-                            <div class="text-muted">No history found.</div>
+                            <p class="text-muted small mb-0 p-3">No history found.</p>
                         <?php else: ?>
-                            <div class="list-group">
+                            <div class="list-group list-group-flush">
                                 <?php foreach ($ticketHistory as $h): ?>
-                                    <div class="list-group-item">
-                                        <div class="d-flex justify-content-between">
-                                            <strong><?= htmlspecialchars($h['action_type'] ?? 'Updated') ?></strong>
-                                            <small class="text-muted">
-                                                <?= !empty($h['date_logged']) ? date('M d, Y H:i', strtotime($h['date_logged'])) : '' ?>
-                                            </small>
-                                        </div>
-                                        <div class="small text-gray-700">
-                                            <?= htmlspecialchars($h['action_details'] ?? '') ?>
-                                        </div>
+                                    <div class="list-group-item py-2 px-3">
+                                        <p class="mb-1 small font-weight-bold text-gray-800">
+                                            <?= htmlspecialchars($h['action_details'] ?? ($h['action_type'] ?? 'Updated')) ?>
+                                        </p>
+                                        <small class="text-muted">
+                                            <?= !empty($h['date_logged']) ? date('M d, Y H:i', strtotime($h['date_logged'])) : '' ?>
+                                        </small>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
                     </div>
                 </div>
-
-                <?php
-                $ticketId = (int) ($ticket['ticket_id'] ?? 0);
-                $canPostComments = true;
-                require __DIR__ . '/../partials/ticket/comments_section.php';
-                ?>
             </div>
         </div>
     <?php endif; ?>

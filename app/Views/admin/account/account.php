@@ -1,168 +1,209 @@
 <?php
 $base = BASE_URL !== '' ? rtrim(BASE_URL, '/') : '';
+require_once __DIR__ . '/../../partials/admin/account_view_helpers.php';
 
+$totalAccounts = count($users);
+$usertypes = [];
+$adminCount = 0;
+$thisMonth = 0;
+$now = time();
+
+foreach ($users as $row) {
+    $type = strtoupper(trim((string) ($row['usertype'] ?? '')));
+    if ($type !== '') {
+        $usertypes[$type] = ($usertypes[$type] ?? 0) + 1;
+    }
+    if ($type === 'ADMIN') {
+        $adminCount++;
+    }
+    $dc = strtotime((string) ($row['datecreated'] ?? ''));
+    if ($dc && (int) date('Y', $dc) === (int) date('Y', $now) && (int) date('n', $dc) === (int) date('n', $now)) {
+        $thisMonth++;
+    }
+}
+
+ksort($usertypes);
 ?>
-
 <html lang="en">
 
 <head>
-
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <title>Storage Mart Accounts - Tables</title>
-
-    <!-- Custom fonts for this template -->
+    <title>Storage Mart | Accounts</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-        rel="stylesheet">
-
-    <!-- Custom styles for this template -->
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-users.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
 
-    <!-- Page Wrapper -->
     <div id="wrapper">
-            <?php 
-            $activePage = 'users';
-            require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
-                <!-- End of Topbar -->
+        <?php
+        $activePage = 'users';
+        $userSubPage = 'accounts';
+        require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';
+        ?>
 
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
+        <div class="container-fluid admin-users-page">
 
-                    <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800">List of Accounts</h1>
-
-
-                    <!-- Main conctent -->
-                    <div class="card shadow mb-4">
-                        <div class="d-flex flex-column align-items-end" style="gap: 10px; margin-right: 40px; margin-top: 40px;">
-                            <a href="<?= htmlspecialchars($base) ?>/admin/account/add" class="btn btn-primary" style="width:160px;"><i class="fas fa-plus"></i> Add Accounts</a>
+            <div class="page-hero hero-accounts">
+                <div class="row align-items-center">
+                    <div class="col-lg-7">
+                        <h1><i class="fas fa-id-card mr-2"></i>Accounts</h1>
+                        <p>Manage system login accounts — usernames, roles, and access levels across the organization.</p>
+                        <div class="quick-nav mt-3">
+                            <a href="<?= htmlspecialchars($base) ?>/admin/employee" class="btn btn-sm btn-outline-light">
+                                <i class="fas fa-user-tie mr-1"></i> Employee Directory
+                            </a>
                         </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered" id="account" width="100%" cellspacing="0">
-                                    <thead>
-                                        <tr>
-											<th>Account ID</th>
-                                            <th>Username</th>
-                                            <th>Usertype</th>
-											<th>datecreated</th>
-											<th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tfoot>
-
-                                    </tfoot>
-                                    <tbody>
-                                       <?php foreach($users as $row): ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars($row['account_id']) ?></td>
-                                            <td><?= htmlspecialchars($row['username']) ?></td>
-                                            <td><?= htmlspecialchars($row['usertype']) ?></td>
-                                            <td><?= htmlspecialchars($row['datecreated']) ?></td>
-                                            <td>
-                                                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <span class="mr-2 d-none d-lg-inline text-gray-600 ">
-                                                        Action</span>
-                                                    </a>
-                                                    <!-- Dropdown - User Information -->
-                                                    <div class="dropdown-menu dropdown-menu-right shadow " aria-labelledby="userDropdown">
-                                                        <!-- Update -->
-                                                        <a class="dropdown-item" href="<?= htmlspecialchars($base) ?>/admin/account/edit?account_id=<?= $row['account_id']; ?>">
-                                                            <i class="fas fa-edit fa-sm fa-fw mr-2 text-black-400"></i>
-                                                            Update
-                                                        </a>
-
-                                                        <!-- Delete -->
-                                                        <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/account" style="display:inline">
-                                                            <input type="hidden" name="id" value="<?= (int)$row['account_id'] ?>">
-                                                            <button onclick="return confirm('Are you sure you want to delete this account?')" 
-                                                                    type="submit" name="action" value="delete" 
-                                                                    class="dropdown-item text-danger">
-                                                                <i class="fas fa-trash fa-sm fa-fw mr-2 text-black-400"></i>
-                                                                Delete
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="row mt-3 mt-lg-0">
+                            <div class="col-4">
+                                <div class="hero-stat">
+                                    <div class="stat-value"><?= (int) $totalAccounts ?></div>
+                                    <div class="stat-label">Total</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="hero-stat">
+                                    <div class="stat-value"><?= (int) $adminCount ?></div>
+                                    <div class="stat-label">Admins</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="hero-stat">
+                                    <div class="stat-value"><?= (int) $thisMonth ?></div>
+                                    <div class="stat-label">This Month</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-        </div>
-        </div>
-        
-                </div>
-                <!-- /.container-fluid -->
-
             </div>
-            <!-- End of Main Content -->
 
-            <!-- Footer -->
-            <!-- End of Footer -->
+            <div class="filter-toolbar">
+                <div class="row align-items-end">
+                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                        <label for="accountRoleFilter">Role / Usertype</label>
+                        <select id="accountRoleFilter" class="form-control form-control-sm">
+                            <option value="">All Roles</option>
+                            <?php foreach (array_keys($usertypes) as $type): ?>
+                                <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-8 col-sm-6 text-md-right">
+                        <button type="button" id="accountClearFilters" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-undo mr-1"></i> Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card data-list-card shadow mb-4">
+                <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-users-cog mr-1"></i> Account Directory
+                    </h6>
+                    <div class="card-header-actions">
+                        <span class="badge badge-primary"><?= (int) $totalAccounts ?> account<?= $totalAccounts === 1 ? '' : 's' ?></span>
+                        <a href="<?= htmlspecialchars($base) ?>/admin/account/add" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus mr-1"></i> Add Account
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($users)): ?>
+                        <div class="empty-state">
+                            <i class="fas fa-user-slash d-block"></i>
+                            No accounts found.
+                        </div>
+                    <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="account" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Account ID</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Date Created</th>
+                                    <th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($users as $row):
+                                    $usertype = (string) ($row['usertype'] ?? '');
+                                    $date = admin_account_format_date((string) ($row['datecreated'] ?? ''));
+                                ?>
+                                    <tr data-role="<?= htmlspecialchars(strtolower(trim($usertype))) ?>">
+                                        <td>
+                                            <span class="account-id">#<?= htmlspecialchars((string) ($row['account_id'] ?? '')) ?></span>
+                                        </td>
+                                        <td>
+                                            <div class="username-text"><?= htmlspecialchars((string) ($row['username'] ?? '')) ?></div>
+                                        </td>
+                                        <td>
+                                            <?php if ($usertype !== ''): ?>
+                                                <span class="role-badge <?= admin_account_usertype_class($usertype) ?>">
+                                                    <i class="fas fa-shield-alt"></i>
+                                                    <?= htmlspecialchars($usertype) ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="text-muted">—</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="date-cell" data-order="<?= (int) $date['order'] ?>">
+                                            <div class="date-main"><?= htmlspecialchars($date['main']) ?></div>
+                                            <?php if ($date['time'] !== ''): ?>
+                                                <div class="date-time"><?= htmlspecialchars($date['time']) ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="action-btn-group">
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/account/edit?account_id=<?= (int) ($row['account_id'] ?? 0) ?>"
+                                                   class="btn btn-sm btn-outline-primary" title="Edit account">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/account" class="d-inline">
+                                                    <input type="hidden" name="id" value="<?= (int) ($row['account_id'] ?? 0) ?>">
+                                                    <button type="submit" name="action" value="delete"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        title="Delete account"
+                                                        onclick="return confirm('Are you sure you want to delete this account?')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
 
         </div>
-        <!-- End of Content Wrapper -->
-
     </div>
-    <!-- End of Page Wrapper -->
 
-    <!-- Scroll to Top Button-->
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
 
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="<?= htmlspecialchars($base) ?>/logout">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap core JavaScript-->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Core plugin JavaScript-->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <!-- Custom scripts for all pages-->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-
-    <!-- Page level plugins -->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-
-    <!-- Page level custom scripts -->
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
-    <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>  
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-accounts.js"></script>
+    <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 
 </html>

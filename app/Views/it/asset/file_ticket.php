@@ -21,6 +21,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <?php require_once __DIR__ . '/../../partials/it/theme_head.php'; ?>
     <link href="<?= htmlspecialchars($base) ?>/assets/css/input.css" rel="stylesheet">
     <!-- Custom styles for this page -->
 

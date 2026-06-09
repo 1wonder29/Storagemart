@@ -1,23 +1,4 @@
-  // --- Main list table (page) ---
-  document.addEventListener('DOMContentLoaded', () => {
-    if (document.querySelector('#logsTicket')) {
-      new DataTable('#logsTicket', {
-        fixedHeader: { header: true },
-        order: [],
-        columnDefs: [
-          {
-            targets: [2,3, 4, 5], // Category, Priority, Date Filed
-            columnControl: ["order", ["searchList","spacer","orderAsc","orderDesc","orderClear"]],
-          },
-          {
-            targets: [0, 1, 6], // Employee, Branch, Action
-            columnControl: ["order", ["search"]],
-          },
-        ],
-        ordering: { indicators: false, handler: false },
-      });
-    }
-  });
+  // Main list table init is handled by admin-tickets.js on the modern admin page.
 
   // --- Modal history table (inside modal) ---
   // Wrap all jQuery code in document.ready to ensure jQuery is loaded

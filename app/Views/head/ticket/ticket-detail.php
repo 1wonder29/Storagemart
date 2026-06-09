@@ -84,28 +84,6 @@ $base = rtrim(BASE_URL, '/');
                         </div>
                     </div>
 
-                    <?php if (!empty($history)): ?>
-                        <div class="card shadow mb-4">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Ticket History</h6>
-                            </div>
-                            <div class="card-body">
-                                <?php foreach ($history as $entry): ?>
-                                    <div class="mb-3">
-                                        <p class="mb-1">
-                                            <strong><?php echo htmlspecialchars((string) ($entry['action_details'] ?? '')); ?></strong>
-                                        </p>
-                                        <small class="text-muted">
-                                            <?php echo htmlspecialchars((string) ($entry['performed_by'] ?? 'System')); ?> •
-                                            <?php echo htmlspecialchars(date('M d, Y H:i', strtotime((string) ($entry['date_logged'] ?? '')))); ?>
-                                        </small>
-                                        <hr>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
                     <?php
                     $ticketId = (int) ($ticket['ticket_id'] ?? 0);
                     $canPostComments = true;
@@ -164,6 +142,31 @@ $base = rtrim(BASE_URL, '/');
                                     <i class="fas fa-arrow-left"></i> Back to Tickets
                                 </a>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-2">
+                            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history"></i> Ticket History</h6>
+                        </div>
+                        <div class="card-body p-0" style="max-height: 320px; overflow-y: auto;">
+                            <?php if (empty($history)): ?>
+                                <p class="text-muted small mb-0 p-3">No history found.</p>
+                            <?php else: ?>
+                                <div class="list-group list-group-flush">
+                                    <?php foreach ($history as $entry): ?>
+                                        <div class="list-group-item py-2 px-3">
+                                            <p class="mb-1 small font-weight-bold text-gray-800">
+                                                <?php echo htmlspecialchars((string) ($entry['action_details'] ?? '')); ?>
+                                            </p>
+                                            <small class="text-muted">
+                                                <?php echo htmlspecialchars((string) ($entry['performed_by'] ?? 'System')); ?> &bull;
+                                                <?php echo htmlspecialchars(date('M d, Y H:i', strtotime((string) ($entry['date_logged'] ?? '')))); ?>
+                                            </small>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

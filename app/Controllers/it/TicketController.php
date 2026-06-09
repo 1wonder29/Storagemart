@@ -4,6 +4,7 @@
 require_once __DIR__ . '/../AuthController.php';
 require_once __DIR__ . '/../../Models/it/IT.php';
 require_once __DIR__ . '/../../Models/it/ItTicketModel.php';
+require_once __DIR__ . '/../../Models/TicketCancelModel.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
 class TicketController extends AuthController
@@ -232,8 +233,14 @@ class TicketController extends AuthController
         $assignedTo = $itTicketModel->getAssignedTo($ticketId);
         $isOwner = $ticket && (int) ($ticket['employee_id'] ?? 0) === (int) $employeeId;
         $isAssigned = $assignedTo !== null && (int) $assignedTo === (int) $employeeId;
+        $cancelModel = new TicketCancelModel();
+        $canViewCancelled = $cancelModel->canItViewCancelledTicket(
+            $ticketId,
+            (int) $employeeId,
+            (int) $_SESSION['account_id']
+        );
 
-        if (!$ticket || (!$isOwner && !$isAssigned)) {
+        if (!$ticket || (!$isOwner && !$isAssigned && !$canViewCancelled)) {
             $_SESSION['flash_error'] = 'Ticket not found.';
             $redirectTo = ($_GET['from'] ?? '') === 'in_progress' ? '/it/tickets/in_progress' : '/it/tickets';
             $this->redirect($redirectTo);
@@ -249,7 +256,13 @@ class TicketController extends AuthController
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
         $activePage = 'tickets';
-        $backUrl = ($_GET['from'] ?? '') === 'in_progress' ? '/it/tickets/in_progress' : '/it/tickets';
+        $from = $_GET['from'] ?? '';
+        $backUrl = match ($from) {
+            'in_progress' => '/it/tickets/in_progress',
+            'resolve'     => '/it/tickets/resolve',
+            'cancelled'   => '/it/tickets/cancelled',
+            default       => '/it/tickets',
+        };
 
         require __DIR__ . '/../../Views/it/ticket/ticket-detail.php';
     }
@@ -491,6 +504,36 @@ class TicketController extends AuthController
         $this->redirect('/it/tickets/in_progress');
     }
 
+
+    public function cancelled()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $accountId = (int) $_SESSION['account_id'];
+        $itModel = new IT();
+        $employeeId = (int) ($itModel->getEmployeeIdByAccountId($accountId) ?: 0);
+
+        $cancelModel = new TicketCancelModel();
+        $tickets = $cancelModel->getCancelledTicketsForIt($employeeId, $accountId);
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        require __DIR__ . '/../../Views/it/ticket/cancelled.php';
+    }
 
     public function resolve(){
         if (session_status() === PHP_SESSION_NONE) session_start();

@@ -21,6 +21,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/input.css" rel="stylesheet">
     <!-- Custom styles for this page -->
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.bootstrap4.min.css" rel="stylesheet">
@@ -33,26 +34,23 @@ $base = rtrim(BASE_URL, '/');
     <div id="wrapper">
             <?php 
             $activePage = 'assets';
+            $assetSubPage = 'add-category';
             require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
-                <!-- End of Topbar -->
 
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
+                <div class="container-fluid admin-assets-page">
 
-                    <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800"></h1>
+                    <div class="page-hero hero-form">
+                        <h1><i class="fas fa-tags mr-2"></i>Add Category</h1>
+                        <p>Create a new asset category with its IC code for inventory classification.</p>
+                    </div>
 
-
-                    <!-- DataTales Example -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Add Category</h6>
+                    <div class="card form-card shadow mb-4">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">Category Details</h6>
                         </div>
                         <div class="card-body">
-                            <div class="container mt-4">
                                 <form action="<?= rtrim($base, '/') ?>/admin/assets/category/add" method="POST">
-                                    
-                                <h1>Category Details</h1>
+                                <div class="form-section-title">Category Information</div>
                                     <div class ="row mb-5">
                                             <div class="col-md-6">
                                                 <label for = "categoryName" class ="form-label">Category name</label>
@@ -64,11 +62,13 @@ $base = rtrim(BASE_URL, '/');
                                                     <input type="text" name="ic_code" class="form-control" id="ic_code" placeholder="IC CODE" required>
                                             </div>
                                     </div>
-                                    <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
-                                    <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-danger">Cancel</a>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary" name="btnSubmit">
+                                            <i class="fas fa-save mr-1"></i> Save Category
+                                        </button>
+                                        <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                                    </div>
                                     </form>
-                                </div>
-
                         </div>
                     </div>
                     

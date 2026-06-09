@@ -1,0 +1,532 @@
+/* IT portal dark mode — blends with SB Admin 2 palette (neutral slate + brand accents) */
+html.it-dark {
+  --it-bg: #181b20;
+  --it-bg-elevated: #1e2229;
+  --it-surface: #252932;
+  --it-surface-2: #2d323c;
+  --it-border: #383e48;
+  --it-border-light: #454c58;
+  --it-text: #e2e5ea;
+  --it-text-muted: #a8aeb8;
+  --it-text-dim: #8b929d;
+  --it-primary: #6c8ef5;
+  --it-success: #3dd09a;
+  --it-warning: #f7c948;
+  --it-info: #4cc4d8;
+  --it-danger: #ed6b5f;
+  --it-primary-soft: rgba(78, 115, 223, 0.14);
+  --it-input-bg: #1e2229;
+  --it-hover: rgba(255, 255, 255, 0.05);
+  --it-shadow: rgba(0, 0, 0, 0.28);
+  --sb-primary: #4e73df;
+  --sb-success: #1cc88a;
+  --sb-warning: #f6c23e;
+  --sb-info: #36b9cc;
+}
+
+html.it-dark,
+html.it-dark body {
+  background-color: var(--it-bg) !important;
+  color: var(--it-text);
+}
+
+html.it-dark #content-wrapper,
+html.it-dark #content {
+  background-color: var(--it-bg) !important;
+}
+
+/* Topbar — same tone as cards, not a separate blue layer */
+html.it-dark .topbar {
+  background-color: var(--it-surface) !important;
+  border-bottom: 1px solid var(--it-border);
+  box-shadow: 0 0.1rem 0.5rem var(--it-shadow) !important;
+}
+
+html.it-dark .topbar .nav-link,
+html.it-dark .topbar .btn-link {
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .topbar .text-gray-600,
+html.it-dark .topbar .text-gray-500,
+html.it-dark .topbar .text-gray-400 {
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark #itDarkModeToggle {
+  color: var(--it-text-muted) !important;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+html.it-dark #itDarkModeToggle:hover,
+html.it-dark #itDarkModeToggle:focus {
+  background: var(--it-hover);
+  color: var(--it-warning) !important;
+  text-decoration: none;
+}
+
+html.it-dark #itDarkModeToggle.it-dark-active {
+  color: var(--it-warning) !important;
+}
+
+/* Sidebar submenu */
+html.it-dark .sidebar .collapse-inner {
+  background-color: #2e3450 !important;
+}
+
+html.it-dark .sidebar .collapse-header {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+html.it-dark .sidebar .collapse-item {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+html.it-dark .sidebar .collapse-item:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+
+/* SB Admin text utilities */
+html.it-dark .text-gray-800,
+html.it-dark .text-gray-900 {
+  color: var(--it-text) !important;
+}
+
+html.it-dark .text-gray-700 {
+  color: #cdd1d8 !important;
+}
+
+html.it-dark .text-gray-600,
+html.it-dark .text-gray-500 {
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .text-gray-400 {
+  color: var(--it-text-dim) !important;
+}
+
+html.it-dark .text-muted {
+  color: var(--it-text-dim) !important;
+}
+
+html.it-dark .text-primary {
+  color: var(--it-primary) !important;
+}
+
+html.it-dark .text-success {
+  color: var(--it-success) !important;
+}
+
+html.it-dark .text-warning {
+  color: var(--it-warning) !important;
+}
+
+html.it-dark .text-info {
+  color: var(--it-info) !important;
+}
+
+html.it-dark .text-danger {
+  color: var(--it-danger) !important;
+}
+
+/* Cards */
+html.it-dark .card {
+  background-color: var(--it-surface) !important;
+  border: 1px solid var(--it-border) !important;
+  box-shadow: 0 0.1rem 0.65rem var(--it-shadow) !important;
+}
+
+html.it-dark .card-header {
+  background-color: var(--it-surface-2) !important;
+  border-bottom-color: var(--it-border) !important;
+}
+
+html.it-dark .card-body {
+  color: var(--it-text);
+}
+
+html.it-dark hr {
+  border-top-color: var(--it-border) !important;
+}
+
+/* Keep SB Admin accent stripes on dashboard stat cards */
+html.it-dark .border-left-primary {
+  border-left-color: var(--sb-primary) !important;
+}
+
+html.it-dark .border-left-success {
+  border-left-color: var(--sb-success) !important;
+}
+
+html.it-dark .border-left-warning {
+  border-left-color: var(--sb-warning) !important;
+}
+
+html.it-dark .border-left-info {
+  border-left-color: var(--sb-info) !important;
+}
+
+html.it-dark .sm-card-link:hover .card,
+html.it-dark .sm-card-link:focus .card {
+  background-color: var(--it-surface-2) !important;
+  box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Tables */
+html.it-dark .table {
+  color: var(--it-text);
+}
+
+html.it-dark .table td,
+html.it-dark .table th {
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .table thead th,
+html.it-dark .table-light th {
+  background-color: var(--it-surface-2) !important;
+  color: var(--it-text-muted) !important;
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .table-hover tbody tr:hover {
+  background-color: var(--it-hover) !important;
+}
+
+html.it-dark .table-bordered {
+  border-color: var(--it-border) !important;
+}
+
+/* DataTables */
+html.it-dark .dt-container .dt-search input,
+html.it-dark .dt-container .dt-length select,
+html.it-dark div.dataTables_wrapper .dataTables_filter input,
+html.it-dark div.dataTables_wrapper .dataTables_length select {
+  background-color: var(--it-input-bg) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text) !important;
+}
+
+html.it-dark .dt-container .dt-info,
+html.it-dark div.dataTables_wrapper .dataTables_info {
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .dt-container .dt-paging .dt-paging-button,
+html.it-dark div.dataTables_wrapper .dataTables_paginate .paginate_button {
+  background: var(--it-surface-2) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .dt-container .dt-paging .dt-paging-button.current,
+html.it-dark div.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: var(--sb-primary) !important;
+  border-color: var(--sb-primary) !important;
+  color: #fff !important;
+}
+
+/* Forms */
+html.it-dark .form-control,
+html.it-dark .custom-select,
+html.it-dark select.form-control,
+html.it-dark textarea.form-control {
+  background-color: var(--it-input-bg) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text) !important;
+}
+
+html.it-dark .form-control:focus,
+html.it-dark .custom-select:focus {
+  border-color: var(--sb-primary) !important;
+  box-shadow: 0 0 0 0.2rem var(--it-primary-soft) !important;
+}
+
+html.it-dark .form-control::placeholder {
+  color: var(--it-text-dim) !important;
+}
+
+html.it-dark label,
+html.it-dark .form-label {
+  color: var(--it-text-muted);
+}
+
+/* Dropdowns */
+html.it-dark .dropdown-menu {
+  background-color: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+  box-shadow: 0 0.4rem 1.2rem var(--it-shadow) !important;
+}
+
+html.it-dark .dropdown-item {
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .dropdown-item:hover,
+html.it-dark .dropdown-item:focus {
+  background-color: var(--it-hover) !important;
+  color: var(--it-text) !important;
+}
+
+html.it-dark .dropdown-header {
+  color: var(--it-text-dim) !important;
+}
+
+html.it-dark .dropdown-divider {
+  border-top-color: var(--it-border) !important;
+}
+
+html.it-dark .dropdown-list {
+  background-color: var(--it-surface) !important;
+}
+
+/* Modals */
+html.it-dark .modal-content {
+  background-color: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text);
+}
+
+html.it-dark .modal-header,
+html.it-dark .modal-footer {
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .modal-header .close,
+html.it-dark .close {
+  color: var(--it-text-muted);
+  text-shadow: none;
+}
+
+/* Buttons */
+html.it-dark .btn-primary {
+  background-color: var(--sb-primary) !important;
+  border-color: var(--sb-primary) !important;
+}
+
+html.it-dark .btn-outline-secondary {
+  color: var(--it-text-muted);
+  border-color: var(--it-border-light);
+}
+
+html.it-dark .btn-outline-secondary:hover {
+  background-color: var(--it-surface-2);
+  color: var(--it-text);
+}
+
+html.it-dark .btn-outline-primary {
+  color: var(--it-primary);
+  border-color: var(--sb-primary);
+}
+
+html.it-dark .btn-outline-primary:hover {
+  background-color: var(--it-primary-soft);
+}
+
+html.it-dark .btn-outline-info {
+  color: var(--it-info);
+  border-color: var(--sb-info);
+}
+
+html.it-dark .btn-outline-light {
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+html.it-dark .btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+html.it-dark .btn-secondary {
+  background-color: var(--it-surface-2);
+  border-color: var(--it-border);
+  color: var(--it-text);
+}
+
+/* Filter toolbar */
+html.it-dark .filter-toolbar {
+  background: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .filter-toolbar label {
+  color: var(--it-text-dim) !important;
+}
+
+/* List cards */
+html.it-dark .ticket-list-card .card-header,
+html.it-dark .asset-list-card .card-header {
+  background: var(--it-surface-2) !important;
+  border-bottom-color: var(--it-border) !important;
+}
+
+html.it-dark .ticket-list-card thead th,
+html.it-dark .asset-list-card thead th {
+  background: var(--it-surface-2) !important;
+  border-bottom-color: var(--it-border) !important;
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .ticket-list-card td,
+html.it-dark .asset-list-card td {
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .ticket-list-card tbody tr:hover,
+html.it-dark .asset-list-card tbody tr:hover {
+  background-color: var(--it-hover) !important;
+}
+
+/* Ticket pages */
+html.it-dark .it-ticket-page .ticket-id {
+  color: var(--it-primary) !important;
+}
+
+html.it-dark .it-ticket-page .employee-name,
+html.it-dark .it-ticket-page .date-cell .date-main,
+html.it-dark .it-ticket-page .resolution-block .action-text,
+html.it-dark .it-ticket-page .concern-text {
+  color: var(--it-text) !important;
+}
+
+html.it-dark .it-ticket-page .branch-pill {
+  background: rgba(78, 115, 223, 0.18) !important;
+  color: #a8bdf8 !important;
+}
+
+html.it-dark .it-ticket-page .category-pill,
+html.it-dark .it-ticket-page .purpose-pill {
+  background: rgba(54, 185, 204, 0.16) !important;
+  color: var(--it-info) !important;
+}
+
+html.it-dark .it-ticket-page .asset-hint,
+html.it-dark .it-ticket-page .remarks-hint,
+html.it-dark .it-ticket-page .assignee-hint,
+html.it-dark .it-ticket-page .date-cell .date-time {
+  color: var(--it-text-dim) !important;
+}
+
+/* Uploads page */
+html.it-dark .it-uploads-page .upload-date-group {
+  background: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .it-uploads-page .upload-date-header {
+  background: var(--it-surface-2) !important;
+  border-bottom-color: var(--it-border) !important;
+}
+
+html.it-dark .it-uploads-page .upload-date-title {
+  color: var(--it-text) !important;
+}
+
+html.it-dark .it-uploads-page .upload-file-row {
+  border-bottom-color: var(--it-border) !important;
+}
+
+html.it-dark .it-uploads-page .upload-file-row:hover {
+  background: var(--it-hover) !important;
+}
+
+html.it-dark .it-uploads-page .upload-filename,
+html.it-dark .it-uploads-page .upload-meta {
+  color: var(--it-text-dim) !important;
+}
+
+html.it-dark .it-uploads-page .ticket-ref {
+  color: var(--it-primary) !important;
+}
+
+html.it-dark .it-uploads-page .file-size-badge {
+  background: var(--it-bg-elevated) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .it-uploads-page .no-results {
+  background: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+}
+
+/* Assets page */
+html.it-dark .it-assets-page .asset-number {
+  color: var(--it-info) !important;
+}
+
+html.it-dark .it-assets-page .device-name,
+html.it-dark .it-assets-page .item-info-text {
+  color: var(--it-text) !important;
+}
+
+html.it-dark .it-assets-page .device-desc,
+html.it-dark .it-assets-page .serial-hint {
+  color: var(--it-text-dim) !important;
+}
+
+/* Badges */
+html.it-dark .badge-primary { background-color: var(--sb-primary) !important; }
+html.it-dark .badge-success { background-color: var(--sb-success) !important; }
+html.it-dark .badge-info { background-color: var(--sb-info) !important; }
+html.it-dark .badge-warning { background-color: var(--sb-warning) !important; color: #1a1c23 !important; }
+
+html.it-dark .status-badge.status-in-progress { background: rgba(78, 115, 223, 0.2); color: #a8bdf8; }
+html.it-dark .status-badge.status-pending { background: rgba(246, 194, 62, 0.2); color: var(--it-warning); }
+html.it-dark .status-badge.status-resolved,
+html.it-dark .resolved-badge,
+html.it-dark .assigned-badge,
+html.it-dark .mine-badge {
+  background: rgba(28, 200, 138, 0.18) !important;
+  color: var(--it-success) !important;
+}
+
+html.it-dark .priority-pill.high { background: rgba(231, 74, 59, 0.18); color: #f5a8a0; }
+html.it-dark .priority-pill.medium { background: rgba(246, 194, 62, 0.18); color: var(--it-warning); }
+html.it-dark .priority-pill.low { background: rgba(54, 185, 204, 0.18); color: var(--it-info); }
+
+html.it-dark .result-pill.success { background: rgba(28, 200, 138, 0.18); color: var(--it-success); }
+html.it-dark .result-pill.warning { background: rgba(246, 194, 62, 0.18); color: var(--it-warning); }
+html.it-dark .result-pill.neutral { background: var(--it-surface-2); color: var(--it-text-muted); }
+
+/* Charts */
+html.it-dark .chart-area,
+html.it-dark .chart-pie,
+html.it-dark canvas {
+  filter: none;
+}
+
+html.it-dark .card .card-body canvas {
+  background: transparent !important;
+}
+
+/* Scroll & dividers */
+html.it-dark .scroll-to-top {
+  background: var(--it-surface-2) !important;
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .topbar-divider {
+  border-right-color: var(--it-border) !important;
+}
+
+/* Toggle button light mode */
+#itDarkModeToggle {
+  border: none;
+  background: transparent;
+  line-height: 1;
+}
+
+#itDarkModeToggle:hover,
+#itDarkModeToggle:focus {
+  text-decoration: none;
+  outline: none;
+}
+
+html:not(.it-dark) #itDarkModeToggle:hover {
+  color: #4e73df !important;
+}

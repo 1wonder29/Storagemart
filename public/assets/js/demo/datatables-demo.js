@@ -1,20 +1,5 @@
 // Call the datatables jQuery plugin
-new DataTable("#asset", {
-  fixedHeader: { header: true },
-  columnDefs: [
-    {
-      targets: [1, 2],
-      columnControl: [
-        "order",
-        ["searchList", "spacer", "orderAsc", "orderDesc", "orderClear"],
-      ],
-    },
-  ],
-  ordering: {
-    indicators: false,
-    handler: false,
-  },
-});
+// #asset table is initialized by admin-assets-directory.js on the modern assets page.
 new DataTable("#assetUser", {
   fixedHeader: { header: true },
   columnDefs: [
@@ -38,40 +23,9 @@ new DataTable("#assetUser", {
     handler: false,
   },
 });
-new DataTable("#account", {
-  fixedHeader: { header: true },
-  columnDefs: [
-    {
-      targets: [1, 2],
-      columnControl: [
-        "order",
-        ["searchList", "spacer", "orderAsc", "orderDesc", "orderClear"],
-      ],
-    },
-  ],
-  ordering: {
-    indicators: false,
-    handler: false,
-  },
-});
+// #account table is initialized by admin-accounts.js on the modern accounts page.
 //ColumnControl for Aseset Inventory
-new DataTable("#asset_inventory", {
-  fixedHeader: { header: true },
-  columnDefs: [
-    {
-      targets: [1, 2, 3, 4, 5],
-      columnControl: [
-        "order",
-        ["searchList", "spacer", "orderAsc", "orderDesc", "orderClear"],
-      ],
-    },
-    
-  ],
-  ordering: {
-    indicators: false,
-    handler: false,
-  },
-});
+// #asset_inventory table is initialized by admin-asset-inventory.js on the modern inventory page.
 new DataTable("#asst-history", {
   fixedHeader: { header: true },
   order: [],
@@ -142,54 +96,8 @@ new DataTable("#asset-ticket", {
     handler: false,
   },
 });
-new DataTable("#employee-table", {
-  fixedHeader: { header: true },
-  order: [],
-  columnDefs: [
-    {
-      targets: [ 5, 6, 7, 10],
-      columnControl: [
-        "order",
-        ["searchList", "spacer", "orderAsc", "orderDesc", "orderClear"],
-      ],
-    },
-    {
-      targets: [0,1,2,3,4,8,9],
-      columnControl: [
-        "order",
-        ["search"],
-      ],
-    },
-  ],
-  ordering: {
-    indicators: false,
-    handler: false,
-  },
-});
-new DataTable("#pendings", {
-  fixedHeader: { header: true },
-  order: [],
-  columnDefs: [
-    {
-      targets: [ 2,3,5, 6,9],
-      columnControl: [
-        "order",
-        ["searchList", "spacer", "orderAsc", "orderDesc", "orderClear"],
-      ],
-    },
-    {
-      targets: [0,1,7,8],
-      columnControl: [
-        "order",
-        ["search"],
-      ],
-    },
-  ],
-  ordering: {
-    indicators: false,
-    handler: false,
-  },
-});
+// #employee-table is initialized by admin-employees.js on the modern employees page.
+// #pendings table is initialized by admin-pendings.js on the modern pending page.
 new DataTable("#ticketTables", {
   fixedHeader: { header: true },
   order: [],

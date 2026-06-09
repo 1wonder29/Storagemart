@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 require_once __DIR__ . '/../../Models/admin/Ticket.php';
+require_once __DIR__ . '/../../Models/TicketCancelModel.php';
 
 class TicketController extends AuthController
 {
@@ -44,6 +45,33 @@ class TicketController extends AuthController
         // render view
         require __DIR__ . '/../../Views/admin/ticket/ticket.php';
 
+    }
+
+    public function cancelled()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        $cancelModel = new TicketCancelModel();
+        $tickets = $cancelModel->getAllCancelledTickets();
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        $activePage = 'tickets';
+
+        require __DIR__ . '/../../Views/admin/ticket/cancelled.php';
     }
 
     public function view()

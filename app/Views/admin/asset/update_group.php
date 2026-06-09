@@ -21,6 +21,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/input.css" rel="stylesheet">
 
 </head>
@@ -31,26 +32,25 @@ $base = rtrim(BASE_URL, '/');
     <div id="wrapper">
             <?php 
             $activePage = 'assets';
+            $assetSubPage = 'directory';
             require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
 
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
+                <div class="container-fluid admin-assets-page">
 
-                    <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800"></h1>
+                    <div class="page-hero hero-form">
+                        <h1><i class="fas fa-edit mr-2"></i>Update Group</h1>
+                        <p>Edit the asset group model name, category, and description.</p>
+                    </div>
 
-
-                    <!-- DataTales Example -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
+                    <div class="card form-card shadow mb-4">
+                        <div class="card-header">
                             <h6 class="m-0 font-weight-bold text-primary">Update Group Asset</h6>
                         </div>
                         <div class="card-body">
-                            <div class="container mt-4">
                                 <form action="<?= rtrim($base, '/') ?>/admin/assets/group/update" method="POST">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                                     <input type="hidden" name="group_id" value="<?= htmlspecialchars($assets['group_id'] ?? '') ?>">
-                                    <h1>Update Group Asset Details</h1>
+                                    <div class="form-section-title">Group Details</div>
                                     <div class ="row mb-5">
                                         <div class = "col-md-6">
                                             <label for="ic_code" class="form-label">IC CODE</label>
@@ -74,11 +74,13 @@ $base = rtrim(BASE_URL, '/');
                                                 <small class="form-text text-muted">Maximum 1000 characters.</small>
                                             </div>
                                     </div>
-                                    <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
-                                    <a href="<?= rtrim($base, '/') ?>/admin/assets" class="btn btn-danger">Cancel</a>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary" name="btnSubmit">
+                                            <i class="fas fa-save mr-1"></i> Save Changes
+                                        </button>
+                                        <a href="<?= rtrim($base, '/') ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                                    </div>
                                     </form>
-                            </div>
-
                         </div>
                     </div>
                     
