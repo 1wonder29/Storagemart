@@ -79,6 +79,9 @@ $base = rtrim(BASE_URL, '/');
                                                         <span class="mr-2 d-none d-lg-inline text-gray-600">Action</span>
                                                     </a>
                                                     <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="userDropdown<?= $row['ticket_id'] ?>">
+                                                        <a href="<?= htmlspecialchars($base) ?>/admin/tickets/view?id=<?= (int) ($row['ticket_id'] ?? 0) ?>" class="dropdown-item">
+                                                            <i class="fas fa-eye fa-sm fa-fw mr-2 text-black-400"></i> View Full Detail
+                                                        </a>
                                                         <a href="#" class="dropdown-item viewBtn" data-action="View"
                                                         data-ticketid="<?= $row['ticket_id'] ?>"
                                                         data-ticketnum="<?= htmlspecialchars($row['ticket_number']) ?>"
@@ -86,7 +89,7 @@ $base = rtrim(BASE_URL, '/');
                                                         data-branch="<?= htmlspecialchars($row['branchName']) ?>"
                                                         data-priority="<?= htmlspecialchars($row['priority']) ?>"
                                                         data-status="<?= htmlspecialchars($row['status']) ?>">
-                                                            <i class="fas fa-eye fa-sm fa-fw mr-2 text-black-400"></i> View
+                                                            <i class="fas fa-history fa-sm fa-fw mr-2 text-black-400"></i> History
                                                         </a>
                                                             <?php if (strcasecmp($row['status'], 'resolved') !== 0): ?>
                                                                 <a href="#" class="dropdown-item openUpdateAssignBtn"
@@ -102,6 +105,13 @@ $base = rtrim(BASE_URL, '/');
                                                                     Assignment Locked
                                                                 </span>
                                                             <?php endif; ?>
+                                                            <?php
+                                                            $ticketId = (int) ($row['ticket_id'] ?? 0);
+                                                            $ticketStatus = (string) ($row['status'] ?? '');
+                                                            $ticketNumber = (string) ($row['ticket_number'] ?? '');
+                                                            $btnClass = 'dropdown-item text-danger';
+                                                            require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
+                                                            ?>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -200,8 +210,17 @@ $base = rtrim(BASE_URL, '/');
                         <tbody></tbody>
                     </table>
                 </div>
+
+                <?php
+                $ticketId = 0;
+                $canPostComments = true;
+                require __DIR__ . '/../../partials/ticket/comments_section.php';
+                ?>
             </div>
             <div class="modal-footer">
+                <a href="#" id="viewFullDetailLink" class="btn btn-info mr-auto">
+                    <i class="fas fa-external-link-alt"></i> View Full Detail
+                </a>
                 <button class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
@@ -271,6 +290,7 @@ $base = rtrim(BASE_URL, '/');
     <script>
     // Set global BASE_URL for all scripts including fetch_ticket_history.js
     window.BASE_URL = "<?= htmlspecialchars($base) ?>";
+    const base = window.BASE_URL;
     </script>
 
     <script>
@@ -282,8 +302,10 @@ $base = rtrim(BASE_URL, '/');
         }); // Close $(document).ready()
     </script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/fetch_ticket_history.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
     <script src='<?= htmlspecialchars($base) ?>/assets/js/edit_ticket_action.js'></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
+    <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 
 </html>

@@ -285,6 +285,63 @@ class UniformController extends AuthController {
     }
 
     /**
+     * Reactivate a discontinued uniform
+     */
+    public function reactivate($uniformId) {
+        $this->requireHR();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/hr/uniforms');
+        }
+
+        try {
+            $uniformId = (int) $uniformId;
+            $uniform = $this->uniformModel->getUniformById($uniformId);
+
+            if (!$uniform) {
+                $_SESSION['errorMessage'] = 'Uniform not found.';
+                $this->redirect('/hr/uniforms');
+            }
+
+            if (strtoupper($uniform['status'] ?? '') !== 'DISCONTINUED') {
+                $_SESSION['errorMessage'] = 'Only discontinued uniforms can be reactivated.';
+                $this->redirect('/hr/uniforms');
+            }
+
+            $updatedBy = $_SESSION['username'] ?? 'system';
+
+            if ($this->uniformModel->reactivateUniform($uniformId, $updatedBy)) {
+                ActivityLogger::update('HR - Uniforms', (string) $uniformId,
+                    "Uniform reactivated: {$uniform['uniform_type']} - Size {$uniform['size']}",
+                    $updatedBy, [
+                        'uniform_id' => $uniformId,
+                        'uniform_type' => $uniform['uniform_type'],
+                        'size' => $uniform['size'],
+                        'status' => 'ACTIVE'
+                    ]);
+
+                $this->hrModel->logAction(
+                    'REACTIVATED_UNIFORM',
+                    null,
+                    $uniformId,
+                    (int) $_SESSION['account_id'],
+                    "Reactivated uniform: {$uniform['uniform_type']} - Size {$uniform['size']}"
+                );
+
+                $_SESSION['successMessage'] = 'Uniform reactivated successfully!';
+            } else {
+                $_SESSION['errorMessage'] = 'Error reactivating uniform.';
+            }
+
+            $this->redirect('/hr/uniforms');
+        } catch (\Throwable $e) {
+            error_log('UniformController::reactivate error: ' . $e->getMessage());
+            $_SESSION['errorMessage'] = 'Error reactivating uniform: ' . $e->getMessage();
+            $this->redirect('/hr/uniforms');
+        }
+    }
+
+    /**
      * Search uniforms
      */
     public function search() {

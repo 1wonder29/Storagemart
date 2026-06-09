@@ -171,6 +171,30 @@ class Employee extends BaseModel{
 
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
+
+    public function formatDisplayName(?array $employee): string
+    {
+        if (!$employee) {
+            return 'Someone';
+        }
+        $name = trim(($employee['firstname'] ?? '') . ' ' . ($employee['lastname'] ?? ''));
+        return $name !== '' ? $name : 'Someone';
+    }
+
+    public function getDisplayNameByEmployeeId(int $employeeId): string
+    {
+        return $this->formatDisplayName($this->getEmployeeById($employeeId));
+    }
+
+    public function getDisplayNameByAccountId(int $accountId): string
+    {
+        $employeeId = $this->getEmployeeIdByAccountId($accountId);
+        if (!$employeeId) {
+            return 'Someone';
+        }
+        return $this->getDisplayNameByEmployeeId($employeeId);
+    }
+
     /**
      * Fetch all employees under a specific department
      * (Used by HEAD role)

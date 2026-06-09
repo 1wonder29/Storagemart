@@ -10,8 +10,7 @@ $totalDepartmentTickets   = $totalDepartmentTickets   ?? 0;
 $pendingDepartmentTickets = $pendingDepartmentTickets ?? 0;
 $resolvedDepartmentTickets= $resolvedDepartmentTickets?? 0;
 
-// If you don’t track this yet
-$inProgressTickets = max(0, $totalTickets - ($pendingTickets + $resolvedTickets));
+$tickets = $tickets ?? [];
 
 $base = rtrim(BASE_URL, '/');
 
@@ -30,8 +29,6 @@ $base = rtrim(BASE_URL, '/');
     <!-- Custom fonts for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
 </head>
@@ -135,57 +132,54 @@ $base = rtrim(BASE_URL, '/');
                     </div>
                 </div>
                 <div class="row">
-
-                    <!-- Ticket Status Pie Chart -->
-                    <div class="col-xl-4 col-lg-5">
+                    <div class="col-lg-12">
                         <div class="card shadow mb-4">
-
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">
-                                    Ticket Status Overview
-                                </h6>
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Department Tickets</h6>
+                                <a href="<?= htmlspecialchars($base) ?>/head/tickets" class="btn btn-primary btn-sm">
+                                    View All Tickets
+                                </a>
                             </div>
-
-                            <div class="card-body text-center">
-                                <div style="height:300px;">
-                                    <canvas id="ticketChart"></canvas>
+                            <div class="card-body">
+                                <?php if (!empty($tickets)): ?>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="departmentTicketsTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Ticket #</th>
+                                                <th>Employee Name</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($tickets as $row): ?>
+                                            <tr>
+                                                <td><?= htmlspecialchars($row['ticket_number']) ?></td>
+                                                <td><?= htmlspecialchars($row['employee_name']) ?></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-primary viewBtn"
+                                                        data-ticketid="<?= (int)$row['ticket_id'] ?>"
+                                                        data-ticketnum="<?= htmlspecialchars($row['ticket_number']) ?>"
+                                                        data-employee="<?= htmlspecialchars($row['employee_name']) ?>"
+                                                        data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
+                                                        data-priority="<?= htmlspecialchars($row['priority']) ?>"
+                                                        data-status="<?= htmlspecialchars($row['status']) ?>">
+                                                        <i class="fas fa-eye"></i> Ticket Details
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
                                 </div>
-
-                                <hr>
-
-                                <span class="small text-muted">
-                                    Ticket distribution by status
-                                </span>
+                                <?php else: ?>
+                                <p class="text-muted text-center py-3 mb-0">
+                                    <i class="fas fa-inbox"></i> No tickets found for this department.
+                                </p>
+                                <?php endif; ?>
                             </div>
-
                         </div>
                     </div>
-
-                    <!-- Ticket Resolution Time Chart -->
-                    <div class="col-xl-8 col-lg-7">
-                        <div class="card shadow mb-4">
-
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">
-                                    Ticket Resolution Overview
-                                </h6>
-                            </div>
-
-                            <div class="card-body text-center">
-                                <div style="height:300px;">
-                                    <canvas id="myAreaChart"></canvas>
-                                </div>
-
-                                <hr>
-
-                                <span class="small text-muted">
-                                    Ticket resolution time (hours)
-                                </span>
-                            </div>
-
-                        </div>
-                    </div>
-
                 </div>
 
                 <!-- End Page Content -->
@@ -198,29 +192,139 @@ $base = rtrim(BASE_URL, '/');
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
+    <!-- View Ticket Modal -->
+    <div class="modal fade" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="viewTicketLabel">Ticket Details</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label>Ticket Number</label>
+                            <input type="text" id="ticket_number" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Status</label>
+                            <input type="text" id="status" class="form-control" readonly>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label>Employee</label>
+                            <input type="text" id="employee" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Priority</label>
+                            <input type="text" id="priority" class="form-control" readonly>
+                        </div>
+                    </div>
+                    <h6 class="mt-4">History Records</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="ticketHistoryTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Action Taken</th>
+                                    <th>Technician</th>
+                                    <th>Old Status</th>
+                                    <th>New Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <?php
+                    $ticketId = 0;
+                    $canPostComments = true;
+                    require __DIR__ . '/../../partials/ticket/comments_section.php';
+                    ?>
+                </div>
+                <div class="modal-footer">
+                    <a id="downloadPdfBtn" class="btn btn-success d-none" download>
+                        <i class="fas fa-download"></i> Download Technical Report
+                    </a>
+                    <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+
     <script>
-        window.ticketData = [
-            <?= (int)$pendingTickets ?>,
-            <?= (int)$inProgressTickets ?>,
-            <?= (int)$resolvedTickets ?>
-        ];
-    </script>
-        <script>
-    window.ticketResolution = {
-        labels: <?= json_encode($resolutionLabels) ?>,
-        data: <?= json_encode($resolutionData) ?>
-    };
-    </script>
+    $(document).ready(function () {
+        const base = "<?= htmlspecialchars($base) ?>";
 
-    <script src="<?=htmlspecialchars ($base)?>/assets/vendor/jquery/jquery.min.js"></script>
-    <script src="<?=htmlspecialchars ($base)?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="<?=htmlspecialchars ($base)?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <script src="<?=htmlspecialchars ($base)?>/assets/js/sb-admin-2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return "";
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
-    <!-- Dashboard chart -->
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/dashboard_chart.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/dashboard_areachart.js"></script>
-    
+        $('#departmentTicketsTable').on("click", ".viewBtn", function () {
+            const id = $(this).data("ticketid");
+            const status = $(this).data("status") || "";
+            $("#ticket_number").val($(this).data("ticketnum") || "");
+            $("#employee").val($(this).data("employee") || "");
+            $("#priority").val($(this).data("priority") || "");
+            $("#status").val(status);
+
+            if (status.toLowerCase() === 'resolved') {
+                $("#downloadPdfBtn")
+                    .attr("href", base + "/head/tickets/download-record?id=" + id)
+                    .removeClass("d-none");
+            } else {
+                $("#downloadPdfBtn").addClass("d-none");
+            }
+
+            $("#ticketHistoryTable tbody").empty();
+
+            $.getJSON(base + "/head/tickets/history/fetch", { ticket_id: id })
+                .done(function (data) {
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.forEach((row) => {
+                            $("#ticketHistoryTable tbody").append(
+                                '<tr>' +
+                                '<td>' + escapeHtml(row.action_details) + '</td>' +
+                                '<td>' + escapeHtml(row.performed_by) + '</td>' +
+                                '<td>' + escapeHtml(row.old_status || "") + '</td>' +
+                                '<td>' + escapeHtml(row.new_status || "") + '</td>' +
+                                '<td>' + escapeHtml(row.date_logged || "") + '</td>' +
+                                '</tr>'
+                            );
+                        });
+                    } else {
+                        $("#ticketHistoryTable tbody").append(
+                            '<tr><td colspan="5" class="text-center">No history found.</td></tr>'
+                        );
+                    }
+                })
+                .fail(function () {
+                    $("#ticketHistoryTable tbody").append(
+                        '<tr><td colspan="5" class="text-center text-danger">Failed to load history.</td></tr>'
+                    );
+                });
+
+            if (window.TicketComments) {
+                TicketComments.load('#viewTicketModal .ticket-comments-section', id);
+            }
+
+            $("#viewTicketModal").modal("show");
+        });
+    });
+    </script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+
 </body>
 </html>

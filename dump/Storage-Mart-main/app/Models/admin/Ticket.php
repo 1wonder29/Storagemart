@@ -482,7 +482,7 @@ public function searchEmployee(string $q): ?array
             CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename,'')) AS fullname,
             b.branchName,
             e.department,
-            CONCAT(i.assetNumber, ' - ', g.groupName) AS asset_info,
+            CONCAT(IFNULL(i.assetNumber, 'N/A'), ' - ', IFNULL(g.groupName, 'N/A')) AS asset_info,
             t.category,
             t.priority,
             t.concern_details,
@@ -491,7 +491,7 @@ public function searchEmployee(string $q): ?array
         FROM {$this->tbltickets} t
         JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
         JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
-        JOIN {$this->tblassets} i ON t.inventory_id = i.inventory_id
+        LEFT JOIN {$this->tblassets} i ON t.inventory_id = i.inventory_id
         LEFT JOIN {$this->tblgroup} g ON i.group_id = g.group_id
         WHERE t.status = 'Pending'
         ORDER BY t.date_filed ASC";

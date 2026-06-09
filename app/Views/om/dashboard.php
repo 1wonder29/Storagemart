@@ -1,5 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
+$dashboardTitle = ($user_role ?? '') === 'HOM' ? 'HOM Dashboard' : 'OM Dashboard';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -7,7 +9,7 @@ $base = rtrim(BASE_URL, '/');
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | OM Dashboard</title>
+    <title>Storage Mart | <?= htmlspecialchars($dashboardTitle) ?></title>
 
     <!-- Custom fonts for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
@@ -117,43 +119,108 @@ $base = rtrim(BASE_URL, '/');
                 </div>
             </div>
 
-            <!-- Quick Actions -->
+            <!-- Quick Actions & Recent Tickets -->
             <div class="row mb-4">
-                <div class="col-lg-4">
-                    <div class="card shadow">
+                <div class="col-xl-4 col-lg-5 mb-4 mb-lg-0">
+                    <div class="card shadow h-100">
                         <div class="card-header py-3 bg-primary">
                             <h6 class="m-0 font-weight-bold text-white">Quick Actions</h6>
                         </div>
                         <div class="card-body">
-                            <a href="<?= htmlspecialchars($base) ?>/om/new-assignment" class="btn btn-primary btn-block mb-2">
+                            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/new-assignment" class="btn btn-primary btn-block mb-2">
                                 <i class="fas fa-plus"></i> Create Assignment
                             </a>
-                            <a href="<?= htmlspecialchars($base) ?>/om/assignments" class="btn btn-success btn-block mb-2">
+                            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/assignments" class="btn btn-success btn-block mb-2">
                                 <i class="fas fa-list"></i> View Assignments
                             </a>
-                            <a href="<?= htmlspecialchars($base) ?>/om/employees" class="btn btn-info btn-block mb-2">
+                            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/employees" class="btn btn-info btn-block mb-2">
                                 <i class="fas fa-users"></i> Manage Employees
                             </a>
-                            <a href="<?= htmlspecialchars($base) ?>/om/tickets/create" class="btn btn-warning btn-block mb-2">
+                            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create" class="btn btn-warning btn-block mb-2">
                                 <i class="fas fa-ticket-alt"></i> Create Ticket
                             </a>
-                            <a href="<?= htmlspecialchars($base) ?>/om/tickets" class="btn btn-secondary btn-block">
+                            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets" class="btn btn-secondary btn-block">
                                 <i class="fas fa-list"></i> View All Tickets
                             </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Recent Assignments -->
-                <?php if (!empty($assignments)): ?>
-                <div class="col-lg-8">
+                <div class="col-xl-8 col-lg-7">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3 bg-primary">
+                            <h6 class="m-0 font-weight-bold text-white">Recent Tickets</h6>
+                        </div>
+                        <div class="card-body">
+                            <?php if (!empty($recentTickets)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Ticket #</th>
+                                            <th>Employee</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($recentTickets as $ticket): ?>
+                                        <?php
+                                            $ticketNumber = (string) ($ticket['ticket_number'] ?? $ticket['ticket_id'] ?? 'N/A');
+                                            $employeeName = (string) ($ticket['employee_name'] ?? trim(($ticket['firstname'] ?? '') . ' ' . ($ticket['lastname'] ?? '')));
+                                            if ($employeeName === '') {
+                                                $employeeName = '—';
+                                            }
+                                            $status = (string) ($ticket['status'] ?? 'Pending');
+                                            $priority = (string) ($ticket['priority'] ?? 'Low');
+                                            $branchName = (string) ($ticket['branchName'] ?? 'N/A');
+                                            $dateFiled = !empty($ticket['date_filed'])
+                                                ? date('M d, Y', strtotime((string) $ticket['date_filed']))
+                                                : '—';
+                                            $description = (string) ($ticket['concern_details'] ?? '');
+                                        ?>
+                                        <tr>
+                                            <td><strong><?= htmlspecialchars($ticketNumber) ?></strong></td>
+                                            <td><?= htmlspecialchars($employeeName) ?></td>
+                                            <td>
+                                                <button type="button"
+                                                    class="btn btn-sm btn-primary viewTicketBtn"
+                                                    data-ticket-number="<?= htmlspecialchars($ticketNumber, ENT_QUOTES) ?>"
+                                                    data-employee="<?= htmlspecialchars($employeeName, ENT_QUOTES) ?>"
+                                                    data-status="<?= htmlspecialchars($status, ENT_QUOTES) ?>"
+                                                    data-priority="<?= htmlspecialchars($priority, ENT_QUOTES) ?>"
+                                                    data-branch="<?= htmlspecialchars($branchName, ENT_QUOTES) ?>"
+                                                    data-date-filed="<?= htmlspecialchars($dateFiled, ENT_QUOTES) ?>"
+                                                    data-description="<?= htmlspecialchars($description, ENT_QUOTES) ?>">
+                                                    <i class="fas fa-eye"></i> Details
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <?php else: ?>
+                            <p class="text-muted text-center py-3 mb-0">
+                                <i class="fas fa-inbox"></i> No tickets created yet.
+                                <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create">Create a ticket</a>
+                            </p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Assignments -->
+            <?php if (!empty($assignments)): ?>
+            <div class="row mb-4">
+                <div class="col-lg-12">
                     <div class="card shadow">
                         <div class="card-header py-3 bg-primary">
                             <h6 class="m-0 font-weight-bold text-white">Recent Assignments</h6>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-hover">
+                                <table class="table table-hover mb-0">
                                     <thead>
                                         <tr>
                                             <th>Employee</th>
@@ -177,69 +244,8 @@ $base = rtrim(BASE_URL, '/');
                         </div>
                     </div>
                 </div>
-                <?php endif; ?>
             </div>
-
-            <!-- Recent Tickets -->
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card shadow">
-                        <div class="card-header py-3 bg-info">
-                            <h6 class="m-0 font-weight-bold text-white">Recent Tickets</h6>
-                        </div>
-                        <div class="card-body">
-                            <?php if (!empty($recentTickets)): ?>
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Ticket #</th>
-                                            <th>Employee</th>
-                                            <th>Department</th>
-                                            <th>Priority</th>
-                                            <th>Status</th>
-                                            <th>Created</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($recentTickets as $ticket): ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars($ticket['ticket_id'] ?? 'N/A') ?></td>
-                                            <td><?= htmlspecialchars(($ticket['firstname'] ?? '') . ' ' . ($ticket['lastname'] ?? '')) ?></td>
-                                            <td><?= htmlspecialchars($ticket['department'] ?? 'N/A') ?></td>
-                                            <td>
-                                                <span class="badge badge-<?= 
-                                                    (($ticket['priority'] ?? 'Low') === 'High' ? 'danger' : (($ticket['priority'] ?? 'Low') === 'Medium' ? 'warning' : 'info'))
-                                                ?>">
-                                                    <?= htmlspecialchars($ticket['priority'] ?? 'Low') ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="badge badge-<?= 
-                                                    (($ticket['status'] ?? 'Open') === 'Completed' ? 'success' : (($ticket['status'] ?? 'Open') === 'In Progress' ? 'warning' : 'primary'))
-                                                ?>">
-                                                    <?= htmlspecialchars($ticket['status'] ?? 'Open') ?>
-                                                </span>
-                                            </td>
-                                            <td><?= date('M d, Y', strtotime($ticket['created_at'] ?? 'now')) ?></td>
-                                            <td>
-                                                <a href="<?= htmlspecialchars($base) ?>/om/tickets/view?id=<?= htmlspecialchars($ticket['ticket_id'] ?? '') ?>" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-eye"></i> View
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <?php else: ?>
-                            <p class="text-muted">No tickets created yet. <a href="<?= htmlspecialchars($base) ?>/om/tickets/create">Create a ticket</a></p>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <?php endif; ?>
         </div>
         <!-- /.container-fluid -->
 
@@ -257,6 +263,58 @@ $base = rtrim(BASE_URL, '/');
     <i class="fas fa-angle-up"></i>
 </a>
 
+<!-- Ticket Details Modal -->
+<div class="modal fade" id="ticketDetailModal" tabindex="-1" aria-labelledby="ticketDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="ticketDetailModalLabel">Ticket Details</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase mb-1">Ticket Number</label>
+                        <p class="font-weight-bold mb-0" id="modalTicketNumber">—</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase mb-1">Employee</label>
+                        <p class="font-weight-bold mb-0" id="modalEmployee">—</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="small text-muted text-uppercase mb-1">Status</label>
+                        <p class="mb-0"><span class="badge" id="modalStatusBadge">—</span></p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small text-muted text-uppercase mb-1">Priority</label>
+                        <p class="mb-0"><span class="badge" id="modalPriorityBadge">—</span></p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small text-muted text-uppercase mb-1">Filed Date</label>
+                        <p class="mb-0" id="modalDateFiled">—</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="small text-muted text-uppercase mb-1">Branch</label>
+                        <p class="mb-0" id="modalBranch">—</p>
+                    </div>
+                </div>
+                <hr>
+                <label class="small text-muted text-uppercase mb-1">Description</label>
+                <p class="mb-0" id="modalDescription">—</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Bootstrap core JavaScript-->
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -266,6 +324,49 @@ $base = rtrim(BASE_URL, '/');
 
 <!-- Custom scripts for all pages-->
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+
+<script>
+(function () {
+    function statusBadgeClass(status) {
+        if (status === 'Pending') return 'badge-warning';
+        if (status === 'In Progress') return 'badge-info';
+        if (status === 'Resolved' || status === 'Completed') return 'badge-success';
+        if (status === 'Closed') return 'badge-secondary';
+        return 'badge-primary';
+    }
+
+    function priorityBadgeClass(priority) {
+        if (priority === 'High') return 'badge-danger';
+        if (priority === 'Medium') return 'badge-warning';
+        return 'badge-success';
+    }
+
+    $(document).on('click', '.viewTicketBtn', function () {
+        const $btn = $(this);
+
+        $('#modalTicketNumber').text($btn.data('ticketNumber') || '—');
+        $('#modalEmployee').text($btn.data('employee') || '—');
+        $('#modalBranch').text($btn.data('branch') || '—');
+        $('#modalDateFiled').text($btn.data('dateFiled') || '—');
+        $('#modalDescription').text($btn.data('description') || 'No description provided.');
+
+        const status = $btn.data('status') || '—';
+        const priority = $btn.data('priority') || '—';
+
+        $('#modalStatusBadge')
+            .removeClass()
+            .addClass('badge ' + statusBadgeClass(status))
+            .text(status);
+
+        $('#modalPriorityBadge')
+            .removeClass()
+            .addClass('badge ' + priorityBadgeClass(priority))
+            .text(priority);
+
+        $('#ticketDetailModal').modal('show');
+    });
+})();
+</script>
 
 </body>
 </html>

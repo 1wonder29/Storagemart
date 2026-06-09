@@ -53,8 +53,8 @@ $base = rtrim(BASE_URL, '/');
                                         <tr>
                                             <td><?= htmlspecialchars(date('M d, Y', strtotime($return['date_returned']))) ?></td>
                                             <td><?= htmlspecialchars($return['employee_name'] ?? 'N/A') ?></td>
-                                            <td><?= htmlspecialchars($return['uniform_type']) ?></td>
-                                            <td><?= htmlspecialchars($return['size']) ?></td>
+                                            <td><?= htmlspecialchars($return['uniform_type'] ?? '') ?></td>
+                                            <td><?= htmlspecialchars($return['size'] ?? '') ?></td>
                                             <td><?= (int)$return['quantity_returned'] ?></td>
                                             <td>
                                                 <?php

@@ -37,6 +37,12 @@ class headTicketController extends AuthController
         $ticketModel = new EmployeeTicket();
         $tickets = $ticketModel->fetchTicketsByDepartment($department);
 
+        $ticketStats = [];
+        foreach ($tickets as $t) {
+            $s = (string) ($t['status'] ?? 'Unknown');
+            $ticketStats[$s] = ($ticketStats[$s] ?? 0) + 1;
+        }
+
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
         $loggedFirstname = $ctx['loggedFirstname'];
@@ -47,6 +53,61 @@ class headTicketController extends AuthController
         $notifications = $notificationData['notifications'];
 
         require __DIR__ . '/../../Views/head/ticket/ticket.php';
+    }
+
+    public function view()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $ticketId = (int) ($_GET['id'] ?? 0);
+        if ($ticketId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid ticket ID.';
+            $this->redirect('/head/tickets');
+            return;
+        }
+
+        $employeeModel = new Employee();
+        $user = $employeeModel->fetchUserDetails((int) $_SESSION['account_id']);
+
+        if (!$user || strtoupper($user['usertype'] ?? '') !== 'HEAD') {
+            http_response_code(403);
+            exit('Unauthorized');
+        }
+
+        $headEmployee = $employeeModel->getEmployeeById((int) $user['employee_id']);
+        $department = $headEmployee['department'] ?? null;
+
+        if (!$department) {
+            $_SESSION['flash_error'] = 'Department not found.';
+            $this->redirect('/head/tickets');
+            return;
+        }
+
+        $ticketModel = new EmployeeTicket();
+        $ticket = $ticketModel->fetchTicketById($ticketId);
+
+        if (!$ticket || strcasecmp((string) ($ticket['department'] ?? ''), (string) $department) !== 0) {
+            $_SESSION['flash_error'] = 'Ticket not found.';
+            $this->redirect('/head/tickets');
+            return;
+        }
+
+        $history = $ticketModel->getTicketHistory($ticketId);
+
+        $ctx = $this->getLoggedUserContext();
+        $loggedFirstname = $ctx['loggedFirstname'] ?? '';
+        $loggedPosition = $ctx['loggedPosition'] ?? '';
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        $activePage = 'tickets';
+
+        require __DIR__ . '/../../Views/head/ticket/ticket-detail.php';
     }
 
         public function create()
@@ -255,39 +316,37 @@ class headTicketController extends AuthController
         require_once __DIR__ . '/../../Models/employee/TicketRatingModel.php';
         require_once __DIR__ . '/../../Models/employee/Ticket.php';
 
-        $accountId = (int)$_SESSION['account_id'];
-        $ticketId  = (int)($_POST['ticket_id'] ?? 0);
+        header('Content-Type: application/json');
+
+        $accountId = (int) ($_SESSION['account_id'] ?? 0);
+        $ticketId  = (int) ($_POST['ticket_id'] ?? 0);
 
         if (!$ticketId) {
-            $_SESSION['flash_error'] = 'Invalid ticket.';
-            $this->redirect('/head/dashboard');
-            return;
+            echo json_encode(['success' => false, 'message' => 'Invalid ticket.']);
+            exit;
         }
 
         $employeeModel = new Employee();
         $employeeId = $employeeModel->getEmployeeIdByAccountId($accountId);
 
         if (!$employeeId) {
-            $_SESSION['flash_error'] = 'Employee not found.';
-            $this->redirect('/head/dashboard');
-            return;
+            echo json_encode(['success' => false, 'message' => 'Employee not found.']);
+            exit;
         }
 
         $ticketModel = new EmployeeTicket();
         $itId = $ticketModel->getAssignedTo($ticketId);
 
         if (!$itId) {
-            $_SESSION['flash_error'] = 'Ticket is not assigned yet.';
-            $this->redirect('/head/dashboard');
-            return;
+            echo json_encode(['success' => false, 'message' => 'Ticket is not assigned yet.']);
+            exit;
         }
 
         $ratingModel = new TicketRatingModel();
 
         if ($ratingModel->hasRated($ticketId, $employeeId)) {
-            $_SESSION['flash_error'] = 'You have already rated this ticket.';
-            $this->redirect('/head/dashboard');
-            return;
+            echo json_encode(['success' => false, 'message' => 'You have already rated this ticket.']);
+            exit;
         }
 
         $ratingModel->create(
@@ -298,8 +357,11 @@ class headTicketController extends AuthController
             $_POST['comment'] ?? ''
         );
 
-        $_SESSION['flash_success'] = 'Thank you for rating IT support!';
-        $this->redirect('/head/dashboard');
+        echo json_encode([
+            'success' => true,
+            'message' => 'Thank you for rating IT support!'
+        ]);
+        exit;
     }
 
     public function fetchHistory()

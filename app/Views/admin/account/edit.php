@@ -74,14 +74,15 @@ $base = rtrim(BASE_URL, '/');
                                     <div class="row mb-5">
                                     <div class="col-md-6">
                                         <label for="usertype" class="form-label">User Type</label>
-                                        <select id="usertype" name="usertype" class="form-control" required onchange="toggleAOMBranches()">
+                                        <select id="usertype" name="usertype" class="form-control" required>
                                             <option value="">-- Select User Type --</option>
                                             <option value="ADMIN" <?= (($account['usertype'] ?? '') === 'ADMIN') ? 'selected' : '' ?>>Admin</option>
                                             <option value="IT" <?= (($account['usertype'] ?? '') === 'IT') ? 'selected' : '' ?>>Information Technology</option>
                                             <option value="HEAD" <?= (($account['usertype'] ?? '') === 'HEAD') ? 'selected' : '' ?>>Head</option>
                                             <option value="HR" <?= (($account['usertype'] ?? '') === 'HR') ? 'selected' : '' ?>>HR</option>
                                             <option value="AOM" <?= (($account['usertype'] ?? '') === 'AOM') ? 'selected' : '' ?>>Area Operation Manager</option>
-                                            <option value="OM" <?= (($account['usertype'] ?? '') === 'OM') ? 'selected' : '' ?>>Operation Manager</option>
+                                            <option value="HOM" <?= (($account['usertype'] ?? '') === 'HOM') ? 'selected' : '' ?>>Head Of Operation</option>
+                                            <option value="OM" <?= (($account['usertype'] ?? '') === 'OM') ? 'selected' : '' ?>>Operation Manager (Legacy)</option>
                                             <option value="EMPLOYEE" <?= (($account['usertype'] ?? '') === 'EMPLOYEE') ? 'selected' : '' ?>>Employee</option>
                                         </select>
                                     </div>
@@ -94,32 +95,6 @@ $base = rtrim(BASE_URL, '/');
                                             </select>
                                         </div>
                                     </div>
-
-                                    <!-- AOM Branch Assignments -->
-                                    <div id="aom-branches-section" class="row mb-5" style="display: <?= (($account['usertype'] ?? '') === 'AOM') ? 'block' : 'none' ?>;">
-                                        <div class="col-md-12">
-                                            <label for="aom_branches" class="form-label"><strong>Assign Branches (for AOM)</strong></label>
-                                            <div id="aom_branches" class="form-control" style="height: auto; border: 1px solid #ddd; padding: 10px; max-height: 200px; overflow-y: auto;">
-                                                <?php 
-                                                $assigned_branches = $aom_assigned_branches ?? [];
-                                                $assigned_ids = array_column($assigned_branches, 'branch_id');
-                                                foreach ($branches as $b):
-                                                    $bId = $b['branch_id'];
-                                                    $bName = $b['branchName'];
-                                                    $isChecked = in_array($bId, $assigned_ids) ? ' checked' : '';
-                                                ?>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input aom-branch-checkbox" type="checkbox" name="aom_branch_ids[]" value="<?= htmlspecialchars($bId) ?>"<?= $isChecked ?> id="branch_<?= htmlspecialchars($bId) ?>">
-                                                        <label class="form-check-label" for="branch_<?= htmlspecialchars($bId) ?>">
-                                                            <?= htmlspecialchars($bName) ?>
-                                                        </label>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            </div>
-                                            <small class="form-text text-muted d-block mt-1">Select the branches this AOM is responsible for</small>
-                                        </div>
-                                    </div>
-
 
                                     <h1>Employee Details </h1>
                                     <div class ="row mb-5">
@@ -245,16 +220,6 @@ $base = rtrim(BASE_URL, '/');
         });
     })();
 
-    // Toggle AOM branch assignment section
-    function toggleAOMBranches() {
-        const usertype = document.getElementById('usertype').value;
-        const aomSection = document.getElementById('aom-branches-section');
-        if (usertype === 'AOM') {
-            aomSection.style.display = 'block';
-        } else {
-            aomSection.style.display = 'none';
-        }
-    }
     </script>
 
 

@@ -27,9 +27,29 @@ $base = rtrim(BASE_URL, '/');
             </div>
 
             <h1 class="h3 mb-4 text-gray-800">
-                <?= htmlspecialchars($employee['firstname'] . ' ' . $employee['lastname']) ?> 
-                <small class="text-muted">(<?= htmlspecialchars($employee['employee_id']) ?>)</small>
+                <?= htmlspecialchars(($employee['firstname'] ?? '') . ' ' . ($employee['lastname'] ?? '')) ?> 
+                <small class="text-muted">(<?= htmlspecialchars((string) ($employee['employee_id'] ?? '')) ?>)</small>
             </h1>
+
+            <?php if (!empty($_SESSION['successMessage'])): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <?= htmlspecialchars($_SESSION['successMessage']) ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <?php unset($_SESSION['successMessage']); ?>
+            <?php endif; ?>
+
+            <?php if (!empty($_SESSION['errorMessage'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?= htmlspecialchars($_SESSION['errorMessage']) ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <?php unset($_SESSION['errorMessage']); ?>
+            <?php endif; ?>
 
             <!-- Employee Info -->
             <div class="card shadow mb-4">
@@ -39,15 +59,15 @@ $base = rtrim(BASE_URL, '/');
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>Name:</strong> <?= htmlspecialchars($employee['firstname'] . ' ' . $employee['lastname']) ?></p>
-                            <p><strong>Position:</strong> <?= htmlspecialchars($employee['position']) ?></p>
-                            <p><strong>Department:</strong> <?= htmlspecialchars($employee['department']) ?></p>
+                            <p><strong>Name:</strong> <?= htmlspecialchars(($employee['firstname'] ?? '') . ' ' . ($employee['lastname'] ?? '')) ?></p>
+                            <p><strong>Position:</strong> <?= htmlspecialchars($employee['position'] ?? '') ?></p>
+                            <p><strong>Department:</strong> <?= htmlspecialchars($employee['department'] ?? '') ?></p>
                             <p><strong>Branch:</strong> <?= htmlspecialchars($employee['branchName'] ?? 'N/A') ?></p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Email:</strong> <?= htmlspecialchars($employee['email']) ?></p>
-                            <p><strong>User Type:</strong> <span class="badge bg-primary"><?= htmlspecialchars($employee['usertype']) ?></span></p>
-                            <p><strong>Status:</strong> <span class="badge bg-<?= ($employee['status'] === 'ACTIVE') ? 'success' : 'danger' ?>"><?= htmlspecialchars($employee['status']) ?></span></p>
+                            <p><strong>Email:</strong> <?= htmlspecialchars($employee['email'] ?? '') ?></p>
+                            <p><strong>User Type:</strong> <span class="badge bg-primary"><?= htmlspecialchars($employee['usertype'] ?? '') ?></span></p>
+                            <p><strong>Status:</strong> <span class="badge bg-<?= ($employee['status'] === 'ACTIVE') ? 'success' : 'danger' ?>"><?= htmlspecialchars($employee['status'] ?? '') ?></span></p>
                             <p><strong>Date Created:</strong> <?= date('M d, Y', strtotime($employee['datecreated'])) ?></p>
                         </div>
                     </div>
@@ -78,17 +98,28 @@ $base = rtrim(BASE_URL, '/');
                                         <th>Category</th>
                                         <th>Issued Date</th>
                                         <th>Status</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($assets as $asset): ?>
                                         <tr>
-                                            <td><?= htmlspecialchars($asset['assetNumber']) ?></td>
-                                            <td><?= htmlspecialchars($asset['itemInfo']) ?></td>
-                                            <td><?= htmlspecialchars($asset['serialNumber']) ?></td>
+                                            <td><?= htmlspecialchars($asset['assetNumber'] ?? '') ?></td>
+                                            <td><?= htmlspecialchars($asset['itemInfo'] ?? '') ?></td>
+                                            <td><?= htmlspecialchars($asset['serialNumber'] ?? '') ?></td>
                                             <td><?= htmlspecialchars($asset['categoryName'] ?? 'N/A') ?></td>
                                             <td><?= $asset['dateIssued'] ? date('M d, Y', strtotime($asset['dateIssued'])) : 'N/A' ?></td>
-                                            <td><span class="badge bg-info"><?= htmlspecialchars($asset['asset_status']) ?></span></td>
+                                            <td><span class="badge bg-info"><?= htmlspecialchars($asset['asset_status'] ?? '') ?></span></td>
+                                            <td>
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/assets/transfer?inventory_id=<?= (int) $asset['inventory_id'] ?>&return_employee_id=<?= (int) $employee['employee_id'] ?>"
+                                                   class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-exchange-alt"></i> Transfer
+                                                </a>
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/assets/transfer-history?inventory_id=<?= (int) $asset['inventory_id'] ?>&return_employee_id=<?= (int) $employee['employee_id'] ?>"
+                                                   class="btn btn-sm btn-secondary">
+                                                    <i class="fas fa-history"></i> History
+                                                </a>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -122,8 +153,8 @@ $base = rtrim(BASE_URL, '/');
                                 <tbody>
                                     <?php foreach ($uniforms as $unif): ?>
                                         <tr>
-                                            <td><?= htmlspecialchars($unif['uniform_type']) ?></td>
-                                            <td><?= htmlspecialchars($unif['size']) ?></td>
+                                            <td><?= htmlspecialchars($unif['uniform_type'] ?? '') ?></td>
+                                            <td><?= htmlspecialchars($unif['size'] ?? '') ?></td>
                                             <td><?= $unif['quantity_issued'] ?></td>
                                             <td><?= date('M d, Y', strtotime($unif['date_issued'])) ?></td>
                                             <td><?= htmlspecialchars($unif['condition_upon_issue'] ?? '-') ?></td>
@@ -162,8 +193,8 @@ $base = rtrim(BASE_URL, '/');
                             <tbody>
                                 <?php foreach ($uniformHistory as $hist): ?>
                                     <tr>
-                                        <td><?= htmlspecialchars($hist['uniform_type']) ?></td>
-                                        <td><?= htmlspecialchars($hist['size'] . ' / ' . $hist['color']) ?></td>
+                                        <td><?= htmlspecialchars($hist['uniform_type'] ?? '') ?></td>
+                                        <td><?= htmlspecialchars(($hist['size'] ?? '') . ' / ' . ($hist['color'] ?? '')) ?></td>
                                         <td><?= date('M d, Y', strtotime($hist['date_issued'])) ?></td>
                                         <td><?= $hist['date_returned'] ? date('M d, Y', strtotime($hist['date_returned'])) : '-' ?></td>
                                         <td><?= htmlspecialchars($hist['condition_upon_issue'] ?? '-') ?></td>

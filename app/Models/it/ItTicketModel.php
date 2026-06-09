@@ -23,7 +23,7 @@ class ItTicketModel extends BaseModel
                    CONCAT(a2.firstname,' ',a2.lastname) AS assigned_to_name
             FROM tbltickets t
             JOIN tblemployee e ON t.employee_id = e.employee_id
-            JOIN tblbranch b ON e.branch_id = b.branch_id
+            JOIN tblbranch b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             LEFT JOIN tblassets_inventory i ON t.inventory_id = i.inventory_id
             LEFT JOIN tblassets_group g ON i.group_id = g.group_id
             LEFT JOIN tblemployee a2 ON t.assigned_to = a2.employee_id
@@ -87,7 +87,7 @@ class ItTicketModel extends BaseModel
             JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
             LEFT JOIN {$this->tblassets} i ON t.inventory_id = i.inventory_id
             LEFT JOIN {$this->tblgroup} g ON i.group_id = g.group_id
-            JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+            JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             WHERE t.status = 'Resolved'
             ORDER BY COALESCE(tt.date_performed, t.last_updated) DESC
         ";
@@ -234,7 +234,7 @@ class ItTicketModel extends BaseModel
                 t.concern_details
             FROM {$this->tbltickets} t
             JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            LEFT JOIN {$this->tblbranch}   b ON e.branch_id = b.branch_id
+            LEFT JOIN {$this->tblbranch}   b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             WHERE e.employee_id = :employee_id
             ORDER BY t.date_filed DESC
         ";

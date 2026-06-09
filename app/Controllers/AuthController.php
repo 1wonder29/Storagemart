@@ -240,8 +240,11 @@ class AuthController {
             case 'AOM':
                 $this->redirect('/aom/dashboard');
                 break;
+            case 'HOM':
+                $this->redirect('/hom/dashboard');
+                break;
             case 'OM':
-                $this->redirect('/om/dashboard');
+                $this->redirect('/hom/dashboard');
                 break;
             default:
                 // Unknown user type - redirect back to login

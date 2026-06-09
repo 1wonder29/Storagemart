@@ -102,6 +102,13 @@ $base = rtrim(BASE_URL, '/');
                     <span>Ratings Report</span></a>
             </li>
 
+            <!-- Nav Item - Monthly Ticket Report -->
+            <li class="nav-item <?= ($activePage === 'monthly_report') ? 'active' : '' ?>">
+                <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/reports/monthly-tickets">
+                    <i class="fas fa-fw fa-file-excel"></i>
+                    <span>Monthly Ticket Report</span></a>
+            </li>
+
             <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">
 

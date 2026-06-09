@@ -4,7 +4,7 @@ require_once __DIR__ . '/../AuthController.php';
 require_once __DIR__ . '/../../Models/employee/Employee.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Models/head/headModel.php';
-require_once __DIR__ . '/../../Models/DashboardModel.php';
+require_once __DIR__ . '/../../Models/employee/Ticket.php';
 class HeadController extends AuthController
 {
     public function dashboard()
@@ -81,19 +81,9 @@ class HeadController extends AuthController
         $base = $ctx['base'];
         $loggedFirstname = $ctx['loggedFirstname'];
         $loggedPosition  = $ctx['loggedPosition'];
-        $dashboardModel = new DashboardModel();
 
-        // 👔 HEAD's department
-        $rows = $dashboardModel->getDepartmentTicketResolutionTimes($department);
-
-        $resolutionLabels = [];
-        $resolutionData   = [];
-
-        foreach ($rows as $row) {
-            $resolutionLabels[] = 'Ticket #' . $row['ticket_number'];
-            $resolutionData[]   = (int)$row['resolution_hours'];
-        }
-
+        $ticketModel = new EmployeeTicket();
+        $tickets = $ticketModel->fetchTicketsByDepartment($department);
 
         require __DIR__ . '/../../Views/head/dashboard/dashboard.php';
     }

@@ -37,7 +37,7 @@ class UniformModel extends HRModel {
                         COALESCE(quantity_lost, 0) AS quantity_lost,
                         CASE WHEN quantity_in_stock <= reorder_level THEN 'NEEDS_REORDER' ELSE 'OK' END as stock_status
                     FROM {$this->tbluniform_inventory}
-                    ORDER BY uniform_type, size, color
+                    ORDER BY CASE WHEN status = 'ACTIVE' THEN 0 ELSE 1 END, uniform_type, size, color
                     LIMIT ? OFFSET ?";
             
             $stmt = $this->pdo->prepare($sql);
@@ -57,7 +57,7 @@ class UniformModel extends HRModel {
      */
     public function getTotalUniformCount(): int {
         try {
-            $sql = "SELECT COUNT(*) FROM {$this->tbluniform_inventory} WHERE status = 'ACTIVE'";
+            $sql = "SELECT COUNT(*) FROM {$this->tbluniform_inventory}";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute();
             return (int) $stmt->fetchColumn();
@@ -179,6 +179,25 @@ class UniformModel extends HRModel {
             return $stmt->execute([$uniformId]);
         } catch (\Throwable $e) {
             error_log('UniformModel::deleteUniform error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Reactivate a discontinued uniform
+     * @param int $uniformId
+     * @param string $updatedBy
+     * @return bool
+     */
+    public function reactivateUniform(int $uniformId, string $updatedBy = 'system'): bool {
+        try {
+            $sql = "UPDATE {$this->tbluniform_inventory}
+                    SET status = 'ACTIVE', date_updated = NOW(), updated_by = ?
+                    WHERE uniform_id = ? AND status = 'DISCONTINUED'";
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute([$updatedBy, $uniformId]);
+        } catch (\Throwable $e) {
+            error_log('UniformModel::reactivateUniform error: ' . $e->getMessage());
             return false;
         }
     }
@@ -355,8 +374,11 @@ class UniformModel extends HRModel {
      */
     public function getAssignmentById(int $assignmentId): ?array {
         try {
-            $sql = "SELECT ua.*, ui.uniform_type, ui.size, ui.color, ui.uniform_id, ua.quantity_issued FROM {$this->tbluniform_assignment} ua
+            $sql = "SELECT ua.*, ui.uniform_type, ui.size, ui.color, ui.uniform_id, ua.quantity_issued,
+                        CONCAT(e.firstname, ' ', e.lastname) AS employee_name
+                    FROM {$this->tbluniform_assignment} ua
                     LEFT JOIN {$this->tbluniform_inventory} ui ON ua.uniform_id = ui.uniform_id
+                    LEFT JOIN {$this->tblemployee} e ON ua.employee_id = e.employee_id
                     WHERE ua.assignment_id = ? LIMIT 1";
 
             $stmt = $this->pdo->prepare($sql);
@@ -543,7 +565,7 @@ class UniformModel extends HRModel {
                         ui.uniform_type,
                         ui.size,
                         ui.color,
-                        e.employee_name,
+                        CONCAT(e.firstname, ' ', e.lastname) AS employee_name,
                         e.email
                     FROM tbluniform_returns ur
                     LEFT JOIN {$this->tbluniform_inventory} ui ON ur.uniform_id = ui.uniform_id

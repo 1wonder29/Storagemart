@@ -15,9 +15,44 @@ class Ticket extends BaseModel {
 
     //fetch all tickets
     public function fetchTicket(): array{
-        $stmt = $this->pdo->prepare("SELECT t.ticket_id, t.ticket_number, CONCAT(e.lastname, ', ', e.firstname) AS employee_name, t.category, t.priority, t.status, t.date_filed, b.branchName,  t.assigned_to AS assigned_to_id, CONCAT(a2.firstname, ' ', a2.lastname) AS assigned_to_name FROM {$this->table} t JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id LEFT JOIN {$this->tblemployee} a2 ON t.assigned_to = a2.employee_id ORDER BY t.date_filed DESC");
+        $stmt = $this->pdo->prepare("SELECT t.ticket_id, t.ticket_number, CONCAT(e.lastname, ', ', e.firstname) AS employee_name, t.category, t.priority, t.status, t.date_filed, b.branchName,  t.assigned_to AS assigned_to_id, CONCAT(a2.firstname, ' ', a2.lastname) AS assigned_to_name FROM {$this->table} t JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id) LEFT JOIN {$this->tblemployee} a2 ON t.assigned_to = a2.employee_id ORDER BY t.date_filed DESC");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function fetchTicketById(int $ticketId)
+    {
+        $sql = "
+            SELECT
+                t.ticket_id,
+                t.employee_id,
+                t.ticket_number,
+                t.department,
+                t.category,
+                t.concern_details,
+                t.priority,
+                t.date_filed,
+                t.status,
+                t.remarks,
+                t.assigned_to,
+                e.firstname AS emp_firstname,
+                e.lastname AS emp_lastname,
+                e.firstname AS employee_firstname,
+                e.lastname AS employee_lastname,
+                b.branchName,
+                CONCAT(a2.firstname, ' ', a2.lastname) AS assigned_to_name
+            FROM {$this->tbltickets} t
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+            LEFT JOIN {$this->tblemployee} a2 ON t.assigned_to = a2.employee_id
+            WHERE t.ticket_id = :ticket_id
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ticket_id' => $ticketId]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: false;
     }
 
     public function fetchTicketHistory(int $ticketId): array
@@ -490,7 +525,7 @@ public function searchEmployee(string $q): ?array
             CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename,'')) AS fullname,
             b.branchName,
             e.department,
-            CONCAT(i.assetNumber, ' - ', g.groupName) AS asset_info,
+            CONCAT(IFNULL(i.assetNumber, 'N/A'), ' - ', IFNULL(g.groupName, 'N/A')) AS asset_info,
             t.category,
             t.priority,
             t.concern_details,
@@ -498,8 +533,8 @@ public function searchEmployee(string $q): ?array
             t.status
         FROM {$this->tbltickets} t
         JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-        JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
-        JOIN {$this->tblassets} i ON t.inventory_id = i.inventory_id
+        LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+        LEFT JOIN {$this->tblassets} i ON t.inventory_id = i.inventory_id
         LEFT JOIN {$this->tblgroup} g ON i.group_id = g.group_id
         WHERE t.status = 'Pending'
         ORDER BY t.date_filed ASC";
@@ -514,6 +549,67 @@ public function searchEmployee(string $q): ?array
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Fetch all tickets filed within a given calendar month.
+     */
+    public function fetchTicketsByMonth(int $year, int $month): array
+    {
+        $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $end = date('Y-m-d H:i:s', strtotime($start . ' +1 month'));
+
+        $sql = "SELECT
+            t.ticket_id,
+            t.ticket_number,
+            CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) AS employee_name,
+            e.department AS employee_department,
+            b.branchName,
+            t.department,
+            t.category,
+            CONCAT(IFNULL(i.assetNumber, 'N/A'), ' - ', IFNULL(g.groupName, 'N/A')) AS asset_info,
+            t.priority,
+            t.status,
+            t.concern_details,
+            t.remarks,
+            CONCAT(IFNULL(a2.firstname, ''), ' ', IFNULL(a2.lastname, '')) AS assigned_to_name,
+            t.date_filed,
+            t.last_updated,
+            t.date_approved,
+            t.decline_reason
+        FROM {$this->tbltickets} t
+        JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+        LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+        LEFT JOIN {$this->tblassets} i ON t.inventory_id = i.inventory_id
+        LEFT JOIN {$this->tblgroup} g ON i.group_id = g.group_id
+        LEFT JOIN {$this->tblemployee} a2 ON t.assigned_to = a2.employee_id
+        WHERE t.date_filed >= :start_date AND t.date_filed < :end_date
+        ORDER BY t.date_filed ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':start_date' => $start,
+            ':end_date'   => $end,
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function countTicketsByMonth(int $year, int $month): int
+    {
+        $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $end = date('Y-m-d H:i:s', strtotime($start . ' +1 month'));
+
+        $stmt = $this->pdo->prepare(
+            "SELECT COUNT(*) FROM {$this->tbltickets}
+             WHERE date_filed >= :start_date AND date_filed < :end_date"
+        );
+        $stmt->execute([
+            ':start_date' => $start,
+            ':end_date'   => $end,
+        ]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     public function approveAndAssign(int $ticketId, int $assignedToEmployeeId, int $approvedByAccountId, string $remarks = ''): bool

@@ -134,8 +134,8 @@ $base = rtrim(BASE_URL, '/');
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-                            <?= htmlspecialchars($loggedFirstname) ?>
-                            (<?= htmlspecialchars($loggedPosition) ?>)
+                            <?= htmlspecialchars((string) ($loggedFirstname ?? '')) ?>
+                            (<?= htmlspecialchars((string) ($loggedPosition ?? '')) ?>)
                         </span>
                         <img class="img-profile rounded-circle"
                              src="<?= htmlspecialchars($base) ?>/assets/img/undraw_profile.svg">
@@ -190,7 +190,7 @@ $base = rtrim(BASE_URL, '/');
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-warning text-white">
-        <h5 class="modal-title"><i class="fas fa-star"></i> Rate IT Support</h5>
+        <h5 class="modal-title"><i class="fas fa-star"></i> Rate This Ticket</h5>
         <button type="button" class="close text-white" data-dismiss="modal">
           <span>&times;</span>
         </button>

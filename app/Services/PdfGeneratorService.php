@@ -226,7 +226,7 @@ class PdfGeneratorService
                 it.lastname AS it_lastname
             FROM tbltickets t
             JOIN tblemployee e ON t.employee_id = e.employee_id
-            JOIN tblbranch b ON e.branch_id = b.branch_id
+            JOIN tblbranch b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             LEFT JOIN (
                 SELECT ticket_id, MAX(date_performed) AS max_date
                 FROM tblticket_technical

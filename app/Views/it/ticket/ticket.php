@@ -77,15 +77,33 @@ $base = rtrim(BASE_URL, '/');
                                                 <td><?= htmlspecialchars($row['status']) ?></td>
                                                 <td><?= htmlspecialchars($row['date_filed']) ?></td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-primary viewBtn" 
-                                                        data-ticketid="<?= $row['ticket_id'] ?>" 
-                                                        data-ticketnum="<?= htmlspecialchars($row['ticket_number']) ?>"
-                                                        data-employee="<?= htmlspecialchars($row['employee_name']) ?>"
-                                                        data-branch="<?= htmlspecialchars($row['branchName']) ?>"
-                                                        data-priority="<?= htmlspecialchars($row['priority']) ?>"
-                                                        data-status="<?= htmlspecialchars($row['status']) ?>">
-                                                        View
-                                                    </button>
+                                                    <a class="nav-link dropdown-toggle d-inline-block p-0" href="#" id="userDropdown<?= $row['ticket_id'] ?>" role="button"
+                                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                        <span class="d-none d-lg-inline text-gray-600">Action</span>
+                                                    </a>
+                                                    <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="userDropdown<?= $row['ticket_id'] ?>">
+                                                        <a href="<?= htmlspecialchars($base) ?>/it/tickets/view?id=<?= (int) ($row['ticket_id'] ?? 0) ?>" class="dropdown-item">
+                                                            <i class="fas fa-eye fa-sm fa-fw mr-2 text-info"></i> View Full Detail
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <a href="#" class="dropdown-item viewBtn"
+                                                            data-ticketid="<?= $row['ticket_id'] ?>"
+                                                            data-ticketnum="<?= htmlspecialchars($row['ticket_number']) ?>"
+                                                            data-employee="<?= htmlspecialchars($row['employee_name']) ?>"
+                                                            data-branch="<?= htmlspecialchars($row['branchName']) ?>"
+                                                            data-priority="<?= htmlspecialchars($row['priority']) ?>"
+                                                            data-status="<?= htmlspecialchars($row['status']) ?>">
+                                                            <i class="fas fa-history fa-sm fa-fw mr-2 text-black-400"></i> History
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <?php
+                                                        $ticketId = (int) ($row['ticket_id'] ?? 0);
+                                                        $ticketStatus = (string) ($row['status'] ?? '');
+                                                        $ticketNumber = (string) ($row['ticket_number'] ?? '');
+                                                        $btnClass = 'dropdown-item text-danger';
+                                                        require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
+                                                        ?>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -165,23 +183,32 @@ $base = rtrim(BASE_URL, '/');
                 </div>
             </div>
 
-            <h6 class="mt-4">History Records</h6>
-            <div class="table-responsive">
-                <table class="table table-bordered" id="ticketHistoryTable" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Action Taken</th>
-                            <th>Technician</th>
-                            <th>Old Status</th>
-                            <th>New Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <h6 class="mt-4">History Records</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="ticketHistoryTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Action Taken</th>
+                                <th>Technician</th>
+                                <th>Old Status</th>
+                                <th>New Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <?php
+                $ticketId = 0;
+                $canPostComments = true;
+                require __DIR__ . '/../../partials/ticket/comments_section.php';
+                ?>
             </div>
-        </div>
         <div class="modal-footer">
+            <a href="#" id="viewFullDetailLink" class="btn btn-info mr-auto">
+                <i class="fas fa-external-link-alt"></i> View Full Detail
+            </a>
             <button class="btn btn-secondary" data-dismiss="modal">Close</button>
         </div>
     </div>
@@ -203,15 +230,16 @@ $base = rtrim(BASE_URL, '/');
         <!-- Set global BASE_URL for all scripts -->
         <script>
         window.BASE_URL = "<?= htmlspecialchars($base) ?>";
+        const base = window.BASE_URL;
         </script>
 
         <!-- Page level custom scripts -->
         <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/fetch_ticket_history.js"></script>
+        <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
 
-        <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>  
+        <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
+        <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 
-
-                                       
 </body>
 
 </html>

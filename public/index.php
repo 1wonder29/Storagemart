@@ -28,8 +28,13 @@ require_once __DIR__ . '/../app/Helpers/Session.php';
 
 Session::start();
 
-// Normalize URI - no subfolder stripping needed for root domain
+// Normalize URI and strip the public subfolder when served from a subdirectory
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+// Determine the script directory (handles Windows backslashes)
+$scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+if ($scriptDir !== '' && strpos($uri, $scriptDir) === 0) {
+    $uri = substr($uri, strlen($scriptDir));
+}
 $uri = '/' . trim($uri, '/');
 
 // ROUTES
@@ -74,6 +79,26 @@ if ($uri === '/logout') {
     exit;
 }
 
+// TICKET COMMENTS (shared — employee, IT, admin)
+if ($uri === '/ticket-comments/fetch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Controllers/TicketCommentController.php';
+    (new TicketCommentController())->fetchComments();
+    exit;
+}
+
+if ($uri === '/ticket-comments/add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../app/Controllers/TicketCommentController.php';
+    (new TicketCommentController())->addComment();
+    exit;
+}
+
+// TICKET CANCEL (shared — all roles)
+if ($uri === '/tickets/cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../app/Controllers/TicketCancelController.php';
+    (new TicketCancelController())->cancel();
+    exit;
+}
+
 // MARK NOTIFICATION AS READ (AJAX)
 if ($uri === '/notifications/read' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/../app/Controllers/NotificationController.php';
@@ -112,6 +137,8 @@ if (strpos($uri, '/admin') === 0) {
         $admin->profile();
     } elseif ($sub === 'tickets') {
         $ticket->ticket();
+    } elseif (strpos($sub, 'tickets/view') === 0) {
+        $ticket->view();
     } elseif ($sub === 'tickets/history') {
         $ticket->history();
     } elseif ($sub === 'tickets/update-assignment' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -172,6 +199,10 @@ if (strpos($uri, '/admin') === 0) {
         $admin->ratings();
     } elseif ($sub === 'ratings/data') {
         $admin->ratingsData();
+    } elseif ($sub === 'reports/monthly-tickets') {
+        $admin->monthlyReport();
+    } elseif ($sub === 'reports/monthly-tickets/export') {
+        $admin->monthlyReportExport();
     } else {
         http_response_code(404);
         echo "Admin page not found.";
@@ -203,6 +234,8 @@ if (strpos($uri, '/employee') === 0) {
         $ticket->store();
     } elseif ($sub === 'tickets') {
         $ticket->index();
+    } elseif (strpos($sub, 'tickets/view') === 0) {
+        $ticket->view();
     } elseif ($sub === 'tickets/create') {
         $ticket->create();
     } elseif ($sub === 'tickets/history') {
@@ -212,6 +245,8 @@ if (strpos($uri, '/employee') === 0) {
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $ticket->rate();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $ticket->storeRating();
+    } elseif ($sub === 'tickets/store-rating' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $ticket->storeRating();
     } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $ticket->downloadTechnicalRecord();
@@ -250,6 +285,8 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
         $ticket->store();
     } elseif ($sub === 'tickets') {
         $ticket->index();
+    } elseif (strpos($sub, 'tickets/view') === 0) {
+        $ticket->view();
     } elseif ($sub === 'tickets/create') {
         $ticket->create();
     } elseif ($sub === 'tickets/history') {
@@ -311,11 +348,15 @@ if (strpos($uri, '/head') === 0) {
         $headTicket->store();
     } elseif ($sub === 'tickets') {
         $headTicket->index();
+    } elseif (strpos($sub, 'tickets/view') === 0) {
+        $headTicket->view();
     } elseif ($sub === 'tickets/create') {
         $headTicket->create();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $headTicket->rate();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $headTicket->storeRating();
+    } elseif ($sub === 'tickets/store-rating' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $headTicket->storeRating();
     } elseif ($sub === 'tickets/history') {
         $headTicket->index();
@@ -337,10 +378,12 @@ if (strpos($uri, '/hr') === 0) {
     require_once __DIR__ . '/../app/Controllers/hr/HrController.php';
     require_once __DIR__ . '/../app/Controllers/hr/UniformController.php';
     require_once __DIR__ . '/../app/Controllers/hr/HrTicketController.php';
+    require_once __DIR__ . '/../app/Controllers/hr/HrAssetController.php';
 
     $hr = new HrController();
     $uniform = new UniformController();
     $hrTicket = new HrTicketController();
+    $hrAsset = new HrAssetController();
 
     $sub = trim(substr($uri, strlen('/hr')), '/');
 
@@ -356,6 +399,12 @@ if (strpos($uri, '/hr') === 0) {
         $hr->downloadAccountabilityForm($employeeId);
     } elseif (strpos($sub, 'employees/search') === 0) {
         $hr->searchEmployees();
+    } elseif ($sub === 'assets/transfer') {
+        $hrAsset->transferItem();
+    } elseif ($sub === 'assets/search-employee') {
+        $hrAsset->searchEmployee();
+    } elseif ($sub === 'assets/transfer-history') {
+        $hrAsset->transferHistory();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $hrTicket->create();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -384,6 +433,8 @@ if (strpos($uri, '/hr') === 0) {
         $hrTicket->rate();
     } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $hrTicket->storeRating();
+    } elseif ($sub === 'tickets/store-rating' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $hrTicket->storeRating();
     } elseif ($sub === 'tickets') {
         $hrTicket->index();
     } elseif ($sub === 'uniforms') {
@@ -408,6 +459,9 @@ if (strpos($uri, '/hr') === 0) {
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uniform->delete($uniformId);
         }
+    } elseif (strpos($sub, 'uniforms/reactivate/') === 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniformId = (int) substr($sub, strlen('uniforms/reactivate/'));
+        $uniform->reactivate($uniformId);
     } elseif (strpos($sub, 'uniforms/search') === 0) {
         $uniform->search();
     } elseif ($sub === 'uniforms/reorder-alerts') {
@@ -494,41 +548,130 @@ if ($uri === '/aom' || strpos($uri, '/aom/') === 0) {
     exit;
 }
 
-// OM PREFIX routes - Operation Manager
+// HOM PREFIX routes - Head Of Operation
+if ($uri === '/hom' || strpos($uri, '/hom/') === 0) {
+    require_once __DIR__ . '/../app/Controllers/hom/HOMController.php';
+    require_once __DIR__ . '/../app/Controllers/hom/HOMTicketController.php';
+
+    $sub = trim(substr($uri, strlen('/hom')), '/');
+
+    // Handle ticket routes
+    if (strpos($sub, 'tickets') === 0) {
+        $homTicket = new HOMTicketController();
+        
+        if ($sub === 'tickets') {
+            $homTicket->index();
+        } elseif ($sub === 'tickets/create') {
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                $homTicket->create();
+            } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $homTicket->store();
+            }
+        } elseif (strpos($sub, 'tickets/view') === 0) {
+            $homTicket->view();
+        } elseif ($sub === 'tickets/upload-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $homTicket->uploadTechnicalReport();
+        } elseif ($sub === 'tickets/upload-technical-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Backwards-compatible route
+            $homTicket->uploadTechnicalReport();
+        } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            $homTicket->rate();
+        } elseif ($sub === 'tickets/store-rating' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $homTicket->storeRating();
+        } elseif ($sub === 'tickets/download-technical-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            $homTicket->downloadTechnicalRecord();
+        } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            // Backwards-compatible route used in some views
+            $homTicket->downloadTechnicalRecord();
+        } else {
+            http_response_code(404);
+            echo "HOM Ticket page not found.";
+        }
+        exit;
+    }
+
+    // Handle non-ticket routes
+    $hom = new HOMController();
+
+    if ($sub === '' || $sub === 'dashboard') {
+        $hom->dashboard();
+    } elseif ($sub === 'employees') {
+        $hom->employees();
+    } elseif ($sub === 'assignments') {
+        $hom->assignments();
+    } elseif ($sub === 'new-assignment') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $hom->createAssignment();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $hom->createAssignment();
+        }
+    } elseif (strpos($sub, 'edit-assignment') === 0) {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $hom->updateAssignment();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $hom->updateAssignment();
+        }
+    } elseif ($sub === 'deactivate-assignment' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $hom->deactivateAssignment();
+    } elseif ($sub === 'api/unassigned-employees' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        // AJAX endpoint to get unassigned employees
+        $hom->getUnassignedEmployees();
+    } elseif ($sub === 'api/aoms' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        // AJAX endpoint to get all AOMs
+        $hom->getAOMs();
+    } elseif ($sub === 'api/employee-assignments' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        // AJAX endpoint to get employee assignments
+        $hom->getEmployeeAssignments();
+    } elseif ($sub === 'aom-branches') {
+        $hom->aomBranches();
+    } elseif (strpos($sub, 'edit-aom-branches') === 0) {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $hom->editAOMBranches();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $hom->editAOMBranches();
+        }
+    } else {
+        http_response_code(404);
+        echo "HOM page not found.";
+    }
+    exit;
+}
+
+// OM PREFIX routes - Operation Manager (LEGACY - kept for backwards compatibility)
 if ($uri === '/om' || strpos($uri, '/om/') === 0) {
-    require_once __DIR__ . '/../app/Controllers/om/OMController.php';
-    require_once __DIR__ . '/../app/Controllers/om/OMTicketController.php';
+    require_once __DIR__ . '/../app/Controllers/hom/HOMController.php';
+    require_once __DIR__ . '/../app/Controllers/hom/HOMTicketController.php';
 
     $sub = trim(substr($uri, strlen('/om')), '/');
 
     // Handle ticket routes
     if (strpos($sub, 'tickets') === 0) {
-        $omTicket = new OMTicketController();
+        $homTicket = new HOMTicketController();
         
         if ($sub === 'tickets') {
-            $omTicket->index();
+            $homTicket->index();
         } elseif ($sub === 'tickets/create') {
             if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-                $omTicket->create();
+                $homTicket->create();
             } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $omTicket->store();
+                $homTicket->store();
             }
         } elseif (strpos($sub, 'tickets/view') === 0) {
-            $omTicket->view();
+            $homTicket->view();
         } elseif ($sub === 'tickets/upload-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-            $omTicket->uploadTechnicalReport();
+            $homTicket->uploadTechnicalReport();
         } elseif ($sub === 'tickets/upload-technical-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             // Backwards-compatible route
-            $omTicket->uploadTechnicalReport();
+            $homTicket->uploadTechnicalReport();
         } elseif ($sub === 'tickets/rate' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-            $omTicket->rate();
+            $homTicket->rate();
         } elseif ($sub === 'tickets/store-rating' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-            $omTicket->storeRating();
+            $homTicket->storeRating();
         } elseif ($sub === 'tickets/download-technical-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-            $omTicket->downloadTechnicalRecord();
+            $homTicket->downloadTechnicalRecord();
         } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
             // Backwards-compatible route used in some views
-            $omTicket->downloadTechnicalRecord();
+            $homTicket->downloadTechnicalRecord();
         } else {
             http_response_code(404);
             echo "OM Ticket page not found.";
@@ -537,37 +680,45 @@ if ($uri === '/om' || strpos($uri, '/om/') === 0) {
     }
 
     // Handle non-ticket routes
-    $om = new OMController();
+    $hom = new HOMController();
 
     if ($sub === '' || $sub === 'dashboard') {
-        $om->dashboard();
+        $hom->dashboard();
     } elseif ($sub === 'employees') {
-        $om->employees();
+        $hom->employees();
     } elseif ($sub === 'assignments') {
-        $om->assignments();
+        $hom->assignments();
     } elseif ($sub === 'new-assignment') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $om->createAssignment();
+            $hom->createAssignment();
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $om->createAssignment();
+            $hom->createAssignment();
         }
     } elseif (strpos($sub, 'edit-assignment') === 0) {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $om->updateAssignment();
+            $hom->updateAssignment();
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $om->updateAssignment();
+            $hom->updateAssignment();
         }
     } elseif ($sub === 'deactivate-assignment' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $om->deactivateAssignment();
+        $hom->deactivateAssignment();
     } elseif ($sub === 'api/unassigned-employees' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         // AJAX endpoint to get unassigned employees
-        $om->getUnassignedEmployees();
+        $hom->getUnassignedEmployees();
     } elseif ($sub === 'api/aoms' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         // AJAX endpoint to get all AOMs
-        $om->getAOMs();
+        $hom->getAOMs();
     } elseif ($sub === 'api/employee-assignments' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         // AJAX endpoint to get employee assignments
-        $om->getEmployeeAssignments();
+        $hom->getEmployeeAssignments();
+    } elseif ($sub === 'aom-branches') {
+        $hom->aomBranches();
+    } elseif (strpos($sub, 'edit-aom-branches') === 0) {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $hom->editAOMBranches();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $hom->editAOMBranches();
+        }
     } else {
         http_response_code(404);
         echo "OM page not found.";

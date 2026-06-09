@@ -1,6 +1,8 @@
 <?php
 $base = rtrim(BASE_URL, '/');
-$loggedFirstname = $ctx['loggedFirstname'] ?? 'OM';
+$routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
+$roleLabel = ($user_role ?? '') === 'HOM' ? 'HOM' : 'OM';
+$loggedFirstname = $ctx['loggedFirstname'] ?? $roleLabel;
 $loggedLastname = $ctx['loggedLastname'] ?? '';
 ?>
 <!DOCTYPE html>
@@ -9,7 +11,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | OM Tickets</title>
+    <title>Storage Mart | <?= htmlspecialchars($roleLabel) ?> Tickets</title>
 
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
@@ -27,7 +29,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">Tickets</h1>
-            <a href="<?= htmlspecialchars($base) ?>/om/tickets/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
                 <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
             </a>
         </div>
@@ -148,9 +150,15 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                     <td><?php echo htmlspecialchars(date('M d, Y', strtotime((string) ($ticket['date_filed'] ?? '')))); ?></td>
                                     <td><?php echo htmlspecialchars((string) ($ticket['branchName'] ?? '')); ?></td>
                                     <td>
-                                        <a href="<?= htmlspecialchars($base) ?>/om/tickets/view?id=<?php echo (int) ($ticket['ticket_id'] ?? 0); ?>" class="btn btn-sm btn-info">
+                                        <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/view?id=<?php echo (int) ($ticket['ticket_id'] ?? 0); ?>" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        <?php
+                                        $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                                        $ticketStatus = (string) ($ticket['status'] ?? '');
+                                        $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
+                                        require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
+                                        ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -180,5 +188,6 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
         document.getElementById('searchInput').value = '';
     }
 </script>
+<?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 </html>

@@ -168,6 +168,7 @@ class OMTicketController extends AuthController
         $notificationModel = new NotificationModel();
         $recipients = $notificationModel->getTicketRecipientsWithType($department);
         $currentAccountId = $accountId;
+        $filerName = $employeeModel->getDisplayNameByAccountId($accountId);
 
         foreach ($recipients as $recipient) {
             $receiverAccountId = (int) $recipient['account_id'];
@@ -184,7 +185,7 @@ class OMTicketController extends AuthController
             }
             $notificationModel->create(
                 $receiverAccountId,
-                'New Ticket Filed by OM',
+                'New Ticket Filed by ' . $filerName,
                 'fa-ticket-alt',
                 'primary',
                 $actionUrl,

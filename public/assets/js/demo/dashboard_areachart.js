@@ -3,10 +3,10 @@
 const areaCtx = document.getElementById("myAreaChart");
 
 if (areaCtx && window.ticketResolution) {
-  const SLA_HOURS = 8;
+  const SLA_DAYS = 1;
   const labels = Array.isArray(window.ticketResolution.labels) ? window.ticketResolution.labels : [];
   const series = Array.isArray(window.ticketResolution.data)
-    ? window.ticketResolution.data.map(v => Number(v) || 0)
+    ? window.ticketResolution.data.map(v => Number(v) / 24 || 0) // Convert hours to days
     : [];
 
   const hasData = series.length > 0 && series.some(v => v > 0);
@@ -19,7 +19,7 @@ if (areaCtx && window.ticketResolution) {
       labels,
       datasets: [
         {
-          label: "Resolution Time (hours)",
+          label: "Resolution Time (days)",
           data: safeSeries,
           tension: 0.3,
           fill: true,
@@ -29,13 +29,13 @@ if (areaCtx && window.ticketResolution) {
           pointRadius: 4,
           pointHoverRadius: 6,
           pointBackgroundColor: safeSeries.map(v =>
-            v > SLA_HOURS ? '#e74a3b' : '#4e73df'
+            v > SLA_DAYS ? '#e74a3b' : '#4e73df'
           ),
           pointBorderColor: "#fff",
         },
         {
-          label: "SLA (8 hrs)",
-          data: Array(safeSeries.length).fill(SLA_HOURS),
+          label: "SLA (1 day)",
+          data: Array(safeSeries.length).fill(SLA_DAYS),
           borderColor: "#e74a3b",
           borderDash: [6, 6],
           pointRadius: 0,
@@ -66,10 +66,10 @@ if (areaCtx && window.ticketResolution) {
           padding: 12,
           callbacks: {
             label: function (context) {
-              if (!hasData && context.dataset.label === "Resolution Time (hours)") return "No data yet";
+              if (!hasData && context.dataset.label === "Resolution Time (days)") return "No data yet";
               const y = Number(context.parsed.y);
               if (!Number.isFinite(y)) return context.dataset.label;
-              return `${context.dataset.label}: ${y} hrs`;
+              return `${context.dataset.label}: ${y.toFixed(2)} days`;
             }
           }
         }
@@ -84,9 +84,9 @@ if (areaCtx && window.ticketResolution) {
         },
         y: {
           beginAtZero: true,
-          suggestedMax: Math.max(SLA_HOURS + 2, ...safeSeries) || (SLA_HOURS + 2),
+          suggestedMax: Math.max(SLA_DAYS + 0.25, ...safeSeries) || (SLA_DAYS + 0.25),
           ticks: {
-            callback: value => value + ' hrs'
+            callback: value => value.toFixed(2) + ' days'
           },
           grid: {
             color: "rgb(234, 236, 244)"

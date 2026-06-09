@@ -54,7 +54,7 @@
 $base = rtrim(BASE_URL, '/');
 ?>
 
-<form method="POST" action="<?= htmlspecialchars($base) ?>/employee/tickets/rate" id="rateTicketForm">
+<form id="rateTicketForm">
     <input type="hidden" name="ticket_id" value="<?= (int)$ticketId ?>">
 
     <div class="form-group">
@@ -79,17 +79,6 @@ $base = rtrim(BASE_URL, '/');
 </form>
 
 <script>
-$(document).on('click', '#downloadTechRecordBtn', function () {
-    const ticketId = $(this).data('ticketid');
-    if (!ticketId) {
-        alert('Invalid ticket ID');
-        return;
-    }
-    const base = "<?= htmlspecialchars($base) ?>";
-    window.location.href = base + '/employee/tickets/download-record?id=' + ticketId;
-});
-</script>
-<script>
 $(function() {
     $(".star").on("click keypress", function(e) {
         if (e.type === 'keypress' && e.which !== 13 && e.which !== 32) return;
@@ -105,12 +94,35 @@ $(function() {
     });
 
     $("#rateTicketForm").on("submit", function(e) {
+        e.preventDefault();
+
         if (!$("#ratingSelect").val()) {
-            e.preventDefault();
             $("#ratingText").text("Please select a rating").css("color", "#d9534f");
             $(".star").first().focus();
             return false;
         }
+
+        const base = "<?= htmlspecialchars($base) ?>";
+        const form = $(this);
+
+        $.ajax({
+            url: base + '/employee/tickets/store-rating',
+            method: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(result) {
+                if (result.success) {
+                    alert(result.message);
+                    $('#rateTicketModal').modal('hide');
+                    setTimeout(function() { location.reload(); }, 500);
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            },
+            error: function() {
+                alert('Failed to submit rating. Please try again.');
+            }
+        });
     });
 });
 </script>

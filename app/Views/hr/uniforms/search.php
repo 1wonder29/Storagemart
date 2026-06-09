@@ -38,14 +38,15 @@ $base = rtrim(BASE_URL, '/');
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($uniforms as $uniform): 
-                                        $statusBadgeColor = ($uniform['status'] === 'ACTIVE') ? 'success' : 'secondary';
+                                    <?php foreach ($uniforms as $uniform):
+                                        $itemStatus = strtoupper($uniform['status'] ?? 'ACTIVE');
+                                        $statusBadgeColor = ($itemStatus === 'ACTIVE') ? 'success' : 'secondary';
                                         $levelPercentage = $uniform['reorder_level'] ? ($uniform['quantity_in_stock'] / max(1, $uniform['reorder_level'])) * 100 : 0;
                                         $levelColor = ($levelPercentage > 100) ? 'success' : (($levelPercentage > 50) ? 'warning' : 'danger');
                                     ?>
                                         <tr>
-                                            <td><?= htmlspecialchars($uniform['uniform_type']) ?></td>
-                                            <td><?= htmlspecialchars($uniform['size']) ?></td>
+                                            <td><?= htmlspecialchars($uniform['uniform_type'] ?? '') ?></td>
+                                            <td><?= htmlspecialchars($uniform['size'] ?? '') ?></td>
                                             <td><?= (int)$uniform['quantity_in_stock'] ?></td>
                                             <td><?= (int)$uniform['reorder_level'] ?></td>
                                             <td>
@@ -54,12 +55,23 @@ $base = rtrim(BASE_URL, '/');
                                                 </span>
                                             </td>
                                             <td>
-                                                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/edit/<?= $uniform['uniform_id'] ?>" class="btn btn-sm btn-primary">
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/edit/<?= $uniform['uniform_id'] ?>" class="btn btn-sm btn-primary" title="Edit">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/delete/<?= $uniform['uniform_id'] ?>" class="btn btn-sm btn-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
+                                                <?php if ($itemStatus === 'DISCONTINUED'): ?>
+                                                    <form method="post"
+                                                          action="<?= htmlspecialchars($base) ?>/hr/uniforms/reactivate/<?= (int) $uniform['uniform_id'] ?>"
+                                                          class="d-inline"
+                                                          onsubmit="return confirm('Reactivate this uniform?');">
+                                                        <button type="submit" class="btn btn-sm btn-success" title="Reactivate">
+                                                            <i class="fas fa-undo"></i>
+                                                        </button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/delete/<?= $uniform['uniform_id'] ?>" class="btn btn-sm btn-danger" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                <?php endif; ?>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

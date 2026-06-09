@@ -92,6 +92,20 @@ $base = rtrim(BASE_URL, '/');
                                                             <span class="mr-2 d-none d-lg-inline text-gray-600">Action</span>
                                                         </a>
                                                         <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="userDropdown<?= $row['ticket_id'] ?>">
+                                                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/view?id=<?= (int) ($row['ticket_id'] ?? 0) ?>&from=in_progress" class="dropdown-item">
+                                                                <i class="fas fa-eye fa-sm fa-fw mr-2 text-info"></i> View Full Detail
+                                                            </a>
+                                                            <div class="dropdown-divider"></div>
+                                                            <a href="#" class="dropdown-item viewTicketBtn"
+                                                                data-ticket-id="<?= (int) $row['ticket_id'] ?>"
+                                                                data-ticket-num="<?= htmlspecialchars($row['ticket_number']) ?>"
+                                                                data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
+                                                                data-priority="<?= htmlspecialchars($row['priority']) ?>"
+                                                                data-status="<?= htmlspecialchars($row['status']) ?>"
+                                                                data-concern="<?= htmlspecialchars($row['concern_details']) ?>">
+                                                                <i class="fas fa-comments fa-sm fa-fw mr-2 text-info"></i> View &amp; Comments
+                                                            </a>
+                                                            <div class="dropdown-divider"></div>
                                                             <a href="#" class="dropdown-item openModalBtn" data-action="Resolve" data-ticket-id="<?= $row['ticket_id']; ?>" data-assigned="<?= $row['assigned_to']; ?>">
                                                                 <i class="fas fa-check fa-sm fa-fw mr-2 text-black-400"></i> Resolved
                                                             </a>
@@ -101,6 +115,14 @@ $base = rtrim(BASE_URL, '/');
                                                             <a href="#" class="dropdown-item openModalBtn" data-action="Unresolved" data-ticket-id="<?= $row['ticket_id']; ?>" data-assigned="<?= $row['assigned_to']; ?>">
                                                                 <i class="fas fa-times fa-sm fa-fw mr-2 text-black-400"></i> Unresolved
                                                             </a>
+                                                            <div class="dropdown-divider"></div>
+                                                            <?php
+                                                            $ticketId = (int) ($row['ticket_id'] ?? 0);
+                                                            $ticketStatus = (string) ($row['status'] ?? '');
+                                                            $ticketNumber = (string) ($row['ticket_number'] ?? '');
+                                                            $btnClass = 'dropdown-item text-danger';
+                                                            require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
+                                                            ?>
                                                         </div>
                                                     <?php else: ?>
                                                         <span class="text-muted">Not assigned to you</span>
@@ -205,6 +227,53 @@ $base = rtrim(BASE_URL, '/');
       </div>
     </div>
 
+    <!-- View Ticket & Comments Modal -->
+    <div class="modal fade" id="viewTicketModal" tabindex="-1" role="dialog" aria-labelledby="viewTicketLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="viewTicketLabel"><i class="fas fa-comments"></i> Ticket Communication</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="small text-muted text-uppercase">Ticket #</label>
+                            <input type="text" id="view_ticket_number" class="form-control form-control-sm" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small text-muted text-uppercase">Employee</label>
+                            <input type="text" id="view_employee" class="form-control form-control-sm" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small text-muted text-uppercase">Priority</label>
+                            <input type="text" id="view_priority" class="form-control form-control-sm" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small text-muted text-uppercase">Status</label>
+                            <input type="text" id="view_status" class="form-control form-control-sm" readonly>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="small text-muted text-uppercase">Concern</label>
+                        <textarea id="view_concern" class="form-control form-control-sm" rows="2" readonly></textarea>
+                    </div>
+
+                    <?php
+                    $ticketId = 0;
+                    $canPostComments = true;
+                    require __DIR__ . '/../../partials/ticket/comments_section.php';
+                    ?>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -249,8 +318,30 @@ $(document).ready(function() {
 
     $('#ticketModal').modal('show');
   });
+
+  $('.viewTicketBtn').click(function(e) {
+    e.preventDefault();
+
+    const ticketId = $(this).data('ticket-id');
+    $('#view_ticket_number').val($(this).data('ticket-num') || '');
+    $('#view_employee').val($(this).data('employee') || '');
+    $('#view_priority').val($(this).data('priority') || '');
+    $('#view_status').val($(this).data('status') || '');
+    $('#view_concern').val($(this).data('concern') || '');
+
+    $('#viewTicketModal').modal('show');
+
+    if (window.TicketComments) {
+      TicketComments.load('#viewTicketModal .ticket-comments-section', ticketId);
+    }
+  });
 });
 </script>
+<script>
+window.BASE_URL = "<?= htmlspecialchars($base) ?>";
+</script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+<?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 </html>

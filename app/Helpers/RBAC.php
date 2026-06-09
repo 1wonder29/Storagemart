@@ -15,6 +15,7 @@ class RBAC
     const ROLE_IT = 'IT';
     const ROLE_AOM = 'AOM';
     const ROLE_OM = 'OM';
+    const ROLE_HOM = 'HOM';
 
     // Available roles
     private static $availableRoles = [
@@ -24,7 +25,8 @@ class RBAC
         self::ROLE_HR,
         self::ROLE_IT,
         self::ROLE_AOM,
-        self::ROLE_OM
+        self::ROLE_OM,
+        self::ROLE_HOM
     ];
 
     // Permission matrix
@@ -60,6 +62,7 @@ class RBAC
         self::ROLE_HR => [
             'manage_employees' => true,
             'manage_uniforms' => true,
+            'transfer_assets' => true,
             'create_tickets' => true,
             'view_all_tickets' => true,
             'manage_payroll' => true,
@@ -90,6 +93,20 @@ class RBAC
             'update_assignments' => true,
             'deactivate_assignments' => true,
             'view_aom_branches' => true,
+            'assign_aom_branches' => true,
+            'access_assignment_records' => true
+        ],
+        self::ROLE_HOM => [
+            'view_all_employees' => true,
+            'view_all_aoms' => true,
+            'assign_employees_to_aom' => true,
+            'manage_aom_assignments' => true,
+            'view_assignment_history' => true,
+            'create_assignments' => true,
+            'update_assignments' => true,
+            'deactivate_assignments' => true,
+            'view_aom_branches' => true,
+            'assign_aom_branches' => true,
             'access_assignment_records' => true
         ]
     ];

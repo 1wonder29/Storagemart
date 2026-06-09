@@ -175,6 +175,12 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                                    class="btn btn-sm btn-primary">
                                                     <i class="fas fa-eye"></i> View
                                                 </a>
+                                                <?php
+                                                $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                                                $ticketStatus = (string) ($ticket['status'] ?? '');
+                                                $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
+                                                require __DIR__ . '/../partials/ticket/cancel_ticket_button.php';
+                                                ?>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -229,5 +235,6 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
             $('#statusFilter, #branchFilter, #priorityFilter').on('change', applyFilters);
         });
     </script>
+<?php require __DIR__ . '/../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 </html>

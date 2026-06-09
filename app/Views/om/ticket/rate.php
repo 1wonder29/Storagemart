@@ -52,12 +52,8 @@
 <?php else: ?>
 <?php
 $base = rtrim(BASE_URL, '/');
+$routePrefix = $routePrefix ?? 'hom';
 ?>
-<div class="mb-3">
-    <button type="button" class="btn btn-info btn-sm" id="downloadTechRecordBtn" data-ticketid="<?= (int)$ticketId ?>">
-        <i class="fas fa-download"></i> Download Technical Record
-    </button>
-</div>
 
 <form id="rateTicketForm">
     <input type="hidden" name="ticket_id" value="<?= (int)$ticketId ?>">
@@ -84,17 +80,6 @@ $base = rtrim(BASE_URL, '/');
 </form>
 
 <script>
-$(document).on('click', '#downloadTechRecordBtn', function () {
-    const ticketId = $(this).data('ticketid');
-    if (!ticketId) {
-        alert('Invalid ticket ID');
-        return;
-    }
-    const base = "<?= htmlspecialchars($base) ?>";
-    window.location.href = base + '/om/tickets/download-record?id=' + ticketId;
-});
-</script>
-<script>
 $(function() {
     $(".star").on("click keypress", function(e) {
         if (e.type === 'keypress' && e.which !== 13 && e.which !== 32) return;
@@ -119,10 +104,11 @@ $(function() {
         }
 
         const base = "<?= htmlspecialchars($base) ?>";
+        const routePrefix = "<?= htmlspecialchars($routePrefix) ?>";
         const form = $(this);
         
         $.ajax({
-            url: base + '/om/tickets/store-rating',
+            url: base + '/' + routePrefix + '/tickets/store-rating',
             method: 'POST',
             data: form.serialize(),
             dataType: 'json',

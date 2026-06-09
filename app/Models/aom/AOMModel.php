@@ -12,6 +12,7 @@ class AOMModel extends BaseModel
     protected $tblemployee = 'tblemployee';
     protected $tblbranch = 'tblbranch';
     protected $tblbranch_assignments = 'tblbranch_assignments';
+    protected $tblhom_employee_assignments = 'tblhom_employee_assignments';
     protected $tbltickets = 'tbltickets';
     protected $tblaccounts = 'tblaccounts';
 
@@ -25,7 +26,7 @@ class AOMModel extends BaseModel
     {
         // Accessible branches are:
         // 1) branches explicitly assigned to AOM via tblbranch_assignments (active)
-        // 2) branches that contain employees assigned to AOM via tblom_employee_assignments (active)
+        // 2) branches that contain employees assigned to AOM via tblhom_employee_assignments (active)
         $sql = "
             SELECT
                 x.branch_id,
@@ -57,7 +58,7 @@ class AOMModel extends BaseModel
                     b.branchAddress,
                     oea.assignment_date,
                     e.employee_id
-                FROM tblom_employee_assignments oea
+                FROM tblhom_employee_assignments oea
                 JOIN {$this->tblemployee} e ON oea.employee_id = e.employee_id
                 JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
                 WHERE oea.aom_id = :aom_employee_id_2
@@ -124,7 +125,7 @@ class AOMModel extends BaseModel
             LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
             LEFT JOIN {$this->tblaccounts} a ON a.account_id = e.account_id
             WHERE e.employee_id IN (
-                SELECT employee_id FROM tblom_employee_assignments
+                SELECT employee_id FROM tblhom_employee_assignments
                 WHERE aom_id = :aom_employee_id_2 AND is_active = 1
             )
             
@@ -164,7 +165,7 @@ class AOMModel extends BaseModel
             // Verify this AOM has at least one OM-assigned employee in this branch
             $sql_verify_om = "
                 SELECT 1
-                FROM tblom_employee_assignments oea
+                FROM tblhom_employee_assignments oea
                 JOIN {$this->tblemployee} e ON oea.employee_id = e.employee_id
                 WHERE oea.aom_id = :aom_employee_id
                   AND oea.is_active = 1
@@ -202,7 +203,7 @@ class AOMModel extends BaseModel
         if (!$isBranchAssigned) {
             $sql .= "
                 AND e.employee_id IN (
-                    SELECT employee_id FROM tblom_employee_assignments
+                    SELECT employee_id FROM tblhom_employee_assignments
                     WHERE aom_id = :aom_employee_id AND is_active = 1
                 )
             ";
@@ -247,7 +248,7 @@ class AOMModel extends BaseModel
                 
                 UNION
                 
-                SELECT DISTINCT employee_id FROM tblom_employee_assignments
+                SELECT DISTINCT employee_id FROM tblhom_employee_assignments
                 WHERE aom_id = :aom_employee_id_2 AND is_active = 1
             ) as all_employees
         ";
@@ -339,7 +340,7 @@ class AOMModel extends BaseModel
             LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
             JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
             WHERE t.employee_id IN (
-                SELECT employee_id FROM tblom_employee_assignments
+                SELECT employee_id FROM tblhom_employee_assignments
                 WHERE aom_id = :aom_employee_id_2 AND is_active = 1
             )
             
@@ -379,7 +380,7 @@ class AOMModel extends BaseModel
                 
                 SELECT status FROM {$this->tbltickets}
                 WHERE employee_id IN (
-                    SELECT employee_id FROM tblom_employee_assignments
+                    SELECT employee_id FROM tblhom_employee_assignments
                     WHERE aom_id = :aom_employee_id_2 AND is_active = 1
                 )
             ) as all_tickets
@@ -422,7 +423,7 @@ class AOMModel extends BaseModel
                   )
                   OR EXISTS (
                       SELECT 1
-                      FROM tblom_employee_assignments oea
+                      FROM tblhom_employee_assignments oea
                       JOIN {$this->tblemployee} e ON oea.employee_id = e.employee_id
                       WHERE oea.aom_id = :aom_employee_id_2
                         AND oea.is_active = 1
@@ -460,7 +461,7 @@ class AOMModel extends BaseModel
                     WHERE aom_employee_id = :aom_employee_id AND is_active = 1
                 )
                 OR e.employee_id IN (
-                    SELECT employee_id FROM tblom_employee_assignments
+                    SELECT employee_id FROM tblhom_employee_assignments
                     WHERE aom_id = :aom_employee_id_2 AND is_active = 1
                 )
             )

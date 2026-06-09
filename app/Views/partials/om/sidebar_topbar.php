@@ -5,6 +5,7 @@ $activePage = $activePage ?? '';
 $user = $user ?? [];
 
 $base = rtrim(BASE_URL, '/');
+$routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
 ?>
 
 <!-- Sidebar -->
@@ -12,7 +13,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" 
-       href="<?= htmlspecialchars($base) ?>/om/dashboard">
+       href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/dashboard">
         <div class="sidebar-brand-icon">
             <img src="<?= htmlspecialchars($base) ?>/assets/img/storagemart-logo.png" 
                  alt="Logo" style="width:100px; height:auto;">
@@ -23,7 +24,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Dashboard -->
     <li class="nav-item <?= ($activePage === 'dashboard') ? 'active' : '' ?>">
-        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/om/dashboard">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/dashboard">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
@@ -35,7 +36,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Employees -->
     <li class="nav-item <?= ($activePage === 'employees') ? 'active' : '' ?>">
-        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/om/employees">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/employees">
             <i class="fas fa-users"></i>
             <span>Employees</span>
         </a>
@@ -43,7 +44,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Assignments -->
     <li class="nav-item <?= ($activePage === 'assignments') ? 'active' : '' ?>">
-        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/om/assignments">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/assignments">
             <i class="fas fa-link"></i>
             <span>Assignments</span>
         </a>
@@ -51,9 +52,17 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Create Assignment -->
     <li class="nav-item <?= ($activePage === 'create-assignment') ? 'active' : '' ?>">
-        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/om/new-assignment">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/new-assignment">
             <i class="fas fa-plus-circle"></i>
             <span>New Assignment</span>
+        </a>
+    </li>
+
+    <!-- AOM Branch Assignments -->
+    <li class="nav-item <?= ($activePage === 'aom-branches') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/aom-branches">
+            <i class="fas fa-building"></i>
+            <span>AOM Branches</span>
         </a>
     </li>
 
@@ -63,7 +72,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Tickets -->
     <li class="nav-item <?= ($activePage === 'tickets') ? 'active' : '' ?>">
-        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/om/tickets">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets">
             <i class="fas fa-ticket-alt"></i>
             <span>Tickets</span>
         </a>
@@ -71,7 +80,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Create Ticket -->
     <li class="nav-item <?= ($activePage === 'create-ticket') ? 'active' : '' ?>">
-        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/om/tickets/create">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create">
             <i class="fas fa-plus-circle"></i>
             <span>New Ticket</span>
         </a>

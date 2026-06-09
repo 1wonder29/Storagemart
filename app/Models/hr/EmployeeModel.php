@@ -123,14 +123,15 @@ class EmployeeModel extends HRModel {
                         aa.dateIssued,
                         aa.dateReturned
                     FROM {$this->tblassets_inventory} ai
-                    LEFT JOIN {$this->tblassets_assignment} aa ON ai.inventory_id = aa.inventory_id
+                    LEFT JOIN {$this->tblassets_assignment} aa
+                        ON ai.assignment_id = aa.assignment_id
                     LEFT JOIN {$this->tblassets_group} ag ON ai.group_id = ag.group_id
                     LEFT JOIN {$this->tblassets_category} ac ON ag.category_id = ac.category_id
-                    WHERE ai.employee_id = ? OR (aa.employee_id = ? AND aa.dateReturned IS NULL)
-                    ORDER BY ac.categoryName, ag.groupName";
+                    WHERE ai.employee_id = ?
+                    ORDER BY ac.categoryName, ag.groupName, ai.inventory_id";
             
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$employeeId, $employeeId]);
+            $stmt->execute([$employeeId]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         } catch (\Throwable $e) {
             error_log('EmployeeModel::getEmployeeAssets error: ' . $e->getMessage());

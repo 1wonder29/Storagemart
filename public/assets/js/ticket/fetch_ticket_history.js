@@ -30,13 +30,15 @@
     }
 
     // Detect which module we're in to construct the correct fetch URL
-    let fetchUrl = base + "/employee/tickets/history/fetch"; // default
+    let fetchUrl = (window.BASE_URL || (typeof base !== 'undefined' ? base : '')).replace(/\/$/, '') + "/employee/tickets/history/fetch"; // default
     if (window.location.pathname.includes("/it/")) {
-      fetchUrl = base + "/it/tickets/history/fetch";
+      fetchUrl = (window.BASE_URL || base).replace(/\/$/, '') + "/it/tickets/history/fetch";
     } else if (window.location.pathname.includes("/head/")) {
-      fetchUrl = base + "/head/tickets/history/fetch";
+      fetchUrl = (window.BASE_URL || base).replace(/\/$/, '') + "/head/tickets/history/fetch";
     } else if (window.location.pathname.includes("/hr/")) {
-      fetchUrl = base + "/hr/tickets/history/fetch";
+      fetchUrl = (window.BASE_URL || base).replace(/\/$/, '') + "/hr/tickets/history/fetch";
+    } else if (window.location.pathname.includes("/admin/")) {
+      fetchUrl = (window.BASE_URL || base).replace(/\/$/, '') + "/admin/tickets/history";
     }
 
     // Attach click handler for "View" buttons (delegated in case rows are replaced)
@@ -47,6 +49,9 @@
       $("#employee").val($(this).data("employee") || "");
       $("#priority").val($(this).data("priority") || "");
       $("#status").val($(this).data("status") || "");
+
+      const detailBase = (window.BASE_URL || (typeof base !== "undefined" ? base : "")).replace(/\/$/, "");
+      $("#viewFullDetailLink").attr("href", detailBase + "/it/tickets/view?id=" + id);
 
       // CLEAR history table (not the main tickets table)
       $("#ticketHistoryTable tbody").empty();
@@ -78,6 +83,10 @@
             `<tr><td colspan="5" class="text-center text-danger">Failed to load history.</td></tr>`,
           );
         });
+
+      if (window.TicketComments) {
+        TicketComments.load("#viewTicketModal .ticket-comments-section", id);
+      }
 
       $("#viewTicketModal").modal("show");
     });

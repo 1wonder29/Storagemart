@@ -38,6 +38,12 @@ class HrTicketController extends AuthController
         $ticketModel = new EmployeeTicket();
         $tickets = $ticketModel->fetchTicketsByDepartment($department);
 
+        $ticketStats = [];
+        foreach ($tickets as $t) {
+            $s = (string) ($t['status'] ?? 'Unknown');
+            $ticketStats[$s] = ($ticketStats[$s] ?? 0) + 1;
+        }
+
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
         $loggedFirstname = $ctx['loggedFirstname'];
@@ -170,6 +176,7 @@ class HrTicketController extends AuthController
 
         // 🔕 Do not notify the ticket filer
         $currentAccountId = (int) $_SESSION['account_id'];
+        $filerName = $employeeModel->formatDisplayName($employee);
 
         foreach ($recipients as $recipient) {
             $receiverAccountId = (int)$recipient['account_id'];
@@ -190,7 +197,7 @@ class HrTicketController extends AuthController
 
             $notificationModel->create(
                 $receiverAccountId,
-                'New Ticket Filed by HR',
+                'New Ticket Filed by ' . $filerName,
                 'fa-ticket-alt',
                 'primary',
                 $actionUrl,
@@ -264,23 +271,27 @@ class HrTicketController extends AuthController
         $model = new EmployeeTicket();
         $ticket = $model->fetchTicketById($ticketId);
 
-        if (!$ticket) {
+        $employeeModel = new Employee();
+        $user = $employeeModel->fetchUserDetails((int) $_SESSION['account_id']);
+        $hrEmployee = $employeeModel->getEmployeeById((int) ($user['employee_id'] ?? 0));
+        $department = $hrEmployee['department'] ?? null;
+
+        if (!$ticket || !$department || strcasecmp((string) ($ticket['department'] ?? ''), (string) $department) !== 0) {
             $_SESSION['flash_error'] = 'Ticket not found.';
             $this->redirect('/hr/tickets');
             return;
         }
 
         $ctx = $this->getLoggedUserContext();
-        $base = $ctx['base'];
-        $loggedFirstname = $ctx['loggedFirstname'];
-        $loggedPosition = $ctx['loggedPosition'];
+        $loggedFirstname = $ctx['loggedFirstname'] ?? '';
+        $loggedPosition = $ctx['loggedPosition'] ?? '';
 
         $notificationData = $this->loadNotifications();
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
+        $activePage = 'tickets';
 
         $history = $model->getTicketHistory($ticketId);
-        $ticketHistory = $history;
 
         require __DIR__ . '/../../Views/hr/ticket/ticket-detail.php';
     }
@@ -540,67 +551,7 @@ class HrTicketController extends AuthController
         $ratingModel = new HRTicketRatingModel();
         $alreadyRated = $ratingModel->hasRated($ticketId, $employeeId);
 
-        if ($alreadyRated) {
-            http_response_code(200);
-            echo '<div class="alert alert-info"><i class="fas fa-check-circle"></i> You have already rated this ticket.</div>';
-            return;
-        }
-
-        // Return just the form HTML for modal
-        echo '
-        <form id="rateTicketForm" method="POST">
-            <input type="hidden" name="ticket_id" value="' . (int)$ticketId . '">
-            
-            <div class="form-group">
-                <label class="font-weight-bold mb-3">How would you rate your experience?</label>
-                <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
-                    <span class="star" data-value="1" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Poor">★</span>
-                    <span class="star" data-value="2" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Fair">★</span>
-                    <span class="star" data-value="3" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Good">★</span>
-                    <span class="star" data-value="4" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Very Good">★</span>
-                    <span class="star" data-value="5" tabindex="0" style="font-size: 2rem; cursor: pointer; color: #ddd; transition: all 0.2s;" title="Excellent">★</span>
-                </div>
-                <p style="text-align: center; color: #999; font-size: 0.9rem;" id="ratingText">Click to select rating</p>
-                <input type="hidden" name="rating" id="ratingSelect" value="">
-            </div>
-
-            <div class="form-group">
-                <label class="font-weight-bold">Comments (optional)</label>
-                <textarea name="comment" class="form-control" placeholder="Share your feedback..." style="min-height: 80px;"></textarea>
-            </div>
-
-            <div class="text-right">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-warning">
-                    <i class="fas fa-paper-plane"></i> Submit Rating
-                </button>
-            </div>
-        </form>
-
-        <script>
-            $(".star").on("click keypress", function(e) {
-                if (e.type === "keypress" && e.which !== 13 && e.which !== 32) return; // Enter or Space
-                const rating = $(this).data("value");
-                $("#ratingSelect").val(rating);
-                $(".star").css("color", "#ddd");
-                if ($.fn.addBack) {
-                    $(this).prevAll(".star").addBack().css("color", "#ffc107");
-                } else {
-                    $(this).prevAll(".star").andSelf().css("color", "#ffc107");
-                }
-                $("#ratingText").text(rating + " star" + (rating > 1 ? "s" : "")).css("color", "#666");
-            });
-
-            $("#rateTicketForm").on("submit", function(e) {
-                if (!$("#ratingSelect").val()) {
-                    e.preventDefault();
-                    $("#ratingText").text("Please select a rating").css("color", "#d9534f");
-                    $(".star").first().focus();
-                    return false;
-                }
-            });
-        </script>
-        ';
+        require __DIR__ . '/../../Views/hr/ticket/rate.php';
     }
 
     public function storeRating()

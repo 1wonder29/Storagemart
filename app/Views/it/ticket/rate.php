@@ -87,17 +87,6 @@ $base = rtrim(BASE_URL, '/');
 </div>
 
 <script>
-$(document).on('click', '#downloadTechRecordBtn', function () {
-    const ticketId = $(this).data('ticketid');
-    if (!ticketId) {
-        alert('Invalid ticket ID');
-        return;
-    }
-    const base = "<?= htmlspecialchars($base) ?>";
-    window.location.href = base + '/it/tickets/download-record?id=' + ticketId;
-});
-</script>
-<script>
 $(function() {
     $(".star").on("click keypress", function(e) {
         if (e.type === 'keypress' && e.which !== 13 && e.which !== 32) return;

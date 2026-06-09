@@ -172,6 +172,58 @@ $base = rtrim(BASE_URL, '/');
                     </div>
                     <!-- End Dashboard Details Row -->
 
+                    <!-- Ticket Charts Row -->
+                    <div class="row">
+                        <div class="col-xl-6 col-lg-6">
+                            <div class="card shadow mb-4 h-100">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Filed Tickets by Category</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div style="height: 320px;">
+                                        <canvas id="adminTicketCategoryChart"></canvas>
+                                    </div>
+                                    <div class="small text-muted mt-2">
+                                        Network, Software, and Hardware tickets filed in the system.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-6 col-lg-6">
+                            <div class="card shadow mb-4 h-100">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Tickets by Status</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div style="height: 320px;">
+                                        <canvas id="adminTicketStatusChart"></canvas>
+                                    </div>
+                                    <div class="small text-muted mt-2">
+                                        Current breakdown of all ticket statuses.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End Ticket Charts Row -->
+
+                    <!-- SLA Chart Row -->
+                    <div class="row">
+                        <div class="col-xl-12">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Ticket Resolution Time (SLA)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div style="height: 400px;">
+                                        <canvas id="myAreaChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End SLA Chart Row -->
+
                 </div>
                 <!-- /.container-fluid -->
 
@@ -225,9 +277,20 @@ $base = rtrim(BASE_URL, '/');
             assets: <?= (int)($assetCount ?? 0) ?>,
             ongoing: <?= (int)($ticketOngoing ?? 0) ?>
         };
+        
+        window.ticketResolution = {
+            labels: <?= json_encode($resolutionLabels ?? []) ?>,
+            data: <?= json_encode($resolutionData ?? []) ?>
+        };
+
+        window.ticketCategoryCounts = <?= json_encode($ticketCategoryCounts ?? ['network' => 0, 'software' => 0, 'hardware' => 0]) ?>;
+        window.ticketStatusCounts = <?= json_encode($ticketStatusCounts ?? []) ?>;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_overview.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_category_bar.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_status_chart.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/dashboard_areachart.js"></script>
 </body>
 
 </html>

@@ -4,6 +4,7 @@ require_once __DIR__ . '/../AuthController.php';
 require_once __DIR__ . '/../../Models/admin/Account.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Models/admin/AuditTrail.php';
+require_once __DIR__ . '/../../Models/DashboardModel.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 
@@ -48,6 +49,19 @@ class AdminController extends AuthController
         $userCount = method_exists($accountModel, 'countUser') ? $accountModel->countUser() : count($users);
         $assetCount = method_exists($accountModel, 'countAssets') ? $accountModel->countAssets() : 0;
         $ticketOngoing = method_exists($accountModel, 'countOngoingTickets') ? $accountModel->countOngoingTickets() : 0;
+        
+        // Get ticket resolution times for SLA chart
+        $dashboardModel = new DashboardModel();
+        $ticketCategoryCounts = $dashboardModel->getTicketCountsByCategory();
+        $ticketStatusCounts = $dashboardModel->getTicketCountsByStatus();
+        $resolutionRows = $dashboardModel->getItTicketResolutionTimes();
+        $resolutionLabels = [];
+        $resolutionData = [];
+        foreach ($resolutionRows as $row) {
+            $resolutionLabels[] = 'Ticket #' . $row['ticket_number'];
+            $resolutionData[] = (int)$row['resolution_hours'];
+        }
+        
         $notificationData = $this->loadNotifications();
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
@@ -185,24 +199,6 @@ class AdminController extends AuthController
                     throw new Exception("Failed updating records.");
                 }
 
-                // Handle AOM branch assignments
-                if ($dataAcc['usertype'] === 'AOM') {
-                    require_once __DIR__ . '/../../Models/aom/AOMModel.php';
-                    $aomModel = new AOMModel();
-                    $branch_ids = isset($_POST['aom_branch_ids']) ? (array)$_POST['aom_branch_ids'] : [];
-                    $admin_employee_id = $_SESSION['employee_id'] ?? null;
-                    
-                    $ok_branches = $aomModel->updateAOMBranchAssignments(
-                        $dataEmp['employee_id'],
-                        $branch_ids,
-                        $admin_employee_id
-                    );
-                    
-                    if (!$ok_branches) {
-                        throw new Exception("Failed updating branch assignments.");
-                    }
-                }
-
                 // Log update via ActivityLogger
                 ActivityLogger::update('Admin - Accounts', (string)$dataAcc['account_id'],
                     "Account updated: {$dataAcc['username']} ({$dataAcc['usertype']})",
@@ -253,14 +249,6 @@ class AdminController extends AuthController
         $branches = method_exists($accountModel, 'fetchBranches')
             ? $accountModel->fetchBranches()
             : [];
-
-        // Load AOM branch assignments if this is an AOM account
-        $aom_assigned_branches = [];
-        if (($account['usertype'] ?? '') === 'AOM' && !empty($employee['employee_id'])) {
-            require_once __DIR__ . '/../../Models/aom/AOMModel.php';
-            $aomModel = new AOMModel();
-            $aom_assigned_branches = $aomModel->getAssignedBranches($employee['employee_id']);
-        }
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
@@ -744,6 +732,132 @@ class AdminController extends AuthController
         header('Content-Type: application/json');
         echo json_encode($ratings);
         exit;
+    }
+
+    /* ------------------------------------------------------
+     * MONTHLY TICKET REPORT
+     * ------------------------------------------------------*/
+    public function monthlyReport()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        require_once __DIR__ . '/../../Models/admin/Ticket.php';
+
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : (int) date('n');
+
+        if ($year < 2000 || $year > 2100) {
+            $year = (int) date('Y');
+        }
+        if ($month < 1 || $month > 12) {
+            $month = (int) date('n');
+        }
+
+        $ticketModel = new Ticket();
+        $tickets = $ticketModel->fetchTicketsByMonth($year, $month);
+        $ticketCount = count($tickets);
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        $selectedYear = $year;
+        $selectedMonth = $month;
+        $monthLabel = date('F Y', mktime(0, 0, 0, $month, 1, $year));
+
+        require __DIR__ . '/../../Views/admin/reports/monthly_tickets.php';
+    }
+
+    public function monthlyReportExport()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            http_response_code(403);
+            echo 'Unauthorized';
+            exit;
+        }
+
+        require_once __DIR__ . '/../../Models/admin/Ticket.php';
+        require_once __DIR__ . '/../../Services/ExcelExportService.php';
+
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : (int) date('n');
+
+        if ($year < 2000 || $year > 2100 || $month < 1 || $month > 12) {
+            http_response_code(400);
+            echo 'Invalid month or year.';
+            exit;
+        }
+
+        $ticketModel = new Ticket();
+        $tickets = $ticketModel->fetchTicketsByMonth($year, $month);
+
+        $headers = [
+            'Ticket #',
+            'Employee',
+            'Employee Department',
+            'Branch',
+            'Ticket Department',
+            'Category',
+            'Asset',
+            'Priority',
+            'Status',
+            'Concern Details',
+            'Remarks',
+            'Assigned To',
+            'Date Filed',
+            'Last Updated',
+            'Date Approved',
+            'Decline Reason',
+        ];
+
+        $rows = [];
+        foreach ($tickets as $ticket) {
+            $rows[] = [
+                $ticket['ticket_number'] ?? '',
+                trim($ticket['employee_name'] ?? ''),
+                $ticket['employee_department'] ?? '',
+                $ticket['branchName'] ?? '',
+                $ticket['department'] ?? '',
+                $ticket['category'] ?? '',
+                $ticket['asset_info'] ?? '',
+                $ticket['priority'] ?? '',
+                $ticket['status'] ?? '',
+                $ticket['concern_details'] ?? '',
+                $ticket['remarks'] ?? '',
+                trim($ticket['assigned_to_name'] ?? '') ?: 'Unassigned',
+                $ticket['date_filed'] ?? '',
+                $ticket['last_updated'] ?? '',
+                $ticket['date_approved'] ?? '',
+                $ticket['decline_reason'] ?? '',
+            ];
+        }
+
+        $filename = sprintf('tickets_%04d_%02d.xls', $year, $month);
+
+        try {
+            (new ExcelExportService())->download($headers, $rows, $filename);
+        } catch (Throwable $e) {
+            error_log('Monthly ticket export failed: ' . $e->getMessage());
+            http_response_code(500);
+            echo 'Failed to generate Excel file.';
+            exit;
+        }
     }
 }
 

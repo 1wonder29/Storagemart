@@ -140,7 +140,7 @@ class AOMTicketModel extends BaseModel
                     WHERE aom_employee_id = :aom_employee_id AND is_active = 1
                 )
                 OR t.employee_id IN (
-                    SELECT employee_id FROM tblom_employee_assignments
+                    SELECT employee_id FROM tblhom_employee_assignments
                     WHERE aom_id = :aom_employee_id_2 AND is_active = 1
                 )
             )

@@ -74,4 +74,50 @@ class DashboardModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getTicketCountsByCategory(): array
+    {
+        $sql = "
+            SELECT
+                SUM(CASE WHEN UPPER(TRIM(category)) = 'NETWORK' THEN 1 ELSE 0 END) AS network,
+                SUM(CASE WHEN UPPER(TRIM(category)) = 'SOFTWARE' THEN 1 ELSE 0 END) AS software,
+                SUM(CASE WHEN UPPER(TRIM(category)) = 'HARDWARE' THEN 1 ELSE 0 END) AS hardware
+            FROM {$this->tbltickets}
+        ";
+
+        $stmt = $this->pdo->query($sql);
+        $row = $stmt ? $stmt->fetch(PDO::FETCH_ASSOC) : false;
+
+        return [
+            'network'  => (int)($row['network'] ?? 0),
+            'software' => (int)($row['software'] ?? 0),
+            'hardware' => (int)($row['hardware'] ?? 0),
+        ];
+    }
+
+    public function getTicketCountsByStatus(): array
+    {
+        $sql = "
+            SELECT status, COUNT(*) AS count
+            FROM {$this->tbltickets}
+            GROUP BY status
+            ORDER BY count DESC
+        ";
+
+        $stmt = $this->pdo->query($sql);
+        if (!$stmt) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $status = trim((string)($row['status'] ?? ''));
+            if ($status === '') {
+                continue;
+            }
+            $result[$status] = (int)$row['count'];
+        }
+
+        return $result;
+    }
+
 }

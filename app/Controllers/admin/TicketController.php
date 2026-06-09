@@ -45,6 +45,54 @@ class TicketController extends AuthController
         require __DIR__ . '/../../Views/admin/ticket/ticket.php';
 
     }
+
+    public function view()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        $ticketId = (int) ($_GET['id'] ?? 0);
+        if ($ticketId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid ticket ID.';
+            $this->redirect('/admin/tickets');
+            return;
+        }
+
+        $ticketModel = new Ticket();
+        $ticket = $ticketModel->fetchTicketById($ticketId);
+
+        if (!$ticket) {
+            $_SESSION['flash_error'] = 'Ticket not found.';
+            $this->redirect('/admin/tickets');
+            return;
+        }
+
+        $history = $ticketModel->fetchTicketHistory($ticketId);
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        $activePage = 'tickets';
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+        $itStaff = $ticketModel->fetchEmployeesByDepartment('IT');
+
+        require __DIR__ . '/../../Views/admin/ticket/ticket-detail.php';
+    }
+
     // fetch ticket history
     public function history()
     {

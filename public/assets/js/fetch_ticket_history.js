@@ -40,6 +40,9 @@ $(document).on('click', '.viewBtn', function () {
   const status = $(this).data('status') || '';
   $('#status').val(status);
 
+  const detailBase = (window.BASE_URL || '').replace(/\/$/, '');
+  $('#viewFullDetailLink').attr('href', detailBase + '/admin/tickets/view?id=' + id);
+
   // 1) Clear previous rows and safely destroy previous DataTable
   try {
     if (historyDT && typeof historyDT.destroy === 'function') {
@@ -62,6 +65,10 @@ $(document).on('click', '.viewBtn', function () {
     </tr>
   `);
   $('#viewTicketModal').modal('show');
+
+  if (window.TicketComments) {
+    TicketComments.load('#viewTicketModal .ticket-comments-section', id);
+  }
 
   // 3) Fetch history
   $.ajax({

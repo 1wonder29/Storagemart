@@ -1,6 +1,8 @@
 <?php
 $base = rtrim(BASE_URL, '/');
-$loggedFirstname = $ctx['loggedFirstname'] ?? 'OM';
+$routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
+$roleLabel = ($user_role ?? '') === 'HOM' ? 'HOM' : 'OM';
+$loggedFirstname = $ctx['loggedFirstname'] ?? $roleLabel;
 $loggedLastname = $ctx['loggedLastname'] ?? '';
 ?>
 <!DOCTYPE html>
@@ -9,7 +11,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | OM — Create Ticket</title>
+    <title>Storage Mart | <?= htmlspecialchars($roleLabel) ?> — Create Ticket</title>
 
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
@@ -44,7 +46,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                         <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-clipboard"></i> Ticket Information</h6>
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="<?= htmlspecialchars($base) ?>/om/tickets/create">
+                        <form method="POST" action="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '', ENT_QUOTES, 'UTF-8') ?>">
 
                             <div class="mb-3">
@@ -107,7 +109,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-check"></i> Create Ticket
                                 </button>
-                                <a href="<?= htmlspecialchars($base) ?>/om/tickets" class="btn btn-secondary">
+                                <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets" class="btn btn-secondary">
                                     <i class="fas fa-times"></i> Cancel
                                 </a>
                             </div>

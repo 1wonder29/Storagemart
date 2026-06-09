@@ -131,6 +131,7 @@ class EmployeeTicketController extends AuthController
 
         // 🔕 Do not notify the ticket filer
         $currentAccountId = (int) $_SESSION['account_id'];
+        $filerName = $employeeModel->formatDisplayName($employee);
 
         foreach ($recipients as $recipient) {
             $receiverAccountId = (int)$recipient['account_id'];
@@ -151,7 +152,7 @@ class EmployeeTicketController extends AuthController
 
             $notificationModel->create(
                 $receiverAccountId,
-                'New Ticket Filed by Employee',
+                'New Ticket Filed by ' . $filerName,
                 'fa-ticket-alt',
                 'primary',
                 $actionUrl,
@@ -198,6 +199,12 @@ class EmployeeTicketController extends AuthController
             $tickets = $ticketModel->fetchAllTicketsByEmployee((int)$employeeId);
         }
 
+        $ticketStats = [];
+        foreach ($tickets as $t) {
+            $s = (string) ($t['status'] ?? 'Unknown');
+            $ticketStats[$s] = ($ticketStats[$s] ?? 0) + 1;
+        }
+
         // supply variables to view
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
@@ -208,6 +215,52 @@ class EmployeeTicketController extends AuthController
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
         require __DIR__ . '/../../Views/employee/ticket/ticket.php';
+    }
+
+    public function view()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $ticketId = (int) ($_GET['id'] ?? 0);
+        if ($ticketId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid ticket ID.';
+            $this->redirect('/employee/tickets');
+            return;
+        }
+
+        $employeeModel = new Employee();
+        $employeeId = $employeeModel->getEmployeeIdByAccountId((int) $_SESSION['account_id']);
+        if (!$employeeId) {
+            $_SESSION['flash_error'] = 'No employee record linked to your account.';
+            $this->redirect('/employee/tickets');
+            return;
+        }
+
+        $ticketModel = new EmployeeTicket();
+        $ticket = $ticketModel->fetchTicketById($ticketId);
+
+        if (!$ticket || (int) ($ticket['employee_id'] ?? 0) !== (int) $employeeId) {
+            $_SESSION['flash_error'] = 'Ticket not found.';
+            $this->redirect('/employee/tickets');
+            return;
+        }
+
+        $history = $ticketModel->getTicketHistory($ticketId);
+
+        $ctx = $this->getLoggedUserContext();
+        $loggedFirstname = $ctx['loggedFirstname'] ?? '';
+        $loggedPosition = $ctx['loggedPosition'] ?? '';
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        $activePage = 'tickets';
+
+        require __DIR__ . '/../../Views/employee/ticket/ticket-detail.php';
     }
 
     public function fetchHistory()

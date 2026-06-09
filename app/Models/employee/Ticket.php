@@ -113,7 +113,7 @@ class EmployeeTicket extends BaseModel
                 t.concern_details
             FROM {$this->tbltickets} t
             JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            LEFT JOIN {$this->tblbranch}   b ON e.branch_id = b.branch_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             WHERE e.employee_id = :employee_id
             ORDER BY t.date_filed DESC
         ";
@@ -192,7 +192,7 @@ class EmployeeTicket extends BaseModel
                 b.branchName
             FROM {$this->tbltickets} t
             JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             WHERE t.ticket_id = :ticket_id
             LIMIT 1
         ";
@@ -220,7 +220,7 @@ class EmployeeTicket extends BaseModel
             INNER JOIN {$this->tblemployee} e 
                 ON t.employee_id = e.employee_id
             LEFT JOIN {$this->tblbranch} b
-                ON e.branch_id = b.branch_id
+                ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             WHERE e.department = ?
             ORDER BY t.date_filed DESC
         ";
@@ -258,7 +258,7 @@ class EmployeeTicket extends BaseModel
                 t.concern_details
             FROM {$this->tbltickets} t
             JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             ORDER BY t.date_filed DESC
         ";
         $stmt = $this->pdo->prepare($sql);
@@ -279,10 +279,10 @@ class EmployeeTicket extends BaseModel
                 t.date_filed, 
                 b.branchName,
                 t.concern_details,
-                e.branch_id
+                COALESCE(NULLIF(t.branch_id, 0), e.branch_id) AS branch_id
             FROM {$this->tbltickets} t
             JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             WHERE t.created_by = :created_by
             ORDER BY t.date_filed DESC
         ";

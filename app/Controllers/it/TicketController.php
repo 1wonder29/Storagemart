@@ -200,6 +200,60 @@ class TicketController extends AuthController
         require __DIR__ . '/../../Views/it/ticket/ticket.php';
     }
 
+    public function view()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $ticketId = (int) ($_GET['id'] ?? 0);
+        if ($ticketId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid ticket ID.';
+            $this->redirect('/it/tickets');
+            return;
+        }
+
+        $itModel = new IT();
+        $employeeId = $itModel->getEmployeeIdByAccountId((int) $_SESSION['account_id']);
+        if (!$employeeId) {
+            $_SESSION['flash_error'] = 'No employee record linked to your account.';
+            $this->redirect('/it/tickets');
+            return;
+        }
+
+        require_once __DIR__ . '/../../Models/employee/Ticket.php';
+        $ticketModel = new EmployeeTicket();
+        $ticket = $ticketModel->fetchTicketById($ticketId);
+
+        $itTicketModel = new ItTicketModel();
+        $assignedTo = $itTicketModel->getAssignedTo($ticketId);
+        $isOwner = $ticket && (int) ($ticket['employee_id'] ?? 0) === (int) $employeeId;
+        $isAssigned = $assignedTo !== null && (int) $assignedTo === (int) $employeeId;
+
+        if (!$ticket || (!$isOwner && !$isAssigned)) {
+            $_SESSION['flash_error'] = 'Ticket not found.';
+            $redirectTo = ($_GET['from'] ?? '') === 'in_progress' ? '/it/tickets/in_progress' : '/it/tickets';
+            $this->redirect($redirectTo);
+            return;
+        }
+
+        $history = $ticketModel->getTicketHistory($ticketId);
+
+        $ctx = $this->getLoggedUserContext();
+        $loggedFirstname = $ctx['loggedFirstname'] ?? '';
+        $loggedPosition = $ctx['loggedPosition'] ?? '';
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        $activePage = 'tickets';
+        $backUrl = ($_GET['from'] ?? '') === 'in_progress' ? '/it/tickets/in_progress' : '/it/tickets';
+
+        require __DIR__ . '/../../Views/it/ticket/ticket-detail.php';
+    }
+
     public function fetchHistory()
     {
         if (session_status() === PHP_SESSION_NONE) {

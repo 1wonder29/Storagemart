@@ -92,6 +92,14 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                             </div>
                         </div>
                     </div>
+                    <div class="card-footer bg-light">
+                        <?php
+                        $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                        $ticketStatus = (string) ($ticket['status'] ?? '');
+                        $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
+                        require __DIR__ . '/../partials/ticket/cancel_ticket_button.php';
+                        ?>
+                    </div>
                     <?php if (($ticket['status'] ?? '') === 'Resolved'): ?>
                         <div class="card-footer bg-light">
                             <a href="<?= htmlspecialchars($base) ?>/aom/tickets/download-record?id=<?= (int)($ticket['ticket_id'] ?? 0) ?>" class="btn btn-sm btn-info">
@@ -152,6 +160,12 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                         <?php endif; ?>
                     </div>
                 </div>
+
+                <?php
+                $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                $canPostComments = true;
+                require __DIR__ . '/../partials/ticket/comments_section.php';
+                ?>
             </div>
         </div>
     <?php endif; ?>
@@ -316,6 +330,8 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
         });
     });
 </script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+<?php require __DIR__ . '/../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 </html>
 

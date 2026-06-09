@@ -1,6 +1,8 @@
 <?php
 $base = rtrim(BASE_URL, '/');
-$loggedFirstname = $ctx['loggedFirstname'] ?? 'OM';
+$routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
+$roleLabel = ($user_role ?? '') === 'HOM' ? 'HOM' : 'OM';
+$loggedFirstname = $ctx['loggedFirstname'] ?? $roleLabel;
 $loggedLastname = $ctx['loggedLastname'] ?? '';
 ?>
 <!DOCTYPE html>
@@ -27,7 +29,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">Ticket Details</h1>
-            <a href="<?= htmlspecialchars($base) ?>/om/tickets" class="btn btn-sm btn-secondary">
+            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets" class="btn btn-sm btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
@@ -107,6 +109,12 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                             </div>
                         </div>
                     <?php endif; ?>
+
+                    <?php
+                    $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                    $canPostComments = true;
+                    require __DIR__ . '/../../partials/ticket/comments_section.php';
+                    ?>
                 </div>
 
                 <div class="col-lg-4">
@@ -155,8 +163,9 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                 </p>
                             </div>
                             <hr>
+                            <?php if (($ticket['status'] ?? '') === 'Resolved'): ?>
                             <div class="mb-3">
-                                <a href="<?= htmlspecialchars($base) ?>/om/tickets/download-record?id=<?= (int)($ticket['ticket_id'] ?? 0) ?>" class="btn btn-info btn-block btn-sm">
+                                <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/download-record?id=<?= (int)($ticket['ticket_id'] ?? 0) ?>" class="btn btn-info btn-block btn-sm">
                                     <i class="fas fa-download"></i> Download Technical Record
                                 </a>
                             </div>
@@ -165,8 +174,18 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                     <i class="fas fa-star"></i> Rate Ticket
                                 </button>
                             </div>
+                            <?php endif; ?>
+                            <div class="mb-3">
+                                <?php
+                                $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                                $ticketStatus = (string) ($ticket['status'] ?? '');
+                                $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
+                                $btnBlock = true;
+                                require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
+                                ?>
+                            </div>
                             <div>
-                                <a href="<?= htmlspecialchars($base) ?>/om/tickets" class="btn btn-block btn-secondary btn-sm">
+                                <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets" class="btn btn-block btn-secondary btn-sm">
                                     <i class="fas fa-arrow-left"></i> Back to Tickets
                                 </a>
                             </div>
@@ -178,7 +197,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
             <div class="alert alert-danger">
                 <i class="fas fa-exclamation-circle"></i> Ticket not found.
             </div>
-            <a href="<?= htmlspecialchars($base) ?>/om/tickets" class="btn btn-secondary">
+            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Tickets
             </a>
         <?php endif; ?>
@@ -218,11 +237,12 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
 
             const formData = new FormData(this);
             const base = "<?= htmlspecialchars($base) ?>";
+            const routePrefix = "<?= htmlspecialchars($routePrefix) ?>";
 
             $btn.prop('disabled', true).find('i').addClass('fa-spin');
 
             $.ajax({
-                url: base + '/om/tickets/upload-report',
+                url: base + '/' + routePrefix + '/tickets/upload-report',
                 method: 'POST',
                 data: formData,
                 dataType: 'json',
@@ -249,8 +269,9 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
         $(document).on('click', '.rateBtn', function () {
             const ticketId = $(this).data('ticketid');
             const base = "<?= htmlspecialchars($base) ?>";
+            const routePrefix = "<?= htmlspecialchars($routePrefix) ?>";
             
-            $.get(base + '/om/tickets/rate?id=' + ticketId)
+            $.get(base + '/' + routePrefix + '/tickets/rate?id=' + ticketId)
                 .done(function(html) {
                     const container = document.getElementById('rateTicketModalBody');
                     container.innerHTML = html;
@@ -275,7 +296,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
         });
     });
 </script>
-<script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+<?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 </html>
