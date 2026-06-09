@@ -210,6 +210,7 @@ class Employee extends BaseModel{
                 e.middlename,
                 e.department,
                 e.position,
+                e.branch_id,
                 b.branchName,
                 e.email,
                 e.createdby,

@@ -1,0 +1,191 @@
+/* Admin monthly ticket report */
+.admin-monthly-report-page {
+  --report-primary: #1a237e;
+  --report-primary-light: #3949ab;
+  --report-muted: #858796;
+  --report-border: #eaecf4;
+  --report-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.1);
+}
+
+.admin-monthly-report-page .page-hero {
+  background: linear-gradient(135deg, #0d47a1 0%, var(--report-primary-light) 100%);
+  border-radius: 0.75rem;
+  color: #fff;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0.25rem 1rem rgba(26, 35, 50, 0.18);
+}
+
+.admin-monthly-report-page .page-hero h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  color: #fff;
+}
+
+.admin-monthly-report-page .page-hero p {
+  margin: 0;
+  opacity: 0.85;
+  font-size: 0.92rem;
+  max-width: 40rem;
+}
+
+.admin-monthly-report-page .filter-toolbar {
+  background: #f8f9fc;
+  border: 1px solid var(--report-border);
+  border-radius: 0.75rem;
+  padding: 1.15rem 1.35rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-monthly-report-page .filter-toolbar .toolbar-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #3a3b45;
+  margin-bottom: 1rem;
+}
+
+.admin-monthly-report-page .filter-toolbar .toolbar-title i {
+  color: var(--report-primary-light);
+  margin-right: 0.4rem;
+}
+
+.admin-monthly-report-page .filter-toolbar label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--report-muted);
+  margin-bottom: 0.35rem;
+}
+
+.admin-monthly-report-page .filter-toolbar .form-control {
+  font-size: 0.85rem;
+  border-radius: 0.45rem;
+  border-color: #d1d3e2;
+  min-width: 10rem;
+}
+
+.admin-monthly-report-page .filter-toolbar .btn-view {
+  background: var(--report-primary-light);
+  border-color: var(--report-primary-light);
+  border-radius: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.45rem 1.1rem;
+}
+
+.admin-monthly-report-page .filter-toolbar .btn-view:hover {
+  background: var(--report-primary);
+  border-color: var(--report-primary);
+}
+
+.admin-monthly-report-page .filter-toolbar .btn-export {
+  background: #fff;
+  color: #1e7e34;
+  border: 1px solid #b8dfc4;
+  border-radius: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.45rem 1.1rem;
+}
+
+.admin-monthly-report-page .filter-toolbar .btn-export:hover {
+  background: #e8f5e9;
+  color: #155724;
+  text-decoration: none;
+}
+
+.admin-monthly-report-page .summary-row {
+  margin-bottom: 1.5rem;
+}
+
+.admin-monthly-report-page .summary-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  background: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid var(--report-border);
+  box-shadow: var(--report-shadow);
+  height: 100%;
+}
+
+.admin-monthly-report-page .summary-card-icon {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+}
+
+.admin-monthly-report-page .summary-card-period .summary-card-icon {
+  background: rgba(78, 115, 223, 0.12);
+  color: #4e73df;
+}
+
+.admin-monthly-report-page .summary-card-total .summary-card-icon {
+  background: rgba(28, 200, 138, 0.12);
+  color: #1cc88a;
+}
+
+.admin-monthly-report-page .summary-card-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--report-muted);
+  margin-bottom: 0.15rem;
+}
+
+.admin-monthly-report-page .summary-card-value {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #3a3b45;
+  line-height: 1.1;
+}
+
+.admin-monthly-report-page .report-list-card {
+  border: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: var(--report-shadow) !important;
+}
+
+.admin-monthly-report-page .report-list-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid var(--report-border);
+  padding: 1rem 1.35rem;
+}
+
+.admin-monthly-report-page .report-list-card .card-header h6 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #3a3b45;
+  margin: 0;
+}
+
+.admin-monthly-report-page .report-list-card .card-header .ticket-count-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 2rem;
+  background: rgba(78, 115, 223, 0.1);
+  color: #4e73df;
+}
+
+@media (max-width: 767.98px) {
+  .admin-monthly-report-page .page-hero {
+    padding: 1.25rem 1.35rem;
+  }
+
+  .admin-monthly-report-page .filter-toolbar .form-control {
+    min-width: 100%;
+  }
+}

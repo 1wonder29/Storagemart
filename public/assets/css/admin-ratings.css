@@ -1,0 +1,409 @@
+/* Admin ratings & performance reports */
+.admin-ratings-page {
+  --ratings-primary: #1a237e;
+  --ratings-primary-light: #3949ab;
+  --ratings-muted: #858796;
+  --ratings-border: #eaecf4;
+  --ratings-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.1);
+}
+
+.admin-ratings-page .page-hero {
+  background: linear-gradient(135deg, #4a148c 0%, #7b1fa2 50%, #3949ab 100%);
+  border-radius: 0.75rem;
+  color: #fff;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0.25rem 1rem rgba(26, 35, 50, 0.18);
+}
+
+.admin-ratings-page .page-hero h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  color: #fff;
+}
+
+.admin-ratings-page .page-hero p {
+  margin: 0;
+  opacity: 0.85;
+  font-size: 0.92rem;
+  max-width: 40rem;
+}
+
+.admin-ratings-page .ratings-tabs {
+  border-bottom: none;
+  gap: 0.45rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-ratings-page .ratings-tabs .nav-link {
+  border: 1px solid var(--ratings-border);
+  border-radius: 2rem;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #5a5c69;
+  background: #fff;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-ratings-page .ratings-tabs .nav-link:hover {
+  color: var(--ratings-primary-light);
+  border-color: #c5cae9;
+}
+
+.admin-ratings-page .ratings-tabs .nav-link.active {
+  background: var(--ratings-primary-light);
+  border-color: var(--ratings-primary-light);
+  color: #fff;
+}
+
+.admin-ratings-page .stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 1.3rem;
+  background: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid var(--ratings-border);
+  box-shadow: var(--ratings-shadow);
+  height: 100%;
+}
+
+.admin-ratings-page .stat-card-icon {
+  flex-shrink: 0;
+  width: 2.85rem;
+  height: 2.85rem;
+  border-radius: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.admin-ratings-page .stat-card-total .stat-card-icon { background: rgba(78, 115, 223, 0.12); color: #4e73df; }
+.admin-ratings-page .stat-card-avg .stat-card-icon { background: rgba(28, 200, 138, 0.12); color: #1cc88a; }
+.admin-ratings-page .stat-card-five .stat-card-icon { background: rgba(255, 193, 7, 0.15); color: #d97706; }
+.admin-ratings-page .stat-card-staff .stat-card-icon { background: rgba(54, 185, 204, 0.12); color: #36b9cc; }
+
+.admin-ratings-page .stat-card-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ratings-muted);
+  margin-bottom: 0.15rem;
+}
+
+.admin-ratings-page .stat-card-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #3a3b45;
+  line-height: 1.1;
+}
+
+.admin-ratings-page .dash-card {
+  border: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: var(--ratings-shadow) !important;
+  height: 100%;
+}
+
+.admin-ratings-page .dash-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid var(--ratings-border);
+  padding: 1rem 1.35rem;
+}
+
+.admin-ratings-page .dash-card .card-header h6 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #3a3b45;
+  margin: 0;
+}
+
+.admin-ratings-page .dash-card .card-header .header-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.45rem;
+  background: rgba(123, 31, 162, 0.1);
+  color: #7b1fa2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  margin-right: 0.6rem;
+}
+
+.admin-ratings-page .chart-wrap {
+  height: 280px;
+  position: relative;
+}
+
+.admin-ratings-page .rating-breakdown-row {
+  margin-bottom: 0.85rem;
+}
+
+.admin-ratings-page .rating-breakdown-row:last-child {
+  margin-bottom: 0;
+}
+
+.admin-ratings-page .rating-breakdown-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #3a3b45;
+}
+
+.admin-ratings-page .rating-breakdown-label .star-num {
+  display: inline-block;
+  min-width: 1.25rem;
+}
+
+.admin-ratings-page .rating-breakdown-meta {
+  font-size: 0.78rem;
+  color: var(--ratings-muted);
+  font-weight: 600;
+}
+
+.admin-ratings-page .rating-breakdown-track {
+  height: 0.55rem;
+  background: #eef0f7;
+  border-radius: 2rem;
+  overflow: hidden;
+  margin-top: 0.35rem;
+}
+
+.admin-ratings-page .rating-breakdown-fill {
+  height: 100%;
+  border-radius: 2rem;
+  transition: width 0.3s ease;
+}
+
+.admin-ratings-page .rating-fill-5 { background: linear-gradient(90deg, #1cc88a, #27ae60); }
+.admin-ratings-page .rating-fill-4 { background: linear-gradient(90deg, #7dcea0, #58d68d); }
+.admin-ratings-page .rating-fill-3 { background: linear-gradient(90deg, #f6c23e, #f1c40f); }
+.admin-ratings-page .rating-fill-2 { background: linear-gradient(90deg, #f39c12, #e67e22); }
+.admin-ratings-page .rating-fill-1 { background: linear-gradient(90deg, #e74a3b, #c0392b); }
+
+.admin-ratings-page .report-list-card {
+  border: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: var(--ratings-shadow) !important;
+}
+
+.admin-ratings-page .report-list-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid var(--ratings-border);
+  padding: 1rem 1.35rem;
+}
+
+.admin-ratings-page .report-list-card .card-header h6 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #3a3b45;
+  margin: 0;
+}
+
+.admin-ratings-page .report-list-card table {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.admin-ratings-page .report-list-card thead th {
+  background: #f1f3f9;
+  border-top: none;
+  border-bottom: 2px solid #d1d3e2;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5a5c69;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.admin-ratings-page .report-list-card tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.admin-ratings-page .report-list-card tbody tr:hover {
+  background-color: #f8f9ff;
+}
+
+.admin-ratings-page .report-list-card td {
+  vertical-align: middle;
+  border-color: var(--ratings-border);
+  padding: 0.85rem 0.75rem;
+}
+
+.admin-ratings-page .rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: #e8eaf6;
+  color: #3949ab;
+}
+
+.admin-ratings-page .rank-badge.rank-1 { background: #fff3cd; color: #b8860b; }
+.admin-ratings-page .rank-badge.rank-2 { background: #e2e3e5; color: #5a5c69; }
+.admin-ratings-page .rank-badge.rank-3 { background: #fde8d8; color: #a0522d; }
+
+.admin-ratings-page .tech-name {
+  font-weight: 600;
+  color: #3a3b45;
+}
+
+.admin-ratings-page .avg-rating-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 2rem;
+  background: #d4edda;
+  color: #155724;
+}
+
+.admin-ratings-page .perf-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 2rem;
+}
+
+.admin-ratings-page .perf-excellent { background: #d4edda; color: #155724; }
+.admin-ratings-page .perf-very-good { background: #cce5ff; color: #004085; }
+.admin-ratings-page .perf-good { background: #fff3cd; color: #856404; }
+.admin-ratings-page .perf-needs-improvement { background: #f8d7da; color: #721c24; }
+
+.admin-ratings-page .rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 2rem;
+  color: #fff;
+}
+
+.admin-ratings-page .rating-stars.rating-5 { background: #1cc88a; }
+.admin-ratings-page .rating-stars.rating-4 { background: #58d68d; }
+.admin-ratings-page .rating-stars.rating-3 { background: #f6c23e; color: #5a4a00; }
+.admin-ratings-page .rating-stars.rating-2 { background: #f39c12; }
+.admin-ratings-page .rating-stars.rating-1 { background: #e74a3b; }
+
+.admin-ratings-page .filter-toolbar {
+  background: #f8f9fc;
+  border-bottom: 1px solid var(--ratings-border);
+  padding: 1.15rem 1.35rem;
+}
+
+.admin-ratings-page .filter-toolbar label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ratings-muted);
+  margin-bottom: 0.35rem;
+}
+
+.admin-ratings-page .filter-toolbar .form-control {
+  font-size: 0.85rem;
+  border-radius: 0.45rem;
+  border-color: #d1d3e2;
+}
+
+.admin-ratings-page .filter-toolbar .btn-apply {
+  background: var(--ratings-primary-light);
+  border-color: var(--ratings-primary-light);
+  border-radius: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.admin-ratings-page .filter-toolbar .btn-clear {
+  border-radius: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.admin-ratings-page .btn-filter-toggle {
+  font-size: 0.8rem;
+  border-radius: 2rem;
+  padding: 0.35rem 0.9rem;
+  font-weight: 600;
+}
+
+.admin-ratings-page .category-pill {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.55rem;
+  border-radius: 0.4rem;
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.admin-ratings-page .ticket-id {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #4e73df;
+}
+
+.admin-ratings-page .comment-preview {
+  font-size: 0.82rem;
+  color: #5a5c69;
+  max-width: 200px;
+}
+
+.admin-ratings-page .date-cell {
+  font-size: 0.82rem;
+  color: #5a5c69;
+  white-space: nowrap;
+}
+
+.admin-ratings-page .empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--ratings-muted);
+}
+
+.admin-ratings-page .empty-state i {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.4;
+}
+
+.admin-ratings-page .dt-container .dt-search input,
+.admin-ratings-page .dt-container .dt-length select {
+  border-radius: 0.4rem;
+  border-color: #d1d3e2;
+}
+
+.admin-ratings-page .dt-container .dt-paging .dt-paging-button.current {
+  background: var(--ratings-primary-light) !important;
+  color: #fff !important;
+  border-color: var(--ratings-primary-light) !important;
+  border-radius: 0.35rem;
+}
+
+@media (max-width: 767.98px) {
+  .admin-ratings-page .page-hero {
+    padding: 1.25rem 1.35rem;
+  }
+}

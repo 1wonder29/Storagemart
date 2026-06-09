@@ -58,20 +58,32 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                     <?php if (!empty($employees)): ?>
                                         <?php foreach ($employees as $emp): ?>
                                             <?php $isDefault = (isset($defaultEmployeeId) && (int)($emp['employee_id'] ?? 0) === $defaultEmployeeId) ? 'selected' : ''; ?>
-                                            <option value="<?php echo (int) ($emp['employee_id'] ?? 0); ?>" <?php echo $isDefault; ?>>
+                                            <option value="<?php echo (int) ($emp['employee_id'] ?? 0); ?>"
+                                                    data-branch-id="<?php echo (int) ($emp['branch_id'] ?? 0); ?>"
+                                                    <?php echo $isDefault; ?>>
                                                 <?php echo htmlspecialchars(($emp['lastname'] ?? '') . ', ' . ($emp['firstname'] ?? '')); ?>
                                             </option>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
                                 </select>
-                                <small class="form-text text-muted d-block mt-1">Choose an employee to file this ticket for.</small>
+                                <small class="form-text text-muted d-block mt-1">Choose an Operations employee to file this ticket for.</small>
                             </div>
 
                             <div class="mb-3">
-                                <label for="department" class="form-label text-xs font-weight-bold text-gray-600 text-uppercase">
-                                    <i class="fas fa-sitemap"></i> Department <span class="text-danger">*</span>
+                                <label for="branch_id" class="form-label text-xs font-weight-bold text-gray-600 text-uppercase">
+                                    <i class="fas fa-building"></i> Branch <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" id="department" name="department" class="form-control form-control-lg" placeholder="e.g., IT, Operations" required>
+                                <select id="branch_id" name="branch_id" class="form-control form-control-lg" required>
+                                    <option value="">-- Select Branch --</option>
+                                    <?php if (!empty($branches)): ?>
+                                        <?php foreach ($branches as $branch): ?>
+                                            <option value="<?php echo (int) ($branch['branch_id'] ?? 0); ?>">
+                                                <?php echo htmlspecialchars(trim(($branch['branchName'] ?? '') . (!empty($branch['branchCode']) ? ' (' . $branch['branchCode'] . ')' : ''))); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                                <small class="form-text text-muted d-block mt-1">Select the branch this ticket is for.</small>
                             </div>
 
                             <div class="mb-3">
@@ -125,5 +137,23 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+<script>
+(function () {
+    var employeeSelect = document.getElementById('employee_id');
+    var branchSelect = document.getElementById('branch_id');
+    if (!employeeSelect || !branchSelect) return;
+
+    function syncBranchFromEmployee() {
+        var option = employeeSelect.options[employeeSelect.selectedIndex];
+        var branchId = option ? option.getAttribute('data-branch-id') : '';
+        if (branchId) {
+            branchSelect.value = branchId;
+        }
+    }
+
+    employeeSelect.addEventListener('change', syncBranchFromEmployee);
+    syncBranchFromEmployee();
+})();
+</script>
 </body>
 </html>

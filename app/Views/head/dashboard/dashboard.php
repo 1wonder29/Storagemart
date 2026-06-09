@@ -13,9 +13,10 @@ $resolvedDepartmentTickets= $resolvedDepartmentTickets?? 0;
 $tickets = $tickets ?? [];
 
 $base = rtrim(BASE_URL, '/');
-
+$headName = htmlspecialchars($loggedFirstname ?? 'Head');
+$departmentLabel = htmlspecialchars($department ?? 'Department');
+$todayLabel = date('l, F j, Y');
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -24,126 +25,154 @@ $base = rtrim(BASE_URL, '/');
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | Admin Dashboard</title>
+    <title>Storage Mart | Head Dashboard</title>
 
-    <!-- Custom fonts for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/head-dashboard.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
 
-    <!-- Page Wrapper -->
     <div id="wrapper">
-    <?php 
+    <?php
     $activePage = 'dashboard';
-    require_once __DIR__ . '/../../partials/head/sidebar_topbar.php';?>
-                <!-- Page Content -->
-            <!-- Page Content -->
-            <div class="container-fluid">
-                <h1 class="h3 mb-4 text-gray-800">My Dashboard</h1>
+    require_once __DIR__ . '/../../partials/head/sidebar_topbar.php';
+    ?>
 
-                <div class="row">
-                    <!-- Assets Card -->
+            <div class="container-fluid head-dashboard-page">
+
+                <div class="page-hero">
+                    <h1><i class="fas fa-tachometer-alt mr-2"></i>Head Dashboard</h1>
+                    <p>Welcome back, <?= $headName ?> — track your personal tickets and monitor <?= $departmentLabel ?> at a glance.</p>
+                    <div class="hero-dept"><i class="fas fa-building mr-1"></i><?= $departmentLabel ?></div>
+                    <div class="hero-date"><i class="far fa-calendar-alt mr-1"></i><?= $todayLabel ?></div>
+                    <div class="quick-nav mt-3">
+                        <a href="<?= htmlspecialchars($base) ?>/head/tickets" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-ticket-alt mr-1"></i> View Tickets
+                        </a>
+                        <a href="<?= htmlspecialchars($base) ?>/head/assets" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-archive mr-1"></i> My Assets
+                        </a>
+                        <a href="<?= htmlspecialchars($base) ?>/head/employee" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-user-friends mr-1"></i> Employees
+                        </a>
+                    </div>
+                </div>
+
+                <div class="section-heading">
+                    <span class="section-icon"><i class="fas fa-user"></i></span>
+                    <h2>My Dashboard</h2>
+                </div>
+
+                <div class="row dashboard-section">
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Your Assets</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $totalAssets ?></div>
+                        <a href="<?= htmlspecialchars($base) ?>/head/assets" class="stat-card stat-card-assets">
+                            <div class="stat-card-icon"><i class="fas fa-archive"></i></div>
+                            <div>
+                                <span class="stat-card-label">Your Assets</span>
+                                <span class="stat-card-value"><?= (int) $totalAssets ?></span>
+                                <span class="stat-card-hint">Assigned to you</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <a href="<?= htmlspecialchars($base) ?>/head/tickets" class="stat-card stat-card-tickets">
+                            <div class="stat-card-icon"><i class="fas fa-ticket-alt"></i></div>
+                            <div>
+                                <span class="stat-card-label">Total Tickets</span>
+                                <span class="stat-card-value"><?= (int) $totalTickets ?></span>
+                                <span class="stat-card-hint">Filed by you</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="stat-card stat-card-pending stat-card-static">
+                            <div class="stat-card-icon"><i class="fas fa-clock"></i></div>
+                            <div>
+                                <span class="stat-card-label">Pending Tickets</span>
+                                <span class="stat-card-value"><?= (int) $pendingTickets ?></span>
+                                <span class="stat-card-hint">Awaiting resolution</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Total Tickets -->
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-success shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Tickets</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $totalTickets ?></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Pending Tickets -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-warning shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Tickets</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $pendingTickets ?></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Resolved Tickets -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-info shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Resolved</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $resolvedTickets ?></div>
+                        <div class="stat-card stat-card-resolved stat-card-static">
+                            <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
+                            <div>
+                                <span class="stat-card-label">Resolved</span>
+                                <span class="stat-card-value"><?= (int) $resolvedTickets ?></span>
+                                <span class="stat-card-hint">Completed tickets</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <div class="section-heading mt-2">
+                    <span class="section-icon dept"><i class="fas fa-users"></i></span>
+                    <h2>My Department</h2>
+                </div>
 
-                <h1 class="h3 mb-4 text-gray-800">My Department</h1>
-
-                <div class="row">
-                    <!-- Assets Card -->
+                <div class="row dashboard-section">
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Department Assets</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $departmentAssets?></div>
+                        <a href="<?= htmlspecialchars($base) ?>/head/employee" class="stat-card stat-card-assets">
+                            <div class="stat-card-icon"><i class="fas fa-boxes"></i></div>
+                            <div>
+                                <span class="stat-card-label">Department Assets</span>
+                                <span class="stat-card-value"><?= (int) $departmentAssets ?></span>
+                                <span class="stat-card-hint">Across all staff</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <a href="<?= htmlspecialchars($base) ?>/head/tickets" class="stat-card stat-card-tickets">
+                            <div class="stat-card-icon"><i class="fas fa-ticket-alt"></i></div>
+                            <div>
+                                <span class="stat-card-label">Total Tickets</span>
+                                <span class="stat-card-value"><?= (int) $totalDepartmentTickets ?></span>
+                                <span class="stat-card-hint">Department-wide</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="stat-card stat-card-pending stat-card-static">
+                            <div class="stat-card-icon"><i class="fas fa-hourglass-half"></i></div>
+                            <div>
+                                <span class="stat-card-label">Pending Tickets</span>
+                                <span class="stat-card-value"><?= (int) $pendingDepartmentTickets ?></span>
+                                <span class="stat-card-hint">Needs attention</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Total Tickets -->
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-success shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Tickets</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $totalDepartmentTickets ?></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Pending Tickets -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-warning shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Tickets</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $pendingDepartmentTickets ?></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Resolved Tickets -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-info shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Resolved</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $resolvedDepartmentTickets ?></div>
+                        <div class="stat-card stat-card-resolved stat-card-static">
+                            <div class="stat-card-icon"><i class="fas fa-check-double"></i></div>
+                            <div>
+                                <span class="stat-card-label">Resolved</span>
+                                <span class="stat-card-value"><?= (int) $resolvedDepartmentTickets ?></span>
+                                <span class="stat-card-hint">Closed department tickets</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="row">
+
+                <div class="row dashboard-section">
                     <div class="col-lg-12">
-                        <div class="card shadow mb-4">
-                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 font-weight-bold text-primary">Department Tickets</h6>
-                                <a href="<?= htmlspecialchars($base) ?>/head/tickets" class="btn btn-primary btn-sm">
-                                    View All Tickets
+                        <div class="card dash-card shadow mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <span class="header-icon"><i class="fas fa-list-alt"></i></span>
+                                    <h6>Department Tickets</h6>
+                                </div>
+                                <a href="<?= htmlspecialchars($base) ?>/head/tickets" class="btn btn-primary btn-sm btn-view-all">
+                                    <i class="fas fa-external-link-alt mr-1"></i> View All Tickets
                                 </a>
                             </div>
                             <div class="card-body">
                                 <?php if (!empty($tickets)): ?>
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-hover" id="departmentTicketsTable" width="100%" cellspacing="0">
+                                    <table class="table table-hover tickets-table" id="departmentTicketsTable" width="100%" cellspacing="0">
                                         <thead>
                                             <tr>
                                                 <th>Ticket #</th>
@@ -154,17 +183,17 @@ $base = rtrim(BASE_URL, '/');
                                         <tbody>
                                             <?php foreach ($tickets as $row): ?>
                                             <tr>
-                                                <td><?= htmlspecialchars($row['ticket_number']) ?></td>
+                                                <td><strong><?= htmlspecialchars($row['ticket_number']) ?></strong></td>
                                                 <td><?= htmlspecialchars($row['employee_name']) ?></td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-primary viewBtn"
+                                                    <button class="btn btn-sm btn-primary btn-view-ticket viewBtn"
                                                         data-ticketid="<?= (int)$row['ticket_id'] ?>"
                                                         data-ticketnum="<?= htmlspecialchars($row['ticket_number']) ?>"
                                                         data-employee="<?= htmlspecialchars($row['employee_name']) ?>"
                                                         data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
                                                         data-priority="<?= htmlspecialchars($row['priority']) ?>"
                                                         data-status="<?= htmlspecialchars($row['status']) ?>">
-                                                        <i class="fas fa-eye"></i> Ticket Details
+                                                        <i class="fas fa-eye mr-1"></i> Details
                                                     </button>
                                                 </td>
                                             </tr>
@@ -173,26 +202,24 @@ $base = rtrim(BASE_URL, '/');
                                     </table>
                                 </div>
                                 <?php else: ?>
-                                <p class="text-muted text-center py-3 mb-0">
-                                    <i class="fas fa-inbox"></i> No tickets found for this department.
-                                </p>
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>No tickets found for this department.</p>
+                                </div>
                                 <?php endif; ?>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- End Page Content -->
             </div>
         </div>
     </div>
-<!--This is flash card -->
 
-    <!-- Scroll to Top -->
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
-    <!-- View Ticket Modal -->
+
     <div class="modal fade" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">

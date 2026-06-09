@@ -27,7 +27,7 @@ $base = rtrim(BASE_URL, '/');
                     <span></span>
                     Ticket Management
                 </div>
-                <h1>Welcome to <span class="highlight">TMS</span>mart</h1>
+                <h1>Welcome</h1>
                 <p>Sign in to manage tickets, track assets, and keep your team running smoothly.</p>
             </div>
 

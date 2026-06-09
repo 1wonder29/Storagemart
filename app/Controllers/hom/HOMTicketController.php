@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Models/NotificationModel.php';
+require_once __DIR__ . '/../../Models/hom/HOMModel.php';
 
 class HOMTicketController extends AuthController
 {
@@ -73,12 +74,9 @@ class HOMTicketController extends AuthController
         $this->requireHOM();
 
         $employeeModel = new Employee();
-        $employees = [];
-        // Get all employees (can be customized per branch/department)
-        $stmt = $employeeModel->getPDO()->query("SELECT employee_id, firstname, lastname FROM tblemployee ORDER BY lastname, firstname");
-        if ($stmt) {
-            $employees = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        }
+        $homModel = new HOMModel();
+        $employees = $employeeModel->fetchEmployeesByDepartment('Operations');
+        $branches = $homModel->getAllBranches();
 
         // Get current logged-in user's employee ID for default
         $accountId = (int) $_SESSION['account_id'];
@@ -143,12 +141,33 @@ class HOMTicketController extends AuthController
             return;
         }
 
-        $department = trim((string) ($_POST['department'] ?? $empRow['department'] ?? ''));
-        if ($department === '') {
-            $_SESSION['flash_error'] = 'Department is required.';
+        if (strcasecmp((string) ($empRow['department'] ?? ''), 'Operations') !== 0) {
+            $_SESSION['flash_error'] = 'Tickets can only be filed for Operations employees.';
             $this->redirect('/hom/tickets/create');
             return;
         }
+
+        $branchId = (int) ($_POST['branch_id'] ?? 0);
+        if ($branchId <= 0) {
+            $_SESSION['flash_error'] = 'Please select a branch.';
+            $this->redirect('/hom/tickets/create');
+            return;
+        }
+
+        $validBranch = false;
+        foreach ((new HOMModel())->getAllBranches() as $branch) {
+            if ((int) ($branch['branch_id'] ?? 0) === $branchId) {
+                $validBranch = true;
+                break;
+            }
+        }
+        if (!$validBranch) {
+            $_SESSION['flash_error'] = 'Invalid branch selected.';
+            $this->redirect('/hom/tickets/create');
+            return;
+        }
+
+        $department = trim((string) ($empRow['department'] ?? 'Operations'));
 
         $concern = trim((string) ($_POST['concern_details'] ?? ''));
         if ($concern === '') {
@@ -166,7 +185,7 @@ class HOMTicketController extends AuthController
         $ticketId = $model->createTicket([
             'employee_id' => $targetEmployeeId,
             'inventory_id' => !empty($_POST['inventory_id']) ? (int)$_POST['inventory_id'] : null,
-            'branch_id' => (int) ($empRow['branch_id'] ?? 0),
+            'branch_id' => $branchId,
             'department' => $department,
             'category' => trim((string) ($_POST['category'] ?? '')),
             'concern_details' => $concern,
