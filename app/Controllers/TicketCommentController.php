@@ -36,11 +36,15 @@ class TicketCommentController extends AuthController
 
         try {
             $model = new TicketCommentModel();
-            $comments = $model->getCommentsByTicketId($ticketId);
+            $sinceId = (int) ($_GET['since_id'] ?? 0);
+            $comments = $sinceId > 0
+                ? $model->getCommentsSince($ticketId, $sinceId)
+                : $model->getCommentsByTicketId($ticketId);
             echo json_encode([
                 'success'  => true,
                 'comments' => $comments,
                 'canPost'  => $access['canPost'],
+                'partial'  => $sinceId > 0,
             ]);
         } catch (Throwable $e) {
             http_response_code(500);

@@ -1,0 +1,6 @@
+<?php
+$realtimeBase = rtrim($base ?? BASE_URL ?? '', '/');
+?>
+<meta name="base-url" content="<?= htmlspecialchars($realtimeBase) ?>">
+<script>window.BASE_URL = <?= json_encode($realtimeBase) ?>;</script>
+<script src="<?= htmlspecialchars($realtimeBase) ?>/assets/js/realtime.js" defer></script>

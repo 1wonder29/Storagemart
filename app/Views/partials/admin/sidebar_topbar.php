@@ -260,31 +260,7 @@ $assetSubPage = $assetSubPage ?? '';
 
                 </nav>
 
-<script>
-document.querySelectorAll('.notification-item').forEach(item => {
-    item.addEventListener('click', function (e) {
-        e.preventDefault();
-
-        const notifId = this.dataset.id;
-        const actionUrl = this.href; // Get the actual action_url
-
-        // mark as read
-        fetch('<?= $base ?>/notifications/read', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: 'id=' + notifId
-        }).then(() => {
-            this.classList.remove('notification-unread');
-            this.classList.add('notification-read');
-
-            // Redirect to the actual action_url stored in the database
-            if (actionUrl && actionUrl !== '#') {
-                window.location.href = actionUrl;
-            }
-        });
-    });
-});
-</script>
+<?php require_once __DIR__ . '/../realtime_scripts.php'; ?>
 <!-- Logout Modal -->
 <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" 
      aria-labelledby="exampleModalLabel" aria-hidden="true">

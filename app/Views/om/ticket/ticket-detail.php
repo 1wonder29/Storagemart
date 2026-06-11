@@ -43,7 +43,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
         <?php endif; ?>
 
         <?php if ($ticket): ?>
-            <div class="row">
+            <div class="row" data-realtime-ticket-detail data-ticket-id="<?= (int) ($ticket['ticket_id'] ?? 0) ?>">
                 <div class="col-lg-8">
                     <div class="card shadow mb-4">
                         <div class="card-header py-3 bg-light">
@@ -72,7 +72,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                         $status = (string) ($ticket['status'] ?? 'Pending');
                                         $statusClass = $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
                                         ?>
-                                        <span class="badge badge-<?php echo $statusClass; ?>">
+                                        <span class="badge badge-<?php echo $statusClass; ?>" data-ticket-status>
                                             <?php echo htmlspecialchars($status); ?>
                                         </span>
                                     </p>

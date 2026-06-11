@@ -140,3 +140,5 @@ $base = rtrim(BASE_URL, '/');
 
         </nav>
         <!-- End of Topbar -->
+
+<?php require_once __DIR__ . '/../realtime_scripts.php'; ?>

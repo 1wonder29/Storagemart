@@ -106,6 +106,19 @@ if ($uri === '/notifications/read' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// REALTIME POLLING (notifications + tickets)
+if ($uri === '/realtime/notifications' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Controllers/RealtimeController.php';
+    (new RealtimeController())->pollNotifications();
+    exit;
+}
+
+if ($uri === '/realtime/tickets' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Controllers/RealtimeController.php';
+    (new RealtimeController())->pollTickets();
+    exit;
+}
+
 // NOTIFICATIONS LIST PAGE
 if ($uri === '/notifications' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     require_once __DIR__ . '/../app/Controllers/NotificationController.php';

@@ -45,7 +45,7 @@ $base = rtrim(BASE_URL, '/');
             $status = (string) ($ticket['status'] ?? 'Pending');
             $statusClass = $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
             ?>
-            <div class="row">
+            <div class="row" data-realtime-ticket-detail data-ticket-id="<?= (int) ($ticket['ticket_id'] ?? 0) ?>">
                 <div class="col-lg-8">
                     <div class="card shadow mb-4">
                         <div class="card-header py-3 bg-light">
@@ -67,7 +67,7 @@ $base = rtrim(BASE_URL, '/');
                                 </div>
                                 <div class="col-md-6">
                                     <p><strong>Status:</strong>
-                                        <span class="badge badge-<?php echo $statusClass; ?>">
+                                        <span class="badge badge-<?php echo $statusClass; ?>" data-ticket-status>
                                             <?php echo htmlspecialchars($status); ?>
                                         </span>
                                     </p>

@@ -30,6 +30,36 @@ class TicketCommentModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function getCommentsSince(int $ticketId, int $sinceCommentId): array
+    {
+        if ($sinceCommentId <= 0) {
+            return $this->getCommentsByTicketId($ticketId);
+        }
+
+        $sql = "
+            SELECT
+                c.comment_id,
+                c.ticket_id,
+                c.account_id,
+                c.author_role,
+                c.author_name,
+                c.comment_text,
+                c.created_at
+            FROM {$this->tblComments} c
+            WHERE c.ticket_id = :ticket_id
+              AND c.comment_id > :since_id
+            ORDER BY c.created_at ASC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':ticket_id' => $ticketId,
+            ':since_id'  => $sinceCommentId,
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function addComment(int $ticketId, int $accountId, string $authorRole, string $authorName, string $commentText): int
     {
         $sql = "

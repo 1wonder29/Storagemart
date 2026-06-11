@@ -107,7 +107,7 @@ $loggedFirstname = $loggedFirstname ?? 'Employee';
                 <h6 class="m-0 font-weight-bold text-primary">All Tickets</h6>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover mb-0" id="employeeTicketsTable">
+                <table class="table table-hover mb-0 ticket-realtime-table" id="employeeTicketsTable">
                     <thead class="bg-light">
                         <tr>
                             <th>Ticket #</th>
@@ -122,7 +122,9 @@ $loggedFirstname = $loggedFirstname ?? 'Employee';
                     <tbody>
                         <?php if (!empty($tickets)): ?>
                             <?php foreach ($tickets as $ticket): ?>
-                                <tr>
+                                <tr data-ticket-id="<?= (int) ($ticket['ticket_id'] ?? 0) ?>"
+                                    data-priority="<?= htmlspecialchars(strtolower(trim((string) ($ticket['priority'] ?? '')))) ?>"
+                                    data-status="<?= htmlspecialchars(strtolower(trim((string) ($ticket['status'] ?? '')))) ?>">
                                     <td class="font-weight-bold"><?php echo htmlspecialchars((string) ($ticket['ticket_number'] ?? '')); ?></td>
                                     <td><?php echo htmlspecialchars((string) ($ticket['category'] ?? '')); ?></td>
                                     <td>
@@ -139,7 +141,7 @@ $loggedFirstname = $loggedFirstname ?? 'Employee';
                                         $status = (string) ($ticket['status'] ?? 'Pending');
                                         $statusClass = $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
                                         ?>
-                                        <span class="badge badge-<?php echo $statusClass; ?>">
+                                        <span class="badge badge-<?php echo $statusClass; ?> status-badge" data-ticket-status>
                                             <?php echo htmlspecialchars($status); ?>
                                         </span>
                                     </td>

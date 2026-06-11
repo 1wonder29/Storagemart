@@ -155,7 +155,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                         </div>
                     <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="logsTicket" width="100%" cellspacing="0">
+                        <table class="table table-hover mb-0 ticket-realtime-table" id="logsTicket" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th>Ticket</th>
@@ -175,7 +175,8 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                     $date = it_ticket_format_date((string) ($row['date_filed'] ?? ''));
                                     $assignedName = trim((string) ($row['assigned_to_name'] ?? ''));
                                 ?>
-                                    <tr data-branch="<?= htmlspecialchars(strtolower(trim((string) ($row['branchName'] ?? '')))) ?>"
+                                    <tr data-ticket-id="<?= $ticketId ?>"
+                                        data-branch="<?= htmlspecialchars(strtolower(trim((string) ($row['branchName'] ?? '')))) ?>"
                                         data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
                                         data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>">
                                         <td>

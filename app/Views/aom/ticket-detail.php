@@ -38,7 +38,7 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
         <?php
         $status = (string) ($ticket['status'] ?? 'Pending');
         ?>
-        <div class="row">
+        <div class="row" data-realtime-ticket-detail data-ticket-id="<?= (int) ($ticket['ticket_id'] ?? 0) ?>">
             <div class="col-lg-8">
                 <div class="card shadow mb-4">
                     <div class="card-header py-3 bg-primary">

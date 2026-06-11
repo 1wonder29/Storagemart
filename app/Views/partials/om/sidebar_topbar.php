@@ -171,45 +171,4 @@ $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
         </nav>
         <!-- End of Topbar -->
 
-<script>
-(function () {
-    function updateBadgeAfterRead() {
-        const badge = document.querySelector('#alertsDropdown .badge-counter');
-        if (!badge) return;
-        const txt = (badge.textContent || '').trim();
-        const n = parseInt(txt, 10);
-        if (Number.isFinite(n)) {
-            const next = Math.max(0, n - 1);
-            if (next <= 0) badge.remove();
-            else badge.textContent = String(next);
-        }
-    }
-
-    document.querySelectorAll('.notification-item').forEach(item => {
-        item.addEventListener('click', function (e) {
-            e.preventDefault();
-
-            const url = this.href;
-            const notifId = this.dataset.id;
-
-            if (!notifId || notifId === '0') {
-                if (url && url !== '#') window.location.href = url;
-                return;
-            }
-
-            fetch('<?= htmlspecialchars($base) ?>/notifications/read', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'id=' + encodeURIComponent(notifId)
-            }).then(() => {
-                this.classList.remove('notification-unread');
-                this.classList.add('notification-read');
-                updateBadgeAfterRead();
-                if (url && url !== '#') window.location.href = url;
-            }).catch(() => {
-                if (url && url !== '#') window.location.href = url;
-            });
-        });
-    });
-})();
-</script>
+<?php require_once __DIR__ . '/../realtime_scripts.php'; ?>

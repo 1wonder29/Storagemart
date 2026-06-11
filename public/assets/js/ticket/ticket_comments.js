@@ -82,6 +82,7 @@
 
     if (!Array.isArray(comments) || comments.length === 0) {
       $list.html('<div class="text-center text-muted py-3"><i class="fas fa-comment-slash"></i> No comments yet. Start the conversation.</div>');
+      $section.data('last-comment-id', 0);
       return;
     }
 
@@ -89,6 +90,30 @@
       $list.append(renderComment(comment));
     });
 
+    const lastId = Math.max.apply(null, comments.map(function (c) {
+      return parseInt(c.comment_id, 10) || 0;
+    }));
+    $section.data('last-comment-id', lastId);
+    $list.scrollTop($list[0].scrollHeight);
+  }
+
+  function appendComments($section, comments) {
+    if (!Array.isArray(comments) || comments.length === 0) {
+      return;
+    }
+
+    const $list = $section.find('.ticket-comments-list');
+    $list.find('.ticket-comments-loading, .text-center.text-muted').remove();
+
+    let lastId = parseInt($section.data('last-comment-id'), 10) || 0;
+    comments.forEach(function (comment) {
+      const cid = parseInt(comment.comment_id, 10) || 0;
+      if (cid <= lastId) return;
+      $list.append(renderComment(comment));
+      lastId = cid;
+    });
+
+    $section.data('last-comment-id', lastId);
     $list.scrollTop($list[0].scrollHeight);
   }
 
@@ -199,6 +224,34 @@
     loadComments($section);
   }
 
+  function pollComments() {
+    $('.ticket-comments-section').each(function () {
+      const $section = $(this);
+      const ticketId = parseInt($section.data('ticket-id'), 10);
+      const sinceId = parseInt($section.data('last-comment-id'), 10) || 0;
+      const baseUrl = getBaseUrl($section);
+
+      if (!ticketId || ticketId <= 0 || sinceId <= 0) {
+        return;
+      }
+
+      if ($section.data('comment-polling')) {
+        return;
+      }
+      $section.data('comment-polling', true);
+
+      $.getJSON(baseUrl + '/ticket-comments/fetch', { ticket_id: ticketId, since_id: sinceId })
+        .done(function (res) {
+          if (res && res.success && res.partial && res.comments && res.comments.length) {
+            appendComments($section, res.comments);
+          }
+        })
+        .always(function () {
+          $section.data('comment-polling', false);
+        });
+    });
+  }
+
   window.TicketComments = {
     init: function (selector) {
       $(selector).each(function () {
@@ -218,6 +271,7 @@
       bindSection($section);
       loadComments($section);
     },
+    poll: pollComments,
   };
 
   $(function () {

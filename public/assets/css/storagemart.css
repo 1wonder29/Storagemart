@@ -10366,3 +10366,12 @@ body.sidebar-toggled footer.sticky-footer {
   transform: translateY(-4px);
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
+
+/* Realtime ticket list highlight */
+tr.ticket-row-updated {
+  animation: ticketRowPulse 2s ease;
+}
+@keyframes ticketRowPulse {
+  0%, 100% { background-color: transparent; }
+  30% { background-color: rgba(78, 115, 223, 0.12); }
+}
