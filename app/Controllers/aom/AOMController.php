@@ -122,6 +122,37 @@ class AOMController extends AuthController
     }
 
     /**
+     * AOM Profile page
+     */
+    public function profile()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $user = $this->requireAOM();
+        if (!$user) return;
+
+        $aom_employee_id = $user['employee_id'];
+        $profile = $this->employeeModel->fetchProfileByAccountId((int)$_SESSION['account_id']) ?? [];
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedLastname = $ctx['loggedLastname'];
+        $loggedPosition = $ctx['loggedPosition'];
+
+        $stats = $this->aomModel->getDashboardStats($aom_employee_id);
+        $branches = $this->aomModel->getAssignedBranches($aom_employee_id);
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        $activePage = 'profile';
+
+        require __DIR__ . '/../../Views/aom/profile/profile.php';
+    }
+
+    /**
      * View all employees in assigned branches
      */
     public function employees()
@@ -135,7 +166,7 @@ class AOMController extends AuthController
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
 
-        // Get all employees in assigned branches
+        // Get Operations employees in assigned branches
         $employees = $this->aomModel->getAssignedEmployees($aom_employee_id);
         $branches = $this->aomModel->getAssignedBranches($aom_employee_id);
 

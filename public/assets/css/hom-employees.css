@@ -1,0 +1,95 @@
+.hom-employees-page .filter-toolbar label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #5a5c69;
+  margin-bottom: 0.35rem;
+}
+
+.hom-employees-page .data-list-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+.hom-employees-page .employee-count-badge {
+  border-radius: 2rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.hom-employees-page .employee-name {
+  font-weight: 700;
+  color: #2e384d;
+}
+
+.hom-employees-page .employee-meta {
+  font-size: 0.78rem;
+  color: #858796;
+}
+
+.hom-employees-page .branch-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #eef5ff;
+  color: #2e59d9;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.hom-employees-page .role-pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.hom-employees-page .role-pill.role-employee {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.hom-employees-page .role-pill.role-aom {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.hom-employees-page .role-pill.role-hom {
+  background: #ede7f6;
+  color: #5e35b1;
+}
+
+.hom-employees-page .empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #858796;
+}
+
+.hom-employees-page .empty-state i {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.45;
+}
+
+.hom-employees-page .transfer-summary {
+  background: #f8f9fc;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.92rem;
+}
+
+.hom-employees-page .alert-modern {
+  border: 0;
+  border-left: 4px solid;
+  border-radius: 0.5rem;
+}
+
+.hom-employees-page .alert-success.alert-modern {
+  border-left-color: #1cc88a;
+}
+
+.hom-employees-page .alert-danger.alert-modern {
+  border-left-color: #e74a3b;
+}

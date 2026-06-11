@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../Models/hom/HOMModel.php';
 require_once __DIR__ . '/../../Models/aom/AOMModel.php';
 require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
+require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 
 /**
  * HOMController - Head Of Operation Controller
@@ -98,25 +99,73 @@ class HOMController extends AuthController
     }
 
     /**
-     * View all employees for assignment
+     * View Operations employees and manage branch transfers
      */
     public function employees()
     {
         $user = $this->requireHOM();
         if (!$user) return;
 
-        $homId = $user['employee_id'];
-        $employees = $this->homModel->getAllEmployeesWithAOMAssignments($homId);
+        $role = strtoupper($user['usertype'] ?? '');
+        $employees = $this->homModel->getOperationsEmployees();
+        $branches = $this->homModel->getAllBranches();
 
         $data = [
-            'page_title' => 'Manage Employee Assignments',
+            'page_title' => 'Operations Employees',
             'user' => $user,
             'employees' => $employees,
-            'user_role' => 'HOM'
+            'branches' => $branches,
+            'user_role' => $role === 'OM' ? 'OM' : 'HOM',
+            'routePrefix' => $role === 'OM' ? 'om' : 'hom',
         ];
 
         extract($data);
         require __DIR__ . '/../../Views/om/employees.php';
+    }
+
+    /**
+     * Transfer an employee from their current branch to another branch
+     */
+    public function transferEmployee()
+    {
+        $user = $this->requireHOM();
+        if (!$user) return;
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit('Method not allowed.');
+        }
+
+        $role = strtoupper($user['usertype'] ?? '');
+        $routePrefix = $role === 'OM' ? 'om' : 'hom';
+        $employeeId = (int) ($_POST['employee_id'] ?? 0);
+        $newBranchId = (int) ($_POST['branch_id'] ?? 0);
+
+        $result = $this->homModel->transferEmployeeBranch($employeeId, $newBranchId);
+
+        if ($result['success']) {
+            $performedBy = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? ''));
+            ActivityLogger::update(
+                'HOM - Employees',
+                (string) $employeeId,
+                sprintf(
+                    'Transferred %s from %s to %s',
+                    $result['employee_name'] ?? 'employee',
+                    $result['old_branch_name'] ?? 'previous branch',
+                    $result['new_branch_name'] ?? 'new branch'
+                ),
+                $performedBy,
+                [
+                    'old_branch_id' => $result['old_branch_id'] ?? null,
+                    'new_branch_id' => $result['new_branch_id'] ?? null,
+                ]
+            );
+            $_SESSION['success_message'] = $result['message'];
+        } else {
+            $_SESSION['error_message'] = $result['message'];
+        }
+
+        $this->redirect("/$routePrefix/employees");
     }
 
     /**

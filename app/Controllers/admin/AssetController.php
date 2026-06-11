@@ -20,8 +20,7 @@ class AssetController extends AuthController {
         }
 
         $assetModel = new Asset();
-        $assets = $assetModel->fetchAllAssets();  
-
+        $assets = $assetModel->fetchAllAssets();
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
@@ -49,12 +48,14 @@ class AssetController extends AuthController {
             exit;
         }
 
-        // If you want to show the add-branch form on GET:
+        $assetModel = new Asset();
+
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             if (empty($_SESSION['csrf_token'])) {
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
             }
             $csrf_token = $_SESSION['csrf_token'];
+            $branches = $assetModel->fetchBranches();
             $ctx = $this->getLoggedUserContext();
             $base = $ctx['base'];
             $loggedFirstname = $ctx['loggedFirstname'];
@@ -74,8 +75,6 @@ class AssetController extends AuthController {
             return;
         }
 
-        $assetModel = new Asset();
-
         $branchName    = trim($_POST['branchName'] ?? '');
         $branchCode    = trim($_POST['branchCode'] ?? '');
         $branchAddress = trim($_POST['branchAddress'] ?? '');
@@ -94,17 +93,172 @@ class AssetController extends AuthController {
                         'branch_address' => $branchAddress
                     ]);
                 $_SESSION['flash_success'] = 'New branch added successfully.';
-                $this->redirect('/admin/assets');
+                $this->redirect('/admin/assets/branch/add');
                 exit;
             } else {
                 throw new \Exception('Failed to insert branch.');
             }
         } catch (\Throwable $e) {
             $_SESSION['flash_error'] = 'Error adding branch: ' . $e->getMessage();
-            $this->redirect('/admin/assets');
+            $this->redirect('/admin/assets/branch/add');
             exit;
         }
     }
+
+    public function updateBranch()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            exit;
+        }
+
+        $assetModel = new Asset();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $branchId = isset($_GET['branch_id']) ? (int) $_GET['branch_id'] : 0;
+            if ($branchId <= 0) {
+                $_SESSION['flash_error'] = 'Invalid branch id.';
+                $this->redirect('/admin/assets/branch/add');
+                return;
+            }
+
+            $branch = $assetModel->fetchBranchById($branchId);
+            if (!$branch) {
+                $_SESSION['flash_error'] = 'Branch not found.';
+                $this->redirect('/admin/assets/branch/add');
+                return;
+            }
+
+            if (empty($_SESSION['csrf_token'])) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+            }
+            $csrf_token = $_SESSION['csrf_token'];
+            $ctx = $this->getLoggedUserContext();
+            $base = $ctx['base'];
+            $loggedFirstname = $ctx['loggedFirstname'];
+            $loggedPosition  = $ctx['loggedPosition'];
+            $notificationData = $this->loadNotifications();
+            $count = $notificationData['count'];
+            $notifications = $notificationData['notifications'];
+            require_once __DIR__ . '/../../Views/admin/asset/update_branch.php';
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+
+        $posted_token = $_POST['csrf_token'] ?? '';
+        if (empty($posted_token) || $posted_token !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token.';
+            $this->redirect('/admin/assets/branch/add');
+            return;
+        }
+
+        $branchId      = isset($_POST['branch_id']) ? (int) $_POST['branch_id'] : 0;
+        $branchName    = trim($_POST['branchName'] ?? '');
+        $branchCode    = trim($_POST['branchCode'] ?? '');
+        $branchAddress = trim($_POST['branchAddress'] ?? '');
+
+        if ($branchId <= 0 || $branchName === '' || $branchCode === '' || $branchAddress === '') {
+            $_SESSION['flash_error'] = 'All branch fields are required.';
+            $this->redirect('/admin/assets/branch/add');
+            return;
+        }
+
+        try {
+            $existing = $assetModel->fetchBranchById($branchId);
+            if (!$existing) {
+                $_SESSION['flash_error'] = 'Branch not found.';
+                $this->redirect('/admin/assets/branch/add');
+                return;
+            }
+
+            $ok = $assetModel->updateBranch($branchId, $branchName, $branchCode, $branchAddress);
+            if ($ok) {
+                ActivityLogger::update('Admin - Assets', (string) $branchId,
+                    "Branch updated: {$branchName} ({$branchCode})",
+                    $_SESSION['username'] ?? 'Unknown', [
+                        'branch_id' => $branchId,
+                        'branch_name' => $branchName,
+                        'branch_code' => $branchCode,
+                        'branch_address' => $branchAddress,
+                    ]);
+                $_SESSION['flash_success'] = 'Branch updated successfully.';
+                $this->redirect('/admin/assets/branch/add');
+                return;
+            }
+
+            throw new \Exception('No rows updated.');
+        } catch (\Throwable $e) {
+            $_SESSION['flash_error'] = 'Error updating branch: ' . $e->getMessage();
+            $this->redirect('/admin/assets/branch/update?branch_id=' . $branchId);
+            return;
+        }
+    }
+
+    public function deleteBranch()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $_SESSION['flash_error'] = 'Unauthorized access.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $branchId = isset($_GET['branch_id']) ? (int) $_GET['branch_id'] : 0;
+        if ($branchId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid branch ID.';
+            $this->redirect('/admin/assets/branch/add');
+            return;
+        }
+
+        $assetModel = new Asset();
+        $branch = $assetModel->fetchBranchById($branchId);
+        if (!$branch) {
+            $_SESSION['flash_error'] = 'Branch not found.';
+            $this->redirect('/admin/assets/branch/add');
+            return;
+        }
+
+        if ($assetModel->isBranchInUse($branchId)) {
+            $_SESSION['flash_error'] = 'Cannot delete this branch because it is assigned to employees or assets.';
+            $this->redirect('/admin/assets/branch/add');
+            return;
+        }
+
+        try {
+            $ok = $assetModel->deleteBranch($branchId);
+            if ($ok) {
+                ActivityLogger::delete('Admin - Assets', (string) $branchId,
+                    "Branch deleted: {$branch['branchName']} ({$branch['branchCode']})",
+                    $_SESSION['username'] ?? 'Unknown', [
+                        'branch_id' => $branchId,
+                        'branch_name' => $branch['branchName'] ?? '',
+                        'branch_code' => $branch['branchCode'] ?? '',
+                    ]);
+                $_SESSION['flash_success'] = 'Branch deleted successfully.';
+                $this->redirect('/admin/assets/branch/add');
+                return;
+            }
+
+            throw new \Exception('Failed to delete branch.');
+        } catch (\Throwable $e) {
+            $_SESSION['flash_error'] = 'Error deleting branch: ' . $e->getMessage();
+            $this->redirect('/admin/assets/branch/add');
+            return;
+        }
+    }
+
     //adding Category Asset Here
     public function category(){
         if (session_status() === PHP_SESSION_NONE) {

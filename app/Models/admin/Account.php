@@ -119,31 +119,63 @@ class Account extends BaseModel {
     }
 
     /**
-     * Delete employee by employee_id (cascades to related account)
+     * Delete employee by employee_id and linked account after clearing related records.
      */
     public function deleteEmployeeByEmployeeId(int $employeeId): bool {
         $employeeId = (int)$employeeId;
         if ($employeeId <= 0) return false;
-        
+
         try {
-            // Get account_id linked to this employee
+            $this->pdo->beginTransaction();
+
             $stmt = $this->pdo->prepare("SELECT account_id FROM {$this->tblemployee} WHERE employee_id = ? LIMIT 1");
             $stmt->execute([$employeeId]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$result) {
+                $this->pdo->rollBack();
+                return false;
+            }
             $accountId = $result['account_id'] ?? null;
-            
-            // Delete employee record
+
+            // Unlink employee from tickets they were assigned to or referenced on
+            $unlinkSql = "UPDATE {$this->tbltickets}
+                          SET assigned_to = NULL
+                          WHERE assigned_to = ?";
+            $this->pdo->prepare($unlinkSql)->execute([$employeeId]);
+
+            foreach (['approved_by', 'declined_by', 'created_by'] as $column) {
+                $sql = "UPDATE {$this->tbltickets} SET {$column} = NULL WHERE {$column} = ?";
+                $this->pdo->prepare($sql)->execute([$employeeId]);
+            }
+
+            // Delete tickets filed by this employee and their child records
+            $stmt = $this->pdo->prepare("SELECT ticket_id FROM {$this->tbltickets} WHERE employee_id = ?");
+            $stmt->execute([$employeeId]);
+            $ticketIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            foreach ($ticketIds as $ticketId) {
+                $this->pdo->prepare("DELETE FROM ticket_ratings WHERE ticket_id = ?")->execute([$ticketId]);
+                $this->pdo->prepare("DELETE FROM tblticket_technical WHERE ticket_id = ?")->execute([$ticketId]);
+                $this->pdo->prepare("DELETE FROM tblticket_history WHERE ticket_id = ?")->execute([$ticketId]);
+                $this->pdo->prepare("DELETE FROM {$this->tbltickets} WHERE ticket_id = ?")->execute([$ticketId]);
+            }
+
+            $this->pdo->prepare("DELETE FROM ticket_ratings WHERE employee_id = ?")->execute([$employeeId]);
+            $this->pdo->prepare("DELETE FROM tblticket_technical WHERE performed_by = ?")->execute([$employeeId]);
+
             $stmt = $this->pdo->prepare("DELETE FROM {$this->tblemployee} WHERE employee_id = ? LIMIT 1");
             $ok = $stmt->execute([$employeeId]);
-            
-            // Delete associated account record if exists
+
             if ($accountId) {
-                $stmt = $this->pdo->prepare("DELETE FROM {$this->table} WHERE account_id = ? LIMIT 1");
-                $stmt->execute([$accountId]);
+                $this->pdo->prepare("DELETE FROM {$this->table} WHERE account_id = ? LIMIT 1")->execute([$accountId]);
             }
-            
+
+            $this->pdo->commit();
             return $ok;
         } catch (PDOException $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             error_log("Account::deleteEmployeeByEmployeeId error: " . $e->getMessage());
             return false;
         }

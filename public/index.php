@@ -159,6 +159,10 @@ if (strpos($uri, '/admin') === 0) {
         $asset->asset();
     } elseif ($sub === 'assets/branch/add') {
         $asset->branch();
+    } elseif ($sub === 'assets/branch/update') {
+        $asset->updateBranch();
+    } elseif ($sub === 'assets/branch/delete') {
+        $asset->deleteBranch();
     } elseif ($sub === 'assets/branch/list' || $sub === 'assets/category/list' || $sub === 'assets/group/list') {
         $asset->referenceLists();
     } elseif ($sub === 'assets/reference') {
@@ -169,6 +173,8 @@ if (strpos($uri, '/admin') === 0) {
         $asset->group();
     } elseif ($sub === 'assets/group/update') {
         $asset->updateGroup();
+    } elseif ($sub === 'assets/group/delete') {
+        $asset->deleteGroup();
     } elseif ($sub === 'assets/item') {
         $asset->item();
     } elseif ($sub === 'assets/add') {
@@ -177,6 +183,8 @@ if (strpos($uri, '/admin') === 0) {
         $asset->editItem();
     } elseif ($sub === 'assets/item/update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $asset->updateItem();
+    } elseif ($sub === 'assets/item/delete') {
+        $asset->deleteItem();
     } elseif ($sub === 'assets/transfer') {
         $asset->transferItem();
     } elseif ($sub === 'assets/search-employee') {
@@ -510,9 +518,7 @@ if ($uri === '/aom' || strpos($uri, '/aom/') === 0) {
     if ($sub === '' || $sub === 'dashboard') {
         $aom->dashboard();
     } elseif ($sub === 'profile') {
-        // Profile page (if needed)
-        http_response_code(501);
-        exit("Coming soon");
+        $aom->profile();
     } elseif ($sub === 'employees') {
         $aom->employees();
     } elseif (strpos($sub, 'employees/detail') === 0) {
@@ -601,6 +607,8 @@ if ($uri === '/hom' || strpos($uri, '/hom/') === 0) {
         $hom->dashboard();
     } elseif ($sub === 'employees') {
         $hom->employees();
+    } elseif ($sub === 'transfer-employee' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $hom->transferEmployee();
     } elseif ($sub === 'assignments') {
         $hom->assignments();
     } elseif ($sub === 'new-assignment') {
@@ -690,6 +698,8 @@ if ($uri === '/om' || strpos($uri, '/om/') === 0) {
         $hom->dashboard();
     } elseif ($sub === 'employees') {
         $hom->employees();
+    } elseif ($sub === 'transfer-employee' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $hom->transferEmployee();
     } elseif ($sub === 'assignments') {
         $hom->assignments();
     } elseif ($sub === 'new-assignment') {

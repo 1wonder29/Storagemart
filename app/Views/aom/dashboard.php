@@ -2,6 +2,12 @@
 $base = rtrim(BASE_URL, '/');
 $loggedFirstname = $ctx['loggedFirstname'] ?? 'AOM';
 $loggedLastname = $ctx['loggedLastname'] ?? '';
+$displayName = trim($loggedFirstname . ' ' . $loggedLastname) ?: 'AOM';
+$ticketStatusClasses = [
+    'Pending'     => 'status-pending',
+    'In Progress' => 'status-in-progress',
+    'Resolved'    => 'status-resolved',
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -11,224 +17,249 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Storage Mart | AOM Dashboard</title>
 
-    <!-- Custom fonts for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
-
-    <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/aom-dashboard.css" rel="stylesheet">
 </head>
-
 <body id="page-top">
 
-    <!-- Page Wrapper -->
-    <div id="wrapper">
-    <?php 
+<div id="wrapper">
+    <?php
     $activePage = 'dashboard';
-    require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';?>
-        <!-- Page Content -->
-        <div class="container-fluid">
-            <!-- Page Heading -->
-            <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-            </div>
+    require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
+    ?>
 
-            <!-- Statistics Cards -->
-            <div class="row mb-4">
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-primary shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Assigned Branches</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $stats['total_branches'] ?? 0; ?></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-success shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Employees</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $stats['total_employees'] ?? 0; ?></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-warning shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Tickets</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $stats['pending_tickets'] ?? 0; ?></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-info shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Resolved (This Month)</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $stats['resolved_this_month'] ?? 0; ?></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="container-fluid aom-dashboard-page">
 
-            <!-- Quick Actions and Branches -->
-            <div class="row mb-4">
-                <div class="col-xl-4 col-lg-5">
-                    <div class="card shadow">
-                        <div class="card-header py-3 bg-primary">
-                            <h6 class="m-0 font-weight-bold text-white">Quick Actions</h6>
-                        </div>
-                        <div class="card-body">
-                            <a href="<?= htmlspecialchars($base) ?>/aom/tickets/create" class="btn btn-primary btn-block mb-2">
-                                <i class="fas fa-plus"></i> Create Ticket
-                            </a>
-                            <a href="<?= htmlspecialchars($base) ?>/aom/employees" class="btn btn-success btn-block mb-2">
-                                <i class="fas fa-users"></i> View Employees
-                            </a>
-                            <a href="<?= htmlspecialchars($base) ?>/aom/tickets" class="btn btn-info btn-block">
-                                <i class="fas fa-list"></i> View All Tickets
-                            </a>
-                        </div>
-                    </div>
+        <!-- Hero -->
+        <div class="page-hero">
+            <div class="row align-items-center">
+                <div class="col-lg-5">
+                    <h1><i class="fas fa-tachometer-alt mr-2"></i>Dashboard</h1>
+                    <p>Welcome back, <?= htmlspecialchars($displayName) ?> — here's an overview of your operations.</p>
                 </div>
-                <div class="col-xl-8 col-lg-7">
-                    <div class="card shadow">
-                        <div class="card-header py-3 bg-primary">
-                            <h6 class="m-0 font-weight-bold text-white">Assigned Branches</h6>
+                <div class="col-lg-7 mt-3 mt-lg-0">
+                    <div class="row">
+                        <div class="col-6 col-md-3 mb-2 mb-md-0">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int)($stats['total_branches'] ?? 0) ?></div>
+                                <div class="stat-label">Branches</div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <?php if (!empty($branches)): ?>
-                                <div class="list-group">
-                                    <?php foreach ($branches as $branch): ?>
-                                        <a href="<?= htmlspecialchars($base) ?>/aom/branches/detail?id=<?php echo $branch['branch_id']; ?>" class="list-group-item list-group-item-action">
-                                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                                <div>
-                                                    <h6 class="mb-1"><i class="fas fa-building"></i> <?php echo htmlspecialchars($branch['branchName']); ?></h6>
-                                                    <small class="text-muted"><?php echo htmlspecialchars($branch['branchAddress'] ?? ''); ?></small>
-                                                </div>
-                                                <span class="badge badge-primary badge-pill"><?php echo $branch['employee_count'] ?? 0; ?> Employees</span>
-                                            </div>
-                                        </a>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <p class="text-muted text-center py-3"><i class="fas fa-inbox"></i> No branches assigned yet.</p>
-                            <?php endif; ?>
+                        <div class="col-6 col-md-3 mb-2 mb-md-0">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int)($stats['total_employees'] ?? 0) ?></div>
+                                <div class="stat-label">Employees</div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Tickets and Statistics -->
-            <div class="row">
-                <div class="col-xl-8 col-lg-7 mb-4">
-                    <div class="card shadow">
-                        <div class="card-header py-3 bg-primary">
-                            <h6 class="m-0 font-weight-bold text-white">Recent Tickets</h6>
+                        <div class="col-6 col-md-3">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int)($stats['pending_tickets'] ?? 0) ?></div>
+                                <div class="stat-label">Pending</div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <?php if (!empty($tickets)): ?>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Ticket #</th>
-                                                <th>Employee</th>
-                                                <th>Status</th>
-                                                <th>Date</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach (array_slice($tickets, 0, 5) as $ticket): ?>
-                                                <tr>
-                                                    <td><strong><?php echo htmlspecialchars($ticket['ticket_number'] ?? $ticket['ticket_id']); ?></strong></td>
-                                                    <td><?php
-                                                        $first = $ticket['firstname'] ?? ($ticket['employee_firstname'] ?? '');
-                                                        $last  = $ticket['lastname'] ?? ($ticket['employee_lastname'] ?? '');
-                                                        $empName = trim($first . ' ' . $last);
-                                                        echo htmlspecialchars($empName !== '' ? $empName : '—');
-                                                    ?></td>
-                                                    <td><?php $statusClass = $ticket['status'] === 'Pending' ? 'warning' : ($ticket['status'] === 'In Progress' ? 'info' : ($ticket['status'] === 'Resolved' ? 'success' : 'secondary')); ?><span class="badge badge-<?php echo $statusClass; ?>"><?php echo htmlspecialchars($ticket['status']); ?></span></td>
-                                                    <td><?php echo !empty($ticket['date_filed']) ? date('M d, Y', strtotime($ticket['date_filed'])) : '—'; ?></td>
-                                                    <td><a href="<?= htmlspecialchars($base) ?>/aom/tickets/view?id=<?php echo $ticket['ticket_id']; ?>" class="btn btn-sm btn-primary">View</a></td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            <?php else: ?>
-                                <p class="text-muted text-center py-3"><i class="fas fa-inbox"></i> No tickets found.</p>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-4 col-lg-5 mb-4">
-                    <div class="card shadow">
-                        <div class="card-header py-3 bg-primary">
-                            <h6 class="m-0 font-weight-bold text-white">Ticket Statistics</h6>
-                        </div>
-                        <div class="card-body text-center">
-                            <?php if (!empty($ticketStats)): ?>
-                                <div style="height: 250px;">
-                                    <canvas id="ticketStatsChart"></canvas>
-                                </div>
-                            <?php else: ?>
-                                <p class="text-muted">No ticket data available.</p>
-                            <?php endif; ?>
+                        <div class="col-6 col-md-3">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int)($stats['resolved_this_month'] ?? 0) ?></div>
+                                <div class="stat-label">Resolved</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End of Page Content -->
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="<?= htmlspecialchars($base) ?>/aom/tickets/create" class="quick-action-btn qa-primary">
+                <i class="fas fa-plus"></i> Create Ticket
+            </a>
+            <a href="<?= htmlspecialchars($base) ?>/aom/employees" class="quick-action-btn qa-success">
+                <i class="fas fa-users"></i> View Employees
+            </a>
+            <a href="<?= htmlspecialchars($base) ?>/aom/tickets" class="quick-action-btn qa-info">
+                <i class="fas fa-ticket-alt"></i> All Tickets
+            </a>
+        </div>
+
+        <!-- Branches & Chart -->
+        <div class="row mb-4">
+            <div class="col-xl-8 mb-4 mb-xl-0">
+                <div class="card dash-card shadow">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h6><i class="fas fa-store"></i>Assigned Branches</h6>
+                        <span class="badge badge-primary" style="border-radius:2rem;">
+                            <?= count($branches ?? []) ?> branch<?= count($branches ?? []) === 1 ? '' : 'es' ?>
+                        </span>
+                    </div>
+                    <div class="card-body" style="max-height:340px;overflow-y:auto;">
+                        <?php if (!empty($branches)): ?>
+                            <?php foreach ($branches as $branch): ?>
+                                <a href="<?= htmlspecialchars($base) ?>/aom/branches/detail?id=<?= (int)$branch['branch_id'] ?>"
+                                   class="branch-item d-flex px-2">
+                                    <div class="branch-icon">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <div>
+                                        <div class="branch-name"><?= htmlspecialchars($branch['branchName']) ?></div>
+                                        <?php if (!empty($branch['branchAddress'])): ?>
+                                            <div class="branch-meta"><?= htmlspecialchars($branch['branchAddress']) ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <span class="branch-count">
+                                        <?= (int)($branch['employee_count'] ?? 0) ?> staff
+                                    </span>
+                                </a>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="empty-state">
+                                <i class="fas fa-store-slash"></i>
+                                <p class="mb-0">No branches assigned yet.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card dash-card shadow">
+                    <div class="card-header">
+                        <h6><i class="fas fa-chart-pie"></i>Ticket Statistics</h6>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($ticketStats)): ?>
+                            <div class="chart-wrap">
+                                <canvas id="ticketStatsChart"></canvas>
+                            </div>
+                        <?php else: ?>
+                            <div class="empty-state">
+                                <i class="fas fa-chart-pie"></i>
+                                <p class="mb-0">No ticket data available.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Tickets -->
+        <div class="card dash-card shadow mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                <h6><i class="fas fa-clipboard-list"></i>Recent Tickets</h6>
+                <a href="<?= htmlspecialchars($base) ?>/aom/tickets" class="btn btn-sm btn-outline-primary" style="border-radius:2rem;font-size:0.75rem;">
+                    View All
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <?php if (!empty($tickets)): ?>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Employee</th>
+                                <th>Status</th>
+                                <th>Date Filed</th>
+                                <th class="text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach (array_slice($tickets, 0, 5) as $ticket):
+                                $first = $ticket['firstname'] ?? ($ticket['employee_firstname'] ?? '');
+                                $last  = $ticket['lastname'] ?? ($ticket['employee_lastname'] ?? '');
+                                $empName = trim($first . ' ' . $last);
+                                $status = (string)($ticket['status'] ?? '');
+                            ?>
+                                <tr>
+                                    <td>
+                                        <span class="ticket-id"><?= htmlspecialchars($ticket['ticket_number'] ?? (string)$ticket['ticket_id']) ?></span>
+                                    </td>
+                                    <td><?= htmlspecialchars($empName !== '' ? $empName : '—') ?></td>
+                                    <td>
+                                        <span class="ticket-status <?= $ticketStatusClasses[$status] ?? 'status-default' ?>">
+                                            <?= htmlspecialchars($status) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?= !empty($ticket['date_filed']) ? date('M d, Y', strtotime($ticket['date_filed'])) : '—' ?>
+                                    </td>
+                                    <td class="text-right">
+                                        <a href="<?= htmlspecialchars($base) ?>/aom/tickets/view?id=<?= (int)$ticket['ticket_id'] ?>"
+                                           class="btn btn-sm btn-outline-primary btn-view-sm">
+                                            <i class="fas fa-eye mr-1"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p class="mb-0">No tickets found.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+    </div>
+    <!-- End of Page Content -->
+
     </div>
     <!-- End of Main Content -->
 
-    </div>
-    <!-- End of Content Wrapper -->
+</div>
+<!-- End of Content Wrapper -->
 
-    <!-- Scripts -->
-    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</div>
+<!-- End of Page Wrapper -->
 
-    <script>
-        // Initialize Ticket Statistics Chart
-        <?php if (!empty($ticketStats)): ?>
-        var ctx = document.getElementById('ticketStatsChart').getContext('2d');
-        var labels = [];
-        var data = [];
-        <?php foreach ($ticketStats as $status => $count): ?>
-        labels.push('<?php echo htmlspecialchars($status); ?>');
-        data.push(<?php echo $count; ?>);
-        <?php endforeach; ?>
+<script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e', '#e74c3c'],
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
+<?php if (!empty($ticketStats)): ?>
+<script>
+(function () {
+    var ctx = document.getElementById('ticketStatsChart');
+    if (!ctx) return;
+
+    var labels = <?= json_encode(array_keys($ticketStats)) ?>;
+    var data = <?= json_encode(array_values($ticketStats)) ?>;
+
+    new Chart(ctx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: ['#5c6bc0', '#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc'],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        padding: 14,
+                        usePointStyle: true,
+                        font: { size: 11 }
+                    }
                 }
-            }
-        });
-        <?php endif; ?>
-    </script>
-
-    </div>
-    <!-- End of Page Wrapper -->
+            },
+            cutout: '62%'
+        }
+    });
+})();
+</script>
+<?php endif; ?>
 </body>
 </html>

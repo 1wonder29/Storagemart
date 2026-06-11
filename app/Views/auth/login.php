@@ -16,6 +16,34 @@ $base = rtrim(BASE_URL, '/');
 </head>
 
 <body class="auth-page">
+    <button
+        type="button"
+        class="auth-audio-toggle"
+        id="authAudioToggle"
+        aria-label="Play background music"
+        aria-pressed="false"
+        title="Background music"
+        hidden
+    >
+        <svg class="icon-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+        </svg>
+        <svg class="icon-playing" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+    </button>
+
+    <audio
+        id="authAmbientAudio"
+        loop
+        preload="auto"
+        src="<?= htmlspecialchars($base) ?>/assets/audio/beat.mp3"
+    ></audio>
+
     <div class="auth-shell">
         <aside class="auth-brand" aria-hidden="true">
             <div class="auth-brand-logo">

@@ -28,8 +28,8 @@
     }
   }
 
-  function initEmployeesTable() {
-    var $table = $("#employee-table");
+  function initAomEmployeesTable() {
+    var $table = $("#aom-employee-table");
     if (!$table.length || !$table.find("tbody tr").length) {
       return;
     }
@@ -40,18 +40,17 @@
       return;
     }
 
-    var dt = new DataTable("#employee-table", {
+    var dt = new DataTable("#aom-employee-table", {
       fixedHeader: { header: true },
-      order: [[4, "desc"]],
+      order: [[0, "asc"]],
       pageLength: 10,
       columnDefs: [{ targets: [5], orderable: false, searchable: false }],
     });
 
-    var deptFilter = "";
     var branchFilter = "";
 
     registerSearch(function (settings, searchData, dataIndex) {
-      if (getTableId(settings) !== "employee-table") {
+      if (getTableId(settings) !== "aom-employee-table") {
         return true;
       }
 
@@ -60,13 +59,9 @@
         return true;
       }
 
-      var dept = (row.getAttribute("data-department") || "").trim().toLowerCase();
-      var branch = (row.getAttribute("data-branch") || "").trim().toLowerCase();
+      var branchId = (row.getAttribute("data-branch-id") || "").trim();
 
-      if (deptFilter && dept !== deptFilter) {
-        return false;
-      }
-      if (branchFilter && branch !== branchFilter) {
+      if (branchFilter && branchId !== branchFilter) {
         return false;
       }
       return true;
@@ -76,21 +71,17 @@
       dt.draw();
     }
 
-    $("#employeeDeptFilter").on("change", function () {
-      deptFilter = ($(this).val() || "").trim().toLowerCase();
+    $("#aomBranchFilter").on("change", function () {
+      branchFilter = ($(this).val() || "").trim();
       redraw();
     });
-    $("#employeeBranchFilter").on("change", function () {
-      branchFilter = ($(this).val() || "").trim().toLowerCase();
-      redraw();
-    });
-    $("#employeeClearFilters").on("click", function () {
-      deptFilter = branchFilter = "";
-      $("#employeeDeptFilter, #employeeBranchFilter").val("");
+    $("#aomClearFilters").on("click", function () {
+      branchFilter = "";
+      $("#aomBranchFilter").val("");
       dt.search("");
       redraw();
     });
   }
 
-  $(document).ready(initEmployeesTable);
+  $(document).ready(initAomEmployeesTable);
 })(jQuery);

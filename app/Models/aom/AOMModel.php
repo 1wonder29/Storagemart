@@ -9,6 +9,8 @@ require_once __DIR__ . '/../admin/BaseModel.php';
  */
 class AOMModel extends BaseModel
 {
+    private const OPERATIONS_DEPARTMENT = 'Operations';
+
     protected $tblemployee = 'tblemployee';
     protected $tblbranch = 'tblbranch';
     protected $tblbranch_assignments = 'tblbranch_assignments';
@@ -105,6 +107,7 @@ class AOMModel extends BaseModel
                 SELECT branch_id FROM {$this->tblbranch_assignments}
                 WHERE aom_employee_id = :aom_employee_id AND is_active = 1
             )
+            AND e.department = :operations_dept
             
             UNION
             
@@ -128,6 +131,7 @@ class AOMModel extends BaseModel
                 SELECT employee_id FROM tblhom_employee_assignments
                 WHERE aom_id = :aom_employee_id_2 AND is_active = 1
             )
+            AND e.department = :operations_dept_2
             
             ORDER BY branchName ASC, lastname ASC, firstname ASC
         ";
@@ -135,7 +139,9 @@ class AOMModel extends BaseModel
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'aom_employee_id' => $aom_employee_id,
-            'aom_employee_id_2' => $aom_employee_id
+            'aom_employee_id_2' => $aom_employee_id,
+            'operations_dept' => self::OPERATIONS_DEPARTMENT,
+            'operations_dept_2' => self::OPERATIONS_DEPARTMENT,
         ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -198,6 +204,7 @@ class AOMModel extends BaseModel
             JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
             LEFT JOIN {$this->tblaccounts} a ON a.account_id = e.account_id
             WHERE e.branch_id = :branch_id
+              AND e.department = :operations_dept
         ";
 
         if (!$isBranchAssigned) {
@@ -212,7 +219,10 @@ class AOMModel extends BaseModel
         $sql .= " ORDER BY e.lastname ASC, e.firstname ASC";
         
         $stmt = $this->pdo->prepare($sql);
-        $params = ['branch_id' => $branch_id];
+        $params = [
+            'branch_id' => $branch_id,
+            'operations_dept' => self::OPERATIONS_DEPARTMENT,
+        ];
         if (!$isBranchAssigned) {
             $params['aom_employee_id'] = $aom_employee_id;
         }
@@ -245,17 +255,24 @@ class AOMModel extends BaseModel
                     SELECT branch_id FROM {$this->tblbranch_assignments}
                     WHERE aom_employee_id = :aom_employee_id AND is_active = 1
                 )
+                AND e.department = :operations_dept
                 
                 UNION
                 
-                SELECT DISTINCT employee_id FROM tblhom_employee_assignments
-                WHERE aom_id = :aom_employee_id_2 AND is_active = 1
+                SELECT DISTINCT oea.employee_id
+                FROM {$this->tblhom_employee_assignments} oea
+                JOIN {$this->tblemployee} e ON oea.employee_id = e.employee_id
+                WHERE oea.aom_id = :aom_employee_id_2
+                  AND oea.is_active = 1
+                  AND e.department = :operations_dept_2
             ) as all_employees
         ";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'aom_employee_id' => $aom_employee_id,
-            'aom_employee_id_2' => $aom_employee_id
+            'aom_employee_id_2' => $aom_employee_id,
+            'operations_dept' => self::OPERATIONS_DEPARTMENT,
+            'operations_dept_2' => self::OPERATIONS_DEPARTMENT,
         ]);
         $stats['total_employees'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
@@ -455,6 +472,7 @@ class AOMModel extends BaseModel
             SELECT 1
             FROM {$this->tblemployee} e
             WHERE e.employee_id = :employee_id
+            AND e.department = :operations_dept
             AND (
                 e.branch_id IN (
                     SELECT branch_id FROM {$this->tblbranch_assignments}
@@ -471,7 +489,8 @@ class AOMModel extends BaseModel
         $stmt->execute([
             'aom_employee_id' => $aom_employee_id,
             'aom_employee_id_2' => $aom_employee_id,
-            'employee_id' => $employee_id
+            'employee_id' => $employee_id,
+            'operations_dept' => self::OPERATIONS_DEPARTMENT,
         ]);
         return (bool)$stmt->fetch();
     }

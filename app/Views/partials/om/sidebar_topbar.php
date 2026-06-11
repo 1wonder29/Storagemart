@@ -50,14 +50,6 @@ $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
         </a>
     </li>
 
-    <!-- Create Assignment -->
-    <li class="nav-item <?= ($activePage === 'create-assignment') ? 'active' : '' ?>">
-        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/new-assignment">
-            <i class="fas fa-plus-circle"></i>
-            <span>New Assignment</span>
-        </a>
-    </li>
-
     <!-- AOM Branch Assignments -->
     <li class="nav-item <?= ($activePage === 'aom-branches') ? 'active' : '' ?>">
         <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/aom-branches">

@@ -208,12 +208,19 @@ ksort($branches);
                                                    class="btn btn-sm btn-outline-primary" title="View assets">
                                                     <i class="fas fa-box-open"></i>
                                                 </a>
-                                                <button type="button"
-                                                    class="btn btn-sm btn-outline-danger"
-                                                    title="Delete employee"
-                                                    onclick="confirmDeleteEmployee(event, <?= $employeeId ?>, <?= json_encode($fullName, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/employee" class="d-inline">
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="employee_id" value="<?= $employeeId ?>">
+                                                    <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        title="Delete employee"
+                                                        onclick="return confirm(<?= json_encode(
+                                                            'Are you sure you want to delete employee "' . $fullName . '"?' . "\n\n" .
+                                                            'This action cannot be undone and will permanently remove all associated data.'
+                                                        ) ?>)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
@@ -231,11 +238,6 @@ ksort($branches);
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
-
-    <form id="deleteEmployeeForm" method="POST" action="<?= htmlspecialchars($base) ?>/admin/employee" style="display:none;">
-        <input type="hidden" name="action" value="delete">
-        <input type="hidden" name="employee_id" id="deleteEmployeeId">
-    </form>
 
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

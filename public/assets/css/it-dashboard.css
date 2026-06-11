@@ -1,0 +1,281 @@
+.it-dashboard-page .page-hero {
+  background: linear-gradient(135deg, #0d47a1 0%, #1565c0 55%, #42a5f5 100%);
+  border-radius: 0.85rem;
+  color: #fff;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0.35rem 1.25rem rgba(13, 71, 161, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+
+.it-dashboard-page .page-hero::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -5%;
+  width: 260px;
+  height: 260px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.it-dashboard-page .page-hero h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #fff;
+}
+
+.it-dashboard-page .page-hero p {
+  margin: 0;
+  opacity: 0.82;
+  font-size: 0.9rem;
+}
+
+.it-dashboard-page .hero-role {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.it-dashboard-page .hero-stat {
+  text-align: center;
+  padding: 0.7rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.it-dashboard-page .hero-stat .stat-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.it-dashboard-page .hero-stat .stat-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+  margin-top: 0.15rem;
+}
+
+.it-dashboard-page .section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #858796;
+  margin-bottom: 0.75rem;
+}
+
+.it-dashboard-page .personal-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.it-dashboard-page .personal-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem;
+  background: #fff;
+  border-radius: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.08);
+  border: 1px solid #eaecf4;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.it-dashboard-page .personal-stat-card:hover {
+  text-decoration: none;
+  color: inherit;
+  transform: translateY(-2px);
+  box-shadow: 0 0.35rem 1.1rem rgba(58, 59, 69, 0.14);
+}
+
+.it-dashboard-page .personal-stat-card .stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.it-dashboard-page .personal-stat-card .stat-icon.icon-assets {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.it-dashboard-page .personal-stat-card .stat-icon.icon-tickets {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.it-dashboard-page .personal-stat-card .stat-icon.icon-ongoing {
+  background: #fff8e1;
+  color: #f57f17;
+}
+
+.it-dashboard-page .personal-stat-card .stat-number {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #3a3b45;
+  line-height: 1.1;
+}
+
+.it-dashboard-page .personal-stat-card .stat-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #858796;
+}
+
+.it-dashboard-page .quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.it-dashboard-page .quick-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 2rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: none;
+}
+
+.it-dashboard-page .quick-action-btn:hover {
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+}
+
+.it-dashboard-page .quick-action-btn.qa-primary { background: #4e73df; color: #fff; }
+.it-dashboard-page .quick-action-btn.qa-success { background: #1cc88a; color: #fff; }
+.it-dashboard-page .quick-action-btn.qa-info { background: #36b9cc; color: #fff; }
+.it-dashboard-page .quick-action-btn.qa-warning { background: #f6c23e; color: #fff; }
+.it-dashboard-page .quick-action-btn.qa-secondary { background: #858796; color: #fff; }
+
+.it-dashboard-page .dash-card {
+  border: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.1) !important;
+  height: 100%;
+}
+
+.it-dashboard-page .dash-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid #eaecf4;
+  padding: 1rem 1.25rem;
+}
+
+.it-dashboard-page .dash-card .card-header h6 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #3a3b45;
+  margin: 0;
+}
+
+.it-dashboard-page .dash-card .card-header i {
+  color: #1565c0;
+  margin-right: 0.4rem;
+}
+
+.it-dashboard-page .chart-wrap {
+  height: 300px;
+  position: relative;
+}
+
+.it-dashboard-page .chart-caption {
+  font-size: 0.78rem;
+  color: #858796;
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+.it-dashboard-page .empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #858796;
+}
+
+.it-dashboard-page .empty-state i {
+  font-size: 2rem;
+  opacity: 0.35;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Dark mode */
+html.it-dark .it-dashboard-page .section-label {
+  color: var(--it-text-muted);
+}
+
+html.it-dark .it-dashboard-page .personal-stat-card {
+  background: var(--it-surface);
+  border-color: var(--it-border);
+  box-shadow: 0 0.1rem 0.65rem var(--it-shadow);
+}
+
+html.it-dark .it-dashboard-page .personal-stat-card:hover {
+  background: var(--it-surface-2);
+  box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.35);
+}
+
+html.it-dark .it-dashboard-page .personal-stat-card .stat-number {
+  color: var(--it-text);
+}
+
+html.it-dark .it-dashboard-page .personal-stat-card .stat-title {
+  color: var(--it-text-muted);
+}
+
+html.it-dark .it-dashboard-page .dash-card .card-header {
+  background: var(--it-surface-2);
+  border-bottom-color: var(--it-border);
+}
+
+html.it-dark .it-dashboard-page .dash-card .card-header h6 {
+  color: var(--it-text);
+}
+
+html.it-dark .it-dashboard-page .dash-card .card-header i {
+  color: var(--it-primary);
+}
+
+@media (max-width: 991px) {
+  .it-dashboard-page .hero-stat {
+    margin-top: 0.5rem;
+  }
+
+  .it-dashboard-page .personal-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 575px) {
+  .it-dashboard-page .personal-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}

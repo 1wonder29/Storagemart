@@ -489,9 +489,9 @@ class AdminController extends AuthController
                                 'deleted_by' => $_SESSION['username'] ?? 'Unknown'
                             ]);
                         
-                        $_SESSION['flash'] = "Employee #{$employeeId} has been permanently deleted and logged in audit trail.";
+                        $_SESSION['flash_success'] = "Employee #{$employeeId} has been permanently deleted and logged in audit trail.";
                     } else {
-                        $_SESSION['flash'] = "Failed to delete employee #{$employeeId}.";
+                        $_SESSION['flash_error'] = "Failed to delete employee #{$employeeId}. They may have related tickets or records that must be removed first.";
                     }
                 }
 

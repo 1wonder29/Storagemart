@@ -25,6 +25,60 @@ class Asset extends BaseModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function fetchBranches(): array {
+        $sql = "SELECT branch_id, branchCode, branchName, branchAddress, datecreated
+                FROM {$this->tblbranch}
+                ORDER BY branchName ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function fetchBranchById(int $branchId): ?array
+    {
+        $sql = "SELECT branch_id, branchCode, branchName, branchAddress, datecreated, createdby
+                FROM {$this->tblbranch}
+                WHERE branch_id = :branch_id
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':branch_id' => $branchId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    public function updateBranch(int $branchId, string $branchName, string $branchCode, string $branchAddress): bool
+    {
+        $sql = "UPDATE {$this->tblbranch}
+                SET branchCode = :branchCode,
+                    branchName = :branchName,
+                    branchAddress = :branchAddress
+                WHERE branch_id = :branch_id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([
+            ':branchCode'    => $branchCode,
+            ':branchName'    => $branchName,
+            ':branchAddress' => $branchAddress,
+            ':branch_id'     => $branchId,
+        ]);
+    }
+
+    public function isBranchInUse(int $branchId): bool
+    {
+        $sql = "SELECT
+                    (SELECT COUNT(*) FROM {$this->tblemployee} WHERE branch_id = :branch_id) +
+                    (SELECT COUNT(*) FROM {$this->tblassets} WHERE branch_id = :branch_id) AS usage_count";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':branch_id' => $branchId]);
+        return (int) ($stmt->fetchColumn() ?: 0) > 0;
+    }
+
+    public function deleteBranch(int $branchId): bool
+    {
+        $sql = "DELETE FROM {$this->tblbranch} WHERE branch_id = :branch_id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([':branch_id' => $branchId]);
+    }
+
     public function addBranch(string $branchName, string $branchCode, string $branchAddress, string $createdBy): ?int
     {
         $sql = "

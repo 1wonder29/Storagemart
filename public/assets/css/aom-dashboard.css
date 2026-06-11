@@ -1,0 +1,277 @@
+.aom-dashboard-page .page-hero {
+  background: linear-gradient(135deg, #1a237e 0%, #3949ab 55%, #5c6bc0 100%);
+  border-radius: 0.85rem;
+  color: #fff;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0.35rem 1.25rem rgba(26, 35, 126, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+
+.aom-dashboard-page .page-hero::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -5%;
+  width: 260px;
+  height: 260px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.aom-dashboard-page .page-hero h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #fff;
+}
+
+.aom-dashboard-page .page-hero p {
+  margin: 0;
+  opacity: 0.82;
+  font-size: 0.9rem;
+}
+
+.aom-dashboard-page .hero-stat {
+  text-align: center;
+  padding: 0.7rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.aom-dashboard-page .hero-stat .stat-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.aom-dashboard-page .hero-stat .stat-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+  margin-top: 0.15rem;
+}
+
+.aom-dashboard-page .quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.aom-dashboard-page .quick-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 2rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: none;
+}
+
+.aom-dashboard-page .quick-action-btn:hover {
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+}
+
+.aom-dashboard-page .quick-action-btn.qa-primary {
+  background: #4e73df;
+  color: #fff;
+}
+
+.aom-dashboard-page .quick-action-btn.qa-success {
+  background: #1cc88a;
+  color: #fff;
+}
+
+.aom-dashboard-page .quick-action-btn.qa-info {
+  background: #36b9cc;
+  color: #fff;
+}
+
+.aom-dashboard-page .dash-card {
+  border: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.1) !important;
+  height: 100%;
+}
+
+.aom-dashboard-page .dash-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid #eaecf4;
+  padding: 1rem 1.25rem;
+}
+
+.aom-dashboard-page .dash-card .card-header h6 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #3a3b45;
+  margin: 0;
+}
+
+.aom-dashboard-page .dash-card .card-header i {
+  color: #4e73df;
+  margin-right: 0.4rem;
+}
+
+.aom-dashboard-page .branch-item {
+  display: flex;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #f0f2f8;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.aom-dashboard-page .branch-item:last-child {
+  border-bottom: none;
+}
+
+.aom-dashboard-page .branch-item:hover {
+  background-color: #f8f9ff;
+  text-decoration: none;
+  color: inherit;
+}
+
+.aom-dashboard-page .branch-item .branch-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 0.55rem;
+  background: linear-gradient(135deg, #e8eaf6, #c5cae9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.85rem;
+  flex-shrink: 0;
+}
+
+.aom-dashboard-page .branch-item .branch-icon i {
+  color: #3949ab;
+  font-size: 0.95rem;
+}
+
+.aom-dashboard-page .branch-item .branch-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #3a3b45;
+}
+
+.aom-dashboard-page .branch-item .branch-meta {
+  font-size: 0.78rem;
+  color: #858796;
+}
+
+.aom-dashboard-page .branch-item .branch-count {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #4e73df;
+  background: #f0f3ff;
+  padding: 0.25rem 0.65rem;
+  border-radius: 2rem;
+  white-space: nowrap;
+}
+
+.aom-dashboard-page .dash-card table {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.aom-dashboard-page .dash-card thead th {
+  background: #f1f3f9;
+  border-top: none;
+  border-bottom: 2px solid #d1d3e2;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5a5c69;
+  white-space: nowrap;
+}
+
+.aom-dashboard-page .dash-card tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.aom-dashboard-page .dash-card tbody tr:hover {
+  background-color: #f8f9ff;
+}
+
+.aom-dashboard-page .dash-card td {
+  vertical-align: middle;
+  border-color: #eaecf4;
+  padding: 0.85rem 0.75rem;
+}
+
+.aom-dashboard-page .ticket-id {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #4e73df;
+}
+
+.aom-dashboard-page .ticket-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.aom-dashboard-page .ticket-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.aom-dashboard-page .ticket-status.status-pending { background: #fff8e1; color: #f57f17; }
+.aom-dashboard-page .ticket-status.status-in-progress { background: #e3f2fd; color: #1565c0; }
+.aom-dashboard-page .ticket-status.status-resolved { background: #e8f5e9; color: #2e7d32; }
+.aom-dashboard-page .ticket-status.status-default { background: #e2e3e5; color: #383d41; }
+
+.aom-dashboard-page .btn-view-sm {
+  font-size: 0.72rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 2rem;
+  font-weight: 600;
+}
+
+.aom-dashboard-page .chart-wrap {
+  height: 260px;
+  position: relative;
+}
+
+.aom-dashboard-page .empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #858796;
+}
+
+.aom-dashboard-page .empty-state i {
+  font-size: 2rem;
+  opacity: 0.35;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+@media (max-width: 991px) {
+  .aom-dashboard-page .hero-stat {
+    margin-top: 0.5rem;
+  }
+}

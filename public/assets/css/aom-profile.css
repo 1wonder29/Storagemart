@@ -1,0 +1,242 @@
+.aom-profile-page .profile-hero {
+  background: linear-gradient(135deg, #1a237e 0%, #3949ab 55%, #5c6bc0 100%);
+  border-radius: 0.85rem;
+  color: #fff;
+  padding: 2rem 2.25rem;
+  margin-bottom: 1.75rem;
+  box-shadow: 0 0.35rem 1.25rem rgba(26, 35, 126, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+
+.aom-profile-page .profile-hero::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -8%;
+  width: 280px;
+  height: 280px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.aom-profile-page .profile-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.aom-profile-page .profile-avatar i {
+  font-size: 2.25rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.aom-profile-page .profile-hero h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+  color: #fff;
+}
+
+.aom-profile-page .profile-hero .profile-role {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin-bottom: 0.5rem;
+}
+
+.aom-profile-page .profile-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.aom-profile-page .profile-badge.badge-active {
+  background: rgba(76, 175, 80, 0.35);
+  border-color: rgba(129, 199, 132, 0.5);
+}
+
+.aom-profile-page .profile-badge.badge-inactive {
+  background: rgba(244, 67, 54, 0.3);
+  border-color: rgba(239, 154, 154, 0.5);
+}
+
+.aom-profile-page .hero-stat {
+  text-align: center;
+  padding: 0.75rem 1.1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  min-width: 110px;
+}
+
+.aom-profile-page .hero-stat .stat-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.aom-profile-page .hero-stat .stat-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+  margin-top: 0.15rem;
+}
+
+.aom-profile-page .profile-card {
+  border: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.1) !important;
+  height: 100%;
+}
+
+.aom-profile-page .profile-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid #eaecf4;
+  padding: 1rem 1.35rem;
+}
+
+.aom-profile-page .profile-card .card-header h6 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #3a3b45;
+  margin: 0;
+}
+
+.aom-profile-page .profile-card .card-header i {
+  color: #4e73df;
+  margin-right: 0.4rem;
+}
+
+.aom-profile-page .info-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #f0f2f8;
+}
+
+.aom-profile-page .info-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.aom-profile-page .info-row .info-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  background: #f0f3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 0.85rem;
+}
+
+.aom-profile-page .info-row .info-icon i {
+  font-size: 0.85rem;
+  color: #4e73df;
+}
+
+.aom-profile-page .info-row .info-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #858796;
+  margin-bottom: 0.15rem;
+}
+
+.aom-profile-page .info-row .info-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3a3b45;
+  word-break: break-word;
+}
+
+.aom-profile-page .branch-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f2f8;
+}
+
+.aom-profile-page .branch-item:last-child {
+  border-bottom: none;
+}
+
+.aom-profile-page .branch-item .branch-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #e8eaf6, #c5cae9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.85rem;
+  flex-shrink: 0;
+}
+
+.aom-profile-page .branch-item .branch-icon i {
+  color: #3949ab;
+  font-size: 0.9rem;
+}
+
+.aom-profile-page .branch-item .branch-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #3a3b45;
+}
+
+.aom-profile-page .branch-item .branch-meta {
+  font-size: 0.78rem;
+  color: #858796;
+}
+
+.aom-profile-page .branch-item .branch-count {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #4e73df;
+  background: #f0f3ff;
+  padding: 0.25rem 0.6rem;
+  border-radius: 2rem;
+  white-space: nowrap;
+}
+
+.aom-profile-page .empty-branches {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #858796;
+}
+
+.aom-profile-page .empty-branches i {
+  font-size: 2rem;
+  opacity: 0.35;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+@media (max-width: 767.98px) {
+  .aom-profile-page .profile-hero {
+    padding: 1.5rem;
+  }
+
+  .aom-profile-page .hero-stat {
+    min-width: 90px;
+    padding: 0.6rem 0.75rem;
+  }
+}

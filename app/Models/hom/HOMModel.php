@@ -18,6 +18,131 @@ class HOMModel
     }
 
     /**
+     * Get all Operations employees and HOM staff for branch management.
+     *
+     * @return array
+     */
+    public function getOperationsEmployees()
+    {
+        $query = "
+            SELECT
+                e.employee_id,
+                e.firstname,
+                e.lastname,
+                e.email,
+                e.position,
+                e.department,
+                e.branch_id,
+                b.branchName,
+                b.branchCode,
+                a.usertype,
+                a.status,
+                aom.employee_id AS aom_id,
+                aom.firstname AS aom_firstname,
+                aom.lastname AS aom_lastname,
+                oea.assignment_id AS hom_assignment_id,
+                oea.is_active,
+                oea.assignment_date
+            FROM tblemployee e
+            JOIN tblaccounts a ON e.account_id = a.account_id
+            LEFT JOIN tblbranch b ON e.branch_id = b.branch_id
+            LEFT JOIN tblhom_employee_assignments oea ON e.employee_id = oea.employee_id AND oea.is_active = 1
+            LEFT JOIN tblemployee aom ON oea.aom_id = aom.employee_id
+            WHERE UPPER(a.status) = 'ACTIVE'
+              AND (
+                    e.department = 'Operations'
+                    OR UPPER(a.usertype) = 'HOM'
+              )
+            ORDER BY e.lastname, e.firstname
+        ";
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Transfer an employee to a different branch.
+     *
+     * @param int $employeeId
+     * @param int $newBranchId
+     * @return array{success:bool,message:string,old_branch_id?:int,new_branch_id?:int,employee_name?:string,old_branch_name?:string,new_branch_name?:string}
+     */
+    public function transferEmployeeBranch(int $employeeId, int $newBranchId)
+    {
+        if ($employeeId <= 0 || $newBranchId <= 0) {
+            return ['success' => false, 'message' => 'Invalid employee or branch.'];
+        }
+
+        $employeeQuery = "
+            SELECT
+                e.employee_id,
+                e.firstname,
+                e.lastname,
+                e.branch_id,
+                e.department,
+                b.branchName AS current_branch_name,
+                a.usertype
+            FROM tblemployee e
+            JOIN tblaccounts a ON e.account_id = a.account_id
+            LEFT JOIN tblbranch b ON e.branch_id = b.branch_id
+            WHERE e.employee_id = :employee_id
+              AND UPPER(a.status) = 'ACTIVE'
+              AND (
+                    e.department = 'Operations'
+                    OR UPPER(a.usertype) = 'HOM'
+              )
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($employeeQuery);
+        $stmt->execute([':employee_id' => $employeeId]);
+        $employee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$employee) {
+            return ['success' => false, 'message' => 'Employee not found or not eligible for branch transfer.'];
+        }
+
+        $oldBranchId = (int) ($employee['branch_id'] ?? 0);
+        if ($oldBranchId === $newBranchId) {
+            return ['success' => false, 'message' => 'Employee is already assigned to this branch.'];
+        }
+
+        $branchStmt = $this->pdo->prepare('SELECT branch_id, branchName FROM tblbranch WHERE branch_id = :branch_id LIMIT 1');
+        $branchStmt->execute([':branch_id' => $newBranchId]);
+        $newBranch = $branchStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$newBranch) {
+            return ['success' => false, 'message' => 'Selected branch does not exist.'];
+        }
+
+        try {
+            $updateStmt = $this->pdo->prepare('UPDATE tblemployee SET branch_id = :branch_id WHERE employee_id = :employee_id LIMIT 1');
+            $updated = $updateStmt->execute([
+                ':branch_id' => $newBranchId,
+                ':employee_id' => $employeeId,
+            ]);
+
+            if (!$updated) {
+                return ['success' => false, 'message' => 'Failed to update employee branch.'];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Employee transferred successfully.',
+                'old_branch_id' => $oldBranchId,
+                'new_branch_id' => $newBranchId,
+                'employee_name' => trim(($employee['firstname'] ?? '') . ' ' . ($employee['lastname'] ?? '')),
+                'old_branch_name' => $employee['current_branch_name'] ?? 'N/A',
+                'new_branch_name' => $newBranch['branchName'] ?? 'N/A',
+            ];
+        } catch (Exception $e) {
+            error_log('HOMModel::transferEmployeeBranch error: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'An error occurred while transferring the employee.'];
+        }
+    }
+
+    /**
      * Get all employees with AOM assignments
      * 
      * @param int|null $homEmployeeId Filter by HOM (optional)

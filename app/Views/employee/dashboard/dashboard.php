@@ -1,168 +1,236 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$displayName = trim($loggedFirstname ?? '') ?: 'Employee';
+$position = trim($loggedPosition ?? '') ?: 'Employee';
+
+$pendingTickets = (int)($pendingTickets ?? 0);
+$inProgressTickets = (int)($inProgressTickets ?? 0);
+$resolvedTickets = (int)($resolvedTickets ?? 0);
+$totalTickets = (int)($totalTickets ?? 0);
+$assetsCount = (int)($assetsCount ?? 0);
+
+$hasTicketChart = ($pendingTickets + $inProgressTickets + $resolvedTickets) > 0;
+$hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | Admin Dashboard</title>
+    <title>Storage Mart | Employee Dashboard</title>
 
-    <!-- Custom fonts for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
-    <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/employee-dashboard.css" rel="stylesheet">
 </head>
-
 <body id="page-top">
 
-    <!-- Page Wrapper -->
-    <div id="wrapper">
-    <?php 
+<div id="wrapper">
+    <?php
     $activePage = 'dashboard';
-    require_once __DIR__ . '/../../partials/employee/sidebar_topbar.php';?>
-                <!-- Page Content -->
-            <!-- Page Content -->
-            <div class="container-fluid">
-                <h1 class="h3 mb-4 text-gray-800">Dashboard</h1>
+    require_once __DIR__ . '/../../partials/employee/sidebar_topbar.php';
+    ?>
 
-                <div class="row">
-                    <!-- Assets Card -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Your Assets</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $assetsCount ?></div>
+    <div class="container-fluid employee-dashboard-page">
+
+        <!-- Hero -->
+        <div class="page-hero">
+            <div class="row align-items-center">
+                <div class="col-lg-5">
+                    <h1><i class="fas fa-tachometer-alt mr-2"></i>Dashboard</h1>
+                    <p>Welcome back, <?= htmlspecialchars($displayName) ?> — track your assets and support tickets.</p>
+                    <?php if ($position !== ''): ?>
+                        <span class="hero-role"><?= htmlspecialchars($position) ?></span>
+                    <?php endif; ?>
+                </div>
+                <div class="col-lg-7 mt-3 mt-lg-0">
+                    <div class="row">
+                        <div class="col-6 col-md-3 mb-2 mb-md-0">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= $assetsCount ?></div>
+                                <div class="stat-label">Your Assets</div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Total Tickets -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-success shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Tickets</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $totalTickets ?></div>
+                        <div class="col-6 col-md-3 mb-2 mb-md-0">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= $totalTickets ?></div>
+                                <div class="stat-label">Total Tickets</div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Pending Tickets -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-warning shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Tickets</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $pendingTickets ?></div>
+                        <div class="col-6 col-md-3">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= $pendingTickets ?></div>
+                                <div class="stat-label">Pending</div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Resolved Tickets -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-info shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Resolved</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $resolvedTickets ?></div>
+                        <div class="col-6 col-md-3">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= $resolvedTickets ?></div>
+                                <div class="stat-label">Resolved</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="row">
-
-                    <!-- Ticket Status Pie Chart -->
-                    <div class="col-xl-4 col-lg-5">
-                        <div class="card shadow mb-4">
-
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">
-                                    Ticket Status Overview
-                                </h6>
-                            </div>
-
-                            <div class="card-body text-center">
-                                <div style="height:300px;">
-                                    <canvas id="ticketChart"></canvas>
-                                </div>
-
-                                <hr>
-
-                                <span class="small text-muted">
-                                    Ticket distribution by status
-                                </span>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <!-- Ticket Resolution Time Chart -->
-                    <div class="col-xl-8 col-lg-7">
-                        <div class="card shadow mb-4">
-
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">
-                                    Ticket Resolution Overview
-                                </h6>
-                            </div>
-
-                            <div class="card-body text-center">
-                                <div style="height:300px;">
-                                    <canvas id="myAreaChart"></canvas>
-                                </div>
-
-                                <hr>
-
-                                <span class="small text-muted">
-                                    Ticket resolution time (hours)
-                                </span>
-                            </div>
-
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- End Page Content -->
             </div>
         </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="<?= htmlspecialchars($base) ?>/employee/assets" class="quick-action-btn qa-primary">
+                <i class="fas fa-archive"></i> My Assets
+            </a>
+            <a href="<?= htmlspecialchars($base) ?>/employee/tickets" class="quick-action-btn qa-success">
+                <i class="fas fa-ticket-alt"></i> My Tickets
+            </a>
+            <a href="<?= htmlspecialchars($base) ?>/employee/tickets/create" class="quick-action-btn qa-info">
+                <i class="fas fa-plus"></i> Create Ticket
+            </a>
+            <a href="<?= htmlspecialchars($base) ?>/employee/profile" class="quick-action-btn qa-secondary">
+                <i class="fas fa-user"></i> My Profile
+            </a>
+        </div>
+
+        <!-- Charts -->
+        <div class="row mb-4">
+            <div class="col-xl-4 col-lg-5 mb-4 mb-xl-0">
+                <div class="card dash-card shadow">
+                    <div class="card-header">
+                        <h6><i class="fas fa-chart-pie"></i>Ticket Status Overview</h6>
+                    </div>
+                    <div class="card-body">
+                        <?php if ($hasTicketChart): ?>
+                            <div class="chart-wrap">
+                                <canvas id="ticketChart"></canvas>
+                            </div>
+                            <p class="chart-caption mb-0">Distribution of your tickets by status</p>
+                        <?php else: ?>
+                            <div class="empty-state">
+                                <i class="fas fa-chart-pie"></i>
+                                <p class="mb-0">No tickets yet.
+                                    <a href="<?= htmlspecialchars($base) ?>/employee/tickets/create">Create one</a>
+                                </p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-8 col-lg-7">
+                <div class="card dash-card shadow">
+                    <div class="card-header">
+                        <h6><i class="fas fa-chart-line"></i>Ticket Resolution Overview</h6>
+                    </div>
+                    <div class="card-body">
+                        <?php if ($hasResolutionChart): ?>
+                            <div class="chart-wrap">
+                                <canvas id="myAreaChart"></canvas>
+                            </div>
+                            <p class="chart-caption mb-0">Resolution time per ticket (hours converted to days)</p>
+                        <?php else: ?>
+                            <div class="empty-state">
+                                <i class="fas fa-chart-line"></i>
+                                <p class="mb-0">No resolution data available yet.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-<!--This is flash card -->
+    <!-- End of Page Content -->
 
+    </div>
+    <!-- End of Main Content -->
 
+</div>
+<!-- End of Content Wrapper -->
 
-    <!-- Scroll to Top -->
-    <a class="scroll-to-top rounded" href="#page-top">
-        <i class="fas fa-angle-up"></i>
-    </a>
-    <!-- Scripts -->
-    <script>
-        window.ticketData = [
-            <?= (int)$pendingTickets ?>,
-            <?= (int)$inProgressTickets ?>,
-            <?= (int)$resolvedTickets ?>
-        ];
-    </script>
-        <script>
+</div>
+<!-- End of Page Wrapper -->
+
+<a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+</a>
+
+<script>
+    window.ticketData = [
+        <?= $pendingTickets ?>,
+        <?= $inProgressTickets ?>,
+        <?= $resolvedTickets ?>
+    ];
     window.ticketResolution = {
-        labels: <?= json_encode($resolutionLabels) ?>,
-        data: <?= json_encode($resolutionData) ?>
+        labels: <?= json_encode($resolutionLabels ?? []) ?>,
+        data: <?= json_encode($resolutionData ?? []) ?>
     };
-    </script>
+</script>
 
-    <script src="<?=htmlspecialchars ($base)?>/assets/vendor/jquery/jquery.min.js"></script>
-    <script src="<?=htmlspecialchars ($base)?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="<?=htmlspecialchars ($base)?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <script src="<?=htmlspecialchars ($base)?>/assets/js/sb-admin-2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Dashboard chart -->
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/dashboard_chart.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/dashboard_areachart.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/author/ouaaa.js"></script>
-    <?php require __DIR__ . '/../../partials/flash_modal.php'; ?> 
+<?php if ($hasTicketChart): ?>
+<script>
+(function () {
+    var ctx = document.getElementById('ticketChart');
+    if (!ctx || !window.ticketData) return;
+
+    var total = window.ticketData.reduce(function (a, b) { return a + b; }, 0);
+
+    var centerText = {
+        id: 'centerText',
+        afterDraw: function (chart) {
+            var meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data || !meta.data.length) return;
+            var c = chart.ctx;
+            var pt = meta.data[0];
+            c.save();
+            c.font = 'bold 22px Nunito';
+            c.fillStyle = '#5a5c69';
+            c.textAlign = 'center';
+            c.textBaseline = 'middle';
+            c.fillText(total, pt.x, pt.y);
+            c.restore();
+        }
+    };
+
+    new Chart(ctx.getContext('2d'), {
+        type: 'doughnut',
+        plugins: [centerText],
+        data: {
+            labels: ['Pending', 'In Progress', 'Resolved'],
+            datasets: [{
+                data: window.ticketData,
+                backgroundColor: ['#f6c23e', '#36b9cc', '#1cc88a'],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { padding: 14, usePointStyle: true, font: { size: 11 } }
+                }
+            }
+        }
+    });
+})();
+</script>
+<?php endif; ?>
+
+<?php if ($hasResolutionChart): ?>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/demo/dashboard_areachart.js"></script>
+<?php endif; ?>
+
+<script src="<?= htmlspecialchars($base) ?>/assets/author/ouaaa.js"></script>
+<?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 </html>

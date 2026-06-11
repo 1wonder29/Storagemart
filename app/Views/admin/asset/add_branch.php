@@ -1,5 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$branches = $branches ?? [];
+$totalBranches = count($branches);
 ?><html lang="en">
 
 <head>
@@ -23,7 +25,7 @@ $base = rtrim(BASE_URL, '/');
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/input.css" rel="stylesheet">
     <!-- Custom styles for this page -->
-    <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.bootstrap4.min.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 
 </head>
 
@@ -39,8 +41,18 @@ $base = rtrim(BASE_URL, '/');
                 <div class="container-fluid admin-assets-page">
 
                     <div class="page-hero hero-form">
-                        <h1><i class="fas fa-map-marker-alt mr-2"></i>Add Branch</h1>
-                        <p>Register a new branch location for asset tracking and employee assignment.</p>
+                        <div class="row align-items-center">
+                            <div class="col-lg-8">
+                                <h1><i class="fas fa-map-marker-alt mr-2"></i>Add Branch</h1>
+                                <p>Register a new branch location for asset tracking and employee assignment.</p>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="hero-stat mt-3 mt-lg-0">
+                                    <div class="stat-value"><?= (int) $totalBranches ?></div>
+                                    <div class="stat-label">Branches</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="card form-card shadow mb-4">
@@ -78,7 +90,72 @@ $base = rtrim(BASE_URL, '/');
                                     </form>
                         </div>
                     </div>
-                    
+
+                    <div class="card asset-list-card shadow mb-4">
+                        <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-list-ul mr-1"></i> Branch List
+                            </h6>
+                            <div class="card-header-actions">
+                                <span class="badge badge-info"><?= (int) $totalBranches ?> branch<?= $totalBranches === 1 ? '' : 'es' ?></span>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <?php if (empty($branches)): ?>
+                                <div class="empty-state">
+                                    <i class="fas fa-map-marker-alt d-block"></i>
+                                    No branches found. Add your first branch above.
+                                </div>
+                            <?php else: ?>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0" id="branchList" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Branch Name</th>
+                                            <th>Address</th>
+                                            <th>Date Created</th>
+                                            <th class="text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($branches as $branch): ?>
+                                            <tr>
+                                                <td>
+                                                    <span class="asset-number"><?= htmlspecialchars((string) ($branch['branchCode'] ?? '')) ?></span>
+                                                </td>
+                                                <td>
+                                                    <span class="branch-pill">
+                                                        <i class="fas fa-map-marker-alt"></i>
+                                                        <?= htmlspecialchars((string) ($branch['branchName'] ?? '')) ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="desc-text" style="max-width:none;"><?= htmlspecialchars((string) ($branch['branchAddress'] ?? '')) ?></div>
+                                                </td>
+                                                <td><?= htmlspecialchars((string) ($branch['datecreated'] ?? '—')) ?></td>
+                                                <td class="text-right">
+                                                    <div class="action-btn-group">
+                                                        <a href="<?= htmlspecialchars($base) ?>/admin/assets/branch/update?branch_id=<?= (int) ($branch['branch_id'] ?? 0) ?>"
+                                                           class="btn btn-sm btn-outline-secondary" title="Edit branch">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <a href="<?= htmlspecialchars($base) ?>/admin/assets/branch/delete?branch_id=<?= (int) ($branch['branch_id'] ?? 0) ?>"
+                                                           class="btn btn-sm btn-outline-danger" title="Delete branch"
+                                                           onclick="return confirm('Are you sure you want to delete this branch?');">
+                                                            <i class="fas fa-trash"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
                 </div>
                 <!-- /.container-fluid -->
 
@@ -128,11 +205,10 @@ $base = rtrim(BASE_URL, '/');
     <!-- Custom scripts for all pages-->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
 
-    <!-- Page level plugins -->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.bootstrap4.min.js"></script>
-    <!-- Page level custom scripts -->
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-assets-branches.js"></script>
+    <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 
 </html>
