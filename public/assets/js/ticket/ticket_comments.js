@@ -128,11 +128,13 @@
 
     const $list = $section.find('.ticket-comments-list');
     $list.html('<div class="text-center text-muted py-3 ticket-comments-loading"><i class="fas fa-spinner fa-spin"></i> Loading comments...</div>');
+    $section.data('comment-loading', true);
 
     $.getJSON(baseUrl + '/ticket-comments/fetch', { ticket_id: ticketId })
       .done(function (res) {
         if (res && res.success) {
           renderComments($section, res.comments || []);
+          $section.data('comments-ready', true);
           if (typeof res.canPost !== 'undefined') {
             $section.data('can-post', res.canPost ? '1' : '0');
             if (!res.canPost) {
@@ -147,6 +149,9 @@
       })
       .fail(function () {
         $list.html('<div class="text-center text-danger py-3">Failed to load comments.</div>');
+      })
+      .always(function () {
+        $section.data('comment-loading', false);
       });
   }
 
@@ -187,7 +192,11 @@
         if (res && res.success) {
           $input.val('');
           showAlert($section, 'success', res.message || 'Comment posted.');
-          loadComments($section);
+          if (res.comment) {
+            appendComments($section, [res.comment]);
+          } else {
+            loadComments($section);
+          }
           setTimeout(function () { hideAlert($section); }, 2500);
         } else {
           showAlert($section, 'danger', (res && res.message) ? res.message : 'Failed to post comment.');
@@ -231,25 +240,55 @@
       const sinceId = parseInt($section.data('last-comment-id'), 10) || 0;
       const baseUrl = getBaseUrl($section);
 
-      if (!ticketId || ticketId <= 0 || sinceId <= 0) {
+      if (!ticketId || ticketId <= 0) {
         return;
       }
 
-      if ($section.data('comment-polling')) {
+      if ($section.data('comment-loading') || $section.data('comment-polling')) {
         return;
       }
+
       $section.data('comment-polling', true);
 
-      $.getJSON(baseUrl + '/ticket-comments/fetch', { ticket_id: ticketId, since_id: sinceId })
+      const params = { ticket_id: ticketId };
+      if (sinceId > 0) {
+        params.since_id = sinceId;
+      }
+
+      $.getJSON(baseUrl + '/ticket-comments/fetch', params)
         .done(function (res) {
-          if (res && res.success && res.partial && res.comments && res.comments.length) {
-            appendComments($section, res.comments);
+          if (!res || !res.success) {
+            return;
           }
+
+          const comments = res.comments || [];
+          if (!comments.length) {
+            return;
+          }
+
+          if (sinceId > 0) {
+            appendComments($section, comments);
+            return;
+          }
+
+          // Empty thread on this side — IT (or anyone) posted the first/new comments
+          renderComments($section, comments);
         })
         .always(function () {
           $section.data('comment-polling', false);
         });
     });
+  }
+
+  var commentPollStarted = false;
+
+  function startCommentPolling() {
+    if (commentPollStarted || !document.querySelector('.ticket-comments-section')) {
+      return;
+    }
+    commentPollStarted = true;
+    pollComments();
+    window.setInterval(pollComments, 2000);
   }
 
   window.TicketComments = {
@@ -270,11 +309,13 @@
 
       bindSection($section);
       loadComments($section);
+      startCommentPolling();
     },
     poll: pollComments,
   };
 
   $(function () {
     TicketComments.init('.ticket-comments-section');
+    startCommentPolling();
   });
 })(window, jQuery);

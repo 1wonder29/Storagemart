@@ -17,6 +17,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/searchable-select.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -66,7 +67,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                         <?php endforeach; ?>
                                     <?php endif; ?>
                                 </select>
-                                <small class="form-text text-muted d-block mt-1">Choose an Operations employee to file this ticket for.</small>
+                                <small class="form-text text-muted d-block mt-1">Type a name to search, then select an Operations employee to file this ticket for.</small>
                             </div>
 
                             <div class="mb-3">
@@ -137,11 +138,17 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/searchable-select.js"></script>
 <script>
 (function () {
     var employeeSelect = document.getElementById('employee_id');
     var branchSelect = document.getElementById('branch_id');
     if (!employeeSelect || !branchSelect) return;
+
+    initSearchableSelect(employeeSelect, {
+        placeholder: '-- Type to search employee --',
+        noResultsText: 'No employees found'
+    });
 
     function syncBranchFromEmployee() {
         var option = employeeSelect.options[employeeSelect.selectedIndex];

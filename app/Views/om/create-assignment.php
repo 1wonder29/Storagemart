@@ -1,5 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$routePrefix = (($user_role ?? '') === 'HOM') ? 'hom' : 'om';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -16,6 +17,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/searchable-select.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -101,7 +103,7 @@ $base = rtrim(BASE_URL, '/');
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-check"></i> Create Assignment
                             </button>
-                            <a href="<?= htmlspecialchars($base) ?>/om/assignments" class="btn btn-secondary">
+                            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/assignments" class="btn btn-secondary">
                                 <i class="fas fa-times"></i> Cancel
                             </a>
                         </div>
@@ -134,6 +136,18 @@ $base = rtrim(BASE_URL, '/');
 
 <!-- Custom scripts for all pages-->
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/searchable-select.js"></script>
+<script>
+(function () {
+    var employeeSelect = document.getElementById('employee_id');
+    if (!employeeSelect) return;
+
+    initSearchableSelect(employeeSelect, {
+        placeholder: '-- Type to search employee --',
+        noResultsText: 'No employees found'
+    });
+})();
+</script>
 
 </body>
 </html>

@@ -354,12 +354,6 @@
       .catch(function () { /* silent */ });
   }
 
-  function pollComments() {
-    if (window.TicketComments && typeof window.TicketComments.poll === 'function') {
-      window.TicketComments.poll();
-    }
-  }
-
   function startPolling() {
     if (!baseUrl()) return;
 
@@ -368,17 +362,7 @@
     pollNotifications();
     window.setInterval(pollNotifications, POLL.notifications);
 
-    function startCommentPolling() {
-      if (!document.querySelector('.ticket-comments-section')) return;
-      pollComments();
-      window.setInterval(pollComments, POLL.comments);
-    }
-
-    if (document.querySelector('.ticket-comments-section')) {
-      startCommentPolling();
-    } else {
-      document.addEventListener('DOMContentLoaded', startCommentPolling);
-    }
+    // Comment polling is handled by ticket_comments.js (needs jQuery + initial load)
 
     if (document.querySelector('.ticket-realtime-table, tr[data-ticket-id], [data-realtime-ticket-detail]')) {
       window.setTimeout(pollTickets, 3000);

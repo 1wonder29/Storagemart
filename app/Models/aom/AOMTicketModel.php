@@ -9,6 +9,8 @@ require_once __DIR__ . '/../admin/BaseModel.php';
  */
 class AOMTicketModel extends BaseModel
 {
+    private const OPERATIONS_DEPARTMENT = 'Operations';
+
     protected $tbltickets = 'tbltickets';
     protected $tblticket_history = 'tblticket_history';
     protected $tblemployee = 'tblemployee';
@@ -135,13 +137,20 @@ class AOMTicketModel extends BaseModel
             JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
             WHERE t.ticket_id = :ticket_id
             AND (
-                t.branch_id IN (
-                    SELECT branch_id FROM tblbranch_assignments
-                    WHERE aom_employee_id = :aom_employee_id AND is_active = 1
+                (
+                    t.branch_id IN (
+                        SELECT branch_id FROM tblbranch_assignments
+                        WHERE aom_employee_id = :aom_employee_id AND is_active = 1
+                    )
+                    AND COALESCE(e.department, t.department) = :operations_dept
                 )
                 OR t.employee_id IN (
-                    SELECT employee_id FROM tblhom_employee_assignments
-                    WHERE aom_id = :aom_employee_id_2 AND is_active = 1
+                    SELECT oea.employee_id
+                    FROM tblhom_employee_assignments oea
+                    JOIN {$this->tblemployee} emp ON oea.employee_id = emp.employee_id
+                    WHERE oea.aom_id = :aom_employee_id_2
+                      AND oea.is_active = 1
+                      AND emp.department = :operations_dept_2
                 )
             )
         ";
@@ -150,7 +159,9 @@ class AOMTicketModel extends BaseModel
         $stmt->execute([
             'ticket_id' => $ticketId,
             'aom_employee_id' => $aom_employee_id,
-            'aom_employee_id_2' => $aom_employee_id
+            'aom_employee_id_2' => $aom_employee_id,
+            'operations_dept' => self::OPERATIONS_DEPARTMENT,
+            'operations_dept_2' => self::OPERATIONS_DEPARTMENT,
         ]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -296,6 +307,7 @@ class AOMTicketModel extends BaseModel
             LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
             JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
             WHERE t.branch_id = :branch_id
+              AND COALESCE(e.department, t.department) = :operations_dept
         ";
         
         if ($status) {
@@ -306,6 +318,7 @@ class AOMTicketModel extends BaseModel
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':branch_id', $branchId, PDO::PARAM_INT);
+        $stmt->bindValue(':operations_dept', self::OPERATIONS_DEPARTMENT);
         if ($status) {
             $stmt->bindValue(':status', $status);
         }

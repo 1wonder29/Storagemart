@@ -49,7 +49,9 @@ class AOMModel extends BaseModel
                     e.employee_id
                 FROM {$this->tblbranch_assignments} ba
                 JOIN {$this->tblbranch} b ON ba.branch_id = b.branch_id
-                LEFT JOIN {$this->tblemployee} e ON e.branch_id = b.branch_id
+                LEFT JOIN {$this->tblemployee} e
+                    ON e.branch_id = b.branch_id
+                   AND e.department = :operations_dept
                 WHERE ba.aom_employee_id = :aom_employee_id
                   AND ba.is_active = 1
 
@@ -67,6 +69,7 @@ class AOMModel extends BaseModel
                 JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
                 WHERE oea.aom_id = :aom_employee_id_2
                   AND oea.is_active = 1
+                  AND e.department = :operations_dept_2
             ) x
             GROUP BY x.branch_id, x.branchCode, x.branchName, x.branchAddress
             ORDER BY x.branchName ASC
@@ -75,7 +78,9 @@ class AOMModel extends BaseModel
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'aom_employee_id' => $aom_employee_id,
-            'aom_employee_id_2' => $aom_employee_id
+            'aom_employee_id_2' => $aom_employee_id,
+            'operations_dept' => self::OPERATIONS_DEPARTMENT,
+            'operations_dept_2' => self::OPERATIONS_DEPARTMENT,
         ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -178,17 +183,21 @@ class AOMModel extends BaseModel
                 WHERE oea.aom_id = :aom_employee_id
                   AND oea.is_active = 1
                   AND e.branch_id = :branch_id
+                  AND e.department = :operations_dept
                 LIMIT 1
             ";
             $stmt = $this->pdo->prepare($sql_verify_om);
-            $stmt->execute(['aom_employee_id' => $aom_employee_id, 'branch_id' => $branch_id]);
+            $stmt->execute([
+                'aom_employee_id' => $aom_employee_id,
+                'branch_id' => $branch_id,
+                'operations_dept' => self::OPERATIONS_DEPARTMENT,
+            ]);
             if (!$stmt->fetch()) {
                 return []; // Unauthorized access
             }
         }
 
-        // If branch is assigned directly, AOM can see all employees in the branch.
-        // If branch is accessible only via OM assignments, return only employees assigned to this AOM.
+        // Operations employees only. Branches via OM assignments are limited to employees assigned to this AOM.
         $sql = "
             SELECT
                 e.employee_id,
@@ -337,6 +346,7 @@ class AOMModel extends BaseModel
                 SELECT branch_id FROM {$this->tblbranch_assignments}
                 WHERE aom_employee_id = :aom_employee_id AND is_active = 1
             )
+            AND COALESCE(e.department, t.department) = :operations_dept
             
             UNION
             
@@ -356,11 +366,15 @@ class AOMModel extends BaseModel
                 t.department,
                 t.category
             FROM {$this->tbltickets} t
-            LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
             JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
             WHERE t.employee_id IN (
-                SELECT employee_id FROM tblhom_employee_assignments
-                WHERE aom_id = :aom_employee_id_2 AND is_active = 1
+                SELECT oea.employee_id
+                FROM tblhom_employee_assignments oea
+                JOIN {$this->tblemployee} emp ON oea.employee_id = emp.employee_id
+                WHERE oea.aom_id = :aom_employee_id_2
+                  AND oea.is_active = 1
+                  AND emp.department = :operations_dept_2
             )
             
             ORDER BY date_filed DESC
@@ -370,6 +384,8 @@ class AOMModel extends BaseModel
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':aom_employee_id', $aom_employee_id, PDO::PARAM_INT);
         $stmt->bindValue(':aom_employee_id_2', $aom_employee_id, PDO::PARAM_INT);
+        $stmt->bindValue(':operations_dept', self::OPERATIONS_DEPARTMENT);
+        $stmt->bindValue(':operations_dept_2', self::OPERATIONS_DEPARTMENT);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -389,18 +405,27 @@ class AOMModel extends BaseModel
                 status,
                 COUNT(*) as count
             FROM (
-                SELECT status FROM {$this->tbltickets}
-                WHERE branch_id IN (
+                SELECT t.status
+                FROM {$this->tbltickets} t
+                LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+                WHERE t.branch_id IN (
                     SELECT branch_id FROM {$this->tblbranch_assignments}
                     WHERE aom_employee_id = :aom_employee_id AND is_active = 1
                 )
+                AND COALESCE(e.department, t.department) = :operations_dept
                 
                 UNION ALL
                 
-                SELECT status FROM {$this->tbltickets}
-                WHERE employee_id IN (
-                    SELECT employee_id FROM tblhom_employee_assignments
-                    WHERE aom_id = :aom_employee_id_2 AND is_active = 1
+                SELECT t.status
+                FROM {$this->tbltickets} t
+                JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+                WHERE t.employee_id IN (
+                    SELECT oea.employee_id
+                    FROM tblhom_employee_assignments oea
+                    JOIN {$this->tblemployee} emp ON oea.employee_id = emp.employee_id
+                    WHERE oea.aom_id = :aom_employee_id_2
+                      AND oea.is_active = 1
+                      AND emp.department = :operations_dept_2
                 )
             ) as all_tickets
             GROUP BY status
@@ -409,7 +434,9 @@ class AOMModel extends BaseModel
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'aom_employee_id' => $aom_employee_id,
-            'aom_employee_id_2' => $aom_employee_id
+            'aom_employee_id_2' => $aom_employee_id,
+            'operations_dept' => self::OPERATIONS_DEPARTMENT,
+            'operations_dept_2' => self::OPERATIONS_DEPARTMENT,
         ]);
         
         $result = [];
@@ -447,6 +474,7 @@ class AOMModel extends BaseModel
                       WHERE oea.aom_id = :aom_employee_id_2
                         AND oea.is_active = 1
                         AND e.branch_id = b.branch_id
+                        AND e.department = :operations_dept
                   )
               )
             LIMIT 1
@@ -456,7 +484,8 @@ class AOMModel extends BaseModel
         $stmt->execute([
             'aom_employee_id' => $aom_employee_id,
             'aom_employee_id_2' => $aom_employee_id,
-            'branch_id' => $branch_id
+            'branch_id' => $branch_id,
+            'operations_dept' => self::OPERATIONS_DEPARTMENT,
         ]);
         return (bool)$stmt->fetch();
     }

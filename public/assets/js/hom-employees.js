@@ -1,50 +1,41 @@
-(function () {
-    const branchFilter = document.getElementById('homBranchFilter');
-    const searchFilter = document.getElementById('homSearchFilter');
-    const clearFiltersBtn = document.getElementById('homClearFilters');
-    const tableRows = Array.from(document.querySelectorAll('#homEmployeesTable tbody tr'));
-    const transferButtons = document.querySelectorAll('.transfer-branch-btn');
-    const transferModal = $('#transferBranchModal');
-    const transferEmployeeId = document.getElementById('transferEmployeeId');
-    const transferEmployeeName = document.getElementById('transferEmployeeName');
-    const transferCurrentBranch = document.getElementById('transferCurrentBranch');
-    const transferBranchId = document.getElementById('transferBranchId');
+(function ($) {
+    'use strict';
 
-    function applyFilters() {
-        const branchValue = branchFilter ? branchFilter.value : '';
-        const searchValue = (searchFilter ? searchFilter.value : '').trim().toLowerCase();
-
-        tableRows.forEach((row) => {
-            const rowBranchId = String(row.dataset.branchId || '');
-            const rowSearch = row.dataset.search || '';
-            const matchesBranch = !branchValue || rowBranchId === branchValue;
-            const matchesSearch = !searchValue || rowSearch.includes(searchValue);
-            row.style.display = matchesBranch && matchesSearch ? '' : 'none';
-        });
+    function isTableInitialized(table) {
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable(table)) {
+            return true;
+        }
+        if (typeof DataTable !== 'undefined' && DataTable.isDataTable) {
+            return DataTable.isDataTable(table);
+        }
+        return false;
     }
 
-    if (branchFilter) {
-        branchFilter.addEventListener('change', applyFilters);
+    function getTableId(settings) {
+        return (
+            settings.sTableId ||
+            (settings.nTable && settings.nTable.id) ||
+            (settings.nTable && settings.nTable.getAttribute && settings.nTable.getAttribute('id')) ||
+            ''
+        );
     }
 
-    if (searchFilter) {
-        searchFilter.addEventListener('input', applyFilters);
+    function registerSearch(fn) {
+        if (typeof DataTable !== 'undefined' && DataTable.ext && DataTable.ext.search) {
+            DataTable.ext.search.push(fn);
+        } else if ($.fn.dataTable && $.fn.dataTable.ext && $.fn.dataTable.ext.search) {
+            $.fn.dataTable.ext.search.push(fn);
+        }
     }
 
-    if (clearFiltersBtn) {
-        clearFiltersBtn.addEventListener('click', function () {
-            if (branchFilter) {
-                branchFilter.value = '';
-            }
-            if (searchFilter) {
-                searchFilter.value = '';
-            }
-            applyFilters();
-        });
-    }
+    function initTransferButtons() {
+        const transferModal = $('#transferBranchModal');
+        const transferEmployeeId = document.getElementById('transferEmployeeId');
+        const transferEmployeeName = document.getElementById('transferEmployeeName');
+        const transferCurrentBranch = document.getElementById('transferCurrentBranch');
+        const transferBranchId = document.getElementById('transferBranchId');
 
-    transferButtons.forEach((button) => {
-        button.addEventListener('click', function () {
+        $(document).on('click', '.transfer-branch-btn', function () {
             const employeeId = this.dataset.employeeId || '';
             const employeeName = this.dataset.employeeName || '';
             const currentBranchId = this.dataset.currentBranchId || '';
@@ -68,5 +59,67 @@
 
             transferModal.modal('show');
         });
-    });
-})();
+    }
+
+    function initHomEmployeesTable() {
+        const $table = $('#homEmployeesTable');
+        if (!$table.length || !$table.find('tbody tr').length) {
+            initTransferButtons();
+            return;
+        }
+        if (isTableInitialized($table[0])) {
+            return;
+        }
+
+        const dt = new DataTable('#homEmployeesTable', {
+            fixedHeader: { header: true },
+            order: [[0, 'asc']],
+            pageLength: 10,
+            columnDefs: [{ targets: [5], orderable: false, searchable: false }],
+        });
+
+        let branchFilter = '';
+
+        registerSearch(function (settings, searchData, dataIndex) {
+            if (getTableId(settings) !== 'homEmployeesTable') {
+                return true;
+            }
+
+            const row = dt.row(dataIndex).node();
+            if (!row) {
+                return true;
+            }
+
+            const branchId = (row.getAttribute('data-branch-id') || '').trim();
+            if (branchFilter && branchId !== branchFilter) {
+                return false;
+            }
+            return true;
+        });
+
+        function redraw() {
+            dt.draw();
+        }
+
+        $('#homBranchFilter').on('change', function () {
+            branchFilter = ($(this).val() || '').trim();
+            redraw();
+        });
+
+        $('#homSearchFilter').on('input', function () {
+            dt.search($(this).val() || '').draw();
+        });
+
+        $('#homClearFilters').on('click', function () {
+            branchFilter = '';
+            $('#homBranchFilter').val('');
+            $('#homSearchFilter').val('');
+            dt.search('');
+            redraw();
+        });
+
+        initTransferButtons();
+    }
+
+    $(document).ready(initHomEmployeesTable);
+})(jQuery);
