@@ -103,7 +103,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover" id="ticketsTable">
+                        <table class="table table-sm table-hover ticket-realtime-table" id="aomTicketsTable">
                             <thead class="table-light">
                                 <tr>
                                     <th>Ticket #</th>
@@ -130,9 +130,12 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                         $fs = strtolower(trim((string)($ticket['status'] ?? '')));
                                         $fp = strtolower(trim((string)($ticket['priority'] ?? '')));
                                         ?>
-                                        <tr data-filter-branch="<?php echo htmlspecialchars($fb, ENT_QUOTES, 'UTF-8'); ?>"
+                                        <tr data-ticket-id="<?= (int) ($ticket['ticket_id'] ?? 0) ?>"
+                                            data-filter-branch="<?php echo htmlspecialchars($fb, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-filter-status="<?php echo htmlspecialchars($fs, ENT_QUOTES, 'UTF-8'); ?>"
-                                            data-filter-priority="<?php echo htmlspecialchars($fp, ENT_QUOTES, 'UTF-8'); ?>">
+                                            data-filter-priority="<?php echo htmlspecialchars($fp, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-status="<?php echo htmlspecialchars($fs, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-priority="<?php echo htmlspecialchars($fp, ENT_QUOTES, 'UTF-8'); ?>">
                                             <td>
                                                 <strong><?php echo htmlspecialchars($ticket['ticket_number']); ?></strong>
                                             </td>
@@ -155,7 +158,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                                 $priorityClass = $ticket['priority'] === 'High' ? 'danger' : 
                                                                 ($ticket['priority'] === 'Medium' ? 'warning' : 'info');
                                                 ?>
-                                                <span class="badge badge-<?php echo $priorityClass; ?>">
+                                                <span class="badge badge-<?php echo $priorityClass; ?>" data-ticket-priority>
                                                     <?php echo htmlspecialchars($ticket['priority']); ?>
                                                 </span>
                                             </td>
@@ -165,7 +168,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                                               ($ticket['status'] === 'In Progress' ? 'info' : 
                                                                ($ticket['status'] === 'Resolved' ? 'success' : 'secondary'));
                                                 ?>
-                                                <span class="badge badge-<?php echo $statusClass; ?>">
+                                                <span class="badge badge-<?php echo $statusClass; ?> status-badge" data-ticket-status>
                                                     <?php echo htmlspecialchars($ticket['status']); ?>
                                                 </span>
                                             </td>

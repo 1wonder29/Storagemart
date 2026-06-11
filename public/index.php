@@ -561,6 +561,8 @@ if ($uri === '/aom' || strpos($uri, '/aom/') === 0) {
         $aom->updateTicketStatus();
     } elseif ($sub === 'tickets/upload-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $aom->uploadReport();
+    } elseif ($sub === 'tickets/transfer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $aom->transferTicket();
     } elseif ($sub === 'api/employees-by-branch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         // AJAX endpoint to get employees in a branch
         $aom->getEmployeesByBranchAjax();
@@ -606,6 +608,8 @@ if ($uri === '/hom' || strpos($uri, '/hom/') === 0) {
         } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
             // Backwards-compatible route used in some views
             $homTicket->downloadTechnicalRecord();
+        } elseif ($sub === 'tickets/transfer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $homTicket->transferTicket();
         } else {
             http_response_code(404);
             echo "HOM Ticket page not found.";

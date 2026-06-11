@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Models/NotificationModel.php';
 require_once __DIR__ . '/../../Models/hom/HOMModel.php';
+require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 
 class HOMTicketController extends AuthController
 {
@@ -41,11 +42,15 @@ class HOMTicketController extends AuthController
 
     public function index()
     {
-        $this->requireHOM();
+        $user = $this->requireHOM();
 
-        $accountId = (int) $_SESSION['account_id'];
         $ticketModel = new EmployeeTicket();
-        $tickets = $ticketModel->getTicketsByCreatedBy($accountId);
+        $role = strtoupper($user['usertype'] ?? '');
+        if ($role === 'HOM') {
+            $tickets = $ticketModel->fetchTicketsByDepartment('Operations');
+        } else {
+            $tickets = $ticketModel->getTicketsByCreatedBy((int) $_SESSION['account_id']);
+        }
 
         $ticketStats = [];
         foreach ($tickets as $t) {
@@ -61,17 +66,14 @@ class HOMTicketController extends AuthController
         $notifications = $notificationData['notifications'];
 
         $activePage = 'tickets';
+        $user_role = $role === 'OM' ? 'OM' : 'HOM';
 
-        $user = $this->employeeModel->fetchUserDetails((int) $_SESSION['account_id']);
-        $user_role = strtoupper($user['usertype'] ?? '') === 'OM' ? 'OM' : 'HOM';
-        $routePrefix = $user_role === 'HOM' ? 'hom' : 'om';
-
-        require __DIR__ . '/../../Views/om/ticket/ticket.php';
+        require __DIR__ . '/../../Views/hom/ticket/ticket.php';
     }
 
     public function create()
     {
-        $this->requireHOM();
+        $user = $this->requireHOM();
 
         $employeeModel = new Employee();
         $homModel = new HOMModel();
@@ -95,12 +97,9 @@ class HOMTicketController extends AuthController
         $notifications = $notificationData['notifications'];
 
         $activePage = 'tickets';
-
-        $user = $this->employeeModel->fetchUserDetails((int) $_SESSION['account_id']);
         $user_role = strtoupper($user['usertype'] ?? '') === 'OM' ? 'OM' : 'HOM';
-        $routePrefix = $user_role === 'HOM' ? 'hom' : 'om';
 
-        require __DIR__ . '/../../Views/om/ticket/create.php';
+        require __DIR__ . '/../../Views/hom/ticket/create.php';
     }
 
     public function store()
@@ -231,7 +230,7 @@ class HOMTicketController extends AuthController
 
     public function view()
     {
-        $this->requireHOM();
+        $user = $this->requireHOM();
 
         $ticketId = (int) ($_GET['id'] ?? 0);
         if ($ticketId <= 0) {
@@ -249,7 +248,34 @@ class HOMTicketController extends AuthController
             return;
         }
 
+        if (!$ticketModel->isOperationsTicket($ticketId)) {
+            $_SESSION['flash_error'] = 'This ticket is not an Operations ticket.';
+            $this->redirect('/hom/tickets');
+            return;
+        }
+
         $history = $ticketModel->getTicketHistory($ticketId);
+        $role = strtoupper($user['usertype'] ?? '');
+        $routePrefix = $role === 'OM' ? 'om' : 'hom';
+        $roleLabel = $role === 'OM' ? 'OM' : 'HOM';
+
+        $ticketStatus = strtolower((string) ($ticket['status'] ?? ''));
+        $canTransferTicket = $role === 'HOM'
+            && !in_array($ticketStatus, ['resolved', 'cancelled', 'closed'], true);
+        $transferEmployees = [];
+        if ($canTransferTicket) {
+            $currentEmployeeId = (int) ($ticket['employee_id'] ?? 0);
+            foreach ($this->employeeModel->fetchEmployeesByDepartment('Operations') as $emp) {
+                if ((int) ($emp['employee_id'] ?? 0) !== $currentEmployeeId) {
+                    $transferEmployees[] = $emp;
+                }
+            }
+        }
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
 
         $ctx = $this->getLoggedUserContext();
         $ctx['loggedLastname'] = $ctx['loggedLastname'] ?? '';
@@ -259,12 +285,98 @@ class HOMTicketController extends AuthController
         $notifications = $notificationData['notifications'];
 
         $activePage = 'tickets';
+        $user_role = $role === 'OM' ? 'OM' : 'HOM';
 
-        $user = $this->employeeModel->fetchUserDetails((int) $_SESSION['account_id']);
-        $user_role = strtoupper($user['usertype'] ?? '') === 'OM' ? 'OM' : 'HOM';
-        $routePrefix = $user_role === 'HOM' ? 'hom' : 'om';
+        require __DIR__ . '/../../Views/hom/ticket/ticket-detail.php';
+    }
 
-        require __DIR__ . '/../../Views/om/ticket/ticket-detail.php';
+    /**
+     * Transfer Operations ticket to another employee (HOM only)
+     */
+    public function transferTicket()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit('Invalid method.');
+        }
+
+        $user = $this->requireHOM();
+        $role = strtoupper($user['usertype'] ?? '');
+        $routePrefix = $role === 'OM' ? 'om' : 'hom';
+
+        if ($role !== 'HOM') {
+            $_SESSION['flash_error'] = 'Only HOM can transfer tickets.';
+            $this->redirect('/' . $routePrefix . '/tickets');
+            return;
+        }
+
+        $ticketId = (int) ($_POST['ticket_id'] ?? 0);
+        $newEmployeeId = (int) ($_POST['employee_id'] ?? 0);
+        $remarks = trim((string) ($_POST['remarks'] ?? ''));
+
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid form token.';
+            $this->redirect('/hom/tickets/view?id=' . $ticketId);
+            return;
+        }
+
+        if ($ticketId <= 0 || $newEmployeeId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid ticket or employee selected.';
+            $this->redirect('/hom/tickets');
+            return;
+        }
+
+        $ticketModel = new EmployeeTicket();
+        $ticket = $ticketModel->fetchTicketById($ticketId);
+
+        if (!$ticket || !$ticketModel->isOperationsTicket($ticketId)) {
+            $_SESSION['flash_error'] = 'Ticket not found or not an Operations ticket.';
+            $this->redirect('/hom/tickets');
+            return;
+        }
+
+        $validEmployee = false;
+        foreach ($this->employeeModel->fetchEmployeesByDepartment('Operations') as $emp) {
+            if ((int) ($emp['employee_id'] ?? 0) === $newEmployeeId) {
+                $validEmployee = true;
+                break;
+            }
+        }
+
+        if (!$validEmployee) {
+            $_SESSION['flash_error'] = 'Selected employee is not a valid Operations staff member.';
+            $this->redirect('/hom/tickets/view?id=' . $ticketId);
+            return;
+        }
+
+        $homEmployeeId = (int) $this->employeeModel->getEmployeeIdByAccountId((int) $_SESSION['account_id']);
+        [$ok, $message] = $ticketModel->transferTicketToEmployee(
+            $ticketId,
+            $newEmployeeId,
+            $homEmployeeId,
+            'HOM',
+            $remarks !== '' ? $remarks : null
+        );
+
+        if ($ok) {
+            $performedBy = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? ''));
+            ActivityLogger::transfer(
+                'HOM - Ticket Management',
+                (string) $ticketId,
+                $message,
+                $performedBy,
+                [
+                    'ticket_number' => $ticket['ticket_number'] ?? '',
+                    'new_employee_id' => $newEmployeeId,
+                    'remarks' => $remarks,
+                ]
+            );
+            $_SESSION['flash_success'] = $message;
+        } else {
+            $_SESSION['flash_error'] = $message;
+        }
+
+        $this->redirect('/hom/tickets/view?id=' . $ticketId);
     }
 
     /**
@@ -480,9 +592,8 @@ class HOMTicketController extends AuthController
         $base = rtrim(BASE_URL, '/');
         $user = $this->employeeModel->fetchUserDetails((int) $_SESSION['account_id']);
         $user_role = strtoupper($user['usertype'] ?? '') === 'OM' ? 'OM' : 'HOM';
-        $routePrefix = $user_role === 'HOM' ? 'hom' : 'om';
 
-        require __DIR__ . '/../../Views/om/ticket/rate.php';
+        require __DIR__ . '/../../Views/hom/ticket/rate.php';
     }
 
     public function storeRating()

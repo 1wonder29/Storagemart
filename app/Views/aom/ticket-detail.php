@@ -32,9 +32,25 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
         </a>
     </div>
 
+    <?php if (!empty($_SESSION['flash_success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> <?= htmlspecialchars((string) $_SESSION['flash_success']) ?>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <?php unset($_SESSION['flash_success']); ?>
+    <?php endif; ?>
+    <?php if (!empty($_SESSION['flash_error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars((string) $_SESSION['flash_error']) ?>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <?php unset($_SESSION['flash_error']); ?>
+    <?php endif; ?>
+
     <?php if (empty($ticket)): ?>
         <div class="alert alert-warning">Ticket not found.</div>
     <?php else: ?>
+        <?php $routePrefix = 'aom'; ?>
         <?php
         $status = (string) ($ticket['status'] ?? 'Pending');
         ?>
@@ -64,11 +80,11 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <div class="small text-gray-500 text-uppercase font-weight-bold">Status</div>
-                                <div class="h6 mb-0"><?= htmlspecialchars($status) ?></div>
+                                <div class="h6 mb-0" data-ticket-status><?= htmlspecialchars($status) ?></div>
                             </div>
                             <div class="col-md-4">
                                 <div class="small text-gray-500 text-uppercase font-weight-bold">Priority</div>
-                                <div class="h6 mb-0"><?= htmlspecialchars($ticket['priority'] ?? '-') ?></div>
+                                <div class="h6 mb-0" data-ticket-priority><?= htmlspecialchars($ticket['priority'] ?? '-') ?></div>
                             </div>
                             <div class="col-md-4">
                                 <div class="small text-gray-500 text-uppercase font-weight-bold">Filed</div>
@@ -146,7 +162,7 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                                 elseif ($status === 'Resolved') $statusIcon = 'fa-check-circle text-success';
                                 elseif ($status === 'Closed') $statusIcon = 'fa-times-circle text-dark';
                                 ?>
-                                <i class="fas <?= $statusIcon ?>"></i> <?= htmlspecialchars($status) ?>
+                                <i class="fas <?= $statusIcon ?>"></i> <span data-ticket-status><?= htmlspecialchars($status) ?></span>
                             </p>
                         </div>
                         <hr>
@@ -162,6 +178,7 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                             </button>
                         </div>
                         <?php endif; ?>
+                        <?php require __DIR__ . '/../partials/ticket/transfer_ticket_modal.php'; ?>
                         <div class="mb-3">
                             <?php
                             $ticketId = (int) ($ticket['ticket_id'] ?? 0);
@@ -194,6 +211,7 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                                             <?= htmlspecialchars($h['action_details'] ?? ($h['action_type'] ?? 'Updated')) ?>
                                         </p>
                                         <small class="text-muted">
+                                            <?= htmlspecialchars((string) ($h['performed_by'] ?? 'System')) ?> &bull;
                                             <?= !empty($h['date_logged']) ? date('M d, Y H:i', strtotime($h['date_logged'])) : '' ?>
                                         </small>
                                     </div>

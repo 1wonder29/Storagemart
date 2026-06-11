@@ -364,6 +364,19 @@ class Asset extends BaseModel {
                 if (!$ok3) { $this->pdo->rollBack(); return false; }
 
                 $this->pdo->commit();
+
+                require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
+                ActivityLogger::transfer(
+                    'Asset Inventory',
+                    (string) $inventoryID,
+                    "Asset custody changed to {$status}",
+                    (string) ($performedByAccountId ?? 'SYSTEM'),
+                    [
+                        'status' => $status,
+                        'reason' => $transferDetails,
+                    ]
+                );
+
                 return true;
             } else {
                 // Normal update (no assignment change)
@@ -516,22 +529,23 @@ class Asset extends BaseModel {
             ]);
             if (!$ok2) { $this->pdo->rollBack(); return ['ok'=>false, 'message'=>'Failed updating inventory']; }
 
-            // 9) log to tbllogs
-            $sqlLog = "INSERT INTO tbllogs (datelog, timelog, action, module, ID, performedby) VALUES (:datelog, :timelog, :action, :module, :ID, :performedby)";
-            $stmt = $this->pdo->prepare($sqlLog);
-            $date = date('Y-m-d');
-            $time = date('H:i:s');
-            $action = "Transferred asset {$oldAssetNumber} to {$assignedTo} ({$branchCode})";
-            $stmt->execute([
-                ':datelog' => $date,
-                ':timelog' => $time,
-                ':action' => $action,
-                ':module' => 'Asset Inventory',
-                ':ID' => $inventoryId,
-                ':performedby' => $performedBy
-            ]);
-
             $this->pdo->commit();
+
+            require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
+            ActivityLogger::transfer(
+                'Asset Inventory',
+                (string) $inventoryId,
+                "Transferred asset {$oldAssetNumber} to {$assignedTo} ({$branchCode})",
+                (string) $performedBy,
+                [
+                    'old_asset_number' => $oldAssetNumber,
+                    'new_asset_number' => $newAssetNumber,
+                    'employee_id' => $employeeId,
+                    'assigned_to' => $assignedTo,
+                    'branch_code' => $branchCode,
+                    'transfer_details' => $transferDetails,
+                ]
+            );
             return ['ok'=>true, 'newAssetNumber' => $newAssetNumber];
         } catch (\Throwable $e) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();

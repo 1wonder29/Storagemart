@@ -16,7 +16,9 @@ class AOMModel extends BaseModel
     protected $tblbranch_assignments = 'tblbranch_assignments';
     protected $tblhom_employee_assignments = 'tblhom_employee_assignments';
     protected $tbltickets = 'tbltickets';
+    protected $tblticket_history = 'tblticket_history';
     protected $tblaccounts = 'tblaccounts';
+    protected $tbllogs = 'tbllogs';
 
     /**
      * Get all branches assigned to an AOM
@@ -502,11 +504,22 @@ class AOMModel extends BaseModel
      * @param int $aom_employee_id The AOM's employee ID
      * @param array $branch_ids Array of branch IDs to assign
      * @param int $assigned_by Admin employee ID who made the assignment
-     * @return bool Success status
+     * @return array{success:bool,message?:string,added_branch_ids?:int[],removed_branch_ids?:int[],old_branch_ids?:int[],new_branch_ids?:int[]}
      */
     public function updateAOMBranchAssignments($aom_employee_id, $branch_ids = [], $assigned_by = null)
     {
         try {
+            $stmt = $this->pdo->prepare("
+                SELECT branch_id FROM {$this->tblbranch_assignments}
+                WHERE aom_employee_id = :aom_employee_id AND is_active = 1
+            ");
+            $stmt->execute(['aom_employee_id' => $aom_employee_id]);
+            $oldBranchIds = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+
+            $newBranchIds = array_values(array_unique(array_filter(
+                array_map('intval', is_array($branch_ids) ? $branch_ids : [])
+            )));
+
             // Deactivate all existing assignments
             $sql_deactivate = "
                 UPDATE {$this->tblbranch_assignments}
@@ -517,10 +530,8 @@ class AOMModel extends BaseModel
             $stmt->execute(['aom_employee_id' => $aom_employee_id]);
 
             // Insert new assignments or reactivate existing ones
-            if (!empty($branch_ids) && is_array($branch_ids)) {
-                foreach ($branch_ids as $branch_id) {
-                    $branch_id = (int)$branch_id;
-                    
+            if (!empty($newBranchIds)) {
+                foreach ($newBranchIds as $branch_id) {
                     // Check if assignment already exists
                     $sql_check = "
                         SELECT assignment_id FROM {$this->tblbranch_assignments}
@@ -531,7 +542,6 @@ class AOMModel extends BaseModel
                     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
                     if ($existing) {
-                        // Reactivate existing assignment
                         $sql_update = "
                             UPDATE {$this->tblbranch_assignments}
                             SET is_active = 1, updated_at = NOW()
@@ -540,7 +550,6 @@ class AOMModel extends BaseModel
                         $stmt = $this->pdo->prepare($sql_update);
                         $stmt->execute(['aom_employee_id' => $aom_employee_id, 'branch_id' => $branch_id]);
                     } else {
-                        // Create new assignment
                         $sql_insert = "
                             INSERT INTO {$this->tblbranch_assignments}
                             (aom_employee_id, branch_id, assignment_date, is_active, assigned_by, created_at)
@@ -556,10 +565,182 @@ class AOMModel extends BaseModel
                 }
             }
 
-            return true;
+            return [
+                'success' => true,
+                'added_branch_ids' => array_values(array_diff($newBranchIds, $oldBranchIds)),
+                'removed_branch_ids' => array_values(array_diff($oldBranchIds, $newBranchIds)),
+                'old_branch_ids' => $oldBranchIds,
+                'new_branch_ids' => $newBranchIds,
+            ];
         } catch (Exception $e) {
             error_log("updateAOMBranchAssignments error: " . $e->getMessage());
-            return false;
+            return ['success' => false, 'message' => 'Failed to update branch assignments.'];
+        }
+    }
+
+    /**
+     * Resolve branch names for a list of branch IDs.
+     *
+     * @param int[] $branchIds
+     * @return string[]
+     */
+    public function getBranchNamesByIds(array $branchIds): array
+    {
+        $branchIds = array_values(array_filter(array_map('intval', $branchIds)));
+        if (empty($branchIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($branchIds), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT branchName FROM {$this->tblbranch}
+            WHERE branch_id IN ({$placeholders})
+            ORDER BY branchName ASC
+        ");
+        $stmt->execute($branchIds);
+
+        return array_map('strval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    }
+
+    /**
+     * Transfer history when HOM/OM updates AOM branch coverage.
+     *
+     * @return array<int, array{datelog:string,timelog:string,action:string,performedby:string,logged_at:string}>
+     */
+    public function getBranchAssignmentHistory(int $aomEmployeeId, int $limit = 20): array
+    {
+        if ($aomEmployeeId <= 0) {
+            return [];
+        }
+
+        $sql = "
+            SELECT datelog, timelog, action, performedby
+            FROM {$this->tbllogs}
+            WHERE ID = :aom_id
+              AND module IN ('HOM - AOM Branches', 'OM - AOM Branches')
+              AND action LIKE '[TRANSFER]%'
+            ORDER BY datelog DESC, timelog DESC
+            LIMIT " . (int) $limit;
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['aom_id' => (string) $aomEmployeeId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        foreach ($rows as &$row) {
+            $action = (string) ($row['action'] ?? '');
+            $action = preg_replace('/^\[TRANSFER\]\s*/', '', $action);
+            $action = preg_replace('/\s*\|\s*Details:.*$/', '', $action);
+            $row['action'] = trim($action);
+            $row['logged_at'] = trim(($row['datelog'] ?? '') . ' ' . ($row['timelog'] ?? ''));
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    /**
+     * Record branch-assignment changes on open tickets in affected branches.
+     */
+    public function logBranchAssignmentTicketHistory(
+        array $addedBranchIds,
+        array $removedBranchIds,
+        int $performedByEmployeeId,
+        string $performedRole,
+        string $aomDisplayName,
+        string $performedByDisplayName
+    ): void {
+        $this->logBranchTicketHistoryForIds(
+            $addedBranchIds,
+            'added',
+            $performedByEmployeeId,
+            $performedRole,
+            $aomDisplayName,
+            $performedByDisplayName
+        );
+        $this->logBranchTicketHistoryForIds(
+            $removedBranchIds,
+            'removed',
+            $performedByEmployeeId,
+            $performedRole,
+            $aomDisplayName,
+            $performedByDisplayName
+        );
+    }
+
+    /**
+     * @param int[] $branchIds
+     */
+    private function logBranchTicketHistoryForIds(
+        array $branchIds,
+        string $changeType,
+        int $performedByEmployeeId,
+        string $performedRole,
+        string $aomDisplayName,
+        string $performedByDisplayName
+    ): void {
+        $branchIds = array_values(array_filter(array_map('intval', $branchIds)));
+        if (empty($branchIds)) {
+            return;
+        }
+
+        $branchNameMap = [];
+        $placeholders = implode(',', array_fill(0, count($branchIds), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT branch_id, branchName FROM {$this->tblbranch}
+            WHERE branch_id IN ({$placeholders})
+        ");
+        $stmt->execute($branchIds);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $branch) {
+            $branchNameMap[(int) $branch['branch_id']] = (string) ($branch['branchName'] ?? 'Branch');
+        }
+
+        $ticketStmt = $this->pdo->prepare("
+            SELECT t.ticket_id, t.status
+            FROM {$this->tbltickets} t
+            LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            WHERE COALESCE(NULLIF(t.branch_id, 0), e.branch_id) = :branch_id
+              AND t.status NOT IN ('Closed', 'Cancelled')
+        ");
+
+        $historyStmt = $this->pdo->prepare("
+            INSERT INTO {$this->tblticket_history}
+                (ticket_id, action_type, action_details, old_status, new_status, performed_by, performed_role, date_logged)
+            VALUES
+                (:ticket_id, :action_type, :action_details, :old_status, :new_status, :performed_by, :performed_role, NOW())
+        ");
+
+        foreach ($branchIds as $branchId) {
+            $branchName = $branchNameMap[$branchId] ?? 'Branch';
+            $actionType = 'Branch Assignment';
+            $actionDetails = $changeType === 'added'
+                ? sprintf(
+                    'AOM branch coverage added: %s assigned to %s by %s',
+                    $branchName,
+                    $aomDisplayName,
+                    $performedByDisplayName
+                )
+                : sprintf(
+                    'AOM branch coverage removed: %s unassigned from %s by %s',
+                    $branchName,
+                    $aomDisplayName,
+                    $performedByDisplayName
+                );
+
+            $ticketStmt->execute(['branch_id' => $branchId]);
+            $tickets = $ticketStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+            foreach ($tickets as $ticket) {
+                $status = (string) ($ticket['status'] ?? 'Pending');
+                $historyStmt->execute([
+                    'ticket_id' => (int) $ticket['ticket_id'],
+                    'action_type' => $actionType,
+                    'action_details' => $actionDetails,
+                    'old_status' => $status,
+                    'new_status' => $status,
+                    'performed_by' => $performedByEmployeeId,
+                    'performed_role' => $performedRole,
+                ]);
+            }
         }
     }
 

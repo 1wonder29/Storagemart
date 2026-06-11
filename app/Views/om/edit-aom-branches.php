@@ -76,6 +76,11 @@ $assignedIds = array_column($assigned_branches ?? [], 'branch_id');
                     </form>
                 </div>
             </div>
+
+            <?php
+            $history_title = 'Branch Assignment Transfer History';
+            require __DIR__ . '/../partials/aom/branch_assignment_history.php';
+            ?>
         </div>
     </div>
 </div>

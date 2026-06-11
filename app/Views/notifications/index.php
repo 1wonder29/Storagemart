@@ -41,6 +41,7 @@ $base = rtrim($base ?? (defined('BASE_URL') ? BASE_URL : '/'), '/');
             require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
             break;
         case 'OM':
+        case 'HOM':
             require_once __DIR__ . '/../partials/om/sidebar_topbar.php';
             break;
         default:

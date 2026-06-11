@@ -258,12 +258,19 @@ class AOMTicketModel extends BaseModel
     public function getTicketHistory($ticketId)
     {
         $sql = "
-            SELECT *
-            FROM {$this->tblticket_history}
-            WHERE ticket_id = :ticket_id
-            ORDER BY date_logged DESC
+            SELECT
+                th.action_type,
+                th.action_details,
+                th.old_status,
+                th.new_status,
+                th.date_logged,
+                CONCAT(e.lastname, ', ', e.firstname) AS performed_by
+            FROM {$this->tblticket_history} th
+            LEFT JOIN {$this->tblemployee} e ON th.performed_by = e.employee_id
+            WHERE th.ticket_id = :ticket_id
+            ORDER BY th.date_logged DESC
         ";
-        
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['ticket_id' => $ticketId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

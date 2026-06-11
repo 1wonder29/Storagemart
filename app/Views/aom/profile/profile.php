@@ -175,6 +175,15 @@ $dateCreatedLabel = $dateCreated ? date('M d, Y', strtotime($dateCreated)) : '-'
             </div>
         </div>
 
+        <div class="row">
+            <div class="col-12">
+                <?php
+                $history_title = 'Branch Assignment Transfer History';
+                require __DIR__ . '/../../partials/aom/branch_assignment_history.php';
+                ?>
+            </div>
+        </div>
+
     </div>
     <!-- End of Page Content -->
 

@@ -103,7 +103,7 @@ ksort($priorities);
                         </div>
                     <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="cancelledTicketTable" width="100%" cellspacing="0">
+                        <table class="table table-hover mb-0 ticket-realtime-table" id="cancelledTicketTable" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th>Ticket</th>
@@ -118,12 +118,15 @@ ksort($priorities);
                             </thead>
                             <tbody>
                                 <?php foreach ($tickets as $row):
+                                    $ticketId = (int) ($row['ticket_id'] ?? 0);
                                     $priority = (string) ($row['priority'] ?? '');
                                     $oldStatus = (string) ($row['old_status'] ?? '');
                                     $date = it_ticket_format_date((string) ($row['date_cancelled'] ?? ''));
                                     $reason = (string) ($row['cancel_reason'] ?? $row['action_details'] ?? '');
                                 ?>
-                                    <tr>
+                                    <tr data-ticket-id="<?= $ticketId ?>"
+                                        data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
+                                        data-status="cancelled">
                                         <td>
                                             <div class="ticket-id-wrap">
                                                 <span class="ticket-id"><?= htmlspecialchars((string) ($row['ticket_number'] ?? '')) ?></span>
@@ -146,12 +149,12 @@ ksort($priorities);
                                         </td>
                                         <td>
                                             <?php if ($priority !== ''): ?>
-                                                <span class="priority-pill <?= it_ticket_priority_class($priority) ?>">
+                                                <span class="priority-pill <?= it_ticket_priority_class($priority) ?>" data-ticket-priority>
                                                     <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
                                                 </span>
                                             <?php endif; ?>
                                             <?php if ($oldStatus !== ''): ?>
-                                                <span class="status-badge status-cancelled mt-1">
+                                                <span class="status-badge status-cancelled mt-1" data-ticket-status>
                                                     Was: <?= htmlspecialchars($oldStatus) ?>
                                                 </span>
                                             <?php endif; ?>

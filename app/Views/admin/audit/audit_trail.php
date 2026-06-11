@@ -13,13 +13,37 @@ if (!function_exists('audit_module_class')) {
     }
 }
 
+if (!function_exists('audit_is_transfer_action')) {
+    function audit_is_transfer_action(string $action): bool
+    {
+        return strpos($action, '[TRANSFER]') !== false
+            || stripos($action, 'Transferred asset') !== false
+            || stripos($action, 'Transfer Asset') !== false
+            || (strpos($action, '[UPDATE]') !== false && stripos($action, 'Transferred') !== false);
+    }
+}
+
 if (!function_exists('audit_action_class')) {
     function audit_action_class(string $action): string
     {
         if (strpos($action, '[DELETE]') !== false) return 'action-delete';
+        if (audit_is_transfer_action($action)) return 'action-transfer';
         if (strpos($action, '[LOGIN]') !== false) return 'action-login';
         if (strpos($action, '[LOGOUT]') !== false) return 'action-logout';
         return '';
+    }
+}
+
+if (!function_exists('audit_display_action')) {
+    function audit_display_action(string $action): string
+    {
+        if (strpos($action, '[DELETE]') === 0) {
+            return substr($action, 10);
+        }
+        if (strpos($action, '[TRANSFER]') === 0) {
+            return substr($action, 11);
+        }
+        return $action;
     }
 }
 
@@ -33,13 +57,16 @@ if (!function_exists('audit_pagination_query')) {
 }
 
 $deleteCount = count($recentDeletes);
+$transferCount = count($recentTransfers ?? []);
 $moduleCount = count($deletesSummary);
+$transferModuleCount = count($transfersSummary ?? []);
 $paginationBase = [
     'type' => $filterType ?? 'all',
     'limit' => $limit ?? 50,
 ];
 if (!empty($searchTerm)) $paginationBase['search'] = $searchTerm;
 if (!empty($module)) $paginationBase['module'] = $module;
+if (!empty($performer)) $paginationBase['performer'] = $performer;
 if (!empty($startDate)) $paginationBase['start_date'] = $startDate;
 if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
 ?>
@@ -69,11 +96,20 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
 
             <div class="page-hero">
                 <h1><i class="fas fa-history mr-2"></i>Audit Trail</h1>
-                <p>Monitor system activity, user actions, and deletion history across all modules.</p>
+                <p>Monitor system activity, transfers, user actions, and deletion history across all modules.</p>
             </div>
 
             <div class="row mb-4">
-                <div class="col-xl-4 col-md-6 mb-4 mb-xl-0">
+                <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
+                    <div class="stat-card stat-card-transfers">
+                        <div class="stat-card-icon"><i class="fas fa-exchange-alt"></i></div>
+                        <div>
+                            <span class="stat-card-label">Transfers (7 Days)</span>
+                            <span class="stat-card-value"><?= $transferCount ?></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
                     <div class="stat-card stat-card-deletes">
                         <div class="stat-card-icon"><i class="fas fa-trash-alt"></i></div>
                         <div>
@@ -82,7 +118,7 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-4 col-md-6 mb-4 mb-xl-0">
+                <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
                     <div class="stat-card stat-card-total">
                         <div class="stat-card-icon"><i class="fas fa-list-alt"></i></div>
                         <div>
@@ -91,12 +127,12 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-4 col-md-6">
+                <div class="col-xl-3 col-md-6">
                     <div class="stat-card stat-card-modules">
                         <div class="stat-card-icon"><i class="fas fa-cubes"></i></div>
                         <div>
-                            <span class="stat-card-label">Modules Affected</span>
-                            <span class="stat-card-value"><?= $moduleCount ?></span>
+                            <span class="stat-card-label">Transfer Modules</span>
+                            <span class="stat-card-value"><?= $transferModuleCount ?></span>
                         </div>
                     </div>
                 </div>
@@ -110,6 +146,7 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
                             <label for="filterType">Filter Type</label>
                             <select name="type" id="filterType" class="form-control" onchange="this.form.submit()">
                                 <option value="all" <?= ($filterType ?? 'all') === 'all' ? 'selected' : '' ?>>All Entries</option>
+                                <option value="transfers" <?= ($filterType ?? '') === 'transfers' ? 'selected' : '' ?>>Transfer Operations Only</option>
                                 <option value="deletes" <?= ($filterType ?? '') === 'deletes' ? 'selected' : '' ?>>Delete Operations Only</option>
                                 <option value="by-module" <?= ($filterType ?? '') === 'by-module' ? 'selected' : '' ?>>By Module</option>
                                 <option value="by-user" <?= ($filterType ?? '') === 'by-user' ? 'selected' : '' ?>>By User</option>
@@ -194,7 +231,8 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
                                 <?php foreach ($logs as $log):
                                     $action = (string) ($log['action'] ?? '');
                                     $isDelete = strpos($action, '[DELETE]') !== false;
-                                    $displayAction = $isDelete ? substr($action, 10) : $action;
+                                    $isTransfer = audit_is_transfer_action($action);
+                                    $displayAction = audit_display_action($action);
                                     $moduleName = (string) ($log['module'] ?? '');
                                 ?>
                                 <tr>
@@ -206,6 +244,8 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
                                         <div class="action-text <?= audit_action_class($action) ?>">
                                             <?php if ($isDelete): ?>
                                                 <i class="fas fa-trash-alt mr-1"></i>
+                                            <?php elseif ($isTransfer): ?>
+                                                <i class="fas fa-exchange-alt mr-1"></i>
                                             <?php elseif (strpos($action, '[LOGIN]') !== false): ?>
                                                 <i class="fas fa-sign-in-alt mr-1"></i>
                                             <?php elseif (strpos($action, '[LOGOUT]') !== false): ?>
@@ -280,6 +320,49 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
                     <?php endif; ?>
                 </ul>
             </nav>
+            <?php endif; ?>
+
+            <?php if (!empty($transfersSummary)): ?>
+            <div class="card report-list-card shadow mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-exchange-alt mr-1 text-primary"></i> Transfer Operations Summary by Module</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Module</th>
+                                    <th>Total Transfers</th>
+                                    <th>Last Transfer</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($transfersSummary as $summary): ?>
+                                <tr>
+                                    <td>
+                                        <span class="module-pill <?= audit_module_class($summary['module']) ?>">
+                                            <?= htmlspecialchars($summary['module']) ?>
+                                        </span>
+                                    </td>
+                                    <td><span class="transfer-count"><?= (int) $summary['transfer_count'] ?></span></td>
+                                    <td class="date-cell">
+                                        <div class="date-time"><?= htmlspecialchars($summary['last_transfer'] ?? 'N/A') ?></div>
+                                    </td>
+                                    <td>
+                                        <a href="?type=transfers&module=<?= urlencode($summary['module']) ?>"
+                                           class="btn btn-sm btn-outline-primary btn-view-transfers">
+                                            <i class="fas fa-search mr-1"></i> View Transfers
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
             <?php endif; ?>
 
             <?php if (!empty($deletesSummary)): ?>

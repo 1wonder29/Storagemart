@@ -132,7 +132,7 @@ $loggedFirstname = $loggedFirstname ?? 'Employee';
                                         $priority = (string) ($ticket['priority'] ?? 'Low');
                                         $priorityClass = $priority === 'High' ? 'danger' : ($priority === 'Medium' ? 'warning' : 'success');
                                         ?>
-                                        <span class="badge badge-<?php echo $priorityClass; ?>">
+                                        <span class="badge badge-<?php echo $priorityClass; ?>" data-ticket-priority>
                                             <?php echo htmlspecialchars($priority); ?>
                                         </span>
                                     </td>

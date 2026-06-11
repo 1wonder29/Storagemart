@@ -2,7 +2,6 @@
 
 require_once __DIR__ . '/../AuthController.php';
 require_once __DIR__ . '/../../Models/admin/Asset.php';
-require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Models/hr/HRModel.php';
 require_once __DIR__ . '/../../Models/NotificationModel.php';
 
@@ -125,9 +124,6 @@ class HrAssetController extends AuthController
                         $inventoryId
                     );
                 }
-
-                $logger = new Logger();
-                $logger->log('Transfer Asset', 'Asset Inventory', (string) $employeeId, $_SESSION['username'] ?? 'Unknown');
 
                 $this->hrModel->logAction(
                     'TRANSFERRED_ASSET',

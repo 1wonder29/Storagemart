@@ -105,7 +105,7 @@ $base = rtrim(BASE_URL, '/');
                 <h6 class="m-0 font-weight-bold text-primary">All Tickets</h6>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover mb-0" id="headTicketsTable">
+                <table class="table table-hover mb-0 ticket-realtime-table" id="headTicketsTable">
                     <thead class="bg-light">
                         <tr>
                             <th>Ticket #</th>
@@ -121,25 +121,26 @@ $base = rtrim(BASE_URL, '/');
                     <tbody>
                         <?php if (!empty($tickets)): ?>
                             <?php foreach ($tickets as $ticket): ?>
-                                <tr>
+                                <?php
+                                $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                                $priority = (string) ($ticket['priority'] ?? 'Low');
+                                $status = (string) ($ticket['status'] ?? 'Pending');
+                                $priorityClass = $priority === 'High' ? 'danger' : ($priority === 'Medium' ? 'warning' : 'success');
+                                $statusClass = $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
+                                ?>
+                                <tr data-ticket-id="<?= $ticketId ?>"
+                                    data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
+                                    data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>">
                                     <td class="font-weight-bold"><?php echo htmlspecialchars((string) ($ticket['ticket_number'] ?? '')); ?></td>
                                     <td><?php echo htmlspecialchars((string) ($ticket['employee_name'] ?? '')); ?></td>
                                     <td><?php echo htmlspecialchars((string) ($ticket['category'] ?? '')); ?></td>
                                     <td>
-                                        <?php
-                                        $priority = (string) ($ticket['priority'] ?? 'Low');
-                                        $priorityClass = $priority === 'High' ? 'danger' : ($priority === 'Medium' ? 'warning' : 'success');
-                                        ?>
-                                        <span class="badge badge-<?php echo $priorityClass; ?>">
+                                        <span class="badge badge-<?php echo $priorityClass; ?>" data-ticket-priority>
                                             <?php echo htmlspecialchars($priority); ?>
                                         </span>
                                     </td>
                                     <td>
-                                        <?php
-                                        $status = (string) ($ticket['status'] ?? 'Pending');
-                                        $statusClass = $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
-                                        ?>
-                                        <span class="badge badge-<?php echo $statusClass; ?>">
+                                        <span class="badge badge-<?php echo $statusClass; ?> status-badge" data-ticket-status>
                                             <?php echo htmlspecialchars($status); ?>
                                         </span>
                                     </td>
@@ -150,8 +151,7 @@ $base = rtrim(BASE_URL, '/');
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <?php
-                                        $ticketId = (int) ($ticket['ticket_id'] ?? 0);
-                                        $ticketStatus = (string) ($ticket['status'] ?? '');
+                                        $ticketStatus = $status;
                                         $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
                                         require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
                                         ?>

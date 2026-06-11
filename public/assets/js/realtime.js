@@ -229,23 +229,27 @@
 
     if (ticket.status) {
       row.setAttribute('data-status', String(ticket.status).toLowerCase());
-      var statusEl = row.querySelector('.status-badge');
-      if (statusEl) {
+      row.querySelectorAll('[data-ticket-status], .status-badge').forEach(function (statusEl) {
         statusEl.textContent = ticket.status;
-        statusEl.className = 'status-badge ' + statusClass(ticket.status) + ' mt-1';
-      }
+        if (statusEl.classList.contains('status-badge')) {
+          statusEl.className = 'status-badge ' + statusClass(ticket.status) + (statusEl.classList.contains('mt-1') ? ' mt-1' : '');
+        }
+      });
     }
 
     if (ticket.priority) {
       row.setAttribute('data-priority', String(ticket.priority).toLowerCase());
-      var priorityEl = row.querySelector('.priority-pill');
-      if (priorityEl) {
-        priorityEl.className = 'priority-pill ' + priorityClass(ticket.priority);
-        var icon = priorityEl.querySelector('i');
-        priorityEl.textContent = '';
-        if (icon) priorityEl.appendChild(icon);
-        priorityEl.appendChild(document.createTextNode(' ' + ticket.priority));
-      }
+      row.querySelectorAll('[data-ticket-priority], .priority-pill').forEach(function (priorityEl) {
+        if (priorityEl.classList.contains('priority-pill')) {
+          priorityEl.className = 'priority-pill ' + priorityClass(ticket.priority);
+          var icon = priorityEl.querySelector('i');
+          priorityEl.textContent = '';
+          if (icon) priorityEl.appendChild(icon);
+          priorityEl.appendChild(document.createTextNode(' ' + ticket.priority));
+        } else {
+          priorityEl.textContent = ticket.priority;
+        }
+      });
     }
 
     if (typeof ticket.assigned_to_name !== 'undefined') {
@@ -311,9 +315,7 @@
   var ticketPollSince = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
   function pollTickets() {
-    var hasTable = document.querySelector(
-      '.ticket-realtime-table, #logsTicket, #ticketsTable, #employeeTicketsTable, #hrTicketsTable, #headTicketsTable'
-    );
+    var hasTable = document.querySelector('.ticket-realtime-table, tr[data-ticket-id]');
     var detail = document.querySelector('[data-realtime-ticket-detail]');
 
     if (detail) {
@@ -378,9 +380,7 @@
       document.addEventListener('DOMContentLoaded', startCommentPolling);
     }
 
-    if (document.querySelector(
-      '.ticket-realtime-table, #logsTicket, #ticketsTable, #employeeTicketsTable, #hrTicketsTable, #headTicketsTable, [data-realtime-ticket-detail]'
-    )) {
+    if (document.querySelector('.ticket-realtime-table, tr[data-ticket-id], [data-realtime-ticket-detail]')) {
       window.setTimeout(pollTickets, 3000);
       window.setInterval(pollTickets, POLL.tickets);
     }

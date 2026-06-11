@@ -138,7 +138,7 @@ ksort($priorities);
                         </div>
                     <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="ticketTables" width="100%" cellspacing="0">
+                        <table class="table table-hover mb-0 ticket-realtime-table" id="ticketTables" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th>Ticket</th>
@@ -163,15 +163,17 @@ ksort($priorities);
                                     $oldStatus = (string) ($row['old_status'] ?? '');
                                     $dateInfo = it_ticket_format_date((string) ($row['date_cancelled'] ?? ''));
                                 ?>
-                                    <tr>
+                                    <tr data-ticket-id="<?= $ticketId ?>"
+                                        data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
+                                        data-status="cancelled">
                                         <td>
                                             <div class="ticket-id-wrap">
                                                 <span class="ticket-id"><?= htmlspecialchars($ticketNum) ?></span>
-                                                <span class="status-badge status-cancelled mt-1">
+                                                <span class="status-badge status-cancelled mt-1" data-ticket-status>
                                                     <i class="fas fa-ban"></i> Cancelled
                                                 </span>
                                                 <?php if ($priority !== ''): ?>
-                                                    <span class="priority-pill <?= it_ticket_priority_class($priority) ?>">
+                                                    <span class="priority-pill <?= it_ticket_priority_class($priority) ?>" data-ticket-priority>
                                                         <?= htmlspecialchars($priority) ?>
                                                     </span>
                                                 <?php endif; ?>

@@ -60,9 +60,12 @@ class HOMController extends AuthController
         // Get statistics
         $stats = $this->homModel->getAssignmentStats();
         
-        // Get ticket data
+        // Get all Operations department tickets for HOM oversight
         $ticketModel = new EmployeeTicket();
-        $tickets = $ticketModel->getTicketsByCreatedBy($accountId);
+        $role = strtoupper($user['usertype'] ?? '');
+        $tickets = $role === 'HOM'
+            ? $ticketModel->fetchTicketsByDepartment('Operations')
+            : $ticketModel->getTicketsByCreatedBy($accountId);
         
         // Count tickets by status
         $ticketStats = ['total' => 0, 'open' => 0, 'in_progress' => 0, 'completed' => 0];
@@ -145,8 +148,9 @@ class HOMController extends AuthController
 
         if ($result['success']) {
             $performedBy = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? ''));
-            ActivityLogger::update(
-                'HOM - Employees',
+            $transferModule = $role === 'OM' ? 'OM - Employees' : 'HOM - Employees';
+            ActivityLogger::transfer(
+                $transferModule,
                 (string) $employeeId,
                 sprintf(
                     'Transferred %s from %s to %s',
@@ -158,6 +162,8 @@ class HOMController extends AuthController
                 [
                     'old_branch_id' => $result['old_branch_id'] ?? null,
                     'new_branch_id' => $result['new_branch_id'] ?? null,
+                    'old_branch_name' => $result['old_branch_name'] ?? null,
+                    'new_branch_name' => $result['new_branch_name'] ?? null,
                 ]
             );
             $_SESSION['success_message'] = $result['message'];
@@ -474,27 +480,71 @@ class HOMController extends AuthController
         $aomModel = new AOMModel();
         $branches = $this->homModel->getAllBranches();
 
+        $role = strtoupper($user['usertype'] ?? '');
+        $routePrefix = (strpos($_SERVER['REQUEST_URI'] ?? '', '/om/') !== false) ? 'om' : 'hom';
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $branchIds = isset($_POST['aom_branch_ids']) ? (array)$_POST['aom_branch_ids'] : [];
-            $ok = $aomModel->updateAOMBranchAssignments(
+            $result = $aomModel->updateAOMBranchAssignments(
                 $aomEmployeeId,
                 $branchIds,
                 $user['employee_id']
             );
 
-            if ($ok) {
+            if (!empty($result['success'])) {
+                $addedIds = $result['added_branch_ids'] ?? [];
+                $removedIds = $result['removed_branch_ids'] ?? [];
+
+                if (!empty($addedIds) || !empty($removedIds)) {
+                    $aomName = trim(($aom['firstname'] ?? '') . ' ' . ($aom['lastname'] ?? ''));
+                    $performedBy = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? ''));
+                    $performedRole = $role === 'OM' ? 'OM' : 'HOM';
+                    $transferModule = $role === 'OM' ? 'OM - AOM Branches' : 'HOM - AOM Branches';
+                    $addedNames = $aomModel->getBranchNamesByIds($addedIds);
+                    $removedNames = $aomModel->getBranchNamesByIds($removedIds);
+
+                    $description = sprintf('Updated branch assignments for %s', $aomName);
+                    if (!empty($addedNames)) {
+                        $description .= ' | Added: ' . implode(', ', $addedNames);
+                    }
+                    if (!empty($removedNames)) {
+                        $description .= ' | Removed: ' . implode(', ', $removedNames);
+                    }
+
+                    ActivityLogger::transfer(
+                        $transferModule,
+                        (string) $aomEmployeeId,
+                        $description,
+                        $performedBy,
+                        [
+                            'added_branch_ids' => $addedIds,
+                            'removed_branch_ids' => $removedIds,
+                            'added_branch_names' => $addedNames,
+                            'removed_branch_names' => $removedNames,
+                        ]
+                    );
+
+                    $aomModel->logBranchAssignmentTicketHistory(
+                        $addedIds,
+                        $removedIds,
+                        (int) $user['employee_id'],
+                        $performedRole,
+                        $aomName,
+                        $performedBy
+                    );
+                }
+
                 $_SESSION['success_message'] = 'Branch assignments updated successfully.';
-                $routePrefix = (strpos($_SERVER['REQUEST_URI'] ?? '', '/om/') !== false) ? 'om' : 'hom';
                 $this->redirect("/$routePrefix/aom-branches");
             }
 
-            $_SESSION['error_message'] = 'Failed to update branch assignments.';
-            $routePrefix = (strpos($_SERVER['REQUEST_URI'] ?? '', '/om/') !== false) ? 'om' : 'hom';
+            $_SESSION['error_message'] = $result['message'] ?? 'Failed to update branch assignments.';
             $this->redirect("/$routePrefix/edit-aom-branches?id=$aomEmployeeId");
             return;
         }
 
         $assignedBranches = $aomModel->getAssignedBranches($aomEmployeeId);
+        $assignmentHistory = $aomModel->getBranchAssignmentHistory($aomEmployeeId);
 
         $data = [
             'page_title' => 'Edit AOM Branch Assignments',
@@ -502,8 +552,9 @@ class HOMController extends AuthController
             'aom' => $aom,
             'branches' => $branches,
             'assigned_branches' => $assignedBranches,
+            'assignment_history' => $assignmentHistory,
             'user_role' => 'HOM',
-            'routePrefix' => (strpos($_SERVER['REQUEST_URI'] ?? '', '/om/') !== false) ? 'om' : 'hom',
+            'routePrefix' => $routePrefix,
         ];
 
         extract($data);

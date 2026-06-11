@@ -298,4 +298,144 @@ class EmployeeTicket extends BaseModel
         return $stmt->execute([':filepath' => $filepath, ':id' => $ticketId]);
     }
 
+    /**
+     * Check whether a ticket belongs to the Operations department.
+     */
+    public function isOperationsTicket(int $ticketId): bool
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT e.department
+            FROM {$this->tbltickets} t
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            WHERE t.ticket_id = :ticket_id
+            LIMIT 1
+        ");
+        $stmt->execute([':ticket_id' => $ticketId]);
+        $department = $stmt->fetchColumn();
+
+        return $department !== false
+            && strcasecmp((string) $department, 'Operations') === 0;
+    }
+
+    /**
+     * Transfer an Operations ticket to another employee.
+     * Returns [bool $ok, string $message]
+     */
+    public function transferTicketToEmployee(
+        int $ticketId,
+        int $newEmployeeId,
+        int $performedByEmployeeId,
+        string $performedRole,
+        ?string $remarks = null
+    ): array {
+        if ($ticketId <= 0) {
+            return [false, 'Invalid ticket.'];
+        }
+        if ($newEmployeeId <= 0) {
+            return [false, 'Please select a valid employee.'];
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT t.ticket_id, t.employee_id, t.branch_id, t.status, t.ticket_number,
+                   e.firstname AS old_firstname, e.lastname AS old_lastname
+            FROM {$this->tbltickets} t
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            WHERE t.ticket_id = :ticket_id
+            LIMIT 1
+        ");
+        $stmt->execute([':ticket_id' => $ticketId]);
+        $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$ticket) {
+            return [false, 'Ticket not found.'];
+        }
+
+        $currentStatus = (string) ($ticket['status'] ?? '');
+        if (in_array(strtolower($currentStatus), ['resolved', 'cancelled', 'closed'], true)) {
+            return [false, 'This ticket cannot be transferred because it is ' . $currentStatus . '.'];
+        }
+
+        $currentEmployeeId = (int) ($ticket['employee_id'] ?? 0);
+        if ($currentEmployeeId === $newEmployeeId) {
+            return [false, 'Ticket is already assigned to the selected employee.'];
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT employee_id, firstname, lastname, branch_id, department
+            FROM {$this->tblemployee}
+            WHERE employee_id = :employee_id
+            LIMIT 1
+        ");
+        $stmt->execute([':employee_id' => $newEmployeeId]);
+        $newEmployee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$newEmployee) {
+            return [false, 'Selected employee does not exist.'];
+        }
+
+        if (strcasecmp((string) ($newEmployee['department'] ?? ''), 'Operations') !== 0) {
+            return [false, 'Tickets can only be transferred to Operations employees.'];
+        }
+
+        $oldName = trim(($ticket['old_firstname'] ?? '') . ' ' . ($ticket['old_lastname'] ?? ''));
+        $newName = trim(($newEmployee['firstname'] ?? '') . ' ' . ($newEmployee['lastname'] ?? ''));
+        $newBranchId = (int) ($newEmployee['branch_id'] ?? 0);
+
+        try {
+            $this->pdo->beginTransaction();
+
+            $sql = "
+                UPDATE {$this->tbltickets}
+                SET employee_id = :employee_id,
+                    branch_id = :branch_id,
+                    last_updated = NOW()
+            ";
+            $params = [
+                ':employee_id' => $newEmployeeId,
+                ':branch_id' => $newBranchId > 0 ? $newBranchId : (int) ($ticket['branch_id'] ?? 0),
+                ':ticket_id' => $ticketId,
+            ];
+
+            if ($remarks !== null && $remarks !== '') {
+                $sql .= ", remarks = :remarks";
+                $params[':remarks'] = $remarks;
+            }
+
+            $sql .= " WHERE ticket_id = :ticket_id";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+
+            $actionDetails = "Transferred from {$oldName} to {$newName}";
+            if ($remarks !== null && $remarks !== '') {
+                $actionDetails .= " — {$remarks}";
+            }
+
+            $stmt = $this->pdo->prepare("
+                INSERT INTO {$this->tblticket_history}
+                    (ticket_id, action_type, action_details, old_status, new_status, performed_by, performed_role, date_logged)
+                VALUES
+                    (:ticket_id, 'Transferred', :action_details, :old_status, :new_status, :performed_by, :performed_role, NOW())
+            ");
+            $stmt->execute([
+                ':ticket_id' => $ticketId,
+                ':action_details' => $actionDetails,
+                ':old_status' => $currentStatus,
+                ':new_status' => $currentStatus,
+                ':performed_by' => $performedByEmployeeId,
+                ':performed_role' => $performedRole,
+            ]);
+
+            $this->pdo->commit();
+
+            return [true, "Ticket transferred to {$newName} successfully."];
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('transferTicketToEmployee error: ' . $e->getMessage());
+            return [false, 'Failed to transfer ticket. Please try again.'];
+        }
+    }
+
 }

@@ -53,6 +53,7 @@
   font-size: 1.1rem;
 }
 
+.admin-audit-page .stat-card-transfers .stat-card-icon { background: rgba(54, 185, 204, 0.12); color: #36b9cc; }
 .admin-audit-page .stat-card-deletes .stat-card-icon { background: rgba(231, 74, 59, 0.12); color: #e74a3b; }
 .admin-audit-page .stat-card-total .stat-card-icon { background: rgba(78, 115, 223, 0.12); color: #4e73df; }
 .admin-audit-page .stat-card-modules .stat-card-icon { background: rgba(28, 200, 138, 0.12); color: #1cc88a; }
@@ -205,6 +206,16 @@
 .admin-audit-page .action-text.action-delete {
   color: #c0392b;
   font-weight: 600;
+}
+
+.admin-audit-page .action-text.action-transfer {
+  color: #117a8b;
+  font-weight: 600;
+}
+
+.admin-audit-page .transfer-count {
+  font-weight: 700;
+  color: #36b9cc;
 }
 
 .admin-audit-page .action-text.action-login {

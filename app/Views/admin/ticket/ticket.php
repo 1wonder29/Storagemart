@@ -201,12 +201,12 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                         </td>
                                         <td>
                                             <?php if ($priority !== ''): ?>
-                                                <span class="priority-pill <?= it_ticket_priority_class($priority) ?>">
+                                                <span class="priority-pill <?= it_ticket_priority_class($priority) ?>" data-ticket-priority>
                                                     <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
                                                 </span>
                                             <?php endif; ?>
                                             <?php if ($status !== ''): ?>
-                                                <span class="status-badge <?= it_ticket_status_class($status) ?> mt-1">
+                                                <span class="status-badge <?= it_ticket_status_class($status) ?> mt-1" data-ticket-status>
                                                     <?= htmlspecialchars($status) ?>
                                                 </span>
                                             <?php endif; ?>

@@ -24,6 +24,13 @@ class AuditTrail extends BaseModel {
     }
 
     /**
+     * Get all transfer operations
+     */
+    public function getTransferLogs($limit = 50, $offset = 0, $module = null) {
+        return $this->logger->getTransferLogs($module, $limit, $offset);
+    }
+
+    /**
      * Get delete logs by module
      * @param string $module Module name
      * @param int $limit
@@ -115,6 +122,26 @@ class AuditTrail extends BaseModel {
     }
 
     /**
+     * Get summary of transfer operations by module
+     */
+    public function getTransferLogsSummary() {
+        if ($this->pdo) {
+            $sql = "SELECT module, COUNT(*) as transfer_count, MAX(datelog) as last_transfer
+                    FROM {$this->table}
+                    WHERE action LIKE '[TRANSFER]%'
+                       OR action LIKE 'Transferred asset%'
+                       OR action LIKE 'Transfer Asset%'
+                       OR (action LIKE '[UPDATE]%' AND action LIKE '%Transferred%')
+                    GROUP BY module
+                    ORDER BY transfer_count DESC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+        return [];
+    }
+
+    /**
      * Get summary of all actions by module
      * @return array
      */
@@ -138,6 +165,10 @@ class AuditTrail extends BaseModel {
      */
     public function countDeleteLogs($module = null) {
         return $this->logger->countLogs($module, '[DELETE]');
+    }
+
+    public function countTransferLogs($module = null) {
+        return $this->logger->countTransferLogs($module);
     }
 
     /**
@@ -183,6 +214,28 @@ class AuditTrail extends BaseModel {
             $startDate = date('Y-m-d', strtotime("-{$days} days"));
             $sql = "SELECT * FROM {$this->table} 
                     WHERE action LIKE '[DELETE]%'
+                    AND datelog >= ?
+                    ORDER BY datelog DESC, timelog DESC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$startDate]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+        return [];
+    }
+
+    /**
+     * Get recent transfer actions
+     */
+    public function getRecentTransferActions($days = 7) {
+        if ($this->pdo) {
+            $startDate = date('Y-m-d', strtotime("-{$days} days"));
+            $sql = "SELECT * FROM {$this->table}
+                    WHERE (
+                        action LIKE '[TRANSFER]%'
+                        OR action LIKE 'Transferred asset%'
+                        OR action LIKE 'Transfer Asset%'
+                        OR (action LIKE '[UPDATE]%' AND action LIKE '%Transferred%')
+                    )
                     AND datelog >= ?
                     ORDER BY datelog DESC, timelog DESC";
             $stmt = $this->pdo->prepare($sql);

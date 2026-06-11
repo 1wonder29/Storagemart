@@ -114,6 +114,51 @@ class Logger {
     }
 
     /**
+     * Enhanced log for transfer operations with more context
+     */
+    public function logTransfer($action, $module, $recordId, $details = '', $performedby = '') {
+        $date = date('Y-m-d');
+        $time = date('H:i:s');
+        $enhancedAction = '[TRANSFER] ' . $action;
+
+        if (is_array($details)) {
+            $details = json_encode($details);
+        }
+        if (!empty($details)) {
+            $enhancedAction .= ' | Details: ' . substr($details, 0, 150);
+        }
+
+        if ($this->pdo) {
+            $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute([$date, $time, $enhancedAction, $module, $recordId, $performedby]);
+        }
+        if ($this->link) {
+            $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
+            if ($stmt = mysqli_prepare($this->link, $sql)) {
+                mysqli_stmt_bind_param($stmt, 'ssssss', $date, $time, $enhancedAction, $module, $recordId, $performedby);
+                $ok = mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+                return (bool) $ok;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * SQL condition matching transfer-related audit entries (current and legacy formats)
+     */
+    private function transferActionCondition(): string
+    {
+        return "(
+            action LIKE '[TRANSFER]%'
+            OR action LIKE 'Transferred asset%'
+            OR action LIKE 'Transfer Asset%'
+            OR (action LIKE '[UPDATE]%' AND action LIKE '%Transferred%')
+        )";
+    }
+
+    /**
      * Get delete logs only
      * @param string|null $module Filter by module
      * @param int $limit Number of records
@@ -122,6 +167,29 @@ class Logger {
      */
     public function getDeleteLogs($module = null, $limit = 50, $offset = 0) {
         return $this->getAuditLogs('[DELETE]', $module, $limit, $offset);
+    }
+
+    /**
+     * Get transfer logs only
+     */
+    public function getTransferLogs($module = null, $limit = 50, $offset = 0) {
+        $sql = "SELECT * FROM {$this->table} WHERE " . $this->transferActionCondition();
+        $params = [];
+
+        if ($module) {
+            $sql .= ' AND module = ?';
+            $params[] = $module;
+        }
+
+        $sql .= ' ORDER BY datelog DESC, timelog DESC LIMIT ' . (int) $limit . ' OFFSET ' . (int) $offset;
+
+        if ($this->pdo) {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return [];
     }
 
     /**
@@ -162,6 +230,25 @@ class Logger {
      * @param string|null $action
      * @return int
      */
+    public function countTransferLogs($module = null) {
+        $sql = 'SELECT COUNT(*) as total FROM ' . $this->table . ' WHERE ' . $this->transferActionCondition();
+        $params = [];
+
+        if ($module) {
+            $sql .= ' AND module = ?';
+            $params[] = $module;
+        }
+
+        if ($this->pdo) {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int) ($result['total'] ?? 0);
+        }
+
+        return 0;
+    }
+
     public function countLogs($module = null, $action = null) {
         $sql = "SELECT COUNT(*) as total FROM {$this->table} WHERE 1=1";
         $params = [];

@@ -83,6 +83,14 @@ class ActivityLogger {
     }
 
     /**
+     * Log a TRANSFER operation (asset assignment, branch transfer, etc.)
+     */
+    public static function transfer($module, $recordId, $description, $performedby, $details = []) {
+        self::initialize();
+        return self::$logger->logTransfer($description, $module, $recordId, $details, $performedby);
+    }
+
+    /**
      * Log a READ/VIEW operation
      * 
      * @param string $module Module name

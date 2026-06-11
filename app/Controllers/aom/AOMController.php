@@ -5,7 +5,9 @@ require_once __DIR__ . '/../AuthController.php';
 require_once __DIR__ . '/../../Models/employee/Employee.php';
 require_once __DIR__ . '/../../Models/aom/AOMModel.php';
 require_once __DIR__ . '/../../Models/aom/AOMTicketModel.php';
+require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
+require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 require_once __DIR__ . '/../../Models/NotificationModel.php';
 
 /**
@@ -142,6 +144,7 @@ class AOMController extends AuthController
 
         $stats = $this->aomModel->getDashboardStats($aom_employee_id);
         $branches = $this->aomModel->getAssignedBranches($aom_employee_id);
+        $assignment_history = $this->aomModel->getBranchAssignmentHistory($aom_employee_id);
 
         $notificationData = $this->loadNotifications();
         $count = $notificationData['count'];
@@ -474,6 +477,26 @@ class AOMController extends AuthController
 
         $ticketHistory = $this->aomTicketModel->getTicketHistory($ticket_id);
 
+        $ticketStatus = strtolower((string) ($ticket['status'] ?? ''));
+        $canTransferTicket = !in_array($ticketStatus, ['resolved', 'cancelled', 'closed'], true);
+        $transferEmployees = [];
+        if ($canTransferTicket) {
+            $branchId = (int) ($ticket['branch_id'] ?? 0);
+            $currentEmployeeId = (int) ($ticket['employee_id'] ?? 0);
+            if ($branchId > 0) {
+                foreach ($this->aomModel->getEmployeesByBranch($aom_employee_id, $branchId) as $emp) {
+                    if ((int) ($emp['employee_id'] ?? 0) !== $currentEmployeeId) {
+                        $transferEmployees[] = $emp;
+                    }
+                }
+            }
+        }
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+
         // Get notifications
         $notificationData = $this->loadNotifications();
         $count = $notificationData['count'];
@@ -482,6 +505,90 @@ class AOMController extends AuthController
         $activePage = 'tickets';
 
         require __DIR__ . '/../../Views/aom/ticket-detail.php';
+    }
+
+    /**
+     * Transfer ticket to another Operations employee (POST)
+     */
+    public function transferTicket()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit('Method not allowed');
+        }
+
+        $user = $this->requireAOM();
+        if (!$user) return;
+
+        $aom_employee_id = (int) $user['employee_id'];
+        $ticketId = (int) ($_POST['ticket_id'] ?? 0);
+        $newEmployeeId = (int) ($_POST['employee_id'] ?? 0);
+        $remarks = trim((string) ($_POST['remarks'] ?? ''));
+
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid form token.';
+            $this->redirect('/aom/tickets/view?id=' . $ticketId);
+            return;
+        }
+
+        if ($ticketId <= 0 || $newEmployeeId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid ticket or employee selected.';
+            $this->redirect('/aom/tickets');
+            return;
+        }
+
+        $ticket = $this->aomTicketModel->getTicketByIdForAOM($ticketId, $aom_employee_id);
+        if (!$ticket) {
+            $_SESSION['flash_error'] = 'Ticket not found or unauthorized access.';
+            $this->redirect('/aom/tickets');
+            return;
+        }
+
+        $branchId = (int) ($ticket['branch_id'] ?? 0);
+        $allowed = false;
+        foreach ($this->aomModel->getEmployeesByBranch($aom_employee_id, $branchId) as $emp) {
+            if ((int) ($emp['employee_id'] ?? 0) === $newEmployeeId) {
+                $allowed = true;
+                break;
+            }
+        }
+
+        if (!$allowed) {
+            $_SESSION['flash_error'] = 'Selected employee is not in your assigned branches.';
+            $this->redirect('/aom/tickets/view?id=' . $ticketId);
+            return;
+        }
+
+        $ticketModel = new EmployeeTicket();
+        [$ok, $message] = $ticketModel->transferTicketToEmployee(
+            $ticketId,
+            $newEmployeeId,
+            $aom_employee_id,
+            'AOM',
+            $remarks !== '' ? $remarks : null
+        );
+
+        if ($ok) {
+            $performedBy = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? ''));
+            ActivityLogger::transfer(
+                'AOM - Ticket Management',
+                (string) $ticketId,
+                $message,
+                $performedBy,
+                [
+                    'ticket_number' => $ticket['ticket_number'] ?? '',
+                    'new_employee_id' => $newEmployeeId,
+                    'remarks' => $remarks,
+                ]
+            );
+            $_SESSION['flash_success'] = $message;
+        } else {
+            $_SESSION['flash_error'] = $message;
+        }
+
+        $this->redirect('/aom/tickets/view?id=' . $ticketId);
     }
 
     /**

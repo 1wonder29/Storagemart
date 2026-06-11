@@ -169,7 +169,7 @@ $resultClass = static function (string $result): string {
                         </div>
                     <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="ticketTables" width="100%" cellspacing="0">
+                        <table class="table table-hover mb-0 ticket-realtime-table" id="ticketTables" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th>Ticket</th>
@@ -195,11 +195,11 @@ $resultClass = static function (string $result): string {
                                         $ts         = strtotime($performed);
                                         $rClass     = $resultClass($result);
                                     ?>
-                                        <tr>
+                                        <tr data-ticket-id="<?= $ticketId ?>">
                                             <td>
                                                 <div class="ticket-id-wrap">
                                                     <span class="ticket-id"><?= htmlspecialchars($ticketNum) ?></span>
-                                                    <span class="resolved-badge">
+                                                    <span class="resolved-badge status-badge" data-ticket-status>
                                                         <i class="fas fa-check"></i> Resolved
                                                     </span>
                                                 </div>

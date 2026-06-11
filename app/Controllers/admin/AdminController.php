@@ -610,6 +610,9 @@ class AdminController extends AuthController
         if ($filterType === 'deletes') {
             $logs = $auditTrail->getAdminDeleteLogs($limit, $offset);
             $totalCount = $auditTrail->countDeleteLogs();
+        } elseif ($filterType === 'transfers') {
+            $logs = $auditTrail->getTransferLogs($limit, $offset, $module);
+            $totalCount = $auditTrail->countTransferLogs($module);
         } elseif ($filterType === 'by-module' && $module) {
             $logs = $auditTrail->getAuditLogsByModule($module, $limit, $offset);
             $totalCount = $auditTrail->countAuditLogs($module);
@@ -627,6 +630,8 @@ class AdminController extends AuthController
         // Get summaries for dashboard
         $deletesSummary = $auditTrail->getDeleteLogsSummary();
         $recentDeletes = $auditTrail->getRecentDeleteActions(7);
+        $transfersSummary = $auditTrail->getTransferLogsSummary();
+        $recentTransfers = $auditTrail->getRecentTransferActions(7);
 
         // Calculate pagination
         $totalPages = ceil($totalCount / $limit);
