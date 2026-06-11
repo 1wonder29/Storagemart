@@ -210,6 +210,5 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
 <?php if ($hasResolutionChart): ?>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/dashboard_areachart.js"></script>
 <?php endif; ?>
-<script src="<?= htmlspecialchars($base) ?>/assets/author/ouaaa.js"></script>
 </body>
 </html>

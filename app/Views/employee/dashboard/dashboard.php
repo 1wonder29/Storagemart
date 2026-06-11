@@ -230,7 +230,6 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
 <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/dashboard_areachart.js"></script>
 <?php endif; ?>
 
-<script src="<?= htmlspecialchars($base) ?>/assets/author/ouaaa.js"></script>
 <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 </html>
