@@ -4,10 +4,8 @@ $base = rtrim(BASE_URL, '/');
 $totalFiles = 0;
 $totalSize = 0;
 $dateCount = 0;
-$thisMonth = 0;
 $employees = [];
 $dates = [];
-$now = time();
 
 foreach ($uploadsByDate as $date => $uploads) {
     $dateCount++;
@@ -18,10 +16,6 @@ foreach ($uploadsByDate as $date => $uploads) {
         $name = trim((string) ($upload['uploaded_by_name'] ?? ''));
         if ($name !== '') {
             $employees[$name] = true;
-        }
-        $uploaded = strtotime((string) ($upload['date_uploaded'] ?? ''));
-        if ($uploaded && (int) date('Y', $uploaded) === (int) date('Y', $now) && (int) date('n', $uploaded) === (int) date('n', $now)) {
-            $thisMonth++;
         }
     }
 }
@@ -92,19 +86,13 @@ $fileIconClass = static function (string $ext): string {
                 </div>
                 <div class="col-lg-5">
                     <div class="row mt-3 mt-lg-0">
-                        <div class="col-4">
+                        <div class="col-6">
                             <div class="hero-stat">
                                 <div class="stat-value"><?= (int) $totalFiles ?></div>
                                 <div class="stat-label">Total Files</div>
                             </div>
                         </div>
-                        <div class="col-4">
-                            <div class="hero-stat">
-                                <div class="stat-value"><?= (int) $thisMonth ?></div>
-                                <div class="stat-label">This Month</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
+                        <div class="col-6">
                             <div class="hero-stat">
                                 <div class="stat-value"><?= htmlspecialchars($totalSizeDisplay) ?></div>
                                 <div class="stat-label">Total Size</div>

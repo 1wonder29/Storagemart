@@ -21,6 +21,7 @@ class AssetController extends AuthController {
 
         $assetModel = new Asset();
         $assets = $assetModel->fetchAllAssets();
+        $defectiveCount = $assetModel->countDefectiveItems();
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
@@ -518,6 +519,114 @@ class AssetController extends AuthController {
         $notifications = $notificationData['notifications'];
             require_once __DIR__ . '/../../Views/admin/asset/update_group.php';
             return;
+        }
+    }
+
+    public function defective()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            exit;
+        }
+
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : (int) date('n');
+
+        if ($year < 2000 || $year > 2100) {
+            $year = (int) date('Y');
+        }
+        if ($month < 1 || $month > 12) {
+            $month = (int) date('n');
+        }
+
+        $assetModel = new Asset();
+        $items = $assetModel->fetchDefectiveItemsByMonth($year, $month);
+        $totalItems = count($items);
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition  = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        $selectedYear = $year;
+        $selectedMonth = $month;
+        $monthLabel = date('F Y', mktime(0, 0, 0, $month, 1, $year));
+
+        require_once __DIR__ . '/../../Views/admin/asset/defective.php';
+    }
+
+    public function defectiveExport()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            http_response_code(403);
+            echo 'Unauthorized';
+            exit;
+        }
+
+        require_once __DIR__ . '/../../Services/ExcelExportService.php';
+
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : (int) date('n');
+
+        if ($year < 2000 || $year > 2100 || $month < 1 || $month > 12) {
+            http_response_code(400);
+            echo 'Invalid month or year.';
+            exit;
+        }
+
+        $assetModel = new Asset();
+        $items = $assetModel->fetchDefectiveItemsByMonth($year, $month);
+
+        $headers = [
+            'Group',
+            'Category',
+            'Asset #',
+            'Serial',
+            'Item Info',
+            'Branch',
+            'Reason',
+            'Marked Defective',
+        ];
+
+        $rows = [];
+        foreach ($items as $item) {
+            $rows[] = [
+                $item['groupName'] ?? '',
+                $item['categoryName'] ?? '',
+                $item['assetNumber'] ?? '',
+                $item['serialNumber'] ?? '',
+                $item['itemInfo'] ?? '',
+                $item['branchName'] ?? '',
+                $item['transferDetails'] ?? '',
+                $item['markedDefectiveAt'] ?? '',
+            ];
+        }
+
+        $filename = sprintf('defective_items_%04d_%02d.xls', $year, $month);
+
+        try {
+            (new ExcelExportService())->download($headers, $rows, $filename);
+        } catch (Throwable $e) {
+            error_log('Defective items export failed: ' . $e->getMessage());
+            http_response_code(500);
+            echo 'Failed to generate Excel file.';
+            exit;
         }
     }
 

@@ -10375,3 +10375,39 @@ tr.ticket-row-updated {
   0%, 100% { background-color: transparent; }
   30% { background-color: rgba(78, 115, 223, 0.12); }
 }
+
+/* Shared table action button alignment */
+.action-btn-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.action-btn-group form,
+.action-btn-group .action-btn-form {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.action-btn-group .dropdown {
+  display: inline-flex;
+  align-items: center;
+}
+
+.action-btn-group .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.action-btn-group .btn i {
+  line-height: 1;
+  vertical-align: middle;
+}

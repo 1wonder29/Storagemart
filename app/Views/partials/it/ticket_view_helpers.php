@@ -29,6 +29,20 @@ if (!function_exists('it_ticket_priority_class')) {
     }
 }
 
+if (!function_exists('it_ticket_priority_options')) {
+    function it_ticket_priority_options(array $found = []): array
+    {
+        $options = ['High', 'Medium', 'Low'];
+        foreach ($found as $priority) {
+            $priority = trim((string) $priority);
+            if ($priority !== '' && !in_array($priority, $options, true)) {
+                $options[] = $priority;
+            }
+        }
+        return $options;
+    }
+}
+
 if (!function_exists('it_ticket_truncate')) {
     function it_ticket_truncate(string $text, int $len = 70): string
     {

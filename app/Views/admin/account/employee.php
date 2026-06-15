@@ -6,8 +6,6 @@ $employees = $employees ?? [];
 $totalEmployees = count($employees);
 $departments = [];
 $branches = [];
-$thisMonth = 0;
-$now = time();
 
 foreach ($employees as $row) {
     $dept = trim((string) ($row['department'] ?? ''));
@@ -17,10 +15,6 @@ foreach ($employees as $row) {
     $branch = trim((string) ($row['branchName'] ?? ''));
     if ($branch !== '') {
         $branches[$branch] = true;
-    }
-    $dc = strtotime((string) ($row['datecreated'] ?? ''));
-    if ($dc && (int) date('Y', $dc) === (int) date('Y', $now) && (int) date('n', $dc) === (int) date('n', $now)) {
-        $thisMonth++;
     }
 }
 
@@ -66,22 +60,16 @@ ksort($branches);
                     </div>
                     <div class="col-lg-5">
                         <div class="row mt-3 mt-lg-0">
-                            <div class="col-4">
+                            <div class="col-6">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $totalEmployees ?></div>
                                     <div class="stat-label">Total</div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-6">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= count($departments) ?></div>
                                     <div class="stat-label">Departments</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $thisMonth ?></div>
-                                    <div class="stat-label">This Month</div>
                                 </div>
                             </div>
                         </div>
@@ -205,14 +193,14 @@ ksort($branches);
                                         <td class="text-right">
                                             <div class="action-btn-group">
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/view?employee_id=<?= $employeeId ?>"
-                                                   class="btn btn-sm btn-outline-primary" title="View assets">
+                                                   class="btn btn-sm btn-outline-primary btn-action-icon" title="View assets">
                                                     <i class="fas fa-box-open"></i>
                                                 </a>
-                                                <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/employee" class="d-inline">
+                                                <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/employee" class="action-btn-form">
                                                     <input type="hidden" name="action" value="delete">
                                                     <input type="hidden" name="employee_id" value="<?= $employeeId ?>">
                                                     <button type="submit"
-                                                        class="btn btn-sm btn-outline-danger"
+                                                        class="btn btn-sm btn-outline-danger btn-action-icon"
                                                         title="Delete employee"
                                                         onclick="return confirm(<?= json_encode(
                                                             'Are you sure you want to delete employee "' . $fullName . '"?' . "\n\n" .

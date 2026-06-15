@@ -9,6 +9,35 @@ $months = [
 ];
 $yearOptions = range((int) date('Y'), (int) date('Y') - 5);
 $ticketCount = (int) ($ticketCount ?? 0);
+
+$branches = [];
+$categories = [];
+$priorities = [];
+$statuses = [];
+
+foreach ($tickets ?? [] as $t) {
+    $bn = trim((string) ($t['branchName'] ?? ''));
+    if ($bn !== '') {
+        $branches[$bn] = true;
+    }
+    $cat = trim((string) ($t['category'] ?? ''));
+    if ($cat !== '') {
+        $categories[$cat] = true;
+    }
+    $pr = trim((string) ($t['priority'] ?? ''));
+    if ($pr !== '') {
+        $priorities[$pr] = true;
+    }
+    $st = trim((string) ($t['status'] ?? ''));
+    if ($st !== '') {
+        $statuses[$st] = true;
+    }
+}
+
+ksort($branches);
+ksort($categories);
+ksort($statuses);
+$priorityOptions = it_ticket_priority_options(array_keys($priorities));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -99,6 +128,55 @@ $ticketCount = (int) ($ticketCount ?? 0);
                 </div>
             </div>
 
+            <?php if (!empty($tickets)): ?>
+            <div class="filter-toolbar">
+                <div class="toolbar-title"><i class="fas fa-filter"></i>Filter Tickets</div>
+                <div class="row align-items-end">
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-2 mb-md-0">
+                        <label for="monthlyBranchFilter">Branch</label>
+                        <select id="monthlyBranchFilter" class="form-control form-control-sm">
+                            <option value="">All Branches</option>
+                            <?php foreach (array_keys($branches) as $branch): ?>
+                                <option value="<?= htmlspecialchars($branch) ?>"><?= htmlspecialchars($branch) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-2 mb-md-0">
+                        <label for="monthlyCategoryFilter">Category</label>
+                        <select id="monthlyCategoryFilter" class="form-control form-control-sm">
+                            <option value="">All Categories</option>
+                            <?php foreach (array_keys($categories) as $category): ?>
+                                <option value="<?= htmlspecialchars($category) ?>"><?= htmlspecialchars($category) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-2 mb-md-0">
+                        <label for="monthlyPriorityFilter">Priority</label>
+                        <select id="monthlyPriorityFilter" class="form-control form-control-sm">
+                            <option value="">All Priorities</option>
+                            <?php foreach ($priorityOptions as $priority): ?>
+                                <option value="<?= htmlspecialchars($priority) ?>"><?= htmlspecialchars($priority) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-2 mb-md-0">
+                        <label for="monthlyStatusFilter">Status</label>
+                        <select id="monthlyStatusFilter" class="form-control form-control-sm">
+                            <option value="">All Statuses</option>
+                            <?php foreach (array_keys($statuses) as $status): ?>
+                                <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-lg-4 col-md-8 col-sm-12 text-lg-right">
+                        <button type="button" id="monthlyClearFilters" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-undo mr-1"></i> Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <div class="card report-list-card ticket-list-card shadow mb-4">
                 <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
                     <h6><i class="fas fa-list-ul mr-1 text-primary"></i> Tickets for <?= htmlspecialchars($monthLabel ?? '') ?></h6>
@@ -119,7 +197,8 @@ $ticketCount = (int) ($ticketCount ?? 0);
                                     <th>Employee</th>
                                     <th>Branch</th>
                                     <th>Category</th>
-                                    <th>Priority / Status</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
                                     <th>Date Filed</th>
                                     <th>Assigned To</th>
                                 </tr>
@@ -131,7 +210,10 @@ $ticketCount = (int) ($ticketCount ?? 0);
                                     $date = it_ticket_format_date((string) ($row['date_filed'] ?? ''));
                                     $assignedName = trim((string) ($row['assigned_to_name'] ?? ''));
                                 ?>
-                                    <tr>
+                                    <tr data-branch="<?= htmlspecialchars(strtolower(trim((string) ($row['branchName'] ?? '')))) ?>"
+                                        data-category="<?= htmlspecialchars(strtolower(trim((string) ($row['category'] ?? '')))) ?>"
+                                        data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
+                                        data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>">
                                         <td>
                                             <span class="ticket-id"><?= htmlspecialchars($row['ticket_number'] ?? '') ?></span>
                                         </td>
@@ -159,11 +241,17 @@ $ticketCount = (int) ($ticketCount ?? 0);
                                                 <span class="priority-pill <?= it_ticket_priority_class($priority) ?>">
                                                     <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
                                                 </span>
+                                            <?php else: ?>
+                                                <span class="text-muted">—</span>
                                             <?php endif; ?>
+                                        </td>
+                                        <td>
                                             <?php if ($status !== ''): ?>
-                                                <span class="status-badge <?= it_ticket_status_class($status) ?> mt-1">
+                                                <span class="status-badge <?= it_ticket_status_class($status) ?>">
                                                     <?= htmlspecialchars($status) ?>
                                                 </span>
+                                            <?php else: ?>
+                                                <span class="text-muted">—</span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="date-cell" data-order="<?= (int) $date['order'] ?>">
@@ -202,16 +290,7 @@ $ticketCount = (int) ($ticketCount ?? 0);
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-    <script>
-    $(document).ready(function () {
-        <?php if (!empty($tickets)): ?>
-        $('#monthlyTicketsTable').DataTable({
-            order: [[5, 'asc']],
-            pageLength: 25
-        });
-        <?php endif; ?>
-    });
-    </script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-monthly-report.js"></script>
 
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>

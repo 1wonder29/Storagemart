@@ -31,8 +31,8 @@ foreach ($tickets as $t) {
 }
 
 ksort($branches);
-ksort($priorities);
 ksort($statuses);
+$priorityOptions = it_ticket_priority_options(array_keys($priorities));
 
 $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 0) + ($statusCounts['On Hold'] ?? 0) + ($statusCounts['Reopened'] ?? 0);
 ?>
@@ -119,7 +119,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                         <label for="myPriorityFilter">Priority</label>
                         <select id="myPriorityFilter" class="form-control form-control-sm">
                             <option value="">All Priorities</option>
-                            <?php foreach (array_keys($priorities) as $priority): ?>
+                            <?php foreach ($priorityOptions as $priority): ?>
                                 <option value="<?= htmlspecialchars($priority) ?>"><?= htmlspecialchars($priority) ?></option>
                             <?php endforeach; ?>
                         </select>
@@ -162,7 +162,8 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                     <th>Ticket</th>
                                     <th>Concern</th>
                                     <th>Branch</th>
-                                    <th>Priority / Status</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
                                     <th>Date Filed</th>
                                     <th class="text-right">Actions</th>
                                 </tr>
@@ -175,6 +176,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                         $date = it_ticket_format_date((string) ($row['date_filed'] ?? ''));
                                     ?>
                                         <tr data-ticket-id="<?= $ticketId ?>"
+                                            data-branch="<?= htmlspecialchars(strtolower(trim((string) ($row['branchName'] ?? '')))) ?>"
                                             data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
                                             data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>">
                                             <td>
@@ -209,11 +211,17 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                                     <span class="priority-pill <?= it_ticket_priority_class($priority) ?>" data-ticket-priority>
                                                         <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
                                                     </span>
+                                                <?php else: ?>
+                                                    <span class="text-muted">—</span>
                                                 <?php endif; ?>
+                                            </td>
+                                            <td>
                                                 <?php if ($status !== ''): ?>
-                                                    <span class="status-badge <?= it_ticket_status_class($status) ?> mt-1" data-ticket-status>
+                                                    <span class="status-badge <?= it_ticket_status_class($status) ?>" data-ticket-status>
                                                         <?= htmlspecialchars($status) ?>
                                                     </span>
+                                                <?php else: ?>
+                                                    <span class="text-muted">—</span>
                                                 <?php endif; ?>
                                             </td>
                                             <td class="date-cell" data-order="<?= (int) $date['order'] ?>">

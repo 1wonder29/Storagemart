@@ -133,6 +133,11 @@
   color: #1cc88a;
 }
 
+.admin-monthly-report-page .summary-card-defective .summary-card-icon {
+  background: rgba(246, 194, 62, 0.15);
+  color: #f6c23e;
+}
+
 .admin-monthly-report-page .summary-card-label {
   display: block;
   font-size: 0.7rem;
@@ -149,6 +154,33 @@
   font-weight: 800;
   color: #3a3b45;
   line-height: 1.1;
+}
+
+.admin-monthly-report-page .filter-toolbar .toolbar-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #3a3b45;
+  margin-bottom: 1rem;
+}
+
+.admin-monthly-report-page .filter-toolbar .toolbar-title i {
+  color: var(--report-primary-light);
+  margin-right: 0.4rem;
+}
+
+.admin-monthly-report-page .filter-toolbar label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--report-muted);
+  margin-bottom: 0.35rem;
+}
+
+.admin-monthly-report-page .filter-toolbar .form-control {
+  font-size: 0.85rem;
+  border-radius: 0.45rem;
+  border-color: #d1d3e2;
 }
 
 .admin-monthly-report-page .report-list-card {

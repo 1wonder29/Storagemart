@@ -25,24 +25,28 @@
 
     var dt = new DataTable("#ticketsTable", {
       fixedHeader: { header: true },
-      order: [[4, "desc"]],
+      order: [[5, "desc"]],
       pageLength: 10,
-      columnDefs: [{ targets: [5], orderable: false, searchable: false }],
+      columnDefs: [{ targets: [6], orderable: false, searchable: false }],
     });
 
     var branchFilter = "";
     var priorityFilter = "";
     var statusFilter = "";
 
-    $.fn.dataTable.ext.search.push(function (settings, data) {
+    $.fn.dataTable.ext.search.push(function (settings, searchData, dataIndex) {
       if (settings.nTable.id !== "ticketsTable") return true;
-      var issue = (data[1] || "").toLowerCase();
-      var branch = (data[2] || "").toLowerCase();
-      var badges = (data[3] || "").toLowerCase();
 
-      if (branchFilter && branch.indexOf(branchFilter) === -1) return false;
-      if (priorityFilter && badges.indexOf(priorityFilter) === -1) return false;
-      if (statusFilter && badges.indexOf(statusFilter) === -1) return false;
+      var row = dt.row(dataIndex).node();
+      if (!row) return true;
+
+      var priority = (row.getAttribute("data-priority") || "").trim().toLowerCase();
+      var status = (row.getAttribute("data-status") || "").trim().toLowerCase();
+      var branch = (row.getAttribute("data-branch") || "").trim().toLowerCase();
+
+      if (branchFilter && branch !== branchFilter) return false;
+      if (priorityFilter && priority !== priorityFilter) return false;
+      if (statusFilter && status !== statusFilter) return false;
       return true;
     });
 

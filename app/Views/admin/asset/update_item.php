@@ -59,9 +59,10 @@ $base = rtrim(BASE_URL, '/');
 
                                 <div class="col-md-6">
                                     <label>Status</label>
-                                    <select name="status" class="form-control" required>
+                                    <select name="status" id="status" class="form-control" required>
                                         <option value="UNASSIGNED" <?= (($inventory['status'] ?? '') === 'UNASSIGNED') ? 'selected' : ''; ?>>Unassigned</option>
                                         <option value="ASSIGNED" <?= (($inventory['status'] ?? '') === 'ASSIGNED') ? 'selected' : ''; ?>>Assigned</option>
+                                        <option value="DEFECTIVE" <?= (($inventory['status'] ?? '') === 'DEFECTIVE') ? 'selected' : ''; ?>>Defective</option>
                                         <option value="DISPOSED" <?= (($inventory['status'] ?? '') === 'DISPOSED') ? 'selected' : ''; ?>>Disposed</option>
                                         <option value="LOST" <?= (($inventory['status'] ?? '') === 'LOST') ? 'selected' : ''; ?>>Lost</option>
                                         <option value="RETURNED" <?= (($inventory['status'] ?? '') === 'RETURNED') ? 'selected' : ''; ?>>Returned</option>
@@ -93,8 +94,8 @@ $base = rtrim(BASE_URL, '/');
                             <div class="row mb-4" id="reasonRow" style="display:none;">
                                 <div class="col-md-12">
                                     <label>Reason</label>
-                                    <textarea class="form-control" name="transferDetails" rows="4"
-                                              placeholder="Enter reason for Disposed, Lost, or Returned"></textarea>
+                                    <textarea class="form-control" id="transferDetails" name="transferDetails" rows="4"
+                                              placeholder="Enter reason for Defective, Disposed, Lost, or Returned"></textarea>
                                 </div>
                             </div>
 

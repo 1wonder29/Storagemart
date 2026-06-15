@@ -31,6 +31,9 @@ function admin_asset_status_class(string $status): string
     if (strpos($s, 'unassign') !== false || strpos($s, 'available') !== false) {
         return 'status-unassigned';
     }
+    if (strpos($s, 'defect') !== false) {
+        return 'status-defective';
+    }
     return 'status-default';
 }
 ?>

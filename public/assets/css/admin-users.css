@@ -242,18 +242,43 @@
 }
 
 .admin-users-page .action-btn-group {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   gap: 0.35rem;
   justify-content: flex-end;
   align-items: center;
 }
 
-.admin-users-page .action-btn-group .btn {
-  font-size: 0.75rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 0.4rem;
-  white-space: nowrap;
+.admin-users-page .action-btn-group .action-btn-form {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  align-self: center;
+  height: 2.25rem;
+}
+
+.admin-users-page .action-btn-group .btn-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0 !important;
+  box-sizing: border-box;
+  font-size: 0.875rem;
+  line-height: 1 !important;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.admin-users-page .action-btn-group .btn-action-icon i {
+  font-size: 0.875rem;
+  line-height: 1;
+  width: 1em;
+  text-align: center;
 }
 
 .admin-users-page .empty-state {

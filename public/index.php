@@ -188,6 +188,10 @@ if (strpos($uri, '/admin') === 0) {
         $asset->updateGroup();
     } elseif ($sub === 'assets/group/delete') {
         $asset->deleteGroup();
+    } elseif ($sub === 'assets/defective') {
+        $asset->defective();
+    } elseif ($sub === 'assets/defective/export') {
+        $asset->defectiveExport();
     } elseif ($sub === 'assets/item') {
         $asset->item();
     } elseif ($sub === 'assets/add') {

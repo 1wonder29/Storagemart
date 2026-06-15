@@ -24,7 +24,7 @@ foreach ($tickets as $t) {
 }
 
 ksort($branches);
-ksort($priorities);
+$priorityOptions = it_ticket_priority_options(array_keys($priorities));
 ?>
 <html lang="en">
 
@@ -110,7 +110,7 @@ ksort($priorities);
                         <label for="cancelPriorityFilter">Priority</label>
                         <select id="cancelPriorityFilter" class="form-control form-control-sm">
                             <option value="">All Priorities</option>
-                            <?php foreach (array_keys($priorities) as $priority): ?>
+                            <?php foreach ($priorityOptions as $priority): ?>
                                 <option value="<?= htmlspecialchars($priority) ?>"><?= htmlspecialchars($priority) ?></option>
                             <?php endforeach; ?>
                         </select>

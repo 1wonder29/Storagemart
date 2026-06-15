@@ -5,8 +5,6 @@ require_once __DIR__ . '/../../partials/admin/account_view_helpers.php';
 $totalAccounts = count($users);
 $usertypes = [];
 $adminCount = 0;
-$thisMonth = 0;
-$now = time();
 
 foreach ($users as $row) {
     $type = strtoupper(trim((string) ($row['usertype'] ?? '')));
@@ -15,10 +13,6 @@ foreach ($users as $row) {
     }
     if ($type === 'ADMIN') {
         $adminCount++;
-    }
-    $dc = strtotime((string) ($row['datecreated'] ?? ''));
-    if ($dc && (int) date('Y', $dc) === (int) date('Y', $now) && (int) date('n', $dc) === (int) date('n', $now)) {
-        $thisMonth++;
     }
 }
 
@@ -63,22 +57,16 @@ ksort($usertypes);
                     </div>
                     <div class="col-lg-5">
                         <div class="row mt-3 mt-lg-0">
-                            <div class="col-4">
+                            <div class="col-6">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $totalAccounts ?></div>
                                     <div class="stat-label">Total</div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-6">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $adminCount ?></div>
                                     <div class="stat-label">Admins</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $thisMonth ?></div>
-                                    <div class="stat-label">This Month</div>
                                 </div>
                             </div>
                         </div>
@@ -166,13 +154,13 @@ ksort($usertypes);
                                         <td class="text-right">
                                             <div class="action-btn-group">
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/account/edit?account_id=<?= (int) ($row['account_id'] ?? 0) ?>"
-                                                   class="btn btn-sm btn-outline-primary" title="Edit account">
+                                                   class="btn btn-sm btn-outline-primary btn-action-icon" title="Edit account">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/account" class="d-inline">
+                                                <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/account" class="action-btn-form">
                                                     <input type="hidden" name="id" value="<?= (int) ($row['account_id'] ?? 0) ?>">
                                                     <button type="submit" name="action" value="delete"
-                                                        class="btn btn-sm btn-outline-danger"
+                                                        class="btn btn-sm btn-outline-danger btn-action-icon"
                                                         title="Delete account"
                                                         onclick="return confirm('Are you sure you want to delete this account?')">
                                                         <i class="fas fa-trash"></i>

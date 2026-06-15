@@ -17,7 +17,7 @@ class Asset extends BaseModel {
         FROM {$this->tblgroup} g 
         JOIN {$this->tblcategory} c ON g.category_id = c.category_id 
         LEFT JOIN {$this->tblassets} i ON g.group_id = i.group_id 
-        AND i.status NOT IN ('DISPOSE','LOST') 
+        AND i.status NOT IN ('DISPOSE','DISPOSED','LOST','DEFECTIVE') 
         GROUP BY g.group_id, g.groupName, g.description, c.categoryName
         ORDER BY g.group_id ASC; ";
         $stmt = $this->pdo->prepare($sql);
@@ -190,6 +190,75 @@ class Asset extends BaseModel {
 
 
     //Fetch items by group ID
+    public function fetchDefectiveItemsByMonth(int $year, int $month): array
+    {
+        $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $end = date('Y-m-d H:i:s', strtotime($start . ' +1 month'));
+
+        $sql = "SELECT
+            i.inventory_id,
+            i.assetNumber,
+            i.serialNumber,
+            i.itemInfo,
+            i.status,
+            COALESCE(a.datecreated, i.datecreated) AS markedDefectiveAt,
+            b.branchName,
+            CONCAT(e.firstname, ' ', e.lastname) AS employeeName,
+            g.group_id,
+            g.groupName,
+            c.categoryName,
+            a.transferDetails
+        FROM {$this->tblassets} i
+        JOIN {$this->tblgroup} g ON i.group_id = g.group_id
+        JOIN {$this->tblcategory} c ON g.category_id = c.category_id
+        LEFT JOIN {$this->tblassign} a ON i.assignment_id = a.assignment_id
+        LEFT JOIN {$this->tblbranch} b ON i.branch_id = b.branch_id
+        LEFT JOIN {$this->tblemployee} e ON i.employee_id = e.employee_id
+        WHERE i.status = 'DEFECTIVE'
+          AND COALESCE(a.datecreated, i.datecreated) >= :start
+          AND COALESCE(a.datecreated, i.datecreated) < :end
+        ORDER BY markedDefectiveAt DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':start' => $start, ':end' => $end]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function fetchDefectiveItems(): array
+    {
+        $sql = "SELECT
+            i.inventory_id,
+            i.assetNumber,
+            i.serialNumber,
+            i.itemInfo,
+            i.status,
+            i.datecreated,
+            b.branchName,
+            CONCAT(e.firstname, ' ', e.lastname) AS employeeName,
+            g.group_id,
+            g.groupName,
+            c.categoryName,
+            a.transferDetails
+        FROM {$this->tblassets} i
+        JOIN {$this->tblgroup} g ON i.group_id = g.group_id
+        JOIN {$this->tblcategory} c ON g.category_id = c.category_id
+        LEFT JOIN {$this->tblassign} a ON i.assignment_id = a.assignment_id
+        LEFT JOIN {$this->tblbranch} b ON i.branch_id = b.branch_id
+        LEFT JOIN {$this->tblemployee} e ON i.employee_id = e.employee_id
+        WHERE i.status = 'DEFECTIVE'
+        ORDER BY i.datecreated DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function countDefectiveItems(): int
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->tblassets} WHERE status = 'DEFECTIVE'";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return (int) ($stmt->fetchColumn() ?: 0);
+    }
+
     public function fetchItemsByGroupId(int $groupId): array {
         $stmt = $this->pdo->prepare("SELECT 
             i.inventory_id,
@@ -313,7 +382,7 @@ class Asset extends BaseModel {
             $status = strtoupper($status);
             $now = date('Y-m-d H:i:s');
 
-            if (in_array($status, ['RETURNED', 'DISPOSED', 'LOST'])) {
+            if (in_array($status, ['RETURNED', 'DISPOSED', 'LOST', 'DEFECTIVE'])) {
                 // 1) update inventory: clear assignment & employee
                 $sqlUp = "UPDATE {$this->tblassets}
                         SET assignment_id = NULL,

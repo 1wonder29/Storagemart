@@ -42,9 +42,9 @@
 
     var dt = new DataTable("#pendings", {
       fixedHeader: { header: true },
-      order: [[5, "desc"]],
+      order: [[6, "desc"]],
       pageLength: 10,
-      columnDefs: [{ targets: [6], orderable: false, searchable: false }],
+      columnDefs: [{ targets: [7], orderable: false, searchable: false }],
     });
 
     var deptFilter = "";

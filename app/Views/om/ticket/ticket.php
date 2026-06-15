@@ -151,7 +151,8 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                     <td><?php echo htmlspecialchars(date('M d, Y', strtotime((string) ($ticket['date_filed'] ?? '')))); ?></td>
                                     <td><?php echo htmlspecialchars((string) ($ticket['branchName'] ?? '')); ?></td>
                                     <td>
-                                        <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/view?id=<?php echo (int) ($ticket['ticket_id'] ?? 0); ?>" class="btn btn-sm btn-info">
+                                        <div class="action-btn-group">
+                                        <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/view?id=<?php echo (int) ($ticket['ticket_id'] ?? 0); ?>" class="btn btn-sm btn-info" title="View ticket">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <?php
@@ -159,6 +160,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                         $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
                                         require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
                                         ?>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

@@ -31,7 +31,7 @@ foreach ($tickets as $t) {
 
 ksort($departments);
 ksort($branches);
-ksort($priorities);
+$priorityOptions = it_ticket_priority_options(array_keys($priorities));
 ?>
 <html lang="en">
 
@@ -118,7 +118,7 @@ ksort($priorities);
                         <label for="pendingPriorityFilter">Priority</label>
                         <select id="pendingPriorityFilter" class="form-control form-control-sm">
                             <option value="">All Priorities</option>
-                            <?php foreach (array_keys($priorities) as $priority): ?>
+                            <?php foreach ($priorityOptions as $priority): ?>
                                 <option value="<?= htmlspecialchars($priority) ?>"><?= htmlspecialchars($priority) ?></option>
                             <?php endforeach; ?>
                         </select>
@@ -153,7 +153,8 @@ ksort($priorities);
                                     <th>Employee</th>
                                     <th>Branch</th>
                                     <th>Concern</th>
-                                    <th>Priority / Status</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
                                     <th>Date Filed</th>
                                     <th class="text-right">Actions</th>
                                 </tr>
@@ -214,11 +215,17 @@ ksort($priorities);
                                                 <span class="priority-pill <?= it_ticket_priority_class($priority) ?>" data-ticket-priority>
                                                     <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
                                                 </span>
+                                            <?php else: ?>
+                                                <span class="text-muted">—</span>
                                             <?php endif; ?>
+                                        </td>
+                                        <td>
                                             <?php if ($status !== ''): ?>
-                                                <span class="status-badge <?= it_ticket_status_class($status) ?> mt-1" data-ticket-status>
+                                                <span class="status-badge <?= it_ticket_status_class($status) ?>" data-ticket-status>
                                                     <?= htmlspecialchars($status) ?>
                                                 </span>
+                                            <?php else: ?>
+                                                <span class="text-muted">—</span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="date-cell" data-order="<?= (int) $date['order'] ?>">

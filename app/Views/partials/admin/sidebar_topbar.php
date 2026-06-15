@@ -87,6 +87,11 @@ $assetSubPage = $assetSubPage ?? '';
                             <i class="fas fa-th-list"></i>
                             <span>Assets Directory</span>
                         </a>
+                        <a class="sidebar-submenu-item <?= ($assetSubPage === 'defective') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/assets/defective">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Defective Items</span>
+                        </a>
                         <a class="sidebar-submenu-item <?= ($assetSubPage === 'add-item') ? 'active' : '' ?>"
                            href="<?= htmlspecialchars($base) ?>/admin/assets/add">
                             <i class="fas fa-plus-circle"></i>

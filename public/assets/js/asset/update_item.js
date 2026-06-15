@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function() {
         var reasonRow = document.getElementById("reasonRow");
         var reasonInput = document.getElementById("transferDetails");
 
-        if (status === "DISPOSED" || status === "LOST" || status === "RETURNED") {
+        if (status === "DEFECTIVE" || status === "DISPOSED" || status === "LOST" || status === "RETURNED") {
             reasonRow.style.display = "block";
             reasonInput.setAttribute("required", "required");
         } else {

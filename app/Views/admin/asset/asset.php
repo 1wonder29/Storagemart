@@ -51,29 +51,38 @@ ksort($categories);
                             <a href="<?= htmlspecialchars($base) ?>/admin/assets/add" class="btn btn-sm btn-outline-light mr-1">
                                 <i class="fas fa-plus mr-1"></i> Add Item
                             </a>
-                            <a href="<?= htmlspecialchars($base) ?>/admin/assets/group/add" class="btn btn-sm btn-outline-light">
+                            <a href="<?= htmlspecialchars($base) ?>/admin/assets/group/add" class="btn btn-sm btn-outline-light mr-1">
                                 <i class="fas fa-layer-group mr-1"></i> Add Group
+                            </a>
+                            <a href="<?= htmlspecialchars($base) ?>/admin/assets/defective" class="btn btn-sm btn-outline-light">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Defective Items
                             </a>
                         </div>
                     </div>
                     <div class="col-lg-5">
                         <div class="row mt-3 mt-lg-0">
-                            <div class="col-4">
+                            <div class="col-3">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $totalGroups ?></div>
                                     <div class="stat-label">Groups</div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $totalItems ?></div>
                                     <div class="stat-label">Items</div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $totalAssigned ?></div>
                                     <div class="stat-label">Assigned</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="hero-stat">
+                                    <div class="stat-value"><?= (int) ($defectiveCount ?? 0) ?></div>
+                                    <div class="stat-label">Defective</div>
                                 </div>
                             </div>
                         </div>

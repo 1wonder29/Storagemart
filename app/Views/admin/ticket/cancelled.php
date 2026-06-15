@@ -109,7 +109,8 @@ ksort($priorities);
                                     <th>Ticket</th>
                                     <th>Employee</th>
                                     <th>Branch</th>
-                                    <th>Priority / Status</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
                                     <th>Cancel Reason</th>
                                     <th>Cancelled By</th>
                                     <th>Date Cancelled</th>
@@ -152,11 +153,17 @@ ksort($priorities);
                                                 <span class="priority-pill <?= it_ticket_priority_class($priority) ?>" data-ticket-priority>
                                                     <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
                                                 </span>
+                                            <?php else: ?>
+                                                <span class="text-muted">—</span>
                                             <?php endif; ?>
+                                        </td>
+                                        <td>
                                             <?php if ($oldStatus !== ''): ?>
-                                                <span class="status-badge status-cancelled mt-1" data-ticket-status>
+                                                <span class="status-badge status-cancelled" data-ticket-status>
                                                     Was: <?= htmlspecialchars($oldStatus) ?>
                                                 </span>
+                                            <?php else: ?>
+                                                <span class="status-badge status-cancelled" data-ticket-status>Cancelled</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -211,9 +218,9 @@ ksort($priorities);
             return;
         }
         new DataTable('#cancelledTicketTable', {
-            order: [[6, 'desc']],
+            order: [[7, 'desc']],
             pageLength: 10,
-            columnDefs: [{ targets: [7], orderable: false, searchable: false }],
+            columnDefs: [{ targets: [8], orderable: false, searchable: false }],
         });
     });
     </script>

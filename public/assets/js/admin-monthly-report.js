@@ -28,31 +28,27 @@
     }
   }
 
-  function initAdminTicketsTable() {
-    var $table = $("#logsTicket");
+  function initMonthlyReportTable() {
+    var $table = $("#monthlyTicketsTable");
     if (!$table.length || !$table.find("tbody tr").length) {
-      return;
-    }
-    if ($table.find("tbody td[colspan]").length) {
       return;
     }
     if (isTableInitialized($table[0])) {
       return;
     }
 
-    var dt = new DataTable("#logsTicket", {
-      fixedHeader: { header: true },
-      order: [[5, "desc"]],
-      pageLength: 10,
-      columnDefs: [{ targets: [7], orderable: false, searchable: false }],
+    var dt = new DataTable("#monthlyTicketsTable", {
+      order: [[6, "asc"]],
+      pageLength: 25,
     });
 
     var branchFilter = "";
+    var categoryFilter = "";
     var priorityFilter = "";
     var statusFilter = "";
 
     registerSearch(function (settings, searchData, dataIndex) {
-      if (getTableId(settings) !== "logsTicket") {
+      if (getTableId(settings) !== "monthlyTicketsTable") {
         return true;
       }
 
@@ -62,10 +58,14 @@
       }
 
       var branch = (row.getAttribute("data-branch") || "").trim().toLowerCase();
+      var category = (row.getAttribute("data-category") || "").trim().toLowerCase();
       var priority = (row.getAttribute("data-priority") || "").trim().toLowerCase();
       var status = (row.getAttribute("data-status") || "").trim().toLowerCase();
 
       if (branchFilter && branch !== branchFilter) {
+        return false;
+      }
+      if (categoryFilter && category !== categoryFilter) {
         return false;
       }
       if (priorityFilter && priority !== priorityFilter) {
@@ -81,25 +81,29 @@
       dt.draw();
     }
 
-    $("#adminBranchFilter").on("change", function () {
+    $("#monthlyBranchFilter").on("change", function () {
       branchFilter = ($(this).val() || "").trim().toLowerCase();
       redraw();
     });
-    $("#adminPriorityFilter").on("change", function () {
+    $("#monthlyCategoryFilter").on("change", function () {
+      categoryFilter = ($(this).val() || "").trim().toLowerCase();
+      redraw();
+    });
+    $("#monthlyPriorityFilter").on("change", function () {
       priorityFilter = ($(this).val() || "").trim().toLowerCase();
       redraw();
     });
-    $("#adminStatusFilter").on("change", function () {
+    $("#monthlyStatusFilter").on("change", function () {
       statusFilter = ($(this).val() || "").trim().toLowerCase();
       redraw();
     });
-    $("#adminClearFilters").on("click", function () {
-      branchFilter = priorityFilter = statusFilter = "";
-      $("#adminBranchFilter, #adminPriorityFilter, #adminStatusFilter").val("");
+    $("#monthlyClearFilters").on("click", function () {
+      branchFilter = categoryFilter = priorityFilter = statusFilter = "";
+      $("#monthlyBranchFilter, #monthlyCategoryFilter, #monthlyPriorityFilter, #monthlyStatusFilter").val("");
       dt.search("");
       redraw();
     });
   }
 
-  $(document).ready(initAdminTicketsTable);
+  $(document).ready(initMonthlyReportTable);
 })(jQuery);

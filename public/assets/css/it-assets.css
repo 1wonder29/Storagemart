@@ -194,6 +194,7 @@
   flex-wrap: wrap;
   gap: 0.35rem;
   justify-content: flex-end;
+  align-items: center;
 }
 
 .it-assets-page .action-btn-group .btn {
