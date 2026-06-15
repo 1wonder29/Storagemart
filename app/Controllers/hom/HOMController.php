@@ -88,7 +88,7 @@ class HOMController extends AuthController
         $recentTickets = array_slice($tickets, 0, 5);
 
         $data = [
-            'page_title' => 'HOM Dashboard',
+            'page_title' => 'Dashboard',
             'user' => $user,
             'stats' => $stats,
             'assignments' => $assignments,

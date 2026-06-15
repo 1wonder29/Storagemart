@@ -1,7 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
-$dashboardTitle = ($user_role ?? '') === 'HOM' ? 'HOM Dashboard' : 'OM Dashboard';
+$dashboardTitle = ($user_role ?? '') === 'HOM' ? 'Dashboard' : 'OM Dashboard';
 $roleLabel = ($user_role ?? '') === 'HOM' ? 'Head of Operations' : 'Operations Manager';
 $displayName = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? '')) ?: 'User';
 

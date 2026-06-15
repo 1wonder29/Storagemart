@@ -3,10 +3,18 @@ $base = rtrim(BASE_URL, '/');
 $loggedFirstname = $ctx['loggedFirstname'] ?? 'AOM';
 $loggedLastname = $ctx['loggedLastname'] ?? '';
 $displayName = trim($loggedFirstname . ' ' . $loggedLastname) ?: 'AOM';
+$chartTicketStats = [
+    'Pending'     => (int)($ticketStats['Pending'] ?? 0),
+    'In Progress' => (int)($ticketStats['In Progress'] ?? 0),
+    'Cancelled'   => (int)($ticketStats['Cancelled'] ?? 0),
+    'Resolved'    => (int)($ticketStats['Resolved'] ?? 0),
+];
+$hasChartData = array_sum($chartTicketStats) > 0;
 $ticketStatusClasses = [
     'Pending'     => 'status-pending',
     'In Progress' => 'status-in-progress',
     'Resolved'    => 'status-resolved',
+    'Cancelled'   => 'status-cancelled',
 ];
 ?>
 <!DOCTYPE html>
@@ -128,7 +136,7 @@ $ticketStatusClasses = [
                         <h6><i class="fas fa-chart-pie"></i>Ticket Statistics</h6>
                     </div>
                     <div class="card-body">
-                        <?php if (!empty($ticketStats)): ?>
+                        <?php if ($hasChartData): ?>
                             <div class="chart-wrap">
                                 <canvas id="ticketStatsChart"></canvas>
                             </div>
@@ -222,14 +230,14 @@ $ticketStatusClasses = [
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<?php if (!empty($ticketStats)): ?>
+<?php if ($hasChartData): ?>
 <script>
 (function () {
     var ctx = document.getElementById('ticketStatsChart');
     if (!ctx) return;
 
-    var labels = <?= json_encode(array_keys($ticketStats)) ?>;
-    var data = <?= json_encode(array_values($ticketStats)) ?>;
+    var labels = <?= json_encode(array_keys($chartTicketStats)) ?>;
+    var data = <?= json_encode(array_values($chartTicketStats)) ?>;
 
     new Chart(ctx.getContext('2d'), {
         type: 'doughnut',
@@ -237,7 +245,7 @@ $ticketStatusClasses = [
             labels: labels,
             datasets: [{
                 data: data,
-                backgroundColor: ['#5c6bc0', '#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc'],
+                backgroundColor: ['#f6c23e', '#1cc88a', '#858796', '#36b9cc', '#e74a3b'],
                 borderColor: '#fff',
                 borderWidth: 2
             }]

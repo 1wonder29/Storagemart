@@ -2,6 +2,21 @@
 $base = rtrim(BASE_URL, '/');
 $loggedFirstname = $ctx['loggedFirstname'] ?? 'AOM';
 $loggedLastname = $ctx['loggedLastname'] ?? '';
+
+$rawTicketStats = $ticketStats ?? [];
+$statusOrder = ['Pending', 'In Progress', 'Cancelled', 'Resolved'];
+$summaryTicketStats = [];
+foreach ($statusOrder as $status) {
+    $count = (int)($rawTicketStats[$status] ?? 0);
+    if ($count > 0 || $status === 'Resolved') {
+        $summaryTicketStats[$status] = $count;
+    }
+}
+foreach ($rawTicketStats as $status => $count) {
+    if (!isset($summaryTicketStats[$status])) {
+        $summaryTicketStats[$status] = (int)$count;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -38,7 +53,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
 
             <!-- Ticket Statistics Cards -->
             <div class="row">
-                <?php foreach ($ticketStats as $status => $count): ?>
+                <?php foreach ($summaryTicketStats as $status => $count): ?>
                     <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card border-left-<?php echo $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary')); ?> shadow h-100 py-2">
                             <div class="card-body">
@@ -67,6 +82,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                 <option value="">All Status</option>
                                 <option value="Pending">Pending</option>
                                 <option value="In Progress">In Progress</option>
+                                <option value="Cancelled">Cancelled</option>
                                 <option value="Resolved">Resolved</option>
                                 <option value="Closed">Closed</option>
                             </select>
@@ -215,7 +231,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                 const priorityFilter = ($('#priorityFilter').val() || '').trim().toLowerCase();
                 const anyFilter = !!(statusFilter || branchFilter || priorityFilter);
 
-                $('#ticketsTable tbody tr').each(function() {
+                $('#aomTicketsTable tbody tr').each(function() {
                     const $row = $(this);
                     // "No tickets" placeholder row
                     if ($row.find('td[colspan]').length) {

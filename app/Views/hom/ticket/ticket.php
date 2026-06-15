@@ -78,6 +78,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                             <option value="">All Status</option>
                             <option value="Pending">Pending</option>
                             <option value="In Progress">In Progress</option>
+                            <option value="Cancelled">Cancelled</option>
                             <option value="Resolved">Resolved</option>
                             <option value="Closed">Closed</option>
                         </select>
@@ -188,7 +189,36 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
         document.getElementById('statusFilter').value = '';
         document.getElementById('priorityFilter').value = '';
         document.getElementById('searchInput').value = '';
+        filterTickets();
     }
+
+    function filterTickets() {
+        const statusVal = (document.getElementById('statusFilter').value || '').toLowerCase();
+        const priorityVal = (document.getElementById('priorityFilter').value || '').toLowerCase();
+        const searchVal = (document.getElementById('searchInput').value || '').toLowerCase();
+
+        document.querySelectorAll('#homTicketsTable tbody tr').forEach(function (row) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 8) return;
+
+            const ticketNum = (cells[0].textContent || '').toLowerCase();
+            const employee = (cells[1].textContent || '').toLowerCase();
+            const category = (cells[2].textContent || '').toLowerCase();
+            const priority = (cells[3].textContent || '').toLowerCase();
+            const status = (cells[4].textContent || '').toLowerCase();
+            const branch = (cells[6].textContent || '').toLowerCase();
+
+            const matchesStatus = !statusVal || status.includes(statusVal);
+            const matchesPriority = !priorityVal || priority.includes(priorityVal);
+            const matchesSearch = !searchVal || ticketNum.includes(searchVal) || employee.includes(searchVal) || category.includes(searchVal) || branch.includes(searchVal);
+
+            row.style.display = (matchesStatus && matchesPriority && matchesSearch) ? '' : 'none';
+        });
+    }
+
+    document.getElementById('statusFilter').addEventListener('change', filterTickets);
+    document.getElementById('priorityFilter').addEventListener('change', filterTickets);
+    document.getElementById('searchInput').addEventListener('input', filterTickets);
 </script>
 <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
