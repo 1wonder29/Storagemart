@@ -466,6 +466,8 @@ if (strpos($uri, '/hr') === 0) {
         $hrTicket->storeRating();
     } elseif ($sub === 'tickets') {
         $hrTicket->index();
+    } elseif ($sub === 'uniforms/export') {
+        $uniform->exportSummary();
     } elseif ($sub === 'uniforms') {
         $uniform->list();
     } elseif ($sub === 'uniforms/add') {

@@ -144,6 +144,8 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                     <th>Ticket</th>
                                     <th>Requester</th>
                                     <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
                                     <th>Cancel Reason</th>
                                     <th>Cancelled By</th>
                                     <th>Date Cancelled</th>
@@ -169,14 +171,6 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                         <td>
                                             <div class="ticket-id-wrap">
                                                 <span class="ticket-id"><?= htmlspecialchars($ticketNum) ?></span>
-                                                <span class="status-badge status-cancelled mt-1" data-ticket-status>
-                                                    <i class="fas fa-ban"></i> Cancelled
-                                                </span>
-                                                <?php if ($priority !== ''): ?>
-                                                    <span class="priority-pill <?= it_ticket_priority_class($priority) ?>" data-ticket-priority>
-                                                        <?= htmlspecialchars($priority) ?>
-                                                    </span>
-                                                <?php endif; ?>
                                             </div>
                                         </td>
                                         <td>
@@ -196,6 +190,20 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                             <?php if ($oldStatus !== ''): ?>
                                                 <div class="remarks-hint">Was: <?= htmlspecialchars($oldStatus) ?></div>
                                             <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($priority !== ''): ?>
+                                                <span class="priority-pill <?= it_ticket_priority_class($priority) ?>" data-ticket-priority>
+                                                    <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="text-muted">—</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge status-cancelled" data-ticket-status>
+                                                <i class="fas fa-ban"></i> Cancelled
+                                            </span>
                                         </td>
                                         <td>
                                             <?php if ($reason !== ''): ?>

@@ -51,6 +51,7 @@ class UniformController extends AuthController {
             $limit = 20;
             $offset = ($page - 1) * $limit;
 
+            $this->uniformModel->syncPendingReturnCounts();
             $uniforms = $this->uniformModel->getAllUniforms($offset, $limit);
             $totalCount = $this->uniformModel->getTotalUniformCount();
             $totalPages = ceil($totalCount / $limit);
@@ -61,6 +62,99 @@ class UniformController extends AuthController {
             error_log('UniformController::list error: ' . $e->getMessage());
             $_SESSION['errorMessage'] = 'Error loading uniforms: ' . $e->getMessage();
             $this->redirect('/hr/uniforms');
+        }
+    }
+
+    /**
+     * Export uniform inventory summary as Excel.
+     */
+    public function exportSummary()
+    {
+        $this->requireHR();
+
+        require_once __DIR__ . '/../../Services/ExcelExportService.php';
+
+        try {
+            $uniforms = $this->uniformModel->getUniformInventorySummary();
+
+            $headers = [
+                'Type',
+                'Size',
+                'Color',
+                'In Stock',
+                'Reorder Level',
+                'Stock Status',
+                'Status',
+                'Pending Return',
+                'Damaged',
+                'Lost',
+                'Supplier',
+                'Cost Per Unit',
+                'Date Added',
+            ];
+
+            $rows = [];
+            $totals = [
+                'in_stock' => 0,
+                'pending_return' => 0,
+                'damaged' => 0,
+                'lost' => 0,
+            ];
+
+            foreach ($uniforms as $uniform) {
+                $inStock = (int) ($uniform['quantity_in_stock'] ?? 0);
+                $pending = max(0, (int) ($uniform['quantity_returned'] ?? 0));
+                $damaged = (int) ($uniform['quantity_damaged'] ?? 0);
+                $lost = (int) ($uniform['quantity_lost'] ?? 0);
+
+                $totals['in_stock'] += $inStock;
+                $totals['pending_return'] += $pending;
+                $totals['damaged'] += $damaged;
+                $totals['lost'] += $lost;
+
+                $rows[] = [
+                    $uniform['uniform_type'] ?? '',
+                    $uniform['size'] ?? '',
+                    $uniform['color'] ?? '',
+                    $inStock,
+                    (int) ($uniform['reorder_level'] ?? 0),
+                    $uniform['stock_status'] ?? '',
+                    strtoupper($uniform['status'] ?? 'ACTIVE'),
+                    $pending,
+                    $damaged,
+                    $lost,
+                    $uniform['supplier'] ?? '',
+                    $uniform['cost_per_unit'] ?? '',
+                    $uniform['datecreated'] ?? '',
+                ];
+            }
+
+            if (!empty($rows)) {
+                $rows[] = array_fill(0, count($headers), '');
+                $rows[] = [
+                    'TOTALS',
+                    '',
+                    '',
+                    $totals['in_stock'],
+                    '',
+                    '',
+                    '',
+                    $totals['pending_return'],
+                    $totals['damaged'],
+                    $totals['lost'],
+                    '',
+                    '',
+                    '',
+                ];
+            }
+
+            $filename = 'uniform_inventory_summary_' . date('Ymd_His') . '.xls';
+            (new ExcelExportService())->download($headers, $rows, $filename);
+        } catch (\Throwable $e) {
+            error_log('UniformController::exportSummary error: ' . $e->getMessage());
+            http_response_code(500);
+            echo 'Failed to generate Excel file.';
+            exit;
         }
     }
 
@@ -566,7 +660,15 @@ class UniformController extends AuthController {
                 $this->redirect('/hr/uniforms');
             }
 
-            $assignments = $this->uniformModel->getAssignmentsByUniformId($uniformId);
+            $conditionFilter = strtoupper(trim((string) ($_GET['condition'] ?? '')));
+            if (!in_array($conditionFilter, ['DAMAGED', 'LOST'], true)) {
+                $conditionFilter = '';
+            }
+
+            $assignments = $this->uniformModel->getAssignmentsByUniformId(
+                $uniformId,
+                $conditionFilter !== '' ? $conditionFilter : null
+            );
             $notifications = $this->notificationModel->getLatest($_SESSION['account_id'] ?? 0, 10);
             require __DIR__ . '/../../Views/hr/uniforms/assignments.php';
         } catch (\Throwable $e) {
@@ -654,6 +756,7 @@ class UniformController extends AuthController {
         $this->requireHR();
 
         try {
+            $this->uniformModel->syncPendingReturnCounts();
             $pendingReturns = $this->uniformModel->getPendingReturns();
             $notifications = $this->notificationModel->getLatest($_SESSION['account_id'] ?? 0, 10);
             require __DIR__ . '/../../Views/hr/uniforms/pending_returns.php';

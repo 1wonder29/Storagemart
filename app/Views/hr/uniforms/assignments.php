@@ -7,6 +7,13 @@ foreach ($assignments ?? [] as $a) {
     }
 }
 $returnedCount = count($assignments ?? []) - $activeCount;
+$conditionFilter = strtoupper(trim((string) ($conditionFilter ?? '')));
+$listTitle = 'Uniform Assignments';
+if ($conditionFilter === 'DAMAGED') {
+    $listTitle = 'Damaged Uniform Returns';
+} elseif ($conditionFilter === 'LOST') {
+    $listTitle = 'Lost Uniform Returns';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -27,7 +34,7 @@ $returnedCount = count($assignments ?? []) - $activeCount;
         ?>
         <div class="container-fluid">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0 text-gray-800">Uniform Assignments</h1>
+                <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($listTitle) ?></h1>
                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-secondary btn-sm">
                     <i class="fas fa-arrow-left"></i> Back to Uniforms
                 </a>
@@ -94,7 +101,14 @@ $returnedCount = count($assignments ?? []) - $activeCount;
                 <div class="card shadow mb-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-list"></i> Assignment History
+                            <i class="fas fa-list"></i>
+                            <?php if ($conditionFilter === 'DAMAGED'): ?>
+                                Damaged Return History
+                            <?php elseif ($conditionFilter === 'LOST'): ?>
+                                Lost Return History
+                            <?php else: ?>
+                                Assignment History
+                            <?php endif; ?>
                         </h6>
                     </div>
                     <div class="card-body">
@@ -130,7 +144,18 @@ $returnedCount = count($assignments ?? []) - $activeCount;
                                                 <?php if ($isActive): ?>
                                                     <span class="badge bg-success">Active</span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-secondary">Returned</span>
+                                                    <?php
+                                                    $returnCondition = strtoupper(trim((string) ($a['condition_upon_return'] ?? '')));
+                                                    $badgeClass = 'bg-secondary';
+                                                    if ($returnCondition === 'DAMAGED') {
+                                                        $badgeClass = 'bg-danger';
+                                                    } elseif ($returnCondition === 'LOST') {
+                                                        $badgeClass = 'bg-dark';
+                                                    }
+                                                    ?>
+                                                    <span class="badge <?= $badgeClass ?>">
+                                                        <?= htmlspecialchars($returnCondition !== '' ? $returnCondition : 'Returned') ?>
+                                                    </span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>

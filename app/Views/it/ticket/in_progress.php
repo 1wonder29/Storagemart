@@ -157,6 +157,8 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                     <th>Ticket</th>
                                     <th>Requester</th>
                                     <th>Issue</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
                                     <th>Assignment</th>
                                     <th>Date Filed</th>
                                     <th class="text-right">Actions</th>
@@ -174,14 +176,12 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                         $date = it_ticket_format_date((string) ($row['date_filed'] ?? ''));
                                     ?>
                                         <tr data-ticket-id="<?= $ticketId ?>"
+                                            data-branch="<?= htmlspecialchars(strtolower(trim((string) ($row['branchName'] ?? '')))) ?>"
                                             data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
                                             data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>">
                                             <td>
                                                 <div class="ticket-id-wrap">
                                                     <span class="ticket-id"><?= htmlspecialchars($row['ticket_number']) ?></span>
-                                                    <span class="status-badge <?= it_ticket_status_class($status) ?>" data-ticket-status>
-                                                        <?= htmlspecialchars($status) ?>
-                                                    </span>
                                                 </div>
                                             </td>
                                             <td>
@@ -198,11 +198,6 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                                         <?= htmlspecialchars($row['category']) ?>
                                                     </span>
                                                 <?php endif; ?>
-                                                <?php if (!empty($row['priority'])): ?>
-                                                    <span class="priority-pill <?= it_ticket_priority_class($priority) ?> ml-1" data-ticket-priority>
-                                                        <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
-                                                    </span>
-                                                <?php endif; ?>
                                                 <?php if (!empty($row['concern_details'])): ?>
                                                     <div class="concern-text" title="<?= htmlspecialchars($row['concern_details']) ?>">
                                                         <?= htmlspecialchars(it_ticket_truncate((string) $row['concern_details'], 80)) ?>
@@ -215,6 +210,24 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                                     <div class="asset-hint" title="<?= htmlspecialchars($asset) ?>">
                                                         <i class="fas fa-laptop mr-1"></i><?= htmlspecialchars($asset) ?>
                                                     </div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($priority !== ''): ?>
+                                                    <span class="priority-pill <?= it_ticket_priority_class($priority) ?>" data-ticket-priority>
+                                                        <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="text-muted">—</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($status !== ''): ?>
+                                                    <span class="status-badge <?= it_ticket_status_class($status) ?>" data-ticket-status>
+                                                        <?= htmlspecialchars($status) ?>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="text-muted">—</span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>

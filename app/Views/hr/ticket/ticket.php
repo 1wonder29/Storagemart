@@ -1,5 +1,20 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+
+$rawTicketStats = $ticketStats ?? [];
+$statusOrder = ['Pending', 'In Progress', 'Cancelled', 'Resolved'];
+$summaryTicketStats = [];
+foreach ($statusOrder as $status) {
+    $count = (int)($rawTicketStats[$status] ?? 0);
+    if ($count > 0 || $status === 'Resolved') {
+        $summaryTicketStats[$status] = $count;
+    }
+}
+foreach ($rawTicketStats as $status => $count) {
+    if (!isset($summaryTicketStats[$status])) {
+        $summaryTicketStats[$status] = (int)$count;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,7 +61,7 @@ $base = rtrim(BASE_URL, '/');
         <?php endif; ?>
 
         <div class="row">
-            <?php foreach ($ticketStats ?? [] as $status => $count): ?>
+            <?php foreach ($summaryTicketStats as $status => $count): ?>
                 <div class="col-xl-3 col-md-6 mb-4">
                     <div class="card border-left-<?php echo $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary')); ?> shadow h-100 py-2">
                         <div class="card-body">
@@ -74,6 +89,7 @@ $base = rtrim(BASE_URL, '/');
                             <option value="">All Status</option>
                             <option value="Pending">Pending</option>
                             <option value="In Progress">In Progress</option>
+                            <option value="Cancelled">Cancelled</option>
                             <option value="Resolved">Resolved</option>
                             <option value="Closed">Closed</option>
                         </select>

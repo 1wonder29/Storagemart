@@ -12,26 +12,28 @@
 
     var dt = new DataTable("#IT-TicketDatables", {
       fixedHeader: { header: true },
-      order: [[4, "desc"]],
+      order: [[6, "desc"]],
       pageLength: 10,
-      columnDefs: [{ targets: [5], orderable: false, searchable: false }],
+      columnDefs: [{ targets: [7], orderable: false, searchable: false }],
     });
 
     var branchFilter = "";
     var priorityFilter = "";
     var statusFilter = "";
 
-    $.fn.dataTable.ext.search.push(function (settings, data) {
+    $.fn.dataTable.ext.search.push(function (settings, searchData, dataIndex) {
       if (settings.nTable.id !== "IT-TicketDatables") return true;
-      var requester = (data[1] || "").toLowerCase();
-      var issue = (data[2] || "").toLowerCase();
-      var assignment = (data[3] || "").toLowerCase();
 
-      if (branchFilter && requester.indexOf(branchFilter) === -1) return false;
-      if (priorityFilter && issue.indexOf(priorityFilter) === -1) return false;
-      if (statusFilter && (issue.indexOf(statusFilter) === -1 && assignment.indexOf(statusFilter) === -1)) {
-        return false;
-      }
+      var row = dt.row(dataIndex).node();
+      if (!row) return true;
+
+      var branch = (row.getAttribute("data-branch") || "").trim().toLowerCase();
+      var priority = (row.getAttribute("data-priority") || "").trim().toLowerCase();
+      var status = (row.getAttribute("data-status") || "").trim().toLowerCase();
+
+      if (branchFilter && branch !== branchFilter) return false;
+      if (priorityFilter && priority !== priorityFilter) return false;
+      if (statusFilter && status !== statusFilter) return false;
       return true;
     });
 

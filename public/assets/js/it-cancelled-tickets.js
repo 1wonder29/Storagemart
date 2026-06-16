@@ -12,23 +12,27 @@
 
     var dt = new DataTable("#ticketTables", {
       fixedHeader: { header: true },
-      order: [[5, "desc"]],
+      order: [[7, "desc"]],
       pageLength: 10,
-      columnDefs: [{ targets: [6], orderable: false, searchable: false }],
+      columnDefs: [{ targets: [8], orderable: false, searchable: false }],
     });
 
     var branchFilter = "";
     var priorityFilter = "";
 
-    $.fn.dataTable.ext.search.push(function (settings, data) {
+    $.fn.dataTable.ext.search.push(function (settings, searchData, dataIndex) {
       if (settings.nTable.id !== "ticketTables") {
         return true;
       }
-      var branch = (data[1] || "").toLowerCase();
-      var priority = (data[0] || "").toLowerCase();
+
+      var row = dt.row(dataIndex).node();
+      if (!row) return true;
+
+      var branch = (searchData[1] || "").toLowerCase();
+      var priority = (row.getAttribute("data-priority") || "").trim().toLowerCase();
 
       if (branchFilter && branch.indexOf(branchFilter) === -1) return false;
-      if (priorityFilter && priority.indexOf(priorityFilter) === -1) return false;
+      if (priorityFilter && priority !== priorityFilter) return false;
       return true;
     });
 

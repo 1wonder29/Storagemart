@@ -55,7 +55,7 @@ $base = rtrim(BASE_URL, '/');
                                             <td><?= htmlspecialchars($return['employee_name'] ?? 'N/A') ?></td>
                                             <td><?= htmlspecialchars($return['uniform_type'] ?? '') ?></td>
                                             <td><?= htmlspecialchars($return['size'] ?? '') ?></td>
-                                            <td><?= (int)$return['quantity_returned'] ?></td>
+                                            <td><?= max(0, (int) ($return['quantity_returned'] ?? 0)) ?></td>
                                             <td>
                                                 <?php
                                                 $condition = strtoupper($return['condition_upon_return']);

@@ -18,17 +18,19 @@ $base = rtrim(BASE_URL, '/');
     $activePage = 'uniforms';
     require_once dirname(dirname(__DIR__)) . '/partials/hr/sidebar_topbar.php';?>
         <div class="container-fluid">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/add" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New Uniform
-                    </a>
-                    <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assign" class="btn btn-success">
-                        <i class="fas fa-hand-holding"></i> Assign Uniform to Employee
-                    </a>
-                </div>
-            </div>
             <h1 class="h3 mb-4 text-gray-800">Uniform Inventory</h1>
+
+            <div class="d-flex flex-wrap align-items-center mb-4">
+                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/add" class="btn btn-primary mr-2 mb-2">
+                    <i class="fas fa-plus"></i> Add New Uniform
+                </a>
+                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assign" class="btn btn-success mr-2 mb-2">
+                    <i class="fas fa-hand-holding"></i> Assign Uniform to Employee
+                </a>
+                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/export" class="btn btn-success mb-2">
+                    <i class="fas fa-file-excel mr-1"></i> Download Summary
+                </a>
+            </div>
 
             <?php if (!empty($_SESSION['successMessage'])): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -110,7 +112,7 @@ $base = rtrim(BASE_URL, '/');
                                                 </span>
                                             </td>
                                             <td>
-                                                <?php $pendingReturn = (int) ($uniform['quantity_returned'] ?? 0); ?>
+                                                <?php $pendingReturn = max(0, (int) ($uniform['quantity_returned'] ?? 0)); ?>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments/<?= (int) $uniform['uniform_id'] ?>"
                                                    class="btn btn-sm btn-warning"
                                                    title="View pending returns">
@@ -118,14 +120,20 @@ $base = rtrim(BASE_URL, '/');
                                                 </a>
                                             </td>
                                             <td>
-                                                <span class="btn btn-sm btn-danger" title="Damaged uniforms">
-                                                    <?= (int) ($uniform['quantity_damaged'] ?? 0) ?>
-                                                </span>
+                                                <?php $damagedCount = (int) ($uniform['quantity_damaged'] ?? 0); ?>
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments/<?= (int) $uniform['uniform_id'] ?>?condition=DAMAGED"
+                                                   class="btn btn-sm btn-danger"
+                                                   title="View damaged uniforms">
+                                                    <?= $damagedCount ?>
+                                                </a>
                                             </td>
                                             <td>
-                                                <span class="btn btn-sm btn-dark" title="Lost uniforms">
-                                                    <?= (int) ($uniform['quantity_lost'] ?? 0) ?>
-                                                </span>
+                                                <?php $lostCount = (int) ($uniform['quantity_lost'] ?? 0); ?>
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments/<?= (int) $uniform['uniform_id'] ?>?condition=LOST"
+                                                   class="btn btn-sm btn-dark"
+                                                   title="View lost uniforms">
+                                                    <?= $lostCount ?>
+                                                </a>
                                             </td>
                                             <td>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/edit/<?= $uniform['uniform_id'] ?>" 

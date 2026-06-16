@@ -32,11 +32,16 @@ class UniformModel extends HRModel {
                         status,
                         datecreated,
                         createdby,
-                        COALESCE(quantity_returned, 0) AS quantity_returned,
+                        COALESCE((
+                            SELECT SUM(ur.quantity_returned)
+                            FROM tbluniform_returns ur
+                            WHERE ur.uniform_id = i.uniform_id
+                              AND ur.return_status = 'PENDING'
+                        ), 0) AS quantity_returned,
                         COALESCE(quantity_damaged, 0) AS quantity_damaged,
                         COALESCE(quantity_lost, 0) AS quantity_lost,
                         CASE WHEN quantity_in_stock <= reorder_level THEN 'NEEDS_REORDER' ELSE 'OK' END as stock_status
-                    FROM {$this->tbluniform_inventory}
+                    FROM {$this->tbluniform_inventory} i
                     ORDER BY CASE WHEN status = 'ACTIVE' THEN 0 ELSE 1 END, uniform_type, size, color
                     LIMIT ? OFFSET ?";
             
@@ -64,6 +69,44 @@ class UniformModel extends HRModel {
         } catch (\Throwable $e) {
             error_log('UniformModel::getTotalUniformCount error: ' . $e->getMessage());
             return 0;
+        }
+    }
+
+    /**
+     * Get full uniform inventory for export (no pagination).
+     * @return array
+     */
+    public function getUniformInventorySummary(): array
+    {
+        try {
+            $sql = "SELECT 
+                        uniform_id,
+                        uniform_type,
+                        size,
+                        color,
+                        quantity_in_stock,
+                        reorder_level,
+                        status,
+                        supplier,
+                        cost_per_unit,
+                        datecreated,
+                        COALESCE((
+                            SELECT SUM(ur.quantity_returned)
+                            FROM tbluniform_returns ur
+                            WHERE ur.uniform_id = i.uniform_id
+                              AND ur.return_status = 'PENDING'
+                        ), 0) AS quantity_returned,
+                        COALESCE(quantity_damaged, 0) AS quantity_damaged,
+                        COALESCE(quantity_lost, 0) AS quantity_lost,
+                        CASE WHEN quantity_in_stock <= reorder_level THEN 'NEEDS_REORDER' ELSE 'OK' END AS stock_status
+                    FROM {$this->tbluniform_inventory} i
+                    ORDER BY CASE WHEN status = 'ACTIVE' THEN 0 ELSE 1 END, uniform_type, size, color";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log('UniformModel::getUniformInventorySummary error: ' . $e->getMessage());
+            return [];
         }
     }
 
@@ -483,13 +526,20 @@ class UniformModel extends HRModel {
                 return false;
             }
 
+            if (strtoupper((string) ($return['return_status'] ?? '')) !== 'PENDING') {
+                $this->pdo->rollBack();
+                return false;
+            }
+
             $uniformId = (int) $return['uniform_id'];
-            $quantity = (int) $return['quantity_returned'];
+            $quantity = max(0, (int) $return['quantity_returned']);
             $condition = strtoupper(trim($return['condition_upon_return']));
 
             if ($approvalStatus === 'APPROVED') {
                 // Remove from pending returns
-                $sqlRemove = "UPDATE {$this->tbluniform_inventory} SET quantity_returned = COALESCE(quantity_returned, 0) - ? WHERE uniform_id = ?";
+                $sqlRemove = "UPDATE {$this->tbluniform_inventory}
+                              SET quantity_returned = GREATEST(0, COALESCE(quantity_returned, 0) - ?)
+                              WHERE uniform_id = ?";
                 $stmtRemove = $this->pdo->prepare($sqlRemove);
                 $ok1 = $stmtRemove->execute([$quantity, $uniformId]);
 
@@ -522,7 +572,9 @@ class UniformModel extends HRModel {
                 }
             } else {
                 // REJECTED: Remove from pending returns only
-                $sqlRemove = "UPDATE {$this->tbluniform_inventory} SET quantity_returned = COALESCE(quantity_returned, 0) - ? WHERE uniform_id = ?";
+                $sqlRemove = "UPDATE {$this->tbluniform_inventory}
+                              SET quantity_returned = GREATEST(0, COALESCE(quantity_returned, 0) - ?)
+                              WHERE uniform_id = ?";
                 $stmtRemove = $this->pdo->prepare($sqlRemove);
                 $ok1 = $stmtRemove->execute([$quantity, $uniformId]);
 
@@ -543,6 +595,25 @@ class UniformModel extends HRModel {
             error_log('UniformModel::approveReturn error: ' . $e->getMessage());
             try { $this->pdo->rollBack(); } catch (\Throwable $_) {}
             return false;
+        }
+    }
+
+    /**
+     * Realign stored pending-return counts with pending return records.
+     */
+    public function syncPendingReturnCounts(): void
+    {
+        try {
+            $sql = "UPDATE {$this->tbluniform_inventory} i
+                    SET quantity_returned = COALESCE((
+                        SELECT SUM(ur.quantity_returned)
+                        FROM tbluniform_returns ur
+                        WHERE ur.uniform_id = i.uniform_id
+                          AND ur.return_status = 'PENDING'
+                    ), 0)";
+            $this->pdo->exec($sql);
+        } catch (\Throwable $e) {
+            error_log('UniformModel::syncPendingReturnCounts error: ' . $e->getMessage());
         }
     }
 
@@ -640,7 +711,7 @@ class UniformModel extends HRModel {
      * @param int $uniformId
      * @return array
      */
-    public function getAssignmentsByUniformId(int $uniformId): array {
+    public function getAssignmentsByUniformId(int $uniformId, ?string $condition = null): array {
         try {
             $sql = "SELECT 
                         ua.assignment_id,
@@ -657,11 +728,18 @@ class UniformModel extends HRModel {
                         CONCAT(e.firstname, ' ', e.lastname) as employee_name
                     FROM {$this->tbluniform_assignment} ua
                     LEFT JOIN {$this->tblemployee} e ON ua.employee_id = e.employee_id
-                    WHERE ua.uniform_id = ?
-                    ORDER BY ua.date_issued DESC, ua.assignment_id DESC";
+                    WHERE ua.uniform_id = ?";
+            $params = [$uniformId];
+
+            if ($condition !== null && $condition !== '') {
+                $sql .= " AND ua.date_returned IS NOT NULL AND UPPER(ua.condition_upon_return) = ?";
+                $params[] = strtoupper($condition);
+            }
+
+            $sql .= " ORDER BY ua.date_issued DESC, ua.assignment_id DESC";
             
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$uniformId]);
+            $stmt->execute($params);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?? [];
         } catch (\Throwable $e) {
             error_log('UniformModel::getAssignmentsByUniformId error: ' . $e->getMessage());
