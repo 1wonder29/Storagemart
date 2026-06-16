@@ -184,6 +184,34 @@ class AOMController extends AuthController
     }
 
     /**
+     * View assets assigned to employees within AOM scope
+     */
+    public function assets()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $user = $this->requireAOM();
+        if (!$user) return;
+
+        $aom_employee_id = (int) $user['employee_id'];
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+
+        $myAssets = $this->employeeModel->fetchAssetDetailsByEmployeeId($aom_employee_id);
+        $teamAssets = $this->aomModel->getAOMTeamAssets($aom_employee_id);
+        $branches = $this->aomModel->getAssignedBranches($aom_employee_id);
+
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        $activePage = 'assets';
+        $teamEmptyMessage = 'No assets found for employees in your assigned branches.';
+
+        require __DIR__ . '/../../Views/aom/asset/assets.php';
+    }
+
+    /**
      * View employee details
      */
     public function employeeDetail()
@@ -283,6 +311,12 @@ class AOMController extends AuthController
         $tickets = $this->aomModel->getAOMTickets($aom_employee_id, 50);
         $ticketStats = $this->aomModel->getTicketStatsByStatus($aom_employee_id);
         $branches = $this->aomModel->getAssignedBranches($aom_employee_id);
+        $operationsEmployees = $this->employeeModel->fetchEmployeesByDepartment('Operations');
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
 
         // Get notifications
         $notificationData = $this->loadNotifications();
@@ -359,6 +393,52 @@ class AOMController extends AuthController
 
         $employees = $this->aomModel->getEmployeesByBranch($aom_employee_id, $branch_id);
         echo json_encode(['data' => $employees]);
+    }
+
+    /**
+     * Get employees in a branch who have tickets (AJAX) — for bulk transfer "Transfer From"
+     */
+    public function getEmployeesWithTicketsByBranchAjax()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        header('Content-Type: application/json');
+
+        if (empty($_SESSION['account_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $user = $this->employeeModel->fetchUserDetails($_SESSION['account_id']);
+        if (!$user || strtoupper($user['usertype'] ?? '') !== 'AOM') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+
+        $aom_employee_id = (int) $user['employee_id'];
+        $branch_id = (int) ($_GET['branch_id'] ?? 0);
+
+        if ($branch_id <= 0) {
+            echo json_encode(['error' => 'Invalid branch ID']);
+            return;
+        }
+
+        if (!$this->aomModel->hasAccessToBranch($aom_employee_id, $branch_id)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized access to this branch']);
+            return;
+        }
+
+        try {
+            $employees = $this->aomTicketModel->getEmployeesWithTicketsInBranch($branch_id, $aom_employee_id);
+            echo json_encode(['data' => $employees]);
+        } catch (\Throwable $e) {
+            error_log('getEmployeesWithTicketsByBranchAjax error: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to load employees']);
+        }
     }
 
     /**
@@ -477,26 +557,6 @@ class AOMController extends AuthController
 
         $ticketHistory = $this->aomTicketModel->getTicketHistory($ticket_id);
 
-        $ticketStatus = strtolower((string) ($ticket['status'] ?? ''));
-        $canTransferTicket = !in_array($ticketStatus, ['resolved', 'cancelled', 'closed'], true);
-        $transferEmployees = [];
-        if ($canTransferTicket) {
-            $branchId = (int) ($ticket['branch_id'] ?? 0);
-            $currentEmployeeId = (int) ($ticket['employee_id'] ?? 0);
-            if ($branchId > 0) {
-                foreach ($this->aomModel->getEmployeesByBranch($aom_employee_id, $branchId) as $emp) {
-                    if ((int) ($emp['employee_id'] ?? 0) !== $currentEmployeeId) {
-                        $transferEmployees[] = $emp;
-                    }
-                }
-            }
-        }
-
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
-        }
-        $csrf_token = $_SESSION['csrf_token'];
-
         // Get notifications
         $notificationData = $this->loadNotifications();
         $count = $notificationData['count'];
@@ -508,7 +568,7 @@ class AOMController extends AuthController
     }
 
     /**
-     * Transfer ticket to another Operations employee (POST)
+     * Transfer all open tickets from one employee to another within a branch (POST)
      */
     public function transferTicket()
     {
@@ -523,47 +583,74 @@ class AOMController extends AuthController
         if (!$user) return;
 
         $aom_employee_id = (int) $user['employee_id'];
-        $ticketId = (int) ($_POST['ticket_id'] ?? 0);
+        $branchId = (int) ($_POST['branch_id'] ?? 0);
+        $sourceEmployeeId = (int) ($_POST['source_employee_id'] ?? 0);
         $newEmployeeId = (int) ($_POST['employee_id'] ?? 0);
         $remarks = trim((string) ($_POST['remarks'] ?? ''));
 
         if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
             $_SESSION['flash_error'] = 'Invalid form token.';
-            $this->redirect('/aom/tickets/view?id=' . $ticketId);
-            return;
-        }
-
-        if ($ticketId <= 0 || $newEmployeeId <= 0) {
-            $_SESSION['flash_error'] = 'Invalid ticket or employee selected.';
             $this->redirect('/aom/tickets');
             return;
         }
 
-        $ticket = $this->aomTicketModel->getTicketByIdForAOM($ticketId, $aom_employee_id);
-        if (!$ticket) {
-            $_SESSION['flash_error'] = 'Ticket not found or unauthorized access.';
+        if ($branchId <= 0 || $sourceEmployeeId <= 0 || $newEmployeeId <= 0) {
+            $_SESSION['flash_error'] = 'Please select a branch and both employees.';
             $this->redirect('/aom/tickets');
             return;
         }
 
-        $branchId = (int) ($ticket['branch_id'] ?? 0);
-        $allowed = false;
-        foreach ($this->aomModel->getEmployeesByBranch($aom_employee_id, $branchId) as $emp) {
+        if ($sourceEmployeeId === $newEmployeeId) {
+            $_SESSION['flash_error'] = 'Source and destination employee must be different.';
+            $this->redirect('/aom/tickets');
+            return;
+        }
+
+        if (!$this->aomModel->hasAccessToBranch($aom_employee_id, $branchId)) {
+            $_SESSION['flash_error'] = 'You do not have access to the selected branch.';
+            $this->redirect('/aom/tickets');
+            return;
+        }
+
+        $branchEmployees = $this->aomTicketModel->getEmployeesWithTicketsInBranch($branchId, $aom_employee_id);
+        $employeeIds = array_map(static fn(array $emp): int => (int) ($emp['employee_id'] ?? 0), $branchEmployees);
+
+        if (!in_array($sourceEmployeeId, $employeeIds, true)) {
+            $_SESSION['flash_error'] = 'Selected source employee has no tickets in the chosen branch.';
+            $this->redirect('/aom/tickets');
+            return;
+        }
+
+        $validTarget = false;
+        foreach ($this->employeeModel->fetchEmployeesByDepartment('Operations') as $emp) {
             if ((int) ($emp['employee_id'] ?? 0) === $newEmployeeId) {
-                $allowed = true;
+                $validTarget = true;
                 break;
             }
         }
 
-        if (!$allowed) {
-            $_SESSION['flash_error'] = 'Selected employee is not in your assigned branches.';
-            $this->redirect('/aom/tickets/view?id=' . $ticketId);
+        if (!$validTarget) {
+            $_SESSION['flash_error'] = 'Selected destination employee is not a valid Operations staff member.';
+            $this->redirect('/aom/tickets');
+            return;
+        }
+
+        $transferableTickets = $this->aomTicketModel->getTransferableTicketsForEmployee(
+            $sourceEmployeeId,
+            $aom_employee_id,
+            $branchId
+        );
+        $ticketIds = array_map(static fn(array $row): int => (int) ($row['ticket_id'] ?? 0), $transferableTickets);
+
+        if (empty($ticketIds)) {
+            $_SESSION['flash_error'] = 'No tickets found for this employee in the selected branch.';
+            $this->redirect('/aom/tickets');
             return;
         }
 
         $ticketModel = new EmployeeTicket();
-        [$ok, $message] = $ticketModel->transferTicketToEmployee(
-            $ticketId,
+        [$ok, $message, $transferredCount] = $ticketModel->transferAllTicketsToEmployee(
+            $ticketIds,
             $newEmployeeId,
             $aom_employee_id,
             'AOM',
@@ -574,11 +661,13 @@ class AOMController extends AuthController
             $performedBy = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? ''));
             ActivityLogger::transfer(
                 'AOM - Ticket Management',
-                (string) $ticketId,
+                (string) $sourceEmployeeId,
                 $message,
                 $performedBy,
                 [
-                    'ticket_number' => $ticket['ticket_number'] ?? '',
+                    'branch_id' => $branchId,
+                    'ticket_ids' => $ticketIds,
+                    'transferred_count' => $transferredCount,
                     'new_employee_id' => $newEmployeeId,
                     'remarks' => $remarks,
                 ]
@@ -588,7 +677,67 @@ class AOMController extends AuthController
             $_SESSION['flash_error'] = $message;
         }
 
-        $this->redirect('/aom/tickets/view?id=' . $ticketId);
+        $this->redirect('/aom/tickets');
+    }
+
+    /**
+     * Get transferable ticket count for bulk transfer preview (AJAX)
+     */
+    public function getTransferableTicketCountAjax()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        header('Content-Type: application/json');
+
+        if (empty($_SESSION['account_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $user = $this->employeeModel->fetchUserDetails($_SESSION['account_id']);
+        if (!$user || strtoupper($user['usertype'] ?? '') !== 'AOM') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+
+        $aom_employee_id = (int) $user['employee_id'];
+        $branchId = (int) ($_GET['branch_id'] ?? 0);
+        $employeeId = (int) ($_GET['employee_id'] ?? 0);
+
+        if ($branchId <= 0 || $employeeId <= 0) {
+            echo json_encode(['count' => 0]);
+            return;
+        }
+
+        if (!$this->aomModel->hasAccessToBranch($aom_employee_id, $branchId)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized access to this branch']);
+            return;
+        }
+
+        $allowed = false;
+        foreach ($this->aomTicketModel->getEmployeesWithTicketsInBranch($branchId, $aom_employee_id) as $emp) {
+            if ((int) ($emp['employee_id'] ?? 0) === $employeeId) {
+                $allowed = true;
+                break;
+            }
+        }
+
+        if (!$allowed) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Employee has no tickets in selected branch']);
+            return;
+        }
+
+        $tickets = $this->aomTicketModel->getTransferableTicketsForEmployee(
+            $employeeId,
+            $aom_employee_id,
+            $branchId
+        );
+
+        echo json_encode(['count' => count($tickets)]);
     }
 
     /**

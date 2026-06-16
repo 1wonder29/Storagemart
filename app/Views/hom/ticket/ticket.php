@@ -17,6 +17,8 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/searchable-select.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/bulk-transfer-modal.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -29,9 +31,16 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">Tickets</h1>
-            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
-            </a>
+            <div>
+                <?php if (!empty($enableBulkTransfer) && !empty($branches)): ?>
+                <button type="button" class="btn btn-sm btn-warning shadow-sm mr-2 mb-2" data-toggle="modal" data-target="#bulkTransferModal">
+                    <i class="fas fa-exchange-alt fa-sm"></i> Bulk Transfer
+                </button>
+                <?php endif; ?>
+                <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm mb-2">
+                    <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
+                </a>
+            </div>
         </div>
 
         <?php if (!empty($_SESSION['flash_success'])): ?>
@@ -84,6 +93,20 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                         </select>
                     </div>
                     <div class="col-md-3">
+                        <label class="form-label text-xs font-weight-bold text-gray-600 text-uppercase mb-2">Branch</label>
+                        <select id="branchFilter" class="form-control form-control-sm">
+                            <option value="">All Branches</option>
+                            <?php if (!empty($enableBulkTransfer)): ?>
+                                <?php foreach ($branches as $branch): ?>
+                                    <?php $bn = trim((string)($branch['branchName'] ?? '')); ?>
+                                    <option value="<?php echo htmlspecialchars($bn, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <?php echo htmlspecialchars($bn, ENT_QUOTES, 'UTF-8'); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label text-xs font-weight-bold text-gray-600 text-uppercase mb-2">Priority</label>
                         <select id="priorityFilter" class="form-control form-control-sm">
                             <option value="">All Priority</option>
@@ -96,6 +119,8 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                         <label class="form-label text-xs font-weight-bold text-gray-600 text-uppercase mb-2">Search</label>
                         <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Ticket number...">
                     </div>
+                </div>
+                <div class="row mt-2">
                     <div class="col-md-3 align-self-end">
                         <button class="btn btn-secondary btn-sm w-100" onclick="resetFilters()">
                             <i class="fas fa-redo"></i> Reset
@@ -134,6 +159,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                 $statusClass = $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
                                 ?>
                                 <tr data-ticket-id="<?= $ticketId ?>"
+                                    data-filter-branch="<?= htmlspecialchars(strtolower(trim((string)($ticket['branchName'] ?? ''))), ENT_QUOTES, 'UTF-8') ?>"
                                     data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
                                     data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>">
                                     <td class="font-weight-bold"><?php echo htmlspecialchars((string) ($ticket['ticket_number'] ?? '')); ?></td>
@@ -184,10 +210,16 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+<?php if (!empty($enableBulkTransfer)): ?>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/searchable-select.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/bulk-transfer-tickets.js"></script>
+<?php endif; ?>
 <script>
     function resetFilters() {
         document.getElementById('statusFilter').value = '';
         document.getElementById('priorityFilter').value = '';
+        const branchFilter = document.getElementById('branchFilter');
+        if (branchFilter) branchFilter.value = '';
         document.getElementById('searchInput').value = '';
         filterTickets();
     }
@@ -195,6 +227,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     function filterTickets() {
         const statusVal = (document.getElementById('statusFilter').value || '').toLowerCase();
         const priorityVal = (document.getElementById('priorityFilter').value || '').toLowerCase();
+        const branchVal = (document.getElementById('branchFilter')?.value || '').toLowerCase();
         const searchVal = (document.getElementById('searchInput').value || '').toLowerCase();
 
         document.querySelectorAll('#homTicketsTable tbody tr').forEach(function (row) {
@@ -206,20 +239,41 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
             const category = (cells[2].textContent || '').toLowerCase();
             const priority = (cells[3].textContent || '').toLowerCase();
             const status = (cells[4].textContent || '').toLowerCase();
-            const branch = (cells[6].textContent || '').toLowerCase();
+            const branch = (row.getAttribute('data-filter-branch') || cells[6].textContent || '').toLowerCase();
 
             const matchesStatus = !statusVal || status.includes(statusVal);
             const matchesPriority = !priorityVal || priority.includes(priorityVal);
+            const matchesBranch = !branchVal || branch === branchVal;
             const matchesSearch = !searchVal || ticketNum.includes(searchVal) || employee.includes(searchVal) || category.includes(searchVal) || branch.includes(searchVal);
 
-            row.style.display = (matchesStatus && matchesPriority && matchesSearch) ? '' : 'none';
+            row.style.display = (matchesStatus && matchesPriority && matchesBranch && matchesSearch) ? '' : 'none';
         });
     }
 
     document.getElementById('statusFilter').addEventListener('change', filterTickets);
     document.getElementById('priorityFilter').addEventListener('change', filterTickets);
+    const branchFilterEl = document.getElementById('branchFilter');
+    if (branchFilterEl) branchFilterEl.addEventListener('change', filterTickets);
     document.getElementById('searchInput').addEventListener('input', filterTickets);
+
+    <?php if (!empty($enableBulkTransfer) && !empty($branches)): ?>
+    $(function () {
+        if (window.initBulkTransferTickets) {
+            window.initBulkTransferTickets({
+                base: <?= json_encode($base) ?>,
+                routePrefix: 'hom',
+                allOperationsEmployees: <?= json_encode($operationsEmployees ?? []) ?>
+            });
+        }
+    });
+    <?php endif; ?>
 </script>
+<?php if (!empty($enableBulkTransfer) && !empty($branches)): ?>
+<?php
+$routePrefix = 'hom';
+require __DIR__ . '/../../partials/ticket/bulk_transfer_modal.php';
+?>
+<?php endif; ?>
 <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 </html>

@@ -799,4 +799,76 @@ class AOMModel extends BaseModel
         $stmt->execute(['aom_employee_id' => $aom_employee_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Get assets assigned to employees within the AOM's scope (excludes the AOM).
+     *
+     * @param int $aom_employee_id
+     * @param int|null $branch_id Optional branch filter
+     * @return array
+     */
+    public function getAOMTeamAssets(int $aom_employee_id, ?int $branch_id = null): array
+    {
+        $sql = "
+            SELECT
+                i.inventory_id,
+                i.assetNumber,
+                i.serialNumber,
+                i.itemInfo,
+                i.status,
+                g.description,
+                g.groupName,
+                e.employee_id,
+                e.firstname,
+                e.lastname,
+                e.department,
+                b.branch_id,
+                b.branchName
+            FROM tblassets_inventory i
+            LEFT JOIN tblassets_group g ON g.group_id = i.group_id
+            INNER JOIN tblemployee e ON e.employee_id = i.employee_id
+            LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+            WHERE i.employee_id != :exclude_aom_id
+              AND i.employee_id IN (
+                    SELECT scoped.employee_id FROM (
+                        SELECT e2.employee_id
+                        FROM {$this->tblemployee} e2
+                        WHERE e2.branch_id IN (
+                            SELECT branch_id FROM {$this->tblbranch_assignments}
+                            WHERE aom_employee_id = :aom_id AND is_active = 1
+                        )
+                        AND e2.department = :dept1
+
+                        UNION
+
+                        SELECT e3.employee_id
+                        FROM {$this->tblemployee} e3
+                        WHERE e3.employee_id IN (
+                            SELECT employee_id FROM {$this->tblhom_employee_assignments}
+                            WHERE aom_id = :aom_id_2 AND is_active = 1
+                        )
+                        AND e3.department = :dept2
+                    ) scoped
+                )
+        ";
+
+        $params = [
+            'exclude_aom_id' => $aom_employee_id,
+            'aom_id' => $aom_employee_id,
+            'aom_id_2' => $aom_employee_id,
+            'dept1' => self::OPERATIONS_DEPARTMENT,
+            'dept2' => self::OPERATIONS_DEPARTMENT,
+        ];
+
+        if ($branch_id !== null && $branch_id > 0) {
+            $sql .= ' AND b.branch_id = :branch_id';
+            $params['branch_id'] = $branch_id;
+        }
+
+        $sql .= ' ORDER BY b.branchName ASC, e.lastname ASC, e.firstname ASC, i.assetNumber ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
 }

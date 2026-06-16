@@ -438,4 +438,224 @@ class EmployeeTicket extends BaseModel
         }
     }
 
+    /**
+     * Transfer multiple Operations tickets to another employee in one transaction.
+     * Returns [bool $ok, string $message, int $transferredCount]
+     */
+    public function transferAllTicketsToEmployee(
+        array $ticketIds,
+        int $newEmployeeId,
+        int $performedByEmployeeId,
+        string $performedRole,
+        ?string $remarks = null
+    ): array {
+        $ticketIds = array_values(array_unique(array_filter(array_map('intval', $ticketIds))));
+        if (empty($ticketIds)) {
+            return [false, 'No transferable tickets found.', 0];
+        }
+        if ($newEmployeeId <= 0) {
+            return [false, 'Please select a valid employee.', 0];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ticketIds), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT t.ticket_id, t.employee_id, t.branch_id, t.status, t.ticket_number,
+                   e.firstname AS old_firstname, e.lastname AS old_lastname
+            FROM {$this->tbltickets} t
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            WHERE t.ticket_id IN ({$placeholders})
+        ");
+        $stmt->execute($ticketIds);
+        $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        if (count($tickets) !== count($ticketIds)) {
+            return [false, 'One or more tickets could not be found.', 0];
+        }
+
+        $fromEmployeeId = (int) ($tickets[0]['employee_id'] ?? 0);
+        foreach ($tickets as $ticket) {
+            if ((int) ($ticket['employee_id'] ?? 0) !== $fromEmployeeId) {
+                return [false, 'Tickets must belong to the same employee.', 0];
+            }
+        }
+
+        if ($fromEmployeeId === $newEmployeeId) {
+            return [false, 'Tickets are already assigned to the selected employee.', 0];
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT employee_id, firstname, lastname, branch_id, department
+            FROM {$this->tblemployee}
+            WHERE employee_id = :employee_id
+            LIMIT 1
+        ");
+        $stmt->execute([':employee_id' => $newEmployeeId]);
+        $newEmployee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$newEmployee) {
+            return [false, 'Selected employee does not exist.', 0];
+        }
+
+        if (strcasecmp((string) ($newEmployee['department'] ?? ''), 'Operations') !== 0) {
+            return [false, 'Tickets can only be transferred to Operations employees.', 0];
+        }
+
+        $oldName = trim(($tickets[0]['old_firstname'] ?? '') . ' ' . ($tickets[0]['old_lastname'] ?? ''));
+        $newName = trim(($newEmployee['firstname'] ?? '') . ' ' . ($newEmployee['lastname'] ?? ''));
+        $newBranchId = (int) ($newEmployee['branch_id'] ?? 0);
+
+        try {
+            $this->pdo->beginTransaction();
+
+            $updateSql = "
+                UPDATE {$this->tbltickets}
+                SET employee_id = :employee_id,
+                    branch_id = :branch_id,
+                    last_updated = NOW()
+            ";
+            if ($remarks !== null && $remarks !== '') {
+                $updateSql .= ", remarks = :remarks";
+            }
+            $updateSql .= " WHERE ticket_id = :ticket_id";
+
+            $updateStmt = $this->pdo->prepare($updateSql);
+            $historyStmt = $this->pdo->prepare("
+                INSERT INTO {$this->tblticket_history}
+                    (ticket_id, action_type, action_details, old_status, new_status, performed_by, performed_role, date_logged)
+                VALUES
+                    (:ticket_id, 'Transferred', :action_details, :old_status, :new_status, :performed_by, :performed_role, NOW())
+            ");
+
+            $transferredCount = 0;
+            foreach ($tickets as $ticket) {
+                $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                $currentStatus = (string) ($ticket['status'] ?? '');
+
+                $params = [
+                    ':employee_id' => $newEmployeeId,
+                    ':branch_id' => $newBranchId > 0 ? $newBranchId : (int) ($ticket['branch_id'] ?? 0),
+                    ':ticket_id' => $ticketId,
+                ];
+                if ($remarks !== null && $remarks !== '') {
+                    $params[':remarks'] = $remarks;
+                }
+                $updateStmt->execute($params);
+
+                $actionDetails = "Transferred from {$oldName} to {$newName}";
+                if ($remarks !== null && $remarks !== '') {
+                    $actionDetails .= " — {$remarks}";
+                }
+
+                $historyStmt->execute([
+                    ':ticket_id' => $ticketId,
+                    ':action_details' => $actionDetails,
+                    ':old_status' => $currentStatus,
+                    ':new_status' => $currentStatus,
+                    ':performed_by' => $performedByEmployeeId,
+                    ':performed_role' => $performedRole,
+                ]);
+
+                $transferredCount++;
+            }
+
+            $this->pdo->commit();
+
+            $message = $transferredCount === 1
+                ? "1 ticket transferred to {$newName} successfully."
+                : "{$transferredCount} tickets transferred to {$newName} successfully.";
+
+            return [true, $message, $transferredCount];
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('transferAllTicketsToEmployee error: ' . $e->getMessage());
+            return [false, 'Failed to transfer tickets. Please try again.', 0];
+        }
+    }
+
+    /**
+     * Get Operations tickets assigned to an employee (all statuses).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getOperationsTicketsForEmployee(int $employeeId, ?int $branchId = null): array
+    {
+        if ($employeeId <= 0) {
+            return [];
+        }
+
+        $sql = "
+            SELECT t.ticket_id, t.ticket_number, t.status, t.branch_id
+            FROM {$this->tbltickets} t
+            LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            WHERE t.employee_id = :employee_id
+              AND COALESCE(e.department, t.department) = 'Operations'
+        ";
+        $params = ['employee_id' => $employeeId];
+
+        if ($branchId !== null && $branchId > 0) {
+            $sql .= ' AND t.branch_id = :branch_id';
+            $params['branch_id'] = $branchId;
+        }
+
+        $sql .= ' ORDER BY t.date_filed DESC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Get Operations employees who have at least one ticket in a branch.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getOperationsEmployeesWithTicketsInBranch(int $branchId): array
+    {
+        if ($branchId <= 0) {
+            return [];
+        }
+
+        $sql = "
+            SELECT
+                e.employee_id,
+                e.firstname,
+                e.lastname,
+                e.middlename,
+                e.email,
+                e.position,
+                COALESCE(e.department, t.department) AS department,
+                COALESCE(e.branch_id, t.branch_id) AS branch_id,
+                b.branchName,
+                COUNT(t.ticket_id) AS ticket_count
+            FROM {$this->tbltickets} t
+            LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            INNER JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
+            WHERE t.branch_id = :branch_id
+              AND t.employee_id IS NOT NULL
+              AND t.employee_id > 0
+              AND COALESCE(e.department, t.department) = 'Operations'
+            GROUP BY
+                e.employee_id,
+                e.firstname,
+                e.lastname,
+                e.middlename,
+                e.email,
+                e.position,
+                e.department,
+                t.department,
+                e.branch_id,
+                t.branch_id,
+                b.branchName
+            ORDER BY e.lastname ASC, e.firstname ASC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['branch_id' => $branchId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
 }

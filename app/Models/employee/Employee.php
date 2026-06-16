@@ -137,6 +137,35 @@ class Employee extends BaseModel{
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function fetchAssetDetailsByEmployeeId(int $employeeId): array
+    {
+        $sql = "
+            SELECT
+                i.inventory_id,
+                i.assetNumber,
+                i.serialNumber,
+                i.itemInfo,
+                i.status,
+                g.description,
+                g.groupName,
+                e.employee_id,
+                e.firstname,
+                e.lastname,
+                e.department,
+                b.branch_id,
+                b.branchName
+            FROM {$this->tblassets} i
+            LEFT JOIN {$this->tblgroup} g ON g.group_id = i.group_id
+            INNER JOIN {$this->tblemployee} e ON e.employee_id = i.employee_id
+            LEFT JOIN tblbranch b ON e.branch_id = b.branch_id
+            WHERE i.employee_id = ?
+            ORDER BY i.assetNumber ASC
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$employeeId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     /**
      * Fetch tickets filed by a particular employee
      */

@@ -42,6 +42,14 @@ $base = rtrim(BASE_URL, '/');
         </a>
     </li>
 
+    <!-- Assets -->
+    <li class="nav-item <?= ($activePage === 'assets') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/aom/assets">
+            <i class="fas fa-archive"></i>
+            <span>Assets</span>
+        </a>
+    </li>
+
     <!-- Tickets -->
     <li class="nav-item <?= ($activePage === 'tickets') ? 'active' : '' ?>">
         <a class="nav-link" href="<?= htmlspecialchars($base) ?>/aom/tickets">

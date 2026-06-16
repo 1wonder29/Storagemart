@@ -540,6 +540,8 @@ if ($uri === '/aom' || strpos($uri, '/aom/') === 0) {
         $aom->profile();
     } elseif ($sub === 'employees') {
         $aom->employees();
+    } elseif ($sub === 'assets') {
+        $aom->assets();
     } elseif (strpos($sub, 'employees/detail') === 0) {
         $aom->employeeDetail();
     } elseif ($sub === 'branches') {
@@ -569,9 +571,13 @@ if ($uri === '/aom' || strpos($uri, '/aom/') === 0) {
         $aom->uploadReport();
     } elseif ($sub === 'tickets/transfer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $aom->transferTicket();
+    } elseif ($sub === 'api/transferable-tickets-count' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $aom->getTransferableTicketCountAjax();
     } elseif ($sub === 'api/employees-by-branch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         // AJAX endpoint to get employees in a branch
         $aom->getEmployeesByBranchAjax();
+    } elseif ($sub === 'api/employees-with-tickets-by-branch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $aom->getEmployeesWithTicketsByBranchAjax();
     } else {
         http_response_code(404);
         echo "AOM page not found.";
@@ -616,10 +622,22 @@ if ($uri === '/hom' || strpos($uri, '/hom/') === 0) {
             $homTicket->downloadTechnicalRecord();
         } elseif ($sub === 'tickets/transfer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $homTicket->transferTicket();
+        } elseif ($sub === 'tickets/bulk-transfer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $homTicket->bulkTransferTicket();
         } else {
             http_response_code(404);
             echo "HOM Ticket page not found.";
         }
+        exit;
+    }
+
+    $homTicket = new HOMTicketController();
+    if ($sub === 'api/transferable-tickets-count' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $homTicket->getTransferableTicketCountAjax();
+        exit;
+    }
+    if ($sub === 'api/employees-with-tickets-by-branch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $homTicket->getEmployeesWithTicketsByBranchAjax();
         exit;
     }
 
@@ -630,6 +648,8 @@ if ($uri === '/hom' || strpos($uri, '/hom/') === 0) {
         $hom->dashboard();
     } elseif ($sub === 'employees') {
         $hom->employees();
+    } elseif ($sub === 'assets') {
+        $hom->assets();
     } elseif ($sub === 'transfer-employee' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $hom->transferEmployee();
     } elseif ($sub === 'assignments') {
@@ -721,6 +741,8 @@ if ($uri === '/om' || strpos($uri, '/om/') === 0) {
         $hom->dashboard();
     } elseif ($sub === 'employees') {
         $hom->employees();
+    } elseif ($sub === 'assets') {
+        $hom->assets();
     } elseif ($sub === 'transfer-employee' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $hom->transferEmployee();
     } elseif ($sub === 'assignments') {

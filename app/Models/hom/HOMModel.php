@@ -523,4 +523,58 @@ class HOMModel
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Get assets assigned to Operations employees under oversight (excludes the viewer).
+     *
+     * @param int|null $branchId Optional branch filter
+     * @param int|null $excludeEmployeeId Logged-in user's employee ID to exclude
+     * @return array
+     */
+    public function getOperationsTeamAssets(?int $branchId = null, ?int $excludeEmployeeId = null): array
+    {
+        $query = "
+            SELECT
+                i.inventory_id,
+                i.assetNumber,
+                i.serialNumber,
+                i.itemInfo,
+                i.status,
+                g.description,
+                g.groupName,
+                e.employee_id,
+                e.firstname,
+                e.lastname,
+                e.department,
+                b.branch_id,
+                b.branchName
+            FROM tblassets_inventory i
+            LEFT JOIN tblassets_group g ON g.group_id = i.group_id
+            INNER JOIN tblemployee e ON e.employee_id = i.employee_id
+            LEFT JOIN tblbranch b ON e.branch_id = b.branch_id
+            JOIN tblaccounts a ON a.account_id = e.account_id
+            WHERE UPPER(a.status) = 'ACTIVE'
+              AND (
+                    e.department = 'Operations'
+                    OR UPPER(a.usertype) IN ('HOM', 'OM')
+              )
+        ";
+
+        $params = [];
+        if ($excludeEmployeeId !== null && $excludeEmployeeId > 0) {
+            $query .= ' AND e.employee_id != :exclude_employee_id';
+            $params['exclude_employee_id'] = $excludeEmployeeId;
+        }
+
+        if ($branchId !== null && $branchId > 0) {
+            $query .= ' AND b.branch_id = :branch_id';
+            $params['branch_id'] = $branchId;
+        }
+
+        $query .= ' ORDER BY b.branchName ASC, e.lastname ASC, e.firstname ASC, i.assetNumber ASC';
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
 }

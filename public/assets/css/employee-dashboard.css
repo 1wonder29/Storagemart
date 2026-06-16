@@ -100,6 +100,12 @@
 .employee-dashboard-page .quick-action-btn.qa-info { background: #36b9cc; color: #fff; }
 .employee-dashboard-page .quick-action-btn.qa-secondary { background: #858796; color: #fff; }
 
+.employee-dashboard-page .quick-action-btn.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .employee-dashboard-page .dash-card {
   border: none;
   border-radius: 0.75rem;

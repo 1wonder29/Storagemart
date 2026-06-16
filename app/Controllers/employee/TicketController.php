@@ -19,9 +19,15 @@ class EmployeeTicketController extends AuthController
             return;
         }
 
-        $inventory_id = (int)($_GET['inventory_id'] ?? 0);
-
         $empModel = new Employee();
+        $employeeId = $empModel->getEmployeeIdByAccountId((int) $_SESSION['account_id']);
+        if (!$employeeId || $empModel->countAssetsByEmployee((int) $employeeId) === 0) {
+            $_SESSION['flash_error'] = 'You need at least one assigned asset before creating a ticket.';
+            $this->redirect('/employee/tickets');
+            return;
+        }
+
+        $inventory_id = (int)($_GET['inventory_id'] ?? 0);
         $model = new EmployeeTicket();
         $inventory = $model->getInventoryDetailsByInventoryId($inventory_id);
 
@@ -85,6 +91,12 @@ class EmployeeTicketController extends AuthController
         if (!$employeeId) {
             $_SESSION['flash_error'] = "Unable to determine your employee record.";
             $this->redirect('/employee/assets');
+            return;
+        }
+
+        if ($employeeModel->countAssetsByEmployee((int) $employeeId) === 0) {
+            $_SESSION['flash_error'] = 'You need at least one assigned asset before creating a ticket.';
+            $this->redirect('/employee/tickets');
             return;
         }
 
@@ -191,12 +203,14 @@ class EmployeeTicketController extends AuthController
         $employeeModel = new Employee();
         $employeeId = $employeeModel->getEmployeeIdByAccountId((int)$_SESSION['account_id']);
 
+        $assetsCount = 0;
         if (!$employeeId) {
             $_SESSION['flash_error'] = 'No employee record linked to your account.';
             $tickets = [];
         } else {
             $ticketModel = new EmployeeTicket();
             $tickets = $ticketModel->fetchAllTicketsByEmployee((int)$employeeId);
+            $assetsCount = $employeeModel->countAssetsByEmployee((int) $employeeId);
         }
 
         $ticketStats = [];

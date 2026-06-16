@@ -127,6 +127,40 @@ class HOMController extends AuthController
     }
 
     /**
+     * View Operations assets across all branches
+     */
+    public function assets()
+    {
+        $user = $this->requireHOM();
+        if (!$user) return;
+
+        $role = strtoupper($user['usertype'] ?? '');
+        $viewerEmployeeId = (int) ($user['employee_id'] ?? 0);
+        $myAssets = $viewerEmployeeId > 0
+            ? $this->employeeModel->fetchAssetDetailsByEmployeeId($viewerEmployeeId)
+            : [];
+        $teamAssets = $this->homModel->getOperationsTeamAssets(
+            null,
+            $viewerEmployeeId > 0 ? $viewerEmployeeId : null
+        );
+        $branches = $this->homModel->getAllBranches();
+
+        $data = [
+            'page_title' => 'Operations Assets',
+            'user' => $user,
+            'myAssets' => $myAssets,
+            'teamAssets' => $teamAssets,
+            'branches' => $branches,
+            'user_role' => $role === 'OM' ? 'OM' : 'HOM',
+            'routePrefix' => $role === 'OM' ? 'om' : 'hom',
+            'teamEmptyMessage' => 'No assets found for Operations employees.',
+        ];
+
+        extract($data);
+        require __DIR__ . '/../../Views/om/asset/assets.php';
+    }
+
+    /**
      * Transfer an employee from their current branch to another branch
      */
     public function transferEmployee()

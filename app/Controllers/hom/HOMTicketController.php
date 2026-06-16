@@ -58,6 +58,19 @@ class HOMTicketController extends AuthController
             $ticketStats[$s] = ($ticketStats[$s] ?? 0) + 1;
         }
 
+        $branches = [];
+        $operationsEmployees = [];
+        $enableBulkTransfer = ($role === 'HOM');
+        if ($enableBulkTransfer) {
+            $homModel = new HOMModel();
+            $branches = $homModel->getAllBranches();
+            $operationsEmployees = $this->employeeModel->fetchEmployeesByDepartment('Operations');
+            if (empty($_SESSION['csrf_token'])) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+            }
+            $csrf_token = $_SESSION['csrf_token'];
+        }
+
         $ctx = $this->getLoggedUserContext();
         $ctx['loggedLastname'] = $ctx['loggedLastname'] ?? '';
 
@@ -377,6 +390,192 @@ class HOMTicketController extends AuthController
         }
 
         $this->redirect('/hom/tickets/view?id=' . $ticketId);
+    }
+
+    /**
+     * Bulk transfer all tickets from one employee to another within a branch (HOM only)
+     */
+    public function bulkTransferTicket()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit('Invalid method.');
+        }
+
+        $user = $this->requireHOM();
+        $role = strtoupper($user['usertype'] ?? '');
+        if ($role !== 'HOM') {
+            $_SESSION['flash_error'] = 'Only HOM can transfer tickets.';
+            $this->redirect('/hom/tickets');
+            return;
+        }
+
+        $branchId = (int) ($_POST['branch_id'] ?? 0);
+        $sourceEmployeeId = (int) ($_POST['source_employee_id'] ?? 0);
+        $newEmployeeId = (int) ($_POST['employee_id'] ?? 0);
+        $remarks = trim((string) ($_POST['remarks'] ?? ''));
+
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid form token.';
+            $this->redirect('/hom/tickets');
+            return;
+        }
+
+        if ($branchId <= 0 || $sourceEmployeeId <= 0 || $newEmployeeId <= 0) {
+            $_SESSION['flash_error'] = 'Please select a branch and both employees.';
+            $this->redirect('/hom/tickets');
+            return;
+        }
+
+        if ($sourceEmployeeId === $newEmployeeId) {
+            $_SESSION['flash_error'] = 'Source and destination employee must be different.';
+            $this->redirect('/hom/tickets');
+            return;
+        }
+
+        $ticketModel = new EmployeeTicket();
+        $branchEmployees = $ticketModel->getOperationsEmployeesWithTicketsInBranch($branchId);
+        $employeeIds = array_map(static fn(array $emp): int => (int) ($emp['employee_id'] ?? 0), $branchEmployees);
+
+        if (!in_array($sourceEmployeeId, $employeeIds, true)) {
+            $_SESSION['flash_error'] = 'Selected source employee has no tickets in the chosen branch.';
+            $this->redirect('/hom/tickets');
+            return;
+        }
+
+        $validTarget = false;
+        foreach ($this->employeeModel->fetchEmployeesByDepartment('Operations') as $emp) {
+            if ((int) ($emp['employee_id'] ?? 0) === $newEmployeeId) {
+                $validTarget = true;
+                break;
+            }
+        }
+
+        if (!$validTarget) {
+            $_SESSION['flash_error'] = 'Selected destination employee is not a valid Operations staff member.';
+            $this->redirect('/hom/tickets');
+            return;
+        }
+
+        $tickets = $ticketModel->getOperationsTicketsForEmployee($sourceEmployeeId, $branchId);
+        $ticketIds = array_map(static fn(array $row): int => (int) ($row['ticket_id'] ?? 0), $tickets);
+
+        if (empty($ticketIds)) {
+            $_SESSION['flash_error'] = 'No tickets found for this employee in the selected branch.';
+            $this->redirect('/hom/tickets');
+            return;
+        }
+
+        $homEmployeeId = (int) $this->employeeModel->getEmployeeIdByAccountId((int) $_SESSION['account_id']);
+        [$ok, $message, $transferredCount] = $ticketModel->transferAllTicketsToEmployee(
+            $ticketIds,
+            $newEmployeeId,
+            $homEmployeeId,
+            'HOM',
+            $remarks !== '' ? $remarks : null
+        );
+
+        if ($ok) {
+            $performedBy = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? ''));
+            ActivityLogger::transfer(
+                'HOM - Ticket Management',
+                (string) $sourceEmployeeId,
+                $message,
+                $performedBy,
+                [
+                    'branch_id' => $branchId,
+                    'ticket_ids' => $ticketIds,
+                    'transferred_count' => $transferredCount,
+                    'new_employee_id' => $newEmployeeId,
+                    'remarks' => $remarks,
+                ]
+            );
+            $_SESSION['flash_success'] = $message;
+        } else {
+            $_SESSION['flash_error'] = $message;
+        }
+
+        $this->redirect('/hom/tickets');
+    }
+
+    /**
+     * Get employees in a branch who have tickets (AJAX) — HOM bulk transfer
+     */
+    public function getEmployeesWithTicketsByBranchAjax()
+    {
+        header('Content-Type: application/json');
+
+        $user = $this->requireHOM();
+        if (!$user) {
+            return;
+        }
+
+        if (strtoupper($user['usertype'] ?? '') !== 'HOM') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+
+        $branchId = (int) ($_GET['branch_id'] ?? 0);
+        if ($branchId <= 0) {
+            echo json_encode(['error' => 'Invalid branch ID']);
+            return;
+        }
+
+        $ticketModel = new EmployeeTicket();
+        try {
+            $employees = $ticketModel->getOperationsEmployeesWithTicketsInBranch($branchId);
+            echo json_encode(['data' => $employees]);
+        } catch (\Throwable $e) {
+            error_log('HOM getEmployeesWithTicketsByBranchAjax error: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to load employees']);
+        }
+    }
+
+    /**
+     * Get ticket count for bulk transfer preview (AJAX) — HOM
+     */
+    public function getTransferableTicketCountAjax()
+    {
+        header('Content-Type: application/json');
+
+        $user = $this->requireHOM();
+        if (!$user) {
+            return;
+        }
+
+        if (strtoupper($user['usertype'] ?? '') !== 'HOM') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+
+        $branchId = (int) ($_GET['branch_id'] ?? 0);
+        $employeeId = (int) ($_GET['employee_id'] ?? 0);
+
+        if ($branchId <= 0 || $employeeId <= 0) {
+            echo json_encode(['count' => 0]);
+            return;
+        }
+
+        $ticketModel = new EmployeeTicket();
+        $allowed = false;
+        foreach ($ticketModel->getOperationsEmployeesWithTicketsInBranch($branchId) as $emp) {
+            if ((int) ($emp['employee_id'] ?? 0) === $employeeId) {
+                $allowed = true;
+                break;
+            }
+        }
+
+        if (!$allowed) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Employee has no tickets in selected branch']);
+            return;
+        }
+
+        $tickets = $ticketModel->getOperationsTicketsForEmployee($employeeId, $branchId);
+        echo json_encode(['count' => count($tickets)]);
     }
 
     /**

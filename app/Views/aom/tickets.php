@@ -33,6 +33,8 @@ foreach ($rawTicketStats as $status => $count) {
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/searchable-select.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/bulk-transfer-modal.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -46,10 +48,32 @@ foreach ($rawTicketStats as $status => $count) {
         <div class="container-fluid">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">Tickets</h1>
-                <a href="<?= htmlspecialchars($base) ?>/aom/tickets/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                    <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
-                </a>
+                <div>
+                    <?php if (!empty($branches)): ?>
+                    <button type="button" class="btn btn-sm btn-warning shadow-sm mr-2 mb-2" data-toggle="modal" data-target="#bulkTransferModal">
+                        <i class="fas fa-exchange-alt fa-sm"></i> Bulk Transfer
+                    </button>
+                    <?php endif; ?>
+                    <a href="<?= htmlspecialchars($base) ?>/aom/tickets/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm mb-2">
+                        <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
+                    </a>
+                </div>
             </div>
+
+            <?php if (!empty($_SESSION['flash_success'])): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> <?= htmlspecialchars((string) $_SESSION['flash_success']) ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <?php unset($_SESSION['flash_success']); ?>
+            <?php endif; ?>
+            <?php if (!empty($_SESSION['flash_error'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars((string) $_SESSION['flash_error']) ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <?php unset($_SESSION['flash_error']); ?>
+            <?php endif; ?>
 
             <!-- Ticket Statistics Cards -->
             <div class="row">
@@ -221,10 +245,11 @@ foreach ($rawTicketStats as $status => $count) {
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/searchable-select.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/bulk-transfer-tickets.js"></script>
 
     <script>
         $(document).ready(function() {
-            // Client-side filter using row data-* (avoids badge/whitespace mismatches vs td:text())
             function applyFilters() {
                 const statusFilter = ($('#statusFilter').val() || '').trim().toLowerCase();
                 const branchFilter = ($('#branchFilter').val() || '').trim().toLowerCase();
@@ -252,8 +277,23 @@ foreach ($rawTicketStats as $status => $count) {
             }
 
             $('#statusFilter, #branchFilter, #priorityFilter').on('change', applyFilters);
+
+            if (window.initBulkTransferTickets) {
+                window.initBulkTransferTickets({
+                    base: <?= json_encode($base) ?>,
+                    routePrefix: 'aom',
+                    allOperationsEmployees: <?= json_encode($operationsEmployees ?? []) ?>
+                });
+            }
         });
     </script>
+<?php if (!empty($branches)): ?>
+<?php
+$routePrefix = 'aom';
+$bulkTransferAction = rtrim($base, '/') . '/aom/tickets/transfer';
+require __DIR__ . '/../partials/ticket/bulk_transfer_modal.php';
+?>
+<?php endif; ?>
 <?php require __DIR__ . '/../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 </html>

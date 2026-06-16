@@ -288,6 +288,97 @@ class AOMTicketModel extends BaseModel
     }
 
     /**
+     * Get tickets assigned to an employee within AOM scope (all statuses).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getTransferableTicketsForEmployee(int $employeeId, int $aomEmployeeId, ?int $branchId = null): array
+    {
+        if ($employeeId <= 0) {
+            return [];
+        }
+
+        $sql = "
+            SELECT t.ticket_id, t.ticket_number, t.status, t.branch_id
+            FROM {$this->tbltickets} t
+            LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            WHERE t.employee_id = :employee_id
+              AND COALESCE(e.department, t.department) = :operations_dept
+        ";
+
+        $params = [
+            'employee_id' => $employeeId,
+            'operations_dept' => self::OPERATIONS_DEPARTMENT,
+        ];
+
+        if ($branchId !== null && $branchId > 0) {
+            $sql .= ' AND t.branch_id = :branch_id';
+            $params['branch_id'] = $branchId;
+        }
+
+        $sql .= ' ORDER BY t.date_filed DESC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Get Operations employees who have at least one ticket in a branch (AOM scope).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getEmployeesWithTicketsInBranch(int $branchId, int $aomEmployeeId): array
+    {
+        if ($branchId <= 0) {
+            return [];
+        }
+
+        $sql = "
+            SELECT
+                e.employee_id,
+                e.firstname,
+                e.lastname,
+                e.middlename,
+                e.email,
+                e.position,
+                COALESCE(e.department, t.department) AS department,
+                COALESCE(e.branch_id, t.branch_id) AS branch_id,
+                b.branchName,
+                COUNT(t.ticket_id) AS ticket_count
+            FROM {$this->tbltickets} t
+            LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            INNER JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
+            WHERE t.branch_id = :branch_id
+              AND t.employee_id IS NOT NULL
+              AND t.employee_id > 0
+              AND COALESCE(e.department, t.department) = :operations_dept
+            GROUP BY
+                e.employee_id,
+                e.firstname,
+                e.lastname,
+                e.middlename,
+                e.email,
+                e.position,
+                e.department,
+                t.department,
+                e.branch_id,
+                t.branch_id,
+                b.branchName
+            ORDER BY e.lastname ASC, e.firstname ASC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'branch_id' => $branchId,
+            'operations_dept' => self::OPERATIONS_DEPARTMENT,
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
      * Get tickets by branch
      * 
      * @param int $branchId The branch ID

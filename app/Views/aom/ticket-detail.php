@@ -178,7 +178,6 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                             </button>
                         </div>
                         <?php endif; ?>
-                        <?php require __DIR__ . '/../partials/ticket/transfer_ticket_modal.php'; ?>
                         <div class="mb-3">
                             <?php
                             $ticketId = (int) ($ticket['ticket_id'] ?? 0);

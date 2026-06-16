@@ -42,6 +42,14 @@ $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
         </a>
     </li>
 
+    <!-- Assets -->
+    <li class="nav-item <?= ($activePage === 'assets') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/assets">
+            <i class="fas fa-archive"></i>
+            <span>Assets</span>
+        </a>
+    </li>
+
     <!-- Assignments -->
     <li class="nav-item <?= ($activePage === 'assignments') ? 'active' : '' ?>">
         <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/assignments">

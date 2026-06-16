@@ -1,6 +1,8 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 $loggedFirstname = $loggedFirstname ?? 'Employee';
+$hasAssets = (int) ($assetsCount ?? 0) > 0;
+$noAssetsTitle = 'You need at least one assigned asset to create a ticket.';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,9 +28,18 @@ $loggedFirstname = $loggedFirstname ?? 'Employee';
     <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">Tickets</h1>
+            <?php if ($hasAssets): ?>
             <a href="<?= htmlspecialchars($base) ?>/employee/assets/file_ticket" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
                 <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
             </a>
+            <?php else: ?>
+            <span class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm disabled"
+                  title="<?= htmlspecialchars($noAssetsTitle) ?>"
+                  data-toggle="tooltip"
+                  data-placement="bottom">
+                <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
+            </span>
+            <?php endif; ?>
         </div>
 
         <?php if (!empty($_SESSION['flash_success'])): ?>
