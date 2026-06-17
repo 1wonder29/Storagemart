@@ -45,6 +45,11 @@ $totalBranches = count($branches);
                             <div class="col-lg-8">
                                 <h1><i class="fas fa-map-marker-alt mr-2"></i>Add Branch</h1>
                                 <p>Register a new branch location for asset tracking and employee assignment.</p>
+                                <div class="quick-nav mt-3">
+                                    <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-sm btn-outline-light">
+                                        <i class="fas fa-arrow-left mr-1"></i> Back to Directory
+                                    </a>
+                                </div>
                             </div>
                             <div class="col-lg-4">
                                 <div class="hero-stat mt-3 mt-lg-0">
@@ -63,7 +68,7 @@ $totalBranches = count($branches);
                         <form action="<?= rtrim($base, '/') ?>/admin/assets/branch/add" method="POST">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                                 <div class="form-section-title">Branch Information</div>
-                                    <div class ="row mb-5">
+                                    <div class="row form-row-gap">
                                             <div class="col-md-6">
                                             <label for = "branchName" class ="form-label">Branch Name</label>
                                                 <input type="text" name="branchName" class="form-control" id="branchName" placeholder="Branch Name" required>
@@ -74,7 +79,7 @@ $totalBranches = count($branches);
                                             </div>
                                     </div>
 
-                                    <div class ="row mb-5">
+                                    <div class="row form-row-gap">
                                             <div class="col-md-6">
                                                 <label for = "branchAddress" class ="form-label">Branch Address</label>
                                                 <textarea id ="branchAddress" name="branchAddress" class="form-control" rows="6" maxlength="1000" required></textarea>
@@ -157,57 +162,19 @@ $totalBranches = count($branches);
                     </div>
 
                 </div>
-                <!-- /.container-fluid -->
-
-            </div>
-            <!-- End of Main Content -->
-
-            <!-- Footer -->
-            <!-- End of Footer -->
-
-        </div>
-        <!-- End of Content Wrapper -->
-
     </div>
-    <!-- End of Page Wrapper -->
 
-    <!-- Scroll to Top Button-->
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
 
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true" data-backdrop="false">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="<?= htmlspecialchars($base) ?>/logout">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap core JavaScript-->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Core plugin JavaScript-->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <!-- Custom scripts for all pages-->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-assets-branches.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-assets-form-lists.js"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 

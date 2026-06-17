@@ -28,6 +28,8 @@ foreach ($rawTicketStats as $status => $count) {
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-pages.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -37,23 +39,30 @@ foreach ($rawTicketStats as $status => $count) {
     $activePage = 'tickets';
     require_once __DIR__ . '/../../partials/hr/sidebar_topbar.php';
     ?>
-    <div class="container-fluid">
-        <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Tickets</h1>
-            <a href="<?= htmlspecialchars($base) ?>/hr/tickets/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
-            </a>
+    <div class="container-fluid hr-dashboard-page hr-ticket-page">
+        <div class="page-hero">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1><i class="fas fa-ticket-alt mr-2"></i>Tickets</h1>
+                    <p>Track employee support tickets with quick filters and status visibility.</p>
+                </div>
+                <div class="col-lg-4 text-lg-right mt-3 mt-lg-0">
+                    <a href="<?= htmlspecialchars($base) ?>/hr/tickets/create" class="btn btn-light btn-sm shadow-sm">
+                        <i class="fas fa-plus fa-sm"></i> Create New Ticket
+                    </a>
+                </div>
+            </div>
         </div>
 
         <?php if (!empty($_SESSION['flash_success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-success alert-dismissible fade show alert-modern" role="alert">
                 <i class="fas fa-check-circle"></i> <?= htmlspecialchars((string) $_SESSION['flash_success']) ?>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <?php unset($_SESSION['flash_success']); ?>
         <?php endif; ?>
         <?php if (!empty($_SESSION['flash_error'])): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show alert-modern" role="alert">
                 <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars((string) $_SESSION['flash_error']) ?>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
@@ -63,7 +72,7 @@ foreach ($rawTicketStats as $status => $count) {
         <div class="row">
             <?php foreach ($summaryTicketStats as $status => $count): ?>
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-<?php echo $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary')); ?> shadow h-100 py-2">
+                    <div class="card border-left-<?php echo $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary')); ?> shadow h-100 py-2 summary-stat-card">
                         <div class="card-body">
                             <div class="text-xs font-weight-bold text-<?php echo $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary')); ?> text-uppercase mb-1">
                                 <?php echo htmlspecialchars((string) $status); ?>
@@ -77,14 +86,14 @@ foreach ($rawTicketStats as $status => $count) {
             <?php endforeach; ?>
         </div>
 
-        <div class="card shadow mb-4">
+        <div class="card shadow mb-4 filter-card">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
+                <h6 class="m-0"><i class="fas fa-filter"></i> Filters</h6>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3">
-                        <label class="form-label text-xs font-weight-bold text-gray-600 text-uppercase mb-2">Status</label>
+                        <label class="form-label">Status</label>
                         <select id="statusFilter" class="form-control form-control-sm">
                             <option value="">All Status</option>
                             <option value="Pending">Pending</option>
@@ -95,7 +104,7 @@ foreach ($rawTicketStats as $status => $count) {
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label text-xs font-weight-bold text-gray-600 text-uppercase mb-2">Priority</label>
+                        <label class="form-label">Priority</label>
                         <select id="priorityFilter" class="form-control form-control-sm">
                             <option value="">All Priority</option>
                             <option value="Low">Low</option>
@@ -104,7 +113,7 @@ foreach ($rawTicketStats as $status => $count) {
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label text-xs font-weight-bold text-gray-600 text-uppercase mb-2">Search</label>
+                        <label class="form-label">Search</label>
                         <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Ticket number...">
                     </div>
                     <div class="col-md-3 align-self-end">
@@ -116,9 +125,9 @@ foreach ($rawTicketStats as $status => $count) {
             </div>
         </div>
 
-        <div class="card shadow mb-4">
+        <div class="card shadow mb-4 ticket-table-card">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">All Tickets</h6>
+                <h6 class="m-0"><i class="fas fa-list"></i> All Tickets</h6>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0 ticket-realtime-table" id="hrTicketsTable">
@@ -164,14 +173,9 @@ foreach ($rawTicketStats as $status => $count) {
                                     <td><?php echo htmlspecialchars((string) ($ticket['branchName'] ?? '')); ?></td>
                                     <td>
                                         <div class="action-btn-group">
-                                        <a href="<?= htmlspecialchars($base) ?>/hr/tickets/view?id=<?php echo (int) ($ticket['ticket_id'] ?? 0); ?>" class="btn btn-sm btn-info" title="View ticket">
+                                        <a href="<?= htmlspecialchars($base) ?>/hr/tickets/view?id=<?php echo (int) ($ticket['ticket_id'] ?? 0); ?>" class="btn btn-sm btn-info btn-view-icon" title="View ticket">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php
-                                        $ticketStatus = $status;
-                                        $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
-                                        require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
-                                        ?>
                                         </div>
                                     </td>
                                 </tr>
@@ -232,6 +236,5 @@ foreach ($rawTicketStats as $status => $count) {
     document.getElementById('searchInput').addEventListener('input', filterTickets);
 </script>
 
-<?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 </html>

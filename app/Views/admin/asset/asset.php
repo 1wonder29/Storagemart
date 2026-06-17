@@ -135,6 +135,7 @@ ksort($categories);
                                     <th>Total</th>
                                     <th>Assigned</th>
                                     <th>Unassigned</th>
+                                    <th>Defective</th>
                                     <th class="text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -162,6 +163,7 @@ ksort($categories);
                                         <td><span class="qty-badge"><?= (int) ($row['totalItems'] ?? 0) ?></span></td>
                                         <td><span class="qty-badge assigned"><?= (int) ($row['assigned'] ?? 0) ?></span></td>
                                         <td><span class="qty-badge unassigned"><?= (int) ($row['unassigned'] ?? 0) ?></span></td>
+                                        <td><span class="qty-badge defective"><?= (int) ($row['defective'] ?? 0) ?></span></td>
                                         <td class="text-right">
                                             <div class="action-btn-group">
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= (int) ($row['group_id'] ?? 0) ?>"

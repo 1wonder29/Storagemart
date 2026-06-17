@@ -55,10 +55,6 @@ class HOMController extends AuthController
         if (!$user) return;
 
         $accountId = (int) $_SESSION['account_id'];
-        $homId = $user['employee_id'];
-        
-        // Get statistics
-        $stats = $this->homModel->getAssignmentStats();
         
         // Get all Operations department tickets for HOM oversight
         $ticketModel = new EmployeeTicket();
@@ -80,9 +76,11 @@ class HOMController extends AuthController
                 $ticketStats['open']++;
             }
         }
-        
-        // Get recent assignments
-        $assignments = $this->homModel->getHOMAssignments($homId);
+
+        // Get dashboard overview counts
+        $employeeCount = count($this->homModel->getOperationsEmployees());
+        $branchCount = count($this->homModel->getAllBranches());
+        $aomCount = count($this->homModel->getAllActiveAOMs());
         
         // Get recent tickets (last 5)
         $recentTickets = array_slice($tickets, 0, 5);
@@ -90,8 +88,9 @@ class HOMController extends AuthController
         $data = [
             'page_title' => 'Dashboard',
             'user' => $user,
-            'stats' => $stats,
-            'assignments' => $assignments,
+            'employeeCount' => $employeeCount,
+            'branchCount' => $branchCount,
+            'aomCount' => $aomCount,
             'ticketStats' => $ticketStats,
             'recentTickets' => $recentTickets,
             'user_role' => 'HOM'
@@ -206,245 +205,6 @@ class HOMController extends AuthController
         }
 
         $this->redirect("/$routePrefix/employees");
-    }
-
-    /**
-     * View all assignments managed by this HOM
-     */
-    public function assignments()
-    {
-        $user = $this->requireHOM();
-        if (!$user) return;
-
-        $homId = $user['employee_id'];
-        $assignments = $this->homModel->getHOMAssignments($homId);
-
-        $data = [
-            'page_title' => 'My Assignments',
-            'user' => $user,
-            'assignments' => $assignments,
-            'user_role' => 'HOM'
-        ];
-
-        extract($data);
-        require __DIR__ . '/../../Views/om/assignments.php';
-    }
-
-    /**
-     * Create new employee assignment
-     */
-    public function createAssignment()
-    {
-        $user = $this->requireHOM();
-        if (!$user) return;
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $employeeId = $_POST['employee_id'] ?? null;
-            $branchId = $_POST['branch_id'] ?? null;
-            $aomId = $_POST['aom_id'] ?? null;
-            $notes = $_POST['notes'] ?? null;
-
-            if (!$employeeId || !$aomId || !$branchId) {
-                $_SESSION['error_message'] = 'Employee, Branch, and AOM are required.';
-                $this->redirect('/hom/new-assignment');
-                return;
-            }
-
-            // Append branch info to notes for tracking
-            $fullNotes = "Branch ID: $branchId | $notes";
-
-            // Create the assignment
-            $assignmentId = $this->homModel->createAssignment(
-                $user['employee_id'],
-                $employeeId,
-                $aomId,
-                $fullNotes,
-                $user['employee_id']
-            );
-
-            if ($assignmentId) {
-                $_SESSION['success_message'] = 'Employee assignment created successfully.';
-                $this->redirect('/hom/assignments');
-            } else {
-                $_SESSION['error_message'] = 'Failed to create assignment or employee already assigned to this AOM.';
-                $this->redirect('/hom/new-assignment');
-            }
-            return;
-        }
-
-        // GET - Show form
-        $unassignedEmployees = $this->homModel->getUnassignedEmployees();
-        $activeAOMs = $this->homModel->getAllActiveAOMs();
-        $branches = $this->homModel->getAllBranches();
-
-        $data = [
-            'page_title' => 'Create Employee Assignment',
-            'user' => $user,
-            'unassigned_employees' => $unassignedEmployees,
-            'active_aoms' => $activeAOMs,
-            'branches' => $branches,
-            'user_role' => 'HOM'
-        ];
-
-        extract($data);
-        require __DIR__ . '/../../Views/om/create-assignment.php';
-    }
-
-    /**
-     * Update an assignment
-     */
-    public function updateAssignment()
-    {
-        $user = $this->requireHOM();
-        if (!$user) return;
-
-        $assignmentId = $_GET['id'] ?? $_POST['assignment_id'] ?? null;
-
-        if (!$assignmentId) {
-            http_response_code(404);
-            exit('Assignment not found.');
-        }
-
-        $assignment = $this->homModel->getAssignmentById($assignmentId);
-        if (!$assignment) {
-            http_response_code(404);
-            exit('Assignment not found.');
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $aomId = $_POST['aom_id'] ?? null;
-            $branchId = $_POST['branch_id'] ?? null;
-            $notes = $_POST['notes'] ?? null;
-
-            if (!$aomId || !$branchId) {
-                $_SESSION['error_message'] = 'AOM and Branch are required.';
-                $this->redirect("/hom/edit-assignment?id=$assignmentId");
-                return;
-            }
-
-            // Append branch info to notes for tracking
-            $fullNotes = "Branch ID: $branchId | $notes";
-
-            $success = $this->homModel->updateAssignment($assignmentId, $aomId, $fullNotes);
-
-            if ($success) {
-                $_SESSION['success_message'] = 'Assignment updated successfully.';
-                $this->redirect('/hom/assignments');
-            } else {
-                $_SESSION['error_message'] = 'Failed to update assignment.';
-                $this->redirect("/hom/edit-assignment?id=$assignmentId");
-            }
-            return;
-        }
-
-        // GET - Show edit form
-        $activeAOMs = $this->homModel->getAllActiveAOMs();
-        $branches = $this->homModel->getAllBranches();
-
-        $data = [
-            'page_title' => 'Edit Assignment',
-            'user' => $user,
-            'assignment' => $assignment,
-            'active_aoms' => $activeAOMs,
-            'branches' => $branches,
-            'user_role' => 'HOM'
-        ];
-
-        extract($data);
-        require __DIR__ . '/../../Views/om/edit-assignment.php';
-    }
-
-    /**
-     * Deactivate an assignment
-     */
-    public function deactivateAssignment()
-    {
-        $user = $this->requireHOM();
-        if (!$user) return;
-
-        $assignmentId = $_POST['assignment_id'] ?? $_GET['id'] ?? null;
-
-        if (!$assignmentId) {
-            http_response_code(400);
-            exit('Assignment ID is required.');
-        }
-
-        $success = $this->homModel->deactivateAssignment($assignmentId);
-
-        if ($success) {
-            $_SESSION['success_message'] = 'Assignment deactivated successfully.';
-        } else {
-            $_SESSION['error_message'] = 'Failed to deactivate assignment.';
-        }
-
-        $this->redirect('/hom/assignments');
-    }
-
-    /**
-     * Get unassigned employees via AJAX
-     */
-    public function getUnassignedEmployees()
-    {
-        $user = $this->requireHOM();
-        if (!$user) {
-            http_response_code(403);
-            exit('Unauthorized');
-        }
-
-        header('Content-Type: application/json');
-        
-        $employees = $this->homModel->getUnassignedEmployees();
-        echo json_encode([
-            'success' => true,
-            'data' => $employees
-        ]);
-    }
-
-    /**
-     * Get all AOMs via AJAX
-     */
-    public function getAOMs()
-    {
-        $user = $this->requireHOM();
-        if (!$user) {
-            http_response_code(403);
-            exit('Unauthorized');
-        }
-
-        header('Content-Type: application/json');
-        
-        $aoms = $this->homModel->getAllActiveAOMs();
-        echo json_encode([
-            'success' => true,
-            'data' => $aoms
-        ]);
-    }
-
-    /**
-     * Get employee assignments via AJAX
-     */
-    public function getEmployeeAssignments()
-    {
-        $user = $this->requireHOM();
-        if (!$user) {
-            http_response_code(403);
-            exit('Unauthorized');
-        }
-
-        $employeeId = $_GET['employee_id'] ?? null;
-
-        if (!$employeeId) {
-            http_response_code(400);
-            exit(json_encode(['error' => 'Employee ID required']));
-        }
-
-        header('Content-Type: application/json');
-        
-        $assignments = $this->homModel->getEmployeeAssignments($employeeId);
-        echo json_encode([
-            'success' => true,
-            'data' => $assignments
-        ]);
     }
 
     /**

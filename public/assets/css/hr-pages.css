@@ -1,0 +1,190 @@
+.hr-ticket-page .summary-stat-card {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.1) !important;
+}
+
+.hr-ticket-page .summary-stat-card .card-body {
+  padding: 1rem 1.1rem;
+}
+
+.hr-ticket-page .filter-card,
+.hr-ticket-page .ticket-table-card,
+.hr-employees-page .filter-card,
+.hr-employees-page .data-card {
+  border: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.1) !important;
+}
+
+.hr-ticket-page .filter-card .card-header,
+.hr-ticket-page .ticket-table-card .card-header,
+.hr-employees-page .filter-card .card-header,
+.hr-employees-page .data-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid #eaecf4;
+  padding: 1rem 1.25rem;
+}
+
+.hr-ticket-page .filter-card .card-header h6,
+.hr-ticket-page .ticket-table-card .card-header h6,
+.hr-employees-page .filter-card .card-header h6,
+.hr-employees-page .data-card .card-header h6 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #3a3b45;
+}
+
+.hr-ticket-page .filter-card .card-header h6 i,
+.hr-ticket-page .ticket-table-card .card-header h6 i,
+.hr-employees-page .filter-card .card-header h6 i,
+.hr-employees-page .data-card .card-header h6 i {
+  color: #ad1457;
+  margin-right: 0.4rem;
+}
+
+.hr-ticket-page .form-label,
+.hr-employees-page .form-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #858796;
+  margin-bottom: 0.35rem;
+}
+
+.hr-ticket-page .table thead th,
+.hr-employees-page .table thead th {
+  background: #f1f3f9;
+  border-top: none;
+  border-bottom: 2px solid #d1d3e2;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5a5c69;
+  white-space: nowrap;
+}
+
+.hr-ticket-page .table td,
+.hr-employees-page .table td {
+  vertical-align: middle;
+  border-color: #eaecf4;
+}
+
+.hr-ticket-page .table tbody tr:hover,
+.hr-employees-page .table tbody tr:hover {
+  background: #fff8fb;
+}
+
+.hr-ticket-page .btn-view-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hr-employees-page .search-inline .form-control {
+  min-width: 280px;
+}
+
+.hr-employees-page .pagination {
+  margin-top: 1rem;
+}
+
+.hr-employees-page .page-link {
+  color: #ad1457;
+}
+
+.hr-employees-page .page-item.active .page-link {
+  background-color: #ad1457;
+  border-color: #ad1457;
+}
+
+/* Keep employee table stable at 100% zoom */
+.hr-employees-page .employees-table .branch-cell {
+  white-space: nowrap;
+}
+
+.hr-employees-page .employees-table .actions-cell {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.hr-employees-page .employees-table .actions-cell .btn {
+  margin-right: 0.25rem;
+  margin-bottom: 0;
+}
+
+.hr-employees-page .employees-table .actions-cell .btn:last-child {
+  margin-right: 0;
+}
+
+.hr-employee-detail-page .detail-card,
+.hr-employee-detail-page .data-card {
+  border: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.1) !important;
+}
+
+.hr-employee-detail-page .detail-card .card-header,
+.hr-employee-detail-page .data-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid #eaecf4;
+  padding: 1rem 1.25rem;
+}
+
+.hr-employee-detail-page .detail-card .card-header h6,
+.hr-employee-detail-page .data-card .card-header h6 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #3a3b45;
+}
+
+.hr-employee-detail-page .detail-grid-item {
+  margin-bottom: 0.75rem;
+}
+
+.hr-employee-detail-page .detail-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #858796;
+  margin-bottom: 0.15rem;
+}
+
+.hr-employee-detail-page .detail-value {
+  font-size: 0.92rem;
+  color: #3a3b45;
+}
+
+.hr-employee-detail-page .actions-inline .btn {
+  border-radius: 0.45rem;
+  font-weight: 600;
+}
+
+.hr-employee-detail-page .table thead th {
+  background: #f1f3f9;
+  border-top: none;
+  border-bottom: 2px solid #d1d3e2;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5a5c69;
+  white-space: nowrap;
+}
+
+.hr-employee-detail-page .table td {
+  vertical-align: middle;
+  border-color: #eaecf4;
+}

@@ -13,13 +13,16 @@ class Asset extends BaseModel {
 
     
     public function fetchAllAssets(): array {
-        $sql = "SELECT g.group_id, g.groupName, g.description, c.categoryName, COUNT(i.group_id) AS totalItems, SUM(CASE WHEN i.status = 'ASSIGNED' THEN 1 ELSE 0 END) AS assigned, SUM(CASE WHEN i.status = 'UNASSIGNED' THEN 1 ELSE 0 END) AS unassigned 
-        FROM {$this->tblgroup} g 
-        JOIN {$this->tblcategory} c ON g.category_id = c.category_id 
-        LEFT JOIN {$this->tblassets} i ON g.group_id = i.group_id 
-        AND i.status NOT IN ('DISPOSE','DISPOSED','LOST','DEFECTIVE') 
+        $sql = "SELECT g.group_id, g.groupName, g.description, c.categoryName,
+            SUM(CASE WHEN i.status NOT IN ('DISPOSE','DISPOSED','LOST','DEFECTIVE') THEN 1 ELSE 0 END) AS totalItems,
+            SUM(CASE WHEN i.status = 'ASSIGNED' THEN 1 ELSE 0 END) AS assigned,
+            SUM(CASE WHEN i.status = 'UNASSIGNED' THEN 1 ELSE 0 END) AS unassigned,
+            SUM(CASE WHEN i.status = 'DEFECTIVE' THEN 1 ELSE 0 END) AS defective
+        FROM {$this->tblgroup} g
+        JOIN {$this->tblcategory} c ON g.category_id = c.category_id
+        LEFT JOIN {$this->tblassets} i ON g.group_id = i.group_id
         GROUP BY g.group_id, g.groupName, g.description, c.categoryName
-        ORDER BY g.group_id ASC; ";
+        ORDER BY g.group_id ASC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -257,6 +260,106 @@ class Asset extends BaseModel {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return (int) ($stmt->fetchColumn() ?: 0);
+    }
+
+    public function markItemDefective(int $inventoryId, string $reason, ?int $performedByAccountId = null): bool
+    {
+        $inventory = $this->fetchInventoryById($inventoryId);
+        if (!$inventory) {
+            return false;
+        }
+        $status = strtoupper(trim((string) ($inventory['status'] ?? '')));
+        if (!in_array($status, ['RETURNED', 'UNASSIGNED'], true)) {
+            return false;
+        }
+        return $this->updateItem(
+            $inventoryId,
+            (string) ($inventory['itemInfo'] ?? ''),
+            (string) ($inventory['serialNumber'] ?? ''),
+            (string) ($inventory['year_purchased'] ?? ''),
+            'DEFECTIVE',
+            $reason,
+            $performedByAccountId
+        );
+    }
+
+    public function returnAssetFromEmployee(int $inventoryId, int $employeeId, string $reason, ?int $performedByAccountId = null): bool
+    {
+        $inventory = $this->fetchInventoryById($inventoryId);
+        if (!$inventory) {
+            return false;
+        }
+        if ((int) ($inventory['employee_id'] ?? 0) !== $employeeId) {
+            return false;
+        }
+        if (strtoupper(trim((string) ($inventory['status'] ?? ''))) !== 'ASSIGNED') {
+            return false;
+        }
+
+        try {
+            $this->pdo->beginTransaction();
+            $now = date('Y-m-d H:i:s');
+            $transferDetails = trim($reason) !== '' ? trim($reason) : 'Returned from employee';
+
+            $sqlUp = "UPDATE {$this->tblassets}
+                    SET employee_id = NULL,
+                        status = 'UNASSIGNED'
+                    WHERE inventory_id = :inventory_id";
+            $stmt = $this->pdo->prepare($sqlUp);
+            if (!$stmt->execute([':inventory_id' => $inventoryId])) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            $sqlIns = "INSERT INTO {$this->tblassign}
+                    (employee_id, inventory_id, assignedTo, dateIssued, transferDetails, dateReturned, datecreated, createdby)
+                    VALUES (:employee_id, :inventory_id, :assignedTo, :dateIssued, :transferDetails, :dateReturned, :datecreated, :createdby)";
+            $stmt2 = $this->pdo->prepare($sqlIns);
+            $ok2 = $stmt2->execute([
+                ':employee_id'     => $employeeId,
+                ':inventory_id'    => $inventoryId,
+                ':assignedTo'      => 'Unassigned',
+                ':dateIssued'      => date('Y-m-d'),
+                ':transferDetails' => $transferDetails,
+                ':dateReturned'    => date('Y-m-d'),
+                ':datecreated'     => $now,
+                ':createdby'       => $performedByAccountId ?? 'SYSTEM',
+            ]);
+            if (!$ok2) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            $newAssignmentId = (int) $this->pdo->lastInsertId();
+            $sqlUpd = "UPDATE {$this->tblassets} SET assignment_id = :assignment_id WHERE inventory_id = :inventory_id";
+            $stmt3 = $this->pdo->prepare($sqlUpd);
+            if (!$stmt3->execute([':assignment_id' => $newAssignmentId, ':inventory_id' => $inventoryId])) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            $this->pdo->commit();
+
+            require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
+            ActivityLogger::transfer(
+                'Asset Inventory',
+                (string) $inventoryId,
+                'Asset returned from employee and marked unassigned',
+                (string) ($performedByAccountId ?? 'SYSTEM'),
+                [
+                    'status' => 'UNASSIGNED',
+                    'employee_id' => $employeeId,
+                    'reason' => $transferDetails,
+                ]
+            );
+
+            return true;
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            return false;
+        }
     }
 
     public function fetchItemsByGroupId(int $groupId): array {
@@ -623,10 +726,27 @@ class Asset extends BaseModel {
     }
 
     public function fetchAssignmentsByInventoryId(int $inventoryId): array {
-        $sql = "SELECT employee_id, assignedTo, transferDetails, dateIssued, dateReturned, createdby
-        FROM {$this->tblassign}
-        WHERE inventory_id = ?
-        ORDER BY assignment_id DESC";
+        $sql = "SELECT
+            asn.employee_id,
+            asn.assignedTo,
+            asn.transferDetails,
+            asn.dateIssued,
+            asn.dateReturned,
+            asn.createdby,
+            COALESCE(
+                NULLIF(TRIM(CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, ''))), ''),
+                NULLIF(TRIM(CONCAT(e.firstname, ' ', e.lastname)), ''),
+                acc.username,
+                asn.createdby,
+                'Unknown'
+            ) AS createdByName
+        FROM {$this->tblassign} asn
+        LEFT JOIN {$this->tblaccounts} acc
+            ON asn.createdby REGEXP '^[0-9]+$'
+            AND acc.account_id = CAST(asn.createdby AS UNSIGNED)
+        LEFT JOIN {$this->tblemployee} e ON e.account_id = acc.account_id
+        WHERE asn.inventory_id = ?
+        ORDER BY asn.assignment_id DESC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$inventoryId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

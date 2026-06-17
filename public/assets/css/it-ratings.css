@@ -212,6 +212,11 @@
   color: #3a3b45;
 }
 
+.it-ratings-page .tech-name {
+  font-weight: 600;
+  color: #3a3b45;
+}
+
 .it-ratings-page .dept-pill {
   display: inline-flex;
   font-size: 0.68rem;
@@ -222,21 +227,22 @@
   color: #1565c0;
 }
 
-.it-ratings-page .star-rating {
+.it-ratings-page .rating-stars {
   display: inline-flex;
   align-items: center;
   gap: 0.15rem;
-  font-size: 0.9rem;
-  color: #f6c23e;
-  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 2rem;
+  color: #fff;
 }
 
-.it-ratings-page .star-rating .rating-num {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #858796;
-  margin-left: 0.25rem;
-}
+.it-ratings-page .rating-stars.rating-5 { background: #1cc88a; }
+.it-ratings-page .rating-stars.rating-4 { background: #58d68d; }
+.it-ratings-page .rating-stars.rating-3 { background: #f6c23e; color: #5a4a00; }
+.it-ratings-page .rating-stars.rating-2 { background: #f39c12; }
+.it-ratings-page .rating-stars.rating-1 { background: #e74a3b; }
 
 .it-ratings-page .comment-text {
   font-size: 0.82rem;
@@ -248,6 +254,187 @@
   font-size: 0.82rem;
   color: #5a5c69;
   white-space: nowrap;
+}
+
+.it-ratings-page .action-col {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.it-ratings-page .btn-rating-details {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1565c0;
+  background: #e8f0fe;
+  border: 1px solid #bbdefb;
+  border-radius: 2rem;
+  padding: 0.38rem 0.9rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.it-ratings-page .btn-rating-details:hover {
+  color: #fff;
+  background: #1565c0;
+  border-color: #1565c0;
+  box-shadow: 0 0.2rem 0.65rem rgba(21, 101, 192, 0.28);
+  transform: translateY(-1px);
+}
+
+.it-ratings-page .btn-rating-details-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: rgba(21, 101, 192, 0.12);
+  font-size: 0.68rem;
+}
+
+.it-ratings-page .btn-rating-details:hover .btn-rating-details-icon {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.it-rating-details-modal .modal-content {
+  border: none;
+  border-radius: 0.85rem;
+  overflow: hidden;
+  box-shadow: 0 1rem 2.5rem rgba(26, 35, 50, 0.18);
+}
+
+.it-rating-details-modal .modal-header {
+  background: linear-gradient(135deg, #4a148c 0%, #7b1fa2 55%, #3949ab 100%);
+  color: #fff;
+  border-bottom: none;
+  padding: 1.35rem 1.5rem;
+  align-items: flex-start;
+}
+
+.it-rating-details-modal .rating-details-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.it-rating-details-modal .modal-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.it-rating-details-modal .rating-details-close {
+  color: #fff;
+  opacity: 0.85;
+  text-shadow: none;
+}
+
+.it-rating-details-modal .modal-body {
+  padding: 1.35rem 1.5rem 1.1rem;
+  background: #f8f9fc;
+}
+
+.it-rating-details-modal .rating-details-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.it-rating-details-modal .rating-details-summary-item {
+  background: #fff;
+  border: 1px solid #eaecf4;
+  border-radius: 0.65rem;
+  padding: 0.85rem 1rem;
+}
+
+.it-rating-details-modal .rating-details-summary-item-wide {
+  grid-column: 1 / -1;
+}
+
+.it-rating-details-modal .summary-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #858796;
+  margin-bottom: 0.3rem;
+}
+
+.it-rating-details-modal .summary-value {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #3a3b45;
+}
+
+.it-rating-details-modal .summary-value.ticket-id {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  color: #4e73df;
+}
+
+.it-rating-details-modal .rating-details-comment {
+  background: #fff;
+  border: 1px solid #eaecf4;
+  border-radius: 0.75rem;
+  padding: 1.1rem 1.15rem;
+}
+
+.it-rating-details-modal .rating-details-comment-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #858796;
+  margin-bottom: 0.75rem;
+}
+
+.it-rating-details-modal .rating-details-comment-head i {
+  color: #7b1fa2;
+}
+
+.it-rating-details-modal .rating-details-comment p {
+  font-size: 0.95rem;
+  color: #3a3b45;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.it-rating-details-modal .rating-details-comment p.is-empty {
+  color: #858796;
+  font-style: italic;
+}
+
+.it-rating-details-modal .modal-footer {
+  background: #fff;
+  border-top: 1px solid #eaecf4;
+  padding: 0.85rem 1.5rem;
+}
+
+.it-rating-details-modal .btn-rating-modal-close {
+  background: #eef0fb;
+  border: 1px solid #c5cae9;
+  color: #3949ab;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 2rem;
+  padding: 0.45rem 1.1rem;
+}
+
+.it-rating-details-modal .btn-rating-modal-close:hover {
+  background: #3949ab;
+  border-color: #3949ab;
+  color: #fff;
 }
 
 .it-ratings-page .empty-state {
@@ -303,12 +490,43 @@ html.it-dark .it-ratings-page .date-cell {
   color: var(--it-text-muted);
 }
 
+html.it-dark .it-ratings-page .tech-name {
+  color: var(--it-text);
+}
+
 html.it-dark .it-ratings-page .ticket-id {
   color: var(--it-primary);
+}
+
+html.it-dark .it-ratings-page .btn-rating-details {
+  color: var(--it-text);
+  background: var(--it-surface-2);
+  border-color: var(--it-border);
+}
+
+html.it-dark .it-ratings-page .btn-rating-details:hover {
+  background: var(--it-primary);
+  border-color: var(--it-primary);
+  color: #fff;
 }
 
 @media (max-width: 991px) {
   .it-ratings-page .hero-stat {
     margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .it-ratings-page .btn-rating-details-label {
+    display: none;
+  }
+
+  .it-ratings-page .btn-rating-details {
+    padding: 0.45rem;
+    border-radius: 50%;
+  }
+
+  .it-rating-details-modal .rating-details-summary {
+    grid-template-columns: 1fr;
   }
 }

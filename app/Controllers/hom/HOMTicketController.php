@@ -40,6 +40,42 @@ class HOMTicketController extends AuthController
         return $user;
     }
 
+    protected function routePrefixForUser(array $user): string
+    {
+        return strtoupper($user['usertype'] ?? '') === 'OM' ? 'om' : 'hom';
+    }
+
+    protected function sendTicketNotifications(int $ticketId, string $department, int $accountId): void
+    {
+        $notificationModel = new NotificationModel();
+        $employeeModel = new Employee();
+        $recipients = $notificationModel->getTicketRecipientsWithType($department);
+        $filerName = $employeeModel->getDisplayNameByAccountId($accountId);
+
+        foreach ($recipients as $recipient) {
+            $receiverAccountId = (int) $recipient['account_id'];
+            $receiverType = strtoupper($recipient['usertype'] ?? '');
+            if ($receiverAccountId === $accountId) {
+                continue;
+            }
+            if ($receiverType === 'ADMIN') {
+                $actionUrl = '/admin/tickets';
+            } elseif ($receiverType === 'HEAD') {
+                $actionUrl = '/head/tickets';
+            } else {
+                $actionUrl = '/it/tickets';
+            }
+            $notificationModel->create(
+                $receiverAccountId,
+                'New Ticket Filed by ' . $filerName,
+                'fa-ticket-alt',
+                'primary',
+                $actionUrl,
+                $ticketId
+            );
+        }
+    }
+
     public function index()
     {
         $user = $this->requireHOM();
@@ -84,18 +120,151 @@ class HOMTicketController extends AuthController
         require __DIR__ . '/../../Views/hom/ticket/ticket.php';
     }
 
+    public function createMy()
+    {
+        $user = $this->requireHOM();
+        if (!$user) return;
+
+        $routePrefix = $this->routePrefixForUser($user);
+        $accountId = (int) $_SESSION['account_id'];
+        $employeeId = (int) ($this->employeeModel->getEmployeeIdByAccountId($accountId) ?? 0);
+        $profile = $employeeId > 0 ? ($this->employeeModel->getEmployeeById($employeeId) ?: []) : [];
+        $myAssets = $employeeId > 0 ? $this->employeeModel->fetchAssetDetailsByEmployeeId($employeeId) : [];
+
+        if (!empty($profile) && $employeeId > 0) {
+            $profile['employee_id'] = $employeeId;
+            if (!empty($profile['branch_id'])) {
+                foreach ((new HOMModel())->getAllBranches() as $branch) {
+                    if ((int) ($branch['branch_id'] ?? 0) === (int) $profile['branch_id']) {
+                        $profile['branchName'] = $branch['branchName'] ?? '';
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+
+        $ctx = $this->getLoggedUserContext();
+        $ctx['loggedLastname'] = $ctx['loggedLastname'] ?? '';
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        $activePage = 'create-my-ticket';
+        $user_role = strtoupper($user['usertype'] ?? '') === 'OM' ? 'OM' : 'HOM';
+        $formAction = '/' . $routePrefix . '/tickets/create/my';
+        $cancelUrl = '/' . $routePrefix . '/tickets';
+
+        require __DIR__ . '/../../Views/hom/ticket/create-my.php';
+    }
+
+    public function storeMy()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit('Invalid method.');
+        }
+
+        $user = $this->requireHOM();
+        if (!$user) return;
+
+        $routePrefix = $this->routePrefixForUser($user);
+
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid form token.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/my');
+            return;
+        }
+
+        $accountId = (int) ($_SESSION['account_id'] ?? 0);
+        $employeeId = (int) ($this->employeeModel->getEmployeeIdByAccountId($accountId) ?? 0);
+        if ($employeeId <= 0) {
+            $_SESSION['flash_error'] = 'Unable to determine your employee record.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/my');
+            return;
+        }
+
+        if ($this->employeeModel->countAssetsByEmployee($employeeId) === 0) {
+            $_SESSION['flash_error'] = 'You need at least one assigned asset before creating a ticket.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/my');
+            return;
+        }
+
+        $inventoryId = (int) ($_POST['inventory_id'] ?? 0);
+        if ($inventoryId <= 0) {
+            $_SESSION['flash_error'] = 'Please select an asset.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/my');
+            return;
+        }
+
+        $ticketModel = new EmployeeTicket();
+        $inventory = $ticketModel->getInventoryDetailsByInventoryId($inventoryId);
+        if (!$inventory || (int) ($inventory['employee_id'] ?? 0) !== $employeeId) {
+            $_SESSION['flash_error'] = 'Invalid asset selected.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/my');
+            return;
+        }
+
+        $employee = $this->employeeModel->getEmployeeById($employeeId);
+        $department = trim((string) ($employee['department'] ?? ''));
+        $concern = trim((string) ($_POST['concern_details'] ?? ''));
+        if ($concern === '') {
+            $_SESSION['flash_error'] = 'Ticket description is required.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/my');
+            return;
+        }
+
+        $priority = ucfirst(strtolower(trim((string) ($_POST['priority'] ?? 'Low'))));
+        if (!in_array($priority, ['Low', 'Medium', 'High'], true)) {
+            $priority = 'Low';
+        }
+
+        $branchId = (int) ($inventory['branch_id'] ?? $employee['branch_id'] ?? 0);
+        $ticketId = $ticketModel->createTicket([
+            'employee_id' => $employeeId,
+            'inventory_id' => $inventoryId,
+            'branch_id' => $branchId,
+            'department' => $department,
+            'category' => trim((string) ($_POST['category'] ?? '')),
+            'concern_details' => $concern,
+            'priority' => $priority,
+            'created_by' => $accountId,
+        ]);
+
+        $this->sendTicketNotifications((int) $ticketId, $department, $accountId);
+
+        $ticket_number = $ticketModel->getTicketNumberById((int) $ticketId) ?? 'N/A';
+        $logger = new Logger();
+        $logger->log('Create', 'Ticket Management', (string) $ticketId, $_SESSION['username'] ?? 'Unknown');
+
+        $_SESSION['flash_success'] = 'Ticket created successfully! Your Ticket Number: ' . $ticket_number;
+        $this->redirect('/' . $routePrefix . '/tickets');
+    }
+
     public function create()
     {
         $user = $this->requireHOM();
+        if (!$user) return;
 
+        $routePrefix = $this->routePrefixForUser($user);
         $employeeModel = new Employee();
         $homModel = new HOMModel();
-        $employees = $employeeModel->fetchEmployeesByDepartment('Operations');
+        $viewerEmployeeId = (int) ($employeeModel->getEmployeeIdByAccountId((int) $_SESSION['account_id']) ?? 0);
+        $employees = array_values(array_filter(
+            $employeeModel->fetchEmployeesByDepartment('Operations'),
+            static function ($emp) use ($viewerEmployeeId) {
+                return (int) ($emp['employee_id'] ?? 0) !== $viewerEmployeeId;
+            }
+        ));
+        foreach ($employees as &$emp) {
+            $emp['has_assets'] = ((int) $employeeModel->countAssetsByEmployee((int) ($emp['employee_id'] ?? 0))) > 0;
+        }
+        unset($emp);
         $branches = $homModel->getAllBranches();
-
-        // Get current logged-in user's employee ID for default
-        $accountId = (int) $_SESSION['account_id'];
-        $defaultEmployeeId = $employeeModel->getEmployeeIdByAccountId($accountId);
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
@@ -109,8 +278,9 @@ class HOMTicketController extends AuthController
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
 
-        $activePage = 'tickets';
+        $activePage = 'create-employee-ticket';
         $user_role = strtoupper($user['usertype'] ?? '') === 'OM' ? 'OM' : 'HOM';
+        $routePrefix = $routePrefix;
 
         require __DIR__ . '/../../Views/hom/ticket/create.php';
     }
@@ -122,10 +292,12 @@ class HOMTicketController extends AuthController
             exit('Invalid method.');
         }
         $this->requireHOM();
+        $user = $this->employeeModel->fetchUserDetails($_SESSION['account_id']);
+        $routePrefix = $this->routePrefixForUser($user ?: []);
 
         if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
             $_SESSION['flash_error'] = 'Invalid form token.';
-            $this->redirect('/hom/tickets/create');
+            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
             return;
         }
 
@@ -135,34 +307,46 @@ class HOMTicketController extends AuthController
 
         if (!$homEmployeeId) {
             $_SESSION['flash_error'] = 'Unable to determine your employee record.';
-            $this->redirect('/hom/tickets/create');
+            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
             return;
         }
 
         $targetEmployeeId = (int) ($_POST['employee_id'] ?? 0);
         if ($targetEmployeeId <= 0) {
             $_SESSION['flash_error'] = 'Please select an employee.';
-            $this->redirect('/hom/tickets/create');
+            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
+            return;
+        }
+
+        if ($targetEmployeeId === (int) $homEmployeeId) {
+            $_SESSION['flash_error'] = 'Use My Ticket to file a ticket for yourself.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/my');
             return;
         }
 
         $empRow = $employeeModel->getEmployeeById($targetEmployeeId);
         if (!$empRow) {
             $_SESSION['flash_error'] = 'Invalid employee selected.';
-            $this->redirect('/hom/tickets/create');
+            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
             return;
         }
 
         if (strcasecmp((string) ($empRow['department'] ?? ''), 'Operations') !== 0) {
             $_SESSION['flash_error'] = 'Tickets can only be filed for Operations employees.';
-            $this->redirect('/hom/tickets/create');
+            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
+            return;
+        }
+
+        if ((int) $employeeModel->countAssetsByEmployee($targetEmployeeId) <= 0) {
+            $_SESSION['flash_error'] = 'Cannot create a ticket: selected employee has no assigned asset.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
             return;
         }
 
         $branchId = (int) ($_POST['branch_id'] ?? 0);
         if ($branchId <= 0) {
             $_SESSION['flash_error'] = 'Please select a branch.';
-            $this->redirect('/hom/tickets/create');
+            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
             return;
         }
 
@@ -175,7 +359,7 @@ class HOMTicketController extends AuthController
         }
         if (!$validBranch) {
             $_SESSION['flash_error'] = 'Invalid branch selected.';
-            $this->redirect('/hom/tickets/create');
+            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
             return;
         }
 
@@ -184,7 +368,7 @@ class HOMTicketController extends AuthController
         $concern = trim((string) ($_POST['concern_details'] ?? ''));
         if ($concern === '') {
             $_SESSION['flash_error'] = 'Ticket description is required.';
-            $this->redirect('/hom/tickets/create');
+            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
             return;
         }
 
@@ -205,40 +389,14 @@ class HOMTicketController extends AuthController
             'created_by' => $accountId,
         ]);
 
-        $notificationModel = new NotificationModel();
-        $recipients = $notificationModel->getTicketRecipientsWithType($department);
-        $currentAccountId = $accountId;
-        $filerName = $employeeModel->getDisplayNameByAccountId($accountId);
-
-        foreach ($recipients as $recipient) {
-            $receiverAccountId = (int) $recipient['account_id'];
-            $receiverType = strtoupper($recipient['usertype'] ?? '');
-            if ($receiverAccountId === $currentAccountId) {
-                continue;
-            }
-            if ($receiverType === 'ADMIN') {
-                $actionUrl = '/admin/tickets';
-            } elseif ($receiverType === 'HEAD') {
-                $actionUrl = '/head/tickets';
-            } else {
-                $actionUrl = '/it/tickets';
-            }
-            $notificationModel->create(
-                $receiverAccountId,
-                'New Ticket Filed by ' . $filerName,
-                'fa-ticket-alt',
-                'primary',
-                $actionUrl,
-                (int) $ticketId
-            );
-        }
+        $this->sendTicketNotifications((int) $ticketId, $department, $accountId);
 
         $ticket_number = $model->getTicketNumberById((int) $ticketId) ?? 'N/A';
         $logger = new Logger();
         $logger->log('Create', 'Ticket Management', (string) $ticketId, $_SESSION['username'] ?? 'Unknown');
 
         $_SESSION['flash_success'] = 'Ticket created successfully! Your Ticket Number: ' . $ticket_number;
-        $this->redirect('/hom/tickets');
+        $this->redirect('/' . $routePrefix . '/tickets');
     }
 
     public function view()

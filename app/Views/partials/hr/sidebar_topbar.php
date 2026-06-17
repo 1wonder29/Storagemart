@@ -2,8 +2,10 @@
 $base = rtrim(BASE_URL, '/');
 ?>
 
+<?php require_once __DIR__ . '/../sidebar_styles.php'; ?>
+
 <!-- Sidebar -->
-<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion sidebar-modern" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" 
@@ -75,47 +77,7 @@ $base = rtrim(BASE_URL, '/');
             <ul class="navbar-nav ml-auto">
 
                 <div class="topbar-divider d-none d-sm-block"></div>
-                <li class="nav-item dropdown no-arrow mx-1">
-                    <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown"
-                    role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-bell fa-fw"></i>
-                        <?php $count = (int) ($count ?? 0); ?>
-                        <?php if ($count > 0): ?>
-                            <span class="badge badge-danger badge-counter">
-                                <?= $count > 9 ? '9+' : $count ?>
-                            </span>
-                        <?php endif; ?>
-                    </a>
-
-                    <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                        aria-labelledby="alertsDropdown">
-                        <h6 class="dropdown-header">Notifications</h6>
-                        <?php if (empty($notifications)): ?>
-                            <div class="dropdown-item text-center small text-gray-500">
-                                No new notifications
-                            </div>
-                        <?php else: ?>
-                            <div class="notification-scroll">
-                                <?php foreach (array_slice($notifications, 0, 5) as $n): ?>
-                                    <a class="dropdown-item d-flex align-items-center notification-item <?= ($n['is_read'] ?? 0) ? 'notification-read' : 'notification-unread' ?>"
-                                       href="<?= htmlspecialchars($n['action_url'] ?? '#') ?>"
-                                       data-id="<?= (int)($n['id'] ?? 0) ?>">
-                                        <div class="mr-3">
-                                            <div class="icon-circle bg-<?= htmlspecialchars($n['bg_color'] ?? 'primary') ?>">
-                                                <i class="fas <?= htmlspecialchars($n['icon'] ?? 'fa-bell') ?> text-white"></i>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="small text-gray-500"><?= date('M d, Y H:i', strtotime($n['created_at'] ?? 'now')) ?></div>
-                                            <span class="font-weight-bold"><?= htmlspecialchars($n['message'] ?? '') ?></span>
-                                        </div>
-                                    </a>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                        <a class="dropdown-item text-center small text-gray-500" href="<?= htmlspecialchars($base) ?>/notifications">Show All Alerts</a>
-                    </div>
-                </li>
+                <?php $count = (int) ($count ?? 0); require_once __DIR__ . '/../notification_dropdown.php'; ?>
 
                 <div class="topbar-divider d-none d-sm-block"></div>
 

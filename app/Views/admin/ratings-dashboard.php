@@ -277,8 +277,8 @@ $staffCount = count($itStaffPerformance);
                                             <th>Department</th>
                                             <th>Technician</th>
                                             <th>Rating</th>
-                                            <th>Comment</th>
                                             <th>Date</th>
+                                            <th class="text-center action-col">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody id="ratingsTableBody">
@@ -297,8 +297,21 @@ $staffCount = count($itStaffPerformance);
                                                     <?= admin_rating_stars($ratingVal) ?>
                                                 </span>
                                             </td>
-                                            <td><span class="comment-preview"><?= htmlspecialchars(strlen($comment) > 50 ? substr($comment, 0, 50) . '...' : $comment) ?></span></td>
                                             <td class="date-cell"><?= date('M d, Y g:i A', strtotime($rating['created_at'])) ?></td>
+                                            <td class="text-center action-col">
+                                                <button type="button"
+                                                    class="btn-rating-details"
+                                                    title="View rating details"
+                                                    data-ticket="<?= htmlspecialchars($rating['ticket_number']) ?>"
+                                                    data-rating="<?= $ratingVal ?>"
+                                                    data-rater="<?= htmlspecialchars($rating['rater_firstname'] . ' ' . $rating['rater_lastname']) ?>"
+                                                    data-technician="<?= htmlspecialchars($rating['tech_firstname'] . ' ' . $rating['tech_lastname']) ?>"
+                                                    data-date="<?= htmlspecialchars(date('M d, Y g:i A', strtotime($rating['created_at']))) ?>"
+                                                    data-comment="<?= htmlspecialchars($comment, ENT_QUOTES, 'UTF-8') ?>">
+                                                    <span class="btn-rating-details-icon"><i class="fas fa-comment-dots"></i></span>
+                                                    <span class="btn-rating-details-label">View Details</span>
+                                                </button>
+                                            </td>
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -319,6 +332,58 @@ $staffCount = count($itStaffPerformance);
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
+
+    <div class="modal fade rating-details-modal" id="ratingDetailsModal" tabindex="-1" role="dialog" aria-labelledby="ratingDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <p class="rating-details-eyebrow mb-1">Ticket Rating</p>
+                        <h5 class="modal-title mb-0" id="ratingDetailsModalLabel">Rating Details</h5>
+                    </div>
+                    <button type="button" class="close rating-details-close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="rating-details-summary">
+                        <div class="rating-details-summary-item">
+                            <span class="summary-label">Ticket #</span>
+                            <span class="summary-value ticket-id" id="ratingDetailTicket"></span>
+                        </div>
+                        <div class="rating-details-summary-item">
+                            <span class="summary-label">Rating</span>
+                            <span class="summary-value" id="ratingDetailStars"></span>
+                        </div>
+                        <div class="rating-details-summary-item">
+                            <span class="summary-label">Rater</span>
+                            <span class="summary-value" id="ratingDetailRater"></span>
+                        </div>
+                        <div class="rating-details-summary-item">
+                            <span class="summary-label">Technician</span>
+                            <span class="summary-value tech-name" id="ratingDetailTechnician"></span>
+                        </div>
+                        <div class="rating-details-summary-item rating-details-summary-item-wide">
+                            <span class="summary-label">Submitted</span>
+                            <span class="summary-value" id="ratingDetailDate"></span>
+                        </div>
+                    </div>
+                    <div class="rating-details-comment">
+                        <div class="rating-details-comment-head">
+                            <i class="fas fa-quote-left"></i>
+                            <span>Feedback Comment</span>
+                        </div>
+                        <p id="ratingDetailComment" class="mb-0"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-rating-modal-close" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -341,9 +406,32 @@ $staffCount = count($itStaffPerformance);
             return '★'.repeat(rating) + '☆'.repeat(5 - rating);
         }
 
-        function buildRatingRow(row) {
+        function escapeAttr(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function buildDetailsButton(row, dateLabel) {
+            const rater = (row.rater_firstname || '') + ' ' + (row.rater_lastname || '');
+            const technician = (row.tech_firstname || '') + ' ' + (row.tech_lastname || '');
             const comment = row.comment || '';
-            const preview = comment.length > 50 ? comment.substring(0, 50) + '...' : comment;
+
+            return '<button type="button" class="btn-rating-details" title="View rating details"' +
+                ' data-ticket="' + escapeAttr(row.ticket_number) + '"' +
+                ' data-rating="' + escapeAttr(row.rating) + '"' +
+                ' data-rater="' + escapeAttr(rater.trim()) + '"' +
+                ' data-technician="' + escapeAttr(technician.trim()) + '"' +
+                ' data-date="' + escapeAttr(dateLabel) + '"' +
+                ' data-comment="' + escapeAttr(comment) + '">' +
+                '<span class="btn-rating-details-icon"><i class="fas fa-comment-dots"></i></span>' +
+                '<span class="btn-rating-details-label">View Details</span></button>';
+        }
+
+        function buildRatingRow(row) {
             const date = row.created_at ? new Date(row.created_at).toLocaleString('en-US', {
                 month: 'short', day: 'numeric', year: 'numeric',
                 hour: 'numeric', minute: '2-digit'
@@ -356,10 +444,32 @@ $staffCount = count($itStaffPerformance);
                 '<td>' + escapeHtml(row.rater_department) + '</td>' +
                 '<td><span class="tech-name">' + escapeHtml(row.tech_firstname + ' ' + row.tech_lastname) + '</span></td>' +
                 '<td><span class="rating-stars rating-' + row.rating + '">' + ratingStars(row.rating) + '</span></td>' +
-                '<td><span class="comment-preview">' + escapeHtml(preview) + '</span></td>' +
                 '<td class="date-cell">' + escapeHtml(date) + '</td>' +
+                '<td class="text-center action-col">' + buildDetailsButton(row, date) + '</td>' +
                 '</tr>';
         }
+
+        $(document).on('click', '.btn-rating-details', function() {
+            const $btn = $(this);
+            const rating = parseInt($btn.attr('data-rating'), 10) || 0;
+            const comment = String($btn.attr('data-comment') || '').trim();
+
+            const ticket = $btn.attr('data-ticket') || '—';
+
+            $('#ratingDetailsModalLabel').text('Ticket ' + ticket);
+            $('#ratingDetailTicket').text(ticket);
+            $('#ratingDetailStars').html(
+                '<span class="rating-stars rating-' + rating + '">' + ratingStars(rating) + '</span>'
+            );
+            $('#ratingDetailRater').text($btn.attr('data-rater') || '—');
+            $('#ratingDetailTechnician').text($btn.attr('data-technician') || '—');
+            $('#ratingDetailDate').text($btn.attr('data-date') || '—');
+            $('#ratingDetailComment')
+                .text(comment !== '' ? comment : 'No comment was provided for this rating.')
+                .toggleClass('is-empty', comment === '');
+
+            $('#ratingDetailsModal').modal('show');
+        });
 
         <?php if (!empty($itStaffPerformance)): ?>
         $('#performanceTable').DataTable({
@@ -368,11 +478,16 @@ $staffCount = count($itStaffPerformance);
         });
         <?php endif; ?>
 
-        <?php if (!empty($ratings)): ?>
-        $('#allRatingsTable').DataTable({
+        const ratingsTableOptions = {
             pageLength: 10,
-            order: [[7, 'desc']]
-        });
+            order: [[6, 'desc']],
+            columnDefs: [
+                { orderable: false, targets: 7, className: 'text-center action-col' }
+            ]
+        };
+
+        <?php if (!empty($ratings)): ?>
+        $('#allRatingsTable').DataTable(ratingsTableOptions);
         <?php endif; ?>
 
         const chartEl = document.getElementById('overallDistributionChart');
@@ -437,10 +552,7 @@ $staffCount = count($itStaffPerformance);
                     tbody.append(buildRatingRow(row));
                 });
 
-                $('#allRatingsTable').DataTable({
-                    pageLength: 10,
-                    order: [[7, 'desc']]
-                });
+                $('#allRatingsTable').DataTable(ratingsTableOptions);
             }).fail(function() {
                 alert('Failed to load ratings. Please try again.');
             });

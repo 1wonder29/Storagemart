@@ -1,170 +1,120 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$groups = $groups ?? [];
+$totalGroups = (int) ($totalGroups ?? count($groups));
+$totalItems = (int) ($totalItems ?? 0);
 ?>
 <html lang="en">
 
 <head>
-
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <title>Storage Mart | Add Asset</title>
-
-    <!-- Custom fonts for this template -->
+    <title>Storage Mart | Add Item</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-        rel="stylesheet">
-
-    <!-- Custom styles for this template -->
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/input.css" rel="stylesheet">
-
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
 </head>
 
 <body id="page-top">
 
-    <!-- Page Wrapper -->
     <div id="wrapper">
-            <?php 
-            $activePage = 'assets';
-            $assetSubPage = 'add-item';
-            require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
+        <?php
+        $activePage = 'assets';
+        $assetSubPage = 'add-item';
+        require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';
+        ?>
 
-                <div class="container-fluid admin-assets-page">
+        <div class="container-fluid admin-assets-page">
 
-                    <div class="page-hero hero-form">
+            <div class="page-hero hero-form">
+                <div class="row align-items-center">
+                    <div class="col-lg-7">
                         <h1><i class="fas fa-plus-circle mr-2"></i>Add Item</h1>
                         <p>Register a new physical asset item and assign it to an existing asset group.</p>
-                    </div>
-
-                    <div class="card form-card shadow mb-4">
-                        <div class="card-header">
-                            <h6 class="m-0 font-weight-bold text-primary">Asset Item Details</h6>
-                        </div>
-                        <div class="card-body">
-                        <form action="<?= htmlspecialchars($base) ?>/admin/assets/add" method="POST">
-                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                                <div class="form-section-title">Item Information</div>
-                                
-                                <div class ="row mb-5">
-                                    <div class="col-md-6">
-                                        <label for="group_id" class="form-label">Asset Group <span class="text-danger">*</span></label>
-                                        <select id="group_id" name="group_id" class="form-control" required>
-                                            <option value="">-- Select a Group --</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class ="row mb-5">
-                                        <div class="col-md-6">
-                                            <label for = "itemInfo" class ="form-label">Item general info</label>
-                                            <textarea id ="itemInfo" name="itemInfo" class="form-control" rows="6" maxlength="1000" required></textarea>
-                                            <small class="form-text text-muted">Maximum 1000 characters.</small>
-                                        </div>
-                                        <div class="col-md-6">
-                                        <label for = "serialNumber" class ="form-label">Serial Number</label>
-                                            <input type="text" name="serialNumber" class="form-control" id="serialNumber" placeholder="Serial Number" required>
-                                        </div>
-                                </div>
-
-                                <div class ="row mb-5">
-                                    <div class="col-md-6">
-                                        <label for = "year_purchased" class ="form-label">Year purchased</label>
-                                            <input type="text" name="year_purchased" class="form-control" id="year_purchased" placeholder="Year purchased" required>
-                                    </div>
-                                </div>
-                                <div class="form-actions">
-                                    <button type="submit" class="btn btn-primary" name="btnSubmit">
-                                        <i class="fas fa-save mr-1"></i> Save Item
-                                    </button>
-                                    <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
-                                </div>
-                        </form>
+                        <div class="quick-nav mt-3">
+                            <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-sm btn-outline-light">
+                                <i class="fas fa-arrow-left mr-1"></i> Back to Directory
+                            </a>
                         </div>
                     </div>
-                    
+                    <div class="col-lg-5">
+                        <div class="hero-stat-row mt-3 mt-lg-0">
+                            <div class="hero-stat hero-stat-inline">
+                                <div class="stat-value"><?= $totalGroups ?></div>
+                                <div class="stat-label">Groups</div>
+                            </div>
+                            <div class="hero-stat hero-stat-inline">
+                                <div class="stat-value"><?= $totalItems ?></div>
+                                <div class="stat-label">Items</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <!-- /.container-fluid -->
-
             </div>
-            <!-- End of Main Content -->
 
-            <!-- Footer -->
-            <!-- End of Footer -->
+            <div class="card form-card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Asset Item Details</h6>
+                </div>
+                <div class="card-body">
+                    <form action="<?= htmlspecialchars($base) ?>/admin/assets/add" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
+                        <div class="form-section-title">Item Information</div>
+
+                        <div class="row form-row-gap">
+                            <div class="col-md-6">
+                                <label for="group_id" class="form-label">Asset Group <span class="text-danger">*</span></label>
+                                <select id="group_id" name="group_id" class="form-control" required>
+                                    <option value="">-- Select a Group --</option>
+                                    <?php foreach ($groups as $group): ?>
+                                        <option value="<?= (int) ($group['group_id'] ?? 0) ?>">
+                                            <?= htmlspecialchars((string) ($group['groupName'] ?? '')) ?>
+                                            (<?= htmlspecialchars((string) ($group['categoryName'] ?? '')) ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row form-row-gap">
+                            <div class="col-md-6">
+                                <label for="itemInfo" class="form-label">Item General Info <span class="text-danger">*</span></label>
+                                <textarea id="itemInfo" name="itemInfo" class="form-control" rows="5" maxlength="1000" required placeholder="Describe the item (e.g. Laptop, Monitor)"></textarea>
+                                <small class="form-text text-muted">Maximum 1000 characters.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="serialNumber" class="form-label">Serial Number <span class="text-danger">*</span></label>
+                                <input type="text" name="serialNumber" class="form-control" id="serialNumber" placeholder="Serial Number" required>
+                                <label for="year_purchased" class="form-label mt-3">Year Purchased <span class="text-danger">*</span></label>
+                                <input type="text" name="year_purchased" class="form-control" id="year_purchased" placeholder="e.g. 2024" required>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" name="btnSubmit">
+                                <i class="fas fa-save mr-1"></i> Save Item
+                            </button>
+                            <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
         </div>
-        <!-- End of Content Wrapper -->
-
     </div>
-    <!-- End of Page Wrapper -->
 
-    <!-- Scroll to Top Button-->
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
 
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true" data-backdrop="false">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="<?= htmlspecialchars($base) ?>/logout">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap core JavaScript-->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Core plugin JavaScript-->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <!-- Custom scripts for all pages-->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-
-    <script>
-        // Fetch and populate groups dropdown
-        fetch('<?= htmlspecialchars($base) ?>/admin/assets')
-            .then(response => response.text())
-            .catch(error => {
-                console.error('Error loading groups:', error);
-                // Fallback: load groups inline if available
-                loadGroupsInline();
-            });
-
-        function loadGroupsInline() {
-            // Groups will be loaded from the server via Fetch or can be embedded here
-            const groupSelect = document.getElementById('group_id');
-            const dummyGroups = <?= isset($groups) ? json_encode($groups ?? []) : '[]'; ?>;
-            
-            dummyGroups.forEach(group => {
-                const option = document.createElement('option');
-                option.value = group.group_id;
-                option.textContent = group.groupName + ' (' + group.categoryName + ')';
-                groupSelect.appendChild(option);
-            });
-        }
-
-        // Load groups on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadGroupsInline();
-        });
-    </script>
+    <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 
 </html>

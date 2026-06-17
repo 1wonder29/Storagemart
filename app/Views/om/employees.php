@@ -154,8 +154,14 @@ $totalEmployees = count($employees);
                                     </span>
                                 </td>
                                 <td>
-                                    <?php if (!empty($employee['aom_firstname'])): ?>
-                                        <?= htmlspecialchars(trim(($employee['aom_firstname'] ?? '') . ' ' . ($employee['aom_lastname'] ?? ''))) ?>
+                                    <?php
+                                    $aomDisplay = trim($employee['aom_names'] ?? '');
+                                    if ($aomDisplay === '' && !empty($employee['aom_firstname'])) {
+                                        $aomDisplay = trim(($employee['aom_firstname'] ?? '') . ' ' . ($employee['aom_lastname'] ?? ''));
+                                    }
+                                    ?>
+                                    <?php if ($aomDisplay !== ''): ?>
+                                        <?= htmlspecialchars($aomDisplay) ?>
                                     <?php else: ?>
                                         <span class="text-muted">Unassigned</span>
                                     <?php endif; ?>

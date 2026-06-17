@@ -41,26 +41,26 @@ $hasChartData = array_sum($chartTicketStats) > 0;
             <div class="row align-items-center">
                 <div class="col-lg-5">
                     <h1><i class="fas fa-tachometer-alt mr-2"></i><?= htmlspecialchars($dashboardTitle) ?></h1>
-                    <p>Welcome back, <?= htmlspecialchars($displayName) ?> — manage assignments and tickets across your <?= htmlspecialchars(strtolower($roleLabel)) ?> area.</p>
+                    <p>Welcome back, <?= htmlspecialchars($displayName) ?> — manage operations staff, branches, and tickets across your <?= htmlspecialchars(strtolower($roleLabel)) ?> area.</p>
                 </div>
                 <div class="col-lg-7 mt-3 mt-lg-0">
                     <div class="row">
                         <div class="col-6 col-md-3 mb-2 mb-md-0">
                             <div class="hero-stat">
-                                <div class="stat-value"><?= (int)($stats['total_assignments'] ?? 0) ?></div>
-                                <div class="stat-label">Assignments</div>
+                                <div class="stat-value"><?= (int)($employeeCount ?? 0) ?></div>
+                                <div class="stat-label">Employees</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3 mb-2 mb-md-0">
                             <div class="hero-stat">
-                                <div class="stat-value"><?= (int)($stats['active_assignments'] ?? 0) ?></div>
-                                <div class="stat-label">Active</div>
+                                <div class="stat-value"><?= (int)($branchCount ?? 0) ?></div>
+                                <div class="stat-label">Branches</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
                             <div class="hero-stat">
-                                <div class="stat-value"><?= (int)($stats['assigned_employee_count'] ?? 0) ?></div>
-                                <div class="stat-label">Employees</div>
+                                <div class="stat-value"><?= (int)($aomCount ?? 0) ?></div>
+                                <div class="stat-label">AOMs</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
@@ -97,14 +97,11 @@ $hasChartData = array_sum($chartTicketStats) > 0;
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/new-assignment" class="quick-action-btn qa-primary">
-                <i class="fas fa-plus"></i> Create Assignment
-            </a>
-            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/assignments" class="quick-action-btn qa-success">
-                <i class="fas fa-list"></i> View Assignments
-            </a>
-            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/employees" class="quick-action-btn qa-info">
+            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/employees" class="quick-action-btn qa-primary">
                 <i class="fas fa-users"></i> Manage Employees
+            </a>
+            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/aom-branches" class="quick-action-btn qa-success">
+                <i class="fas fa-building"></i> AOM Branches
             </a>
             <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create" class="quick-action-btn qa-warning">
                 <i class="fas fa-ticket-alt"></i> Create Ticket
@@ -201,58 +198,6 @@ $hasChartData = array_sum($chartTicketStats) > 0;
                         <?php endif; ?>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Recent Assignments -->
-        <div class="card dash-card shadow mb-4">
-            <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
-                <h6><i class="fas fa-user-check"></i>Recent Assignments</h6>
-                <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/assignments"
-                   class="btn btn-sm btn-outline-success" style="border-radius:2rem;font-size:0.75rem;">
-                    View All
-                </a>
-            </div>
-            <div class="card-body p-0">
-                <?php if (!empty($assignments)): ?>
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Employee</th>
-                                <th>Assigned AOM</th>
-                                <th>Date</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach (array_slice($assignments, 0, 5) as $assignment):
-                                $empName = trim(($assignment['employee_firstname'] ?? '') . ' ' . ($assignment['employee_lastname'] ?? ''));
-                                $aomName = trim(($assignment['aom_firstname'] ?? '') . ' ' . ($assignment['aom_lastname'] ?? ''));
-                                $isActive = !empty($assignment['is_active']);
-                            ?>
-                            <tr>
-                                <td><span class="employee-name"><?= htmlspecialchars($empName) ?></span></td>
-                                <td><span class="aom-name"><?= htmlspecialchars($aomName) ?></span></td>
-                                <td><?= date('M d, Y', strtotime($assignment['assignment_date'])) ?></td>
-                                <td>
-                                    <span class="status-pill <?= $isActive ? 'status-active' : 'status-inactive' ?>">
-                                        <?= $isActive ? 'Active' : 'Inactive' ?>
-                                    </span>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-                <?php else: ?>
-                    <div class="empty-state">
-                        <i class="fas fa-user-slash"></i>
-                        <p class="mb-0">No assignments yet.
-                            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/new-assignment">Create one</a>
-                        </p>
-                    </div>
-                <?php endif; ?>
             </div>
         </div>
 

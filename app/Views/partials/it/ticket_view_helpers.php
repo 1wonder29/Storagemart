@@ -10,6 +10,7 @@ if (!function_exists('it_ticket_status_class')) {
             'In Progress' => 'status-in-progress',
             'On Hold'     => 'status-on-hold',
             'Resolved'    => 'status-resolved',
+            'Unresolved'  => 'status-unresolved',
             'Closed'      => 'status-closed',
             'Reopened'    => 'status-reopened',
             'Cancelled'   => 'status-cancelled',

@@ -152,8 +152,8 @@ $base = rtrim(BASE_URL, '/');
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <?php
-                                        $ticketStatus = $status;
                                         $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
+                                        $ticketStatus = $status;
                                         require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
                                         ?>
                                         </div>
@@ -218,6 +218,5 @@ $base = rtrim(BASE_URL, '/');
 
 <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
-
 </body>
 </html>

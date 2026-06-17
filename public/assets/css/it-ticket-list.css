@@ -163,6 +163,7 @@
 .it-ticket-page .status-badge.status-closed { background: #d6d8db; color: #1b1e21; }
 .it-ticket-page .status-badge.status-reopened { background: #f8d7da; color: #721c24; }
 .it-ticket-page .status-badge.status-cancelled { background: #f5c6cb; color: #721c24; }
+.it-ticket-page .status-badge.status-unresolved { background: #f8d7da; color: #721c24; }
 .it-ticket-page .status-badge.status-default { background: #e2e3e5; color: #383d41; }
 .it-ticket-page .resolved-badge { background: #d4edda; color: #155724; }
 
@@ -320,5 +321,109 @@
 @media (max-width: 991px) {
   .it-ticket-page .hero-stat {
     margin-top: 0.75rem;
+  }
+}
+
+/* IT update ticket modal — matches ticket detail card layout */
+.it-update-ticket-modal {
+  padding-right: 0 !important;
+}
+
+.it-update-ticket-modal .it-update-ticket-dialog {
+  width: min(960px, calc(100vw - 2rem));
+  max-width: 960px;
+  margin: 1.75rem auto;
+}
+
+.it-update-ticket-modal .it-ticket-detail-card {
+  border: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.it-update-ticket-modal .it-ticket-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: none;
+}
+
+.it-update-ticket-modal .it-ticket-modal-header h6 {
+  font-size: 1rem;
+}
+
+.it-update-ticket-modal .it-ticket-modal-header .close {
+  opacity: 0.9;
+  text-shadow: none;
+  margin: -0.5rem -0.5rem -0.5rem auto;
+}
+
+.it-update-ticket-modal .it-ticket-modal-body {
+  padding: 1.25rem 1.5rem 1.35rem;
+  background: #fff;
+}
+
+.it-update-ticket-modal .it-ticket-modal-action-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #4e73df;
+  margin-bottom: 1rem;
+}
+
+.it-update-ticket-modal .it-ticket-readonly-box {
+  min-height: 3rem;
+  color: #3a3b45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.it-update-ticket-modal .it-ticket-field-box {
+  border-color: #e3e6f0;
+  background: #f8f9fc;
+  border-radius: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.it-update-ticket-modal .it-ticket-field-box:focus {
+  background: #fff;
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.15rem rgba(78, 115, 223, 0.15);
+}
+
+.it-update-ticket-modal textarea.it-ticket-field-box {
+  min-height: 6.5rem;
+  resize: vertical;
+}
+
+.it-update-ticket-modal .it-ticket-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.9rem 1.5rem;
+  border-top: 1px solid #eaecf4;
+}
+
+.it-update-ticket-modal .it-ticket-modal-footer .btn {
+  min-width: 7.5rem;
+  font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+  .it-update-ticket-modal .it-update-ticket-dialog {
+    width: calc(100vw - 1rem);
+    margin: 0.5rem auto;
+  }
+
+  .it-update-ticket-modal .it-ticket-modal-body {
+    padding: 1rem;
+  }
+
+  .it-update-ticket-modal .it-ticket-modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .it-update-ticket-modal .it-ticket-modal-footer .btn {
+    width: 100%;
   }
 }

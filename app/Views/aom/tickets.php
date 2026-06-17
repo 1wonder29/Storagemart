@@ -54,8 +54,11 @@ foreach ($rawTicketStats as $status => $count) {
                         <i class="fas fa-exchange-alt fa-sm"></i> Bulk Transfer
                     </button>
                     <?php endif; ?>
-                    <a href="<?= htmlspecialchars($base) ?>/aom/tickets/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm mb-2">
-                        <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
+                    <a href="<?= htmlspecialchars($base) ?>/aom/tickets/create/my" class="d-none d-sm-inline-block btn btn-sm btn-info shadow-sm mb-2 mr-1">
+                        <i class="fas fa-user fa-sm"></i> My Ticket
+                    </a>
+                    <a href="<?= htmlspecialchars($base) ?>/aom/tickets/create/employee" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm mb-2">
+                        <i class="fas fa-plus fa-sm text-white-50"></i> Employee Ticket
                     </a>
                 </div>
             </div>
@@ -214,8 +217,9 @@ foreach ($rawTicketStats as $status => $count) {
                                             </td>
                                             <td><?php echo date('M d, Y', strtotime($ticket['date_filed'])); ?></td>
                                             <td>
-                                                <a href="<?= htmlspecialchars($base) ?>/aom/tickets/view?id=<?php echo $ticket['ticket_id']; ?>" 
-                                                   class="btn btn-sm btn-primary">
+                                                <div class="action-btn-group">
+                                                <a href="<?= htmlspecialchars($base) ?>/aom/tickets/view?id=<?php echo (int) $ticket['ticket_id']; ?>"
+                                                   class="btn btn-sm btn-primary" title="View ticket">
                                                     <i class="fas fa-eye"></i> View
                                                 </a>
                                                 <?php
@@ -224,6 +228,7 @@ foreach ($rawTicketStats as $status => $count) {
                                                 $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
                                                 require __DIR__ . '/../partials/ticket/cancel_ticket_button.php';
                                                 ?>
+                                                </div>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

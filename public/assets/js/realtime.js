@@ -91,16 +91,14 @@
     var dateLabel = formatNotifDate(n.created_at);
 
     return (
-      '<a class="dropdown-item d-flex align-items-center notification-item ' + readClass + '" ' +
-        'href="' + url + '" data-id="' + id + '">' +
-        '<div class="mr-3">' +
-          '<div class="icon-circle bg-' + bg + '">' +
-            '<i class="fas ' + icon + ' text-white"></i>' +
-          '</div>' +
+      '<a class="notification-item ' + readClass + '" href="' + url + '" data-id="' + id + '">' +
+        '<span class="notification-indicator" aria-hidden="true"></span>' +
+        '<div class="notification-icon bg-' + bg + '">' +
+          '<i class="fas ' + icon + '"></i>' +
         '</div>' +
-        '<div>' +
-          '<div class="small text-gray-500">' + dateLabel + '</div>' +
-          '<div class="font-weight-bold">' + message + '</div>' +
+        '<div class="notification-body">' +
+          '<div class="notification-message">' + message + '</div>' +
+          '<div class="notification-time">' + dateLabel + '</div>' +
         '</div>' +
       '</a>'
     );
@@ -108,7 +106,7 @@
 
   function renderNotificationList(notifications) {
     if (!Array.isArray(notifications) || notifications.length === 0) {
-      return '<div class="dropdown-item text-center small text-gray-500 py-2">No notifications</div>';
+      return '<div class="notification-empty"><i class="fas fa-check-circle d-block mb-2"></i>You\'re all caught up</div>';
     }
     return '<div class="notification-scroll">' +
       notifications.map(renderNotificationItem).join('') +
@@ -135,6 +133,7 @@
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'id=' + encodeURIComponent(notifId),
     }).then(function () {
+      var wasUnread = item.classList.contains('notification-unread');
       item.classList.remove('notification-unread');
       item.classList.add('notification-read');
       var badge = document.querySelector('#alertsDropdown .badge-counter');
@@ -144,6 +143,26 @@
           var next = Math.max(0, n - 1);
           if (next <= 0) badge.remove();
           else badge.textContent = String(next);
+        }
+      }
+      if (wasUnread) {
+        var pageUnread = document.getElementById('alertsUnreadStat');
+        if (pageUnread) {
+          var unreadN = parseInt(pageUnread.textContent, 10);
+          if (Number.isFinite(unreadN)) {
+            var unreadNext = Math.max(0, unreadN - 1);
+            pageUnread.textContent = String(unreadNext);
+            var pageRead = document.getElementById('alertsReadStat');
+            if (pageRead) {
+              var readN = parseInt(pageRead.textContent, 10);
+              if (Number.isFinite(readN)) pageRead.textContent = String(readN + 1);
+            }
+            var pagePill = document.getElementById('alertsUnreadPill');
+            if (pagePill) {
+              if (unreadNext <= 0) pagePill.classList.add('d-none');
+              else pagePill.textContent = (unreadNext > 9 ? '9+' : String(unreadNext)) + ' unread';
+            }
+          }
         }
       }
       navigateAfterNotificationRead(url);
@@ -182,19 +201,32 @@
         if (!res || !res.success) return;
         updateBadge(res.count);
 
-        var header = dropdown.querySelector('.dropdown-header');
-        var showAll = dropdown.querySelector('a[href*="/notifications"]');
+        var header = dropdown.querySelector('.notification-dropdown-header, .dropdown-header');
+        var footer = dropdown.querySelector('.notification-dropdown-footer');
+        var showAll = footer ? footer.querySelector('a[href*="/notifications"]') : dropdown.querySelector('a[href*="/notifications"]');
         var html = renderNotificationList(res.notifications || []);
 
+        var unreadPill = dropdown.querySelector('.notification-unread-pill');
+        if (unreadPill) {
+          var unreadCount = parseInt(res.count, 10) || 0;
+          if (unreadCount > 0) {
+            unreadPill.textContent = (unreadCount > 9 ? '9+' : String(unreadCount)) + ' new';
+            unreadPill.style.display = '';
+          } else {
+            unreadPill.style.display = 'none';
+          }
+        }
+
         Array.from(dropdown.children).forEach(function (child) {
-          if (child === header || child === showAll) return;
+          if (child === header || child === footer || child === showAll) return;
           child.remove();
         });
 
         var temp = document.createElement('div');
         temp.innerHTML = html;
         while (temp.firstChild) {
-          if (showAll) dropdown.insertBefore(temp.firstChild, showAll);
+          if (footer) dropdown.insertBefore(temp.firstChild, footer);
+          else if (showAll) dropdown.insertBefore(temp.firstChild, showAll);
           else dropdown.appendChild(temp.firstChild);
         }
       })
@@ -230,6 +262,9 @@
     if (ticket.status) {
       row.setAttribute('data-status', String(ticket.status).toLowerCase());
       row.querySelectorAll('[data-ticket-status], .status-badge').forEach(function (statusEl) {
+        if (statusEl.closest('.cancelTicketBtn') || statusEl.classList.contains('cancelTicketBtn')) {
+          return;
+        }
         statusEl.textContent = ticket.status;
         if (statusEl.classList.contains('status-badge')) {
           statusEl.className = 'status-badge ' + statusClass(ticket.status) + (statusEl.classList.contains('mt-1') ? ' mt-1' : '');

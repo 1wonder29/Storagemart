@@ -329,7 +329,128 @@ class AOMController extends AuthController
     }
 
     /**
-     * Create ticket page
+     * Create personal ticket page
+     */
+    public function createMyTicketForm()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $user = $this->requireAOM();
+        if (!$user) return;
+
+        $aom_employee_id = (int) $user['employee_id'];
+        $profile = $this->employeeModel->getEmployeeById($aom_employee_id) ?: [];
+        $myAssets = $this->employeeModel->fetchAssetDetailsByEmployeeId($aom_employee_id);
+        $profile['employee_id'] = $aom_employee_id;
+        if (!empty($profile['branch_id'])) {
+            foreach ($this->aomModel->getAssignedBranches($aom_employee_id) as $branch) {
+                if ((int) ($branch['branch_id'] ?? 0) === (int) $profile['branch_id']) {
+                    $profile['branchName'] = $branch['branchName'] ?? '';
+                    break;
+                }
+            }
+        }
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+
+        $ctx = $this->getLoggedUserContext();
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+
+        $activePage = 'create-my-ticket';
+        $formAction = '/aom/tickets/create/my';
+        $cancelUrl = '/aom/tickets';
+
+        require __DIR__ . '/../../Views/aom/create-my-ticket.php';
+    }
+
+    /**
+     * Store personal ticket (POST)
+     */
+    public function submitMyTicket()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit('Method not allowed');
+        }
+
+        $user = $this->requireAOM();
+        if (!$user) return;
+
+        $aom_employee_id = (int) $user['employee_id'];
+
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid form token.';
+            $this->redirect('/aom/tickets/create/my');
+            return;
+        }
+
+        if ($this->employeeModel->countAssetsByEmployee($aom_employee_id) === 0) {
+            $_SESSION['flash_error'] = 'You need at least one assigned asset before creating a ticket.';
+            $this->redirect('/aom/tickets/create/my');
+            return;
+        }
+
+        $inventoryId = (int) ($_POST['inventory_id'] ?? 0);
+        if ($inventoryId <= 0) {
+            $_SESSION['flash_error'] = 'Please select an asset.';
+            $this->redirect('/aom/tickets/create/my');
+            return;
+        }
+
+        $ticketModel = new EmployeeTicket();
+        $inventory = $ticketModel->getInventoryDetailsByInventoryId($inventoryId);
+        if (!$inventory || (int) ($inventory['employee_id'] ?? 0) !== $aom_employee_id) {
+            $_SESSION['flash_error'] = 'Invalid asset selected.';
+            $this->redirect('/aom/tickets/create/my');
+            return;
+        }
+
+        $employee = $this->employeeModel->getEmployeeById($aom_employee_id);
+        $concern = trim((string) ($_POST['concern_details'] ?? ''));
+        if ($concern === '') {
+            $_SESSION['flash_error'] = 'Ticket description is required.';
+            $this->redirect('/aom/tickets/create/my');
+            return;
+        }
+
+        $priority = ucfirst(strtolower(trim((string) ($_POST['priority'] ?? 'Low'))));
+        if (!in_array($priority, ['Low', 'Medium', 'High'], true)) {
+            $priority = 'Low';
+        }
+
+        $ticketData = [
+            'branch_id' => (int) ($inventory['branch_id'] ?? $employee['branch_id'] ?? 0),
+            'employee_id' => $aom_employee_id,
+            'department' => $employee['department'] ?? null,
+            'category' => trim((string) ($_POST['category'] ?? '')),
+            'concern_details' => $concern,
+            'priority' => $priority,
+            'aom_id' => $aom_employee_id,
+            'created_by' => $_SESSION['account_id'],
+            'performed_by' => $aom_employee_id,
+            'inventory_id' => $inventoryId,
+        ];
+
+        $ticketId = $this->aomTicketModel->createTicket($ticketData);
+        if ($ticketId) {
+            $_SESSION['flash_success'] = 'Ticket created successfully!';
+            $this->redirect('/aom/tickets');
+            return;
+        }
+
+        $_SESSION['flash_error'] = 'Failed to create ticket. Please try again.';
+        $this->redirect('/aom/tickets/create/my');
+    }
+
+    /**
+     * Create employee ticket page
      */
     public function createTicketForm()
     {
@@ -349,7 +470,12 @@ class AOMController extends AuthController
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
 
-        $activePage = 'create-ticket';
+        $activePage = 'create-employee-ticket';
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
 
         require __DIR__ . '/../../Views/aom/create-ticket.php';
     }
@@ -392,6 +518,9 @@ class AOMController extends AuthController
         }
 
         $employees = $this->aomModel->getEmployeesByBranch($aom_employee_id, $branch_id);
+        $employees = array_values(array_filter($employees, static function ($emp) use ($aom_employee_id) {
+            return (int) ($emp['employee_id'] ?? 0) !== (int) $aom_employee_id;
+        }));
         echo json_encode(['data' => $employees]);
     }
 
@@ -470,20 +599,38 @@ class AOMController extends AuthController
             // Validation
             if ($branch_id <= 0) {
                 $_SESSION['flash_error'] = 'Please select a branch.';
-                $this->redirect('/aom/tickets/create');
+                $this->redirect('/aom/tickets/create/employee');
                 return;
             }
 
             if (empty($concern_details)) {
                 $_SESSION['flash_error'] = 'Ticket description is required.';
-                $this->redirect('/aom/tickets/create');
+                $this->redirect('/aom/tickets/create/employee');
+                return;
+            }
+
+            if ($employee_id <= 0) {
+                $_SESSION['flash_error'] = 'Please select an employee.';
+                $this->redirect('/aom/tickets/create/employee');
+                return;
+            }
+
+            if ($employee_id === (int) $aom_employee_id) {
+                $_SESSION['flash_error'] = 'Use My Ticket to file a ticket for yourself.';
+                $this->redirect('/aom/tickets/create/my');
                 return;
             }
 
             // Verify AOM has access to branch
             if (!$this->aomModel->hasAccessToBranch($aom_employee_id, $branch_id)) {
                 $_SESSION['flash_error'] = 'Unauthorized: You do not have access to this branch.';
-                $this->redirect('/aom/tickets/create');
+                $this->redirect('/aom/tickets/create/employee');
+                return;
+            }
+
+            if (!$this->aomModel->hasAccessToEmployee($aom_employee_id, $employee_id)) {
+                $_SESSION['flash_error'] = 'Unauthorized: You do not have access to this employee.';
+                $this->redirect('/aom/tickets/create/employee');
                 return;
             }
 
@@ -515,12 +662,12 @@ class AOMController extends AuthController
                 $this->redirect('/aom/tickets');
             } else {
                 $_SESSION['flash_error'] = 'Failed to create ticket. Please try again.';
-                $this->redirect('/aom/tickets/create');
+                $this->redirect('/aom/tickets/create/employee');
             }
         } catch (Exception $e) {
             error_log("Error creating ticket: " . $e->getMessage());
             $_SESSION['flash_error'] = 'An error occurred while creating the ticket.';
-            $this->redirect('/aom/tickets/create');
+            $this->redirect('/aom/tickets/create/employee');
         }
     }
 

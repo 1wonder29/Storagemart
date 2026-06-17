@@ -121,12 +121,19 @@ class EmployeeModel extends HRModel {
                         ag.groupName,
                         ac.categoryName,
                         aa.dateIssued,
-                        aa.dateReturned
+                        aa.dateReturned,
+                        COALESCE(
+                            NULLIF(CONCAT(COALESCE(ie.firstname, ''), ' ', COALESCE(ie.lastname, '')), ' '),
+                            ia.username,
+                            'N/A'
+                        ) AS issued_by_display
                     FROM {$this->tblassets_inventory} ai
                     LEFT JOIN {$this->tblassets_assignment} aa
                         ON ai.assignment_id = aa.assignment_id
                     LEFT JOIN {$this->tblassets_group} ag ON ai.group_id = ag.group_id
                     LEFT JOIN {$this->tblassets_category} ac ON ag.category_id = ac.category_id
+                    LEFT JOIN {$this->tblaccounts} ia ON aa.createdby = ia.account_id
+                    LEFT JOIN {$this->tblemployee} ie ON ie.account_id = ia.account_id
                     WHERE ai.employee_id = ?
                     ORDER BY ac.categoryName, ag.groupName, ai.inventory_id";
             
@@ -184,13 +191,22 @@ class EmployeeModel extends HRModel {
                         ua.assignment_id,
                         ua.uniform_id,
                         ua.date_issued,
+                        ua.date_returned,
                         ua.quantity_issued,
                         ua.condition_upon_issue,
+                        ua.createdby,
                         ui.uniform_type,
                         ui.size,
-                        ui.color
+                        ui.color,
+                        COALESCE(
+                            NULLIF(CONCAT(COALESCE(ue.firstname, ''), ' ', COALESCE(ue.lastname, '')), ' '),
+                            uaacc.username,
+                            'N/A'
+                        ) AS issued_by_display
                     FROM {$this->tbluniform_assignment} ua
                     LEFT JOIN {$this->tbluniform_inventory} ui ON ua.uniform_id = ui.uniform_id
+                    LEFT JOIN {$this->tblaccounts} uaacc ON ua.createdby = uaacc.account_id
+                    LEFT JOIN {$this->tblemployee} ue ON ue.account_id = uaacc.account_id
                     WHERE ua.employee_id = ? AND ua.date_returned IS NULL
                     ORDER BY ua.date_issued DESC";
             

@@ -37,17 +37,25 @@ class HOMModel
                 b.branchCode,
                 a.usertype,
                 a.status,
-                aom.employee_id AS aom_id,
-                aom.firstname AS aom_firstname,
-                aom.lastname AS aom_lastname,
-                oea.assignment_id AS hom_assignment_id,
-                oea.is_active,
-                oea.assignment_date
+                branch_aom.aom_names
             FROM tblemployee e
             JOIN tblaccounts a ON e.account_id = a.account_id
             LEFT JOIN tblbranch b ON e.branch_id = b.branch_id
-            LEFT JOIN tblhom_employee_assignments oea ON e.employee_id = oea.employee_id AND oea.is_active = 1
-            LEFT JOIN tblemployee aom ON oea.aom_id = aom.employee_id
+            LEFT JOIN (
+                SELECT
+                    ba.branch_id,
+                    GROUP_CONCAT(
+                        DISTINCT TRIM(CONCAT(aom.firstname, ' ', aom.lastname))
+                        ORDER BY aom.lastname, aom.firstname
+                        SEPARATOR ', '
+                    ) AS aom_names
+                FROM tblbranch_assignments ba
+                JOIN tblemployee aom ON ba.aom_employee_id = aom.employee_id
+                JOIN tblaccounts aom_a ON aom.account_id = aom_a.account_id
+                WHERE ba.is_active = 1
+                  AND UPPER(aom_a.status) = 'ACTIVE'
+                GROUP BY ba.branch_id
+            ) branch_aom ON e.branch_id = branch_aom.branch_id
             WHERE UPPER(a.status) = 'ACTIVE'
               AND (
                     e.department = 'Operations'

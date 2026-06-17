@@ -246,20 +246,6 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                                         data-status="<?= htmlspecialchars($status) ?>">
                                                         <i class="fas fa-history"></i>
                                                     </button>
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="More actions">
-                                                            <i class="fas fa-ellipsis-v"></i>
-                                                        </button>
-                                                        <div class="dropdown-menu dropdown-menu-right shadow">
-                                                            <?php
-                                                            $ticketStatus = $status;
-                                                            $ticketNumber = (string) ($row['ticket_number'] ?? '');
-                                                            $btnClass = 'dropdown-item text-danger';
-                                                            require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
-                                                            ?>
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>
@@ -371,6 +357,5 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/fetch_ticket_history.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
-    <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 </html>

@@ -334,42 +334,82 @@ class PdfGeneratorService
             $template->setValue('position', htmlspecialchars($position));
             $template->setValue('date_issued', htmlspecialchars($date_issued));
             
-            // Fill in IT Assets
-            if (!empty($assets)) {
-                $template->cloneRow('itemInfo', count($assets));
-                $i = 1;
-                foreach ($assets as $asset) {
-                    $template->setValue("itemInfo#{$i}", htmlspecialchars($asset['itemInfo'] ?? 'N/A'));
-                    $template->setValue("assetCode#{$i}", htmlspecialchars($asset['assetCode'] ?? 'N/A'));
-                    $template->setValue("assetNumber#{$i}", htmlspecialchars($asset['assetNumber'] ?? 'N/A'));
-                    $template->setValue("serialNumber#{$i}", htmlspecialchars($asset['serialNumber'] ?? 'N/A'));
-                    $i++;
+            // Build accountability line items to match the reference table format.
+            $lineItems = [];
+
+            foreach ($assets as $asset) {
+                $itemName = trim((string) ($asset['itemInfo'] ?? ''));
+                if ($itemName === '') {
+                    $itemName = trim((string) ($asset['assetNumber'] ?? 'Asset'));
                 }
-            } else {
-                // Handle no assets case
-                $template->setValue('itemInfo', 'No assets assigned');
-                $template->setValue('assetCode', '');
-                $template->setValue('assetNumber', '');
-                $template->setValue('serialNumber', '');
+                if (!empty($asset['serialNumber'])) {
+                    $itemName .= ' (' . $asset['serialNumber'] . ')';
+                }
+
+                $assetQty = '';
+                if (isset($asset['quantity_issued'])) {
+                    $assetQty = (string) ((int) $asset['quantity_issued']);
+                } elseif (isset($asset['quantity'])) {
+                    $assetQty = (string) ((int) $asset['quantity']);
+                } elseif (isset($asset['qty'])) {
+                    $assetQty = (string) ((int) $asset['qty']);
+                }
+
+                $lineItems[] = [
+                    'date_issued' => !empty($asset['dateIssued']) ? date('F j Y', strtotime((string) $asset['dateIssued'])) : '',
+                    'item' => $itemName,
+                    'quantity' => $assetQty,
+                    'issued_by' => (string) ($asset['issued_by_display'] ?? 'N/A'),
+                    'date_returned' => !empty($asset['dateReturned']) ? date('F j Y', strtotime((string) $asset['dateReturned'])) : '',
+                    'uniform_type' => '',
+                    'size' => '',
+                    'color' => ''
+                ];
             }
-            
-            // Fill in Uniforms
-            if (!empty($uniforms)) {
-                $template->cloneRow('uniform_type', count($uniforms));
-                $j = 1;
-                foreach ($uniforms as $uniform) {
-                    $template->setValue("uniform_type#{$j}", htmlspecialchars($uniform['uniform_type'] ?? 'N/A'));
-                    $template->setValue("size#{$j}", htmlspecialchars($uniform['size'] ?? 'N/A'));
-                    $template->setValue("color#{$j}", htmlspecialchars($uniform['color'] ?? 'N/A'));
-                    $template->setValue("quantity_issued#{$j}", htmlspecialchars($uniform['quantity_issued'] ?? '0'));
-                    $j++;
+
+            foreach ($uniforms as $uniform) {
+                $lineItems[] = [
+                    'date_issued' => !empty($uniform['date_issued']) ? date('F j Y', strtotime((string) $uniform['date_issued'])) : '',
+                    'item' => trim(
+                        (string) ($uniform['uniform_type'] ?? 'Uniform')
+                        . ' '
+                        . (string) ($uniform['size'] ?? '')
+                        . ' '
+                        . (string) ($uniform['color'] ?? '')
+                    ),
+                    'quantity' => (string) ((int) ($uniform['quantity_issued'] ?? 1)),
+                    'issued_by' => (string) ($uniform['issued_by_display'] ?? 'N/A'),
+                    'date_returned' => !empty($uniform['date_returned']) ? date('F j Y', strtotime((string) $uniform['date_returned'])) : '',
+                    'uniform_type' => (string) ($uniform['uniform_type'] ?? ''),
+                    'size' => (string) ($uniform['size'] ?? ''),
+                    'color' => (string) ($uniform['color'] ?? '')
+                ];
+            }
+
+            if (!empty($lineItems)) {
+                $template->cloneRow('itemInfo', count($lineItems));
+                $idx = 1;
+                foreach ($lineItems as $row) {
+                    $template->setValue("dateissued#{$idx}", htmlspecialchars($row['date_issued']));
+                    $template->setValue("itemInfo#{$idx}", htmlspecialchars($row['item']));
+                    $template->setValue("quantity_issued#{$idx}", htmlspecialchars($row['quantity']));
+                    $template->setValue("createdby#{$idx}", htmlspecialchars($row['issued_by']));
+                    $template->setValue("dateReturned#{$idx}", htmlspecialchars($row['date_returned']));
+                    // Also populate these in case they still exist in template rows.
+                    $template->setValue("uniform_type#{$idx}", htmlspecialchars($row['uniform_type']));
+                    $template->setValue("size#{$idx}", htmlspecialchars($row['size']));
+                    $template->setValue("color#{$idx}", htmlspecialchars($row['color']));
+                    $idx++;
                 }
             } else {
-                // Handle no uniforms case
-                $template->setValue('uniform_type', 'No uniforms assigned');
+                $template->setValue('dateissued', '');
+                $template->setValue('itemInfo', 'No assets assigned');
+                $template->setValue('quantity_issued', '');
+                $template->setValue('createdby', '');
+                $template->setValue('dateReturned', '');
+                $template->setValue('uniform_type', '');
                 $template->setValue('size', '');
                 $template->setValue('color', '');
-                $template->setValue('quantity_issued', '');
             }
             
             // Generate filename

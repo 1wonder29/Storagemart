@@ -1,0 +1,323 @@
+/* Storage Mart — shared sidebar design (all roles) */
+#accordionSidebar.sidebar-modern {
+  --sb-bg-start: #141b4d;
+  --sb-bg-mid: #1a237e;
+  --sb-bg-end: #311b92;
+  --sb-text: rgba(255, 255, 255, 0.78);
+  --sb-text-hover: #fff;
+  --sb-muted: rgba(255, 255, 255, 0.42);
+  --sb-divider: rgba(255, 255, 255, 0.1);
+  --sb-item-hover: rgba(255, 255, 255, 0.1);
+  --sb-item-active: rgba(255, 255, 255, 0.16);
+  --sb-accent: #7c9cff;
+  --sb-icon-bg: rgba(255, 255, 255, 0.1);
+  --sb-icon-active: rgba(255, 255, 255, 0.22);
+  --sb-shadow: 0 0.35rem 1.25rem rgba(8, 10, 30, 0.35);
+
+  background: linear-gradient(185deg, var(--sb-bg-start) 0%, var(--sb-bg-mid) 45%, var(--sb-bg-end) 100%) !important;
+  background-image: linear-gradient(185deg, var(--sb-bg-start) 0%, var(--sb-bg-mid) 45%, var(--sb-bg-end) 100%) !important;
+  box-shadow: var(--sb-shadow);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+#accordionSidebar.sidebar-modern::-webkit-scrollbar {
+  width: 6px;
+}
+
+#accordionSidebar.sidebar-modern::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
+#accordionSidebar.sidebar-modern::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(124, 156, 255, 0.18), transparent 42%),
+    radial-gradient(circle at 80% 100%, rgba(186, 104, 255, 0.14), transparent 38%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#accordionSidebar.sidebar-modern > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Brand */
+#accordionSidebar.sidebar-modern .sidebar-brand {
+  min-height: 5.25rem;
+  padding: 1.1rem 0.85rem 0.85rem;
+  margin: 0.65rem 0.5rem 0.25rem;
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-brand:hover {
+  background: rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+#accordionSidebar.sidebar-modern .sidebar-brand img {
+  width: 100% !important;
+  max-width: 7.5rem;
+  height: auto !important;
+  max-height: 2.75rem;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+/* Dividers & headings */
+#accordionSidebar.sidebar-modern hr.sidebar-divider {
+  border-top-color: var(--sb-divider);
+  margin: 0.65rem 0.85rem;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-heading {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sb-muted);
+  padding: 0.55rem 1rem 0.35rem;
+  margin-top: 0.15rem;
+}
+
+/* Nav links */
+#accordionSidebar.sidebar-modern .nav-item {
+  margin: 0.12rem 0.45rem;
+}
+
+#accordionSidebar.sidebar-modern .nav-item .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.58rem 0.7rem;
+  border-radius: 0.65rem;
+  color: var(--sb-text);
+  font-size: 0.84rem;
+  font-weight: 500;
+  text-align: left;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#accordionSidebar.sidebar-modern .nav-item .nav-link i {
+  width: 1.85rem;
+  height: 1.85rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.55rem;
+  background: var(--sb-icon-bg);
+  font-size: 0.8rem;
+  opacity: 1;
+  margin-right: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#accordionSidebar.sidebar-modern .nav-item .nav-link span {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+#accordionSidebar.sidebar-modern .nav-item .nav-link:hover {
+  color: var(--sb-text-hover);
+  background: var(--sb-item-hover);
+}
+
+#accordionSidebar.sidebar-modern .nav-item .nav-link:hover i {
+  background: var(--sb-icon-active);
+}
+
+#accordionSidebar.sidebar-modern .nav-item.active > .nav-link {
+  color: var(--sb-text-hover);
+  font-weight: 600;
+  background: var(--sb-item-active);
+  box-shadow: inset 3px 0 0 var(--sb-accent);
+}
+
+#accordionSidebar.sidebar-modern .nav-item.active > .nav-link i {
+  background: var(--sb-icon-active);
+  color: #fff;
+}
+
+#accordionSidebar.sidebar-modern .nav-item .nav-link[data-toggle="collapse"]::after {
+  float: none;
+  flex-shrink: 0;
+  width: auto;
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Admin-style submenu */
+#accordionSidebar.sidebar-modern .sidebar-submenu {
+  padding: 0.35rem 0 0.5rem 0.75rem;
+  margin: 0 0.5rem 0.5rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+#accordionSidebar.sidebar-modern .sidebar-submenu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.5rem 0.65rem;
+  margin-bottom: 0.15rem;
+  border-radius: 0.45rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+  min-width: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-submenu-item span {
+  min-width: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-submenu-item i {
+  width: 1rem;
+  text-align: center;
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-submenu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  text-decoration: none;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-submenu-item.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.55);
+}
+
+/* IT / legacy collapse submenu — match admin submenu */
+#accordionSidebar.sidebar-modern .collapse-inner {
+  background: transparent !important;
+  padding: 0.35rem 0 0.5rem 0.75rem !important;
+  margin: 0 0.5rem 0.5rem !important;
+  border-left: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  min-width: 0 !important;
+}
+
+#accordionSidebar.sidebar-modern .collapse-header {
+  display: none;
+}
+
+#accordionSidebar.sidebar-modern .collapse-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem !important;
+  margin-bottom: 0.15rem;
+  border-radius: 0.45rem !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-size: 0.84rem !important;
+  font-weight: 500;
+  white-space: normal;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#accordionSidebar.sidebar-modern .collapse-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+#accordionSidebar.sidebar-modern .collapse-item.active {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #fff !important;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.55);
+}
+
+/* Toggle */
+#accordionSidebar.sidebar-modern #sidebarToggle {
+  width: 2.35rem;
+  height: 2.35rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 0.85rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+#accordionSidebar.sidebar-modern #sidebarToggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+#accordionSidebar.sidebar-modern #sidebarToggle::after {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Expanded desktop width — base theme uses 14rem which clips modern nav items */
+@media (min-width: 768px) {
+  #accordionSidebar.sidebar-modern {
+    width: 17rem !important;
+    overflow-x: visible;
+    overflow-y: auto;
+  }
+
+  #accordionSidebar.sidebar-modern .nav-item .nav-link {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  #accordionSidebar.sidebar-modern .nav-item .nav-link span {
+    display: inline;
+    font-size: 0.84rem;
+  }
+
+  #accordionSidebar.sidebar-modern .nav-item .collapse,
+  #accordionSidebar.sidebar-modern .nav-item .collapsing {
+    margin: 0 0.45rem !important;
+  }
+
+  #accordionSidebar.sidebar-modern.toggled {
+    width: 6.5rem !important;
+    overflow-x: hidden;
+  }
+}
+
+/* Collapsed sidebar */
+@media (min-width: 768px) {
+  #accordionSidebar.sidebar-modern.toggled .sidebar-brand {
+    margin: 0.5rem 0.35rem;
+    padding: 0.65rem 0.25rem;
+  }
+
+  #accordionSidebar.sidebar-modern.toggled .sidebar-brand img {
+    width: 2.25rem !important;
+  }
+
+  #accordionSidebar.sidebar-modern.toggled .nav-item {
+    margin: 0.12rem 0.35rem;
+  }
+
+  #accordionSidebar.sidebar-modern.toggled .nav-item .nav-link {
+    justify-content: center;
+    padding: 0.55rem;
+  }
+
+  #accordionSidebar.sidebar-modern.toggled .nav-item .nav-link i {
+    margin: 0;
+  }
+}

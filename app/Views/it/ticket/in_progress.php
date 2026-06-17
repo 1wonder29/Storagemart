@@ -271,22 +271,54 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                                             </button>
                                                             <div class="dropdown-menu dropdown-menu-right shadow">
                                                                 <h6 class="dropdown-header">Update Status</h6>
-                                                                <a href="#" class="dropdown-item openModalBtn" data-action="Resolve" data-ticket-id="<?= $ticketId ?>" data-assigned="<?= $row['assigned_to'] ?>">
+                                                                <a href="#" class="dropdown-item openModalBtn" data-action="Resolve"
+                                                                    data-ticket-id="<?= $ticketId ?>"
+                                                                    data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>"
+                                                                    data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
+                                                                    data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
+                                                                    data-priority="<?= htmlspecialchars($priority) ?>"
+                                                                    data-status="<?= htmlspecialchars($status) ?>"
+                                                                    data-category="<?= htmlspecialchars($row['category'] ?? '') ?>"
+                                                                    data-department="<?= htmlspecialchars($row['department'] ?? '') ?>"
+                                                                    data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>"
+                                                                    data-filed="<?= !empty($row['date_filed']) ? date('M d, Y', strtotime((string) $row['date_filed'])) : '' ?>"
+                                                                    data-assigned="<?= $row['assigned_to'] ?>">
                                                                     <i class="fas fa-check fa-sm fa-fw mr-2 text-success"></i> Resolved
                                                                 </a>
-                                                                <a href="#" class="dropdown-item openModalBtn" data-action="On Hold" data-ticket-id="<?= $ticketId ?>" data-assigned="<?= $row['assigned_to'] ?>">
+                                                                <a href="#" class="dropdown-item openModalBtn" data-action="On Hold"
+                                                                    data-ticket-id="<?= $ticketId ?>"
+                                                                    data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>"
+                                                                    data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
+                                                                    data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
+                                                                    data-priority="<?= htmlspecialchars($priority) ?>"
+                                                                    data-status="<?= htmlspecialchars($status) ?>"
+                                                                    data-category="<?= htmlspecialchars($row['category'] ?? '') ?>"
+                                                                    data-department="<?= htmlspecialchars($row['department'] ?? '') ?>"
+                                                                    data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>"
+                                                                    data-filed="<?= !empty($row['date_filed']) ? date('M d, Y', strtotime((string) $row['date_filed'])) : '' ?>"
+                                                                    data-assigned="<?= $row['assigned_to'] ?>">
                                                                     <i class="fas fa-pause fa-sm fa-fw mr-2 text-warning"></i> On Hold
                                                                 </a>
-                                                                <a href="#" class="dropdown-item openModalBtn" data-action="Unresolved" data-ticket-id="<?= $ticketId ?>" data-assigned="<?= $row['assigned_to'] ?>">
+                                                                <a href="#" class="dropdown-item openModalBtn" data-action="Unresolved"
+                                                                    data-ticket-id="<?= $ticketId ?>"
+                                                                    data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>"
+                                                                    data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
+                                                                    data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
+                                                                    data-priority="<?= htmlspecialchars($priority) ?>"
+                                                                    data-status="<?= htmlspecialchars($status) ?>"
+                                                                    data-category="<?= htmlspecialchars($row['category'] ?? '') ?>"
+                                                                    data-department="<?= htmlspecialchars($row['department'] ?? '') ?>"
+                                                                    data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>"
+                                                                    data-filed="<?= !empty($row['date_filed']) ? date('M d, Y', strtotime((string) $row['date_filed'])) : '' ?>"
+                                                                    data-assigned="<?= $row['assigned_to'] ?>">
                                                                     <i class="fas fa-times fa-sm fa-fw mr-2 text-danger"></i> Unresolved
                                                                 </a>
                                                                 <div class="dropdown-divider"></div>
-                                                                <?php
-                                                                $ticketStatus = $status;
-                                                                $ticketNumber = (string) ($row['ticket_number'] ?? '');
-                                                                $btnClass = 'dropdown-item text-danger';
-                                                                require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
-                                                                ?>
+                                                                <a href="#" class="dropdown-item cancelTicketBtn"
+                                                                    data-ticket-id="<?= $ticketId ?>"
+                                                                    data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>">
+                                                                    <i class="fas fa-ban fa-sm fa-fw mr-2 text-secondary"></i> Cancel
+                                                                </a>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -322,63 +354,107 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
         </div></div>
     </div>
 
-    <div class="modal fade" id="ticketModal" tabindex="-1" role="dialog" aria-labelledby="ticketModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" style="margin-top: 100px;" role="document">
-            <form method="POST" action="<?= htmlspecialchars($base) ?>/it/tickets/update">
-                <div class="modal-content shadow-lg border-0" style="margin:auto; max-width:850px;">
-                    <div class="modal-header bg-primary text-white text-center">
-                        <h5 class="modal-title w-100" id="ticketModalLabel">Update Ticket</h5>
-                        <button type="button" class="close text-white position-absolute" style="right:15px;" data-dismiss="modal" aria-label="Close">
+    <div class="modal fade it-update-ticket-modal" id="ticketModal" tabindex="-1" role="dialog" aria-labelledby="ticketModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered it-update-ticket-dialog" role="document">
+            <div class="modal-content it-ticket-detail-card shadow">
+                <form method="POST" action="<?= htmlspecialchars($base) ?>/it/tickets/update" id="ticketUpdateForm">
+                    <div class="card-header py-3 bg-primary it-ticket-modal-header">
+                        <h6 class="m-0 font-weight-bold text-white">
+                            <i class="fas fa-ticket-alt"></i>
+                            <span id="ticketModalTicketNum">Ticket</span>
+                        </h6>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <div class="modal-body px-4 py-3">
+
+                    <div class="card-body it-ticket-modal-body">
                         <input type="hidden" name="ticket_id" id="ticket_id">
                         <input type="hidden" name="action" id="ticket_action">
-                        <h5 class="text-primary text-center mb-3">Technical Details</h5>
+
+                        <p class="it-ticket-modal-action-title mb-3" id="ticketModalLabel">Update Ticket</p>
+
                         <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label>Technical Purpose</label>
-                                <select class="form-control" name="technical_purpose" required>
-                                    <option value="">-- Select Technical Purpose --</option>
-                                    <option>Desktop / Laptop Issue</option>
-                                    <option>Network Issue</option>
-                                    <option>Software Installation / Activation</option>
-                                    <option>Application Issue</option>
-                                    <option>Phone Issue</option>
-                                    <option>Others</option>
-                                </select>
+                            <div class="col-md-4">
+                                <div class="small text-gray-500 text-uppercase font-weight-bold">Ticket ID</div>
+                                <div class="h6 mb-0" id="ticketModalTicketId">—</div>
                             </div>
-                            <div class="col-md-6">
-                                <label>Status</label>
-                                <select class="form-control" name="status" required>
-                                    <option value="Resolved">Resolved</option>
-                                    <option value="On Hold">On Hold</option>
-                                    <option value="Unresolved">Unresolved</option>
-                                </select>
+                            <div class="col-md-4">
+                                <div class="small text-gray-500 text-uppercase font-weight-bold">Employee</div>
+                                <div class="h6 mb-0" id="ticketModalEmployee">—</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small text-gray-500 text-uppercase font-weight-bold">Branch</div>
+                                <div class="h6 mb-0" id="ticketModalBranch">—</div>
                             </div>
                         </div>
+
                         <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label>Action Taken</label>
-                                <textarea class="form-control" name="action_taken" rows="3" required></textarea>
+                            <div class="col-md-4">
+                                <div class="small text-gray-500 text-uppercase font-weight-bold">New Status</div>
+                                <div class="h6 mb-0" id="ticketModalNewStatus">—</div>
                             </div>
-                            <div class="col-md-6">
-                                <label>After Service Note</label>
-                                <textarea class="form-control" name="result" rows="3" required></textarea>
+                            <div class="col-md-4">
+                                <div class="small text-gray-500 text-uppercase font-weight-bold">Priority</div>
+                                <div class="h6 mb-0" id="ticketModalPriority">—</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small text-gray-500 text-uppercase font-weight-bold">Filed</div>
+                                <div class="h6 mb-0" id="ticketModalFiled">—</div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Remarks</label>
-                            <textarea class="form-control" name="remarks" rows="3"></textarea>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="small text-gray-500 text-uppercase font-weight-bold">Department</div>
+                                <div class="h6 mb-0" id="ticketModalDepartment">—</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small text-gray-500 text-uppercase font-weight-bold">Category</div>
+                                <div class="h6 mb-0" id="ticketModalCategory">—</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="small text-gray-500 text-uppercase font-weight-bold">Concern</div>
+                            <div class="p-3 bg-light rounded border it-ticket-readonly-box" id="ticketModalConcern">—</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="small text-gray-500 text-uppercase font-weight-bold">Technical Purpose <span class="text-danger">*</span></div>
+                            <select class="form-control it-ticket-field-box" id="technical_purpose" name="technical_purpose" required>
+                                <option value="">Select technical purpose</option>
+                                <option>Desktop / Laptop Issue</option>
+                                <option>Network Issue</option>
+                                <option>Software Installation / Activation</option>
+                                <option>Application Issue</option>
+                                <option>Phone Issue</option>
+                                <option>Others</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="small text-gray-500 text-uppercase font-weight-bold">Action Taken <span class="text-danger">*</span></div>
+                            <textarea class="form-control it-ticket-field-box" id="action_taken" name="action_taken" rows="4" required placeholder="Describe what was done to address the issue"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="small text-gray-500 text-uppercase font-weight-bold">Resolution Details <span class="text-danger">*</span></div>
+                            <textarea class="form-control it-ticket-field-box" id="result" name="result" rows="4" required placeholder="Outcome or follow-up notes for the requester"></textarea>
+                        </div>
+
+                        <div class="mb-0">
+                            <div class="small text-gray-500 text-uppercase font-weight-bold">Remarks</div>
+                            <textarea class="form-control it-ticket-field-box" id="remarks" name="remarks" rows="3" placeholder="Optional internal remarks"></textarea>
                         </div>
                     </div>
-                    <div class="modal-footer justify-content-center">
-                        <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success px-4" id="modalSubmitBtn">Submit</button>
+
+                    <div class="card-footer it-ticket-modal-footer bg-white">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="modalSubmitBtn">Submit</button>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -431,6 +507,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+    <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/it-in-progress-tickets.js"></script>
@@ -439,27 +516,70 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     $(document).ready(function() {
         const currentEmployeeId = parseInt($('#IT-TicketDatables').data('employee-id'), 10);
 
+        const actionConfig = {
+            'Resolve': {
+                title: 'Resolve Ticket',
+                statusLabel: 'Resolved',
+                submitClass: 'btn-success',
+                submitLabel: 'Mark Resolved'
+            },
+            'On Hold': {
+                title: 'Put Ticket On Hold',
+                statusLabel: 'On Hold',
+                submitClass: 'btn-warning',
+                submitLabel: 'Put On Hold'
+            },
+            'Unresolved': {
+                title: 'Mark Ticket Unresolved',
+                statusLabel: 'Unresolved',
+                submitClass: 'btn-danger',
+                submitLabel: 'Mark Unresolved'
+            }
+        };
+
+        function displayValue(value) {
+            const text = String(value || '').trim();
+            return text !== '' ? text : '—';
+        }
+
         $('.openModalBtn').click(function(e) {
             e.preventDefault();
-            const ticketId = $(this).data('ticket-id');
-            const action = $(this).data('action');
-            const assignedTo = $(this).data('assigned');
+            const $btn = $(this);
+            const ticketId = $btn.data('ticket-id');
+            const ticketNum = $btn.data('ticket-num') || '';
+            const action = $btn.data('action');
+            const assignedTo = $btn.data('assigned');
 
             if (typeof assignedTo !== 'undefined' && parseInt(assignedTo, 10) !== currentEmployeeId) {
                 alert('You cannot modify tickets not assigned to you.');
                 return;
             }
 
-            const btnColor = action === 'Resolve' ? 'btn-success' :
-                             action === 'On Hold' ? 'btn-warning' : 'btn-danger';
+            const cfg = actionConfig[action];
+            if (!cfg) {
+                return;
+            }
 
+            $('#ticketUpdateForm')[0].reset();
             $('#ticket_id').val(ticketId);
             $('#ticket_action').val(action);
-            $('#ticketModalLabel').text(action + ' Ticket');
+
+            $('#ticketModalTicketNum').text(displayValue(ticketNum));
+            $('#ticketModalLabel').text(cfg.title);
+            $('#ticketModalTicketId').text(ticketId || '—');
+            $('#ticketModalEmployee').text(displayValue($btn.data('employee')));
+            $('#ticketModalBranch').text(displayValue($btn.data('branch')));
+            $('#ticketModalNewStatus').text(cfg.statusLabel);
+            $('#ticketModalPriority').text(displayValue($btn.data('priority')));
+            $('#ticketModalFiled').text(displayValue($btn.data('filed')));
+            $('#ticketModalDepartment').text(displayValue($btn.data('department')));
+            $('#ticketModalCategory').text(displayValue($btn.data('category')));
+            $('#ticketModalConcern').text(displayValue($btn.data('concern')));
+
             $('#modalSubmitBtn')
-                .removeClass('btn-success btn-warning btn-danger')
-                .addClass(btnColor)
-                .text(action);
+                .removeClass('btn-success btn-warning btn-danger btn-primary')
+                .addClass(cfg.submitClass)
+                .text(cfg.submitLabel);
 
             $('#ticketModal').modal('show');
         });
@@ -482,7 +602,6 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     </script>
     <script>window.BASE_URL = "<?= htmlspecialchars($base) ?>";</script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
-    <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 </html>

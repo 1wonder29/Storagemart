@@ -72,8 +72,19 @@ html.it-dark #itDarkModeToggle.it-dark-active {
 }
 
 /* Sidebar submenu */
-html.it-dark .sidebar .collapse-inner {
-  background-color: #2e3450 !important;
+html.it-dark #accordionSidebar.sidebar-modern {
+  --sb-bg-start: #12151c;
+  --sb-bg-mid: #1a1f2b;
+  --sb-bg-end: #232838;
+  --sb-item-hover: rgba(255, 255, 255, 0.06);
+  --sb-item-active: rgba(108, 142, 245, 0.18);
+  --sb-accent: #6c8ef5;
+  border-right-color: var(--it-border);
+}
+
+html.it-dark .sidebar .collapse-inner,
+html.it-dark #accordionSidebar.sidebar-modern .collapse-inner {
+  background-color: transparent !important;
 }
 
 html.it-dark .sidebar .collapse-header {
@@ -529,4 +540,23 @@ html.it-dark .topbar-divider {
 
 html:not(.it-dark) #itDarkModeToggle:hover {
   color: #4e73df !important;
+}
+
+/* IT update ticket modal — preserve card layout in dark mode */
+html.it-dark .it-update-ticket-modal .it-ticket-modal-body,
+html.it-dark .it-update-ticket-modal .it-ticket-modal-footer {
+  background: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text);
+}
+
+html.it-dark .it-update-ticket-modal .it-ticket-readonly-box,
+html.it-dark .it-update-ticket-modal .it-ticket-field-box {
+  background: var(--it-input-bg) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text) !important;
+}
+
+html.it-dark .it-update-ticket-modal .it-ticket-modal-action-title {
+  color: var(--it-primary) !important;
 }

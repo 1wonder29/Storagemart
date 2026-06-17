@@ -1,7 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
-$routePrefix = 'hom';
-$roleLabel = 'HOM';
+$routePrefix = $routePrefix ?? 'hom';
+$roleLabel = ($user_role ?? '') === 'OM' ? 'OM' : 'HOM';
 $loggedFirstname = $ctx['loggedFirstname'] ?? 'HOM';
 $loggedLastname = $ctx['loggedLastname'] ?? '';
 ?>
@@ -37,8 +37,11 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                     <i class="fas fa-exchange-alt fa-sm"></i> Bulk Transfer
                 </button>
                 <?php endif; ?>
-                <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm mb-2">
-                    <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
+                <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create/my" class="d-none d-sm-inline-block btn btn-sm btn-info shadow-sm mb-2 mr-1">
+                    <i class="fas fa-user fa-sm"></i> My Ticket
+                </a>
+                <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create/employee" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm mb-2">
+                    <i class="fas fa-plus fa-sm text-white-50"></i> Employee Ticket
                 </a>
             </div>
         </div>
@@ -183,6 +186,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <?php
+                                        $ticketId = (int) ($ticket['ticket_id'] ?? 0);
                                         $ticketStatus = $status;
                                         $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
                                         require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';

@@ -1,12 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
-$activeCount = 0;
-foreach ($assignments ?? [] as $a) {
-    if (empty($a['date_returned'])) {
-        $activeCount++;
-    }
-}
-$returnedCount = count($assignments ?? []) - $activeCount;
+$returnedCount = count($assignments ?? []);
 $conditionFilter = strtoupper(trim((string) ($conditionFilter ?? '')));
 $listTitle = 'Uniform Assignments';
 if ($conditionFilter === 'DAMAGED') {
@@ -62,7 +56,7 @@ if ($conditionFilter === 'DAMAGED') {
 
             <?php if (!empty($uniform)): ?>
                 <div class="row mb-4">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="card border-left-primary shadow h-100 py-2">
                             <div class="card-body">
                                 <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Uniform</div>
@@ -73,15 +67,7 @@ if ($conditionFilter === 'DAMAGED') {
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card border-left-success shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Active Assignments</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $activeCount ?></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="card border-left-secondary shadow h-100 py-2">
                             <div class="card-body">
                                 <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Returned</div>

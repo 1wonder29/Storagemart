@@ -434,14 +434,23 @@ class UniformModel extends HRModel {
     }
 
     /**
-     * Mark assignment as returned and track in pending returns
+     * Mark assignment as returned and apply inventory updates immediately.
+     * Supports mixed-condition returns via $returnBreakdown.
+     *
      * @param int $assignmentId
      * @param int $processedBy
-     * @param string $condition Condition upon return (GOOD, FAIR, USED, DAMAGED, LOST)
-     * @param string $remarks Optional remarks about the return
+     * @param string $condition Backward-compatible fallback condition
+     * @param string $remarks Optional remarks
+     * @param array<string,int> $returnBreakdown ['GOOD'=>x,'DAMAGED'=>x,'LOST'=>x]
      * @return bool
      */
-    public function returnAssignment(int $assignmentId, int $processedBy, string $condition = 'GOOD', string $remarks = ''): bool {
+    public function returnAssignment(
+        int $assignmentId,
+        int $processedBy,
+        string $condition = 'GOOD',
+        string $remarks = '',
+        array $returnBreakdown = []
+    ): bool {
         try {
             $this->pdo->beginTransaction();
 
@@ -463,36 +472,116 @@ class UniformModel extends HRModel {
             $condition = strtoupper(trim($condition)) ?: 'GOOD';
             $remarks = trim($remarks);
 
-            // 1) Mark assignment as returned and store the condition
-            $sql = "UPDATE {$this->tbluniform_assignment} SET date_returned = CURDATE(), condition_upon_return = ? WHERE assignment_id = ?";
-            $stmt = $this->pdo->prepare($sql);
-            $ok = $stmt->execute([$condition, $assignmentId]);
+            $allowedConditions = ['GOOD', 'DAMAGED', 'LOST'];
+            $normalizedBreakdown = [];
+            foreach ($allowedConditions as $allowedCondition) {
+                $normalizedBreakdown[$allowedCondition] = max(0, (int) ($returnBreakdown[$allowedCondition] ?? 0));
+            }
+            $returnQuantity = array_sum($normalizedBreakdown);
+            $hasBreakdown = $returnQuantity > 0;
+
+            if ($hasBreakdown && ($returnQuantity <= 0 || $returnQuantity > $quantity)) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            if (!$hasBreakdown) {
+                $normalizedBreakdown[$condition] = $quantity;
+                $returnQuantity = $quantity;
+            }
+
+            // Pick overall assignment condition by severity when mixed return is used.
+            $overallCondition = 'GOOD';
+            if ($normalizedBreakdown['LOST'] > 0) {
+                $overallCondition = 'LOST';
+            } elseif ($normalizedBreakdown['DAMAGED'] > 0) {
+                $overallCondition = 'DAMAGED';
+            }
+
+            // 1) Mark assignment as fully returned or reduce outstanding quantity for partial return.
+            if ($returnQuantity >= $quantity) {
+                $sql = "UPDATE {$this->tbluniform_assignment}
+                        SET date_returned = CURDATE(), condition_upon_return = ?
+                        WHERE assignment_id = ?";
+                $stmt = $this->pdo->prepare($sql);
+                $ok = $stmt->execute([$overallCondition, $assignmentId]);
+            } else {
+                $sql = "UPDATE {$this->tbluniform_assignment}
+                        SET quantity_issued = GREATEST(0, quantity_issued - ?)
+                        WHERE assignment_id = ?";
+                $stmt = $this->pdo->prepare($sql);
+                $ok = $stmt->execute([$returnQuantity, $assignmentId]);
+            }
 
             if (!$ok) {
                 $this->pdo->rollBack();
                 return false;
             }
 
-            // 2) Add to pending returns (all returns go to pending first for inspection)
-            $sql2 = "UPDATE {$this->tbluniform_inventory} SET quantity_returned = COALESCE(quantity_returned, 0) + ?, date_updated = NOW() WHERE uniform_id = ?";
-            $stmt2 = $this->pdo->prepare($sql2);
-            $ok2 = $stmt2->execute([$quantity, $uniformId]);
+            // 2) Apply inventory counts immediately based on return condition breakdown.
+            foreach ($normalizedBreakdown as $conditionKey => $conditionQty) {
+                if ($conditionQty <= 0) {
+                    continue;
+                }
 
-            if (!$ok2) {
-                $this->pdo->rollBack();
-                return false;
+                if ($conditionKey === 'DAMAGED') {
+                    $sqlInv = "UPDATE {$this->tbluniform_inventory}
+                               SET quantity_damaged = COALESCE(quantity_damaged, 0) + ?, date_updated = NOW()
+                               WHERE uniform_id = ?";
+                } elseif ($conditionKey === 'LOST') {
+                    $sqlInv = "UPDATE {$this->tbluniform_inventory}
+                               SET quantity_lost = COALESCE(quantity_lost, 0) + ?, date_updated = NOW()
+                               WHERE uniform_id = ?";
+                } else {
+                    $sqlInv = "UPDATE {$this->tbluniform_inventory}
+                               SET quantity_in_stock = quantity_in_stock + ?, date_updated = NOW()
+                               WHERE uniform_id = ?";
+                }
+
+                $stmtInv = $this->pdo->prepare($sqlInv);
+                $okInv = $stmtInv->execute([$conditionQty, $uniformId]);
+                if (!$okInv) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
             }
 
-            // 3) Record the return in tbluniform_returns for HR review and processing
-            $sql3 = "INSERT INTO tbluniform_returns 
-                    (assignment_id, uniform_id, employee_id, quantity_returned, condition_upon_return, remarks, date_returned, processed_by, return_status, createdby, datecreated)
-                    VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, 'PENDING', ?, NOW())";
+            // 3) Record per-condition return rows as already approved (no pending queue).
+            $sql3 = "INSERT INTO tbluniform_returns
+                    (assignment_id, uniform_id, employee_id, quantity_returned, condition_upon_return, remarks, date_returned, processed_by, return_status, approved_by, processed_at, createdby, datecreated)
+                    VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, 'APPROVED', ?, NOW(), ?, NOW())";
             $stmt3 = $this->pdo->prepare($sql3);
-            $ok3 = $stmt3->execute([$assignmentId, $uniformId, $employeeId, $quantity, $condition, $remarks, $processedBy, 'system']);
+            $ok3 = true;
+            foreach ($normalizedBreakdown as $conditionKey => $conditionQty) {
+                if ($conditionQty <= 0) {
+                    continue;
+                }
+
+                $rowRemarks = $remarks;
+                if (count(array_filter($normalizedBreakdown, static fn ($qty) => $qty > 0)) > 1) {
+                    $rowRemarks = trim(($remarks !== '' ? $remarks . ' | ' : '') . 'Split return');
+                }
+
+                $insertOk = $stmt3->execute([
+                    $assignmentId,
+                    $uniformId,
+                    $employeeId,
+                    $conditionQty,
+                    $conditionKey,
+                    $rowRemarks,
+                    $processedBy,
+                    $processedBy,
+                    'system'
+                ]);
+
+                if (!$insertOk) {
+                    $ok3 = false;
+                    break;
+                }
+            }
 
             if (!$ok3) {
-                // Log the error but don't fail the transaction - the main return was processed
-                error_log('UniformModel::returnAssignment warning: Failed to create return record for assignment ' . $assignmentId);
+                error_log('UniformModel::returnAssignment warning: Failed to create return record(s) for assignment ' . $assignmentId);
             }
 
             $this->pdo->commit();
@@ -713,6 +802,35 @@ class UniformModel extends HRModel {
      */
     public function getAssignmentsByUniformId(int $uniformId, ?string $condition = null): array {
         try {
+            $condition = strtoupper(trim((string) $condition));
+
+            // For return-condition views (DAMAGED/LOST), read from return records.
+            if (in_array($condition, ['DAMAGED', 'LOST'], true)) {
+                $sql = "SELECT
+                            ur.assignment_id,
+                            ur.employee_id,
+                            ur.uniform_id,
+                            ur.quantity_returned AS quantity_issued,
+                            ua.date_issued,
+                            ur.date_returned AS date_returned,
+                            ua.condition_upon_issue,
+                            ur.condition_upon_return,
+                            ur.remarks,
+                            e.firstname,
+                            e.lastname,
+                            CONCAT(e.firstname, ' ', e.lastname) AS employee_name
+                        FROM tbluniform_returns ur
+                        LEFT JOIN {$this->tbluniform_assignment} ua ON ur.assignment_id = ua.assignment_id
+                        LEFT JOIN {$this->tblemployee} e ON ur.employee_id = e.employee_id
+                        WHERE ur.uniform_id = ?
+                          AND UPPER(ur.condition_upon_return) = ?
+                        ORDER BY ur.date_returned DESC, ur.return_id DESC";
+
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([$uniformId, $condition]);
+                return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+            }
+
             $sql = "SELECT 
                         ua.assignment_id,
                         ua.employee_id,
@@ -730,11 +848,6 @@ class UniformModel extends HRModel {
                     LEFT JOIN {$this->tblemployee} e ON ua.employee_id = e.employee_id
                     WHERE ua.uniform_id = ?";
             $params = [$uniformId];
-
-            if ($condition !== null && $condition !== '') {
-                $sql .= " AND ua.date_returned IS NOT NULL AND UPPER(ua.condition_upon_return) = ?";
-                $params[] = strtoupper($condition);
-            }
 
             $sql .= " ORDER BY ua.date_issued DESC, ua.assignment_id DESC";
             

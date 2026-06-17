@@ -60,18 +60,6 @@ $base = rtrim(BASE_URL, '/');
                 </div>
             <?php endif; ?>
 
-            <!-- Pending Returns Alert -->
-            <div class="alert alert-info d-flex justify-content-between align-items-center" role="alert">
-                <div>
-                    <i class="fas fa-inbox"></i> 
-                    <strong>Pending Uniform Returns Awaiting Approval</strong>
-                    <p class="mb-0 small" style="margin-top: 5px;">Review and approve returned uniforms to update inventory counts</p>
-                </div>
-                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/pending-returns" class="btn btn-info btn-sm">
-                    <i class="fas fa-clock"></i> Review Pending Returns
-                </a>
-            </div>
-
             <!-- Uniforms Table -->
             <div class="card shadow">
                 <div class="card-header py-3">
@@ -91,7 +79,6 @@ $base = rtrim(BASE_URL, '/');
                                         <th>Reorder Level</th>
                                         <th>Stock Status</th>
                                         <th>Status</th>
-                                        <th>Pending Return</th>
                                         <th>Damaged</th>
                                         <th>Lost</th>
                                         <th>Actions</th>
@@ -110,14 +97,6 @@ $base = rtrim(BASE_URL, '/');
                                                 <span class="badge bg-<?= $itemStatus === 'ACTIVE' ? 'success' : 'secondary' ?>">
                                                     <?= htmlspecialchars($itemStatus) ?>
                                                 </span>
-                                            </td>
-                                            <td>
-                                                <?php $pendingReturn = max(0, (int) ($uniform['quantity_returned'] ?? 0)); ?>
-                                                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments/<?= (int) $uniform['uniform_id'] ?>"
-                                                   class="btn btn-sm btn-warning"
-                                                   title="View pending returns">
-                                                    <?= $pendingReturn ?>
-                                                </a>
                                             </td>
                                             <td>
                                                 <?php $damagedCount = (int) ($uniform['quantity_damaged'] ?? 0); ?>

@@ -1,8 +1,9 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 ?>
+<?php require_once __DIR__ . '/../sidebar_styles.php'; ?>
         <!-- Sidebar -->
-        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion sidebar-modern" id="accordionSidebar">
             
             <!-- Brand -->
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?= htmlspecialchars($base)?>/it">
@@ -91,59 +92,7 @@ $base = rtrim(BASE_URL, '/');
                             </button>
                         </li>
                         <div class="topbar-divider d-none d-sm-block"></div>
-                <li class="nav-item dropdown no-arrow mx-1">
-                    <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown"
-                    role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-bell fa-fw"></i>
-
-                        <?php if ($count > 0): ?>
-                            <span class="badge badge-danger badge-counter">
-                                <?= $count > 9 ? '9+' : $count ?>
-                            </span>
-                        <?php endif; ?>
-                    </a>
-
-                    <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                        aria-labelledby="alertsDropdown">
-
-                        <h6 class="dropdown-header">Alerts Center</h6>
-
-                        <?php if (empty($notifications)): ?>
-                            <div class="dropdown-item text-center small text-gray-500">
-                                No new alerts
-                            </div>
-                        <?php else: ?>
-                                <div class="notification-scroll">
-                                    <?php foreach ($notifications as $n): ?>
-                                        <a class="dropdown-item d-flex align-items-center notification-item <?= $n['is_read'] ? 'notification-read' : 'notification-unread' ?>"
-                                            href="<?= htmlspecialchars($n['action_url'] ?? '#') ?>"
-                                            data-id="<?= (int)$n['id'] ?>"
-                                            data-related="<?= (int)($n['related_id'] ?? 0) ?>">
-
-                                            <div class="mr-3">
-                                                <div class="icon-circle bg-<?= htmlspecialchars($n['bg_color']) ?>">
-                                                    <i class="fas <?= htmlspecialchars($n['icon']) ?> text-white"></i>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <div class="small text-gray-500">
-                                                    <?= date('F d, Y', strtotime($n['created_at'])) ?>
-                                                </div>
-                                                <?= htmlspecialchars($n['message']) ?>
-                                            </div>
-                                        </a>
-                                    <?php endforeach; ?>
-                                </div>
-
-
-                        <?php endif; ?>
-
-                        <a class="dropdown-item text-center small text-gray-500" href="<?= htmlspecialchars($base) ?>/notifications">
-                            Show All Alerts
-                        </a>
-                    </div>
-                </li>
+                <?php require_once __DIR__ . '/../notification_dropdown.php'; ?>
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -170,4 +119,22 @@ $base = rtrim(BASE_URL, '/');
 <?php require_once __DIR__ . '/../realtime_scripts.php'; ?>
 <?php if (!isset($base)) { $base = rtrim(BASE_URL, '/'); } ?>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/it-dark-mode.js"></script>
+
+<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logoutModalLabel">Ready to Leave?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <a class="btn btn-primary" href="<?= htmlspecialchars($base) ?>/logout">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>
 

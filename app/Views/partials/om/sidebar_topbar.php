@@ -8,8 +8,10 @@ $base = rtrim(BASE_URL, '/');
 $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
 ?>
 
+<?php require_once __DIR__ . '/../sidebar_styles.php'; ?>
+
 <!-- Sidebar -->
-<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion sidebar-modern" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" 
@@ -50,14 +52,6 @@ $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
         </a>
     </li>
 
-    <!-- Assignments -->
-    <li class="nav-item <?= ($activePage === 'assignments') ? 'active' : '' ?>">
-        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/assignments">
-            <i class="fas fa-link"></i>
-            <span>Assignments</span>
-        </a>
-    </li>
-
     <!-- AOM Branch Assignments -->
     <li class="nav-item <?= ($activePage === 'aom-branches') ? 'active' : '' ?>">
         <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/aom-branches">
@@ -79,10 +73,17 @@ $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
     </li>
 
     <!-- Create Ticket -->
-    <li class="nav-item <?= ($activePage === 'create-ticket') ? 'active' : '' ?>">
-        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create">
+    <li class="nav-item <?= ($activePage === 'create-my-ticket') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create/my">
+            <i class="fas fa-user"></i>
+            <span>My Ticket</span>
+        </a>
+    </li>
+
+    <li class="nav-item <?= ($activePage === 'create-employee-ticket') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create/employee">
             <i class="fas fa-plus-circle"></i>
-            <span>New Ticket</span>
+            <span>Employee Ticket</span>
         </a>
     </li>
 
@@ -113,45 +114,7 @@ $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
 
                 <div class="topbar-divider d-none d-sm-block"></div>
                 <!-- Notifications -->
-                <li class="nav-item dropdown no-arrow mx-1">
-                    <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown"
-                    role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-bell fa-fw"></i>
-                        <?php if (!empty($count)): ?>
-                            <span class="badge badge-danger badge-counter"><?= (int)$count > 9 ? '9+' : (int)$count ?></span>
-                        <?php endif; ?>
-                    </a>
-                    <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                        aria-labelledby="alertsDropdown">
-                        <h6 class="dropdown-header bg-light font-weight-bold">Notification Center</h6>
-                        <?php if (!empty($notifications)): ?>
-                            <div class="notification-scroll">
-                                <?php foreach ($notifications as $n): ?>
-                                    <a class="dropdown-item d-flex align-items-center notification-item <?= ($n['is_read'] ?? 0) ? 'notification-read' : 'notification-unread' ?>"
-                                       href="<?= htmlspecialchars($n['action_url'] ?? '#') ?>"
-                                       data-id="<?= (int)($n['id'] ?? 0) ?>">
-                                        <div class="mr-3">
-                                            <div class="icon-circle bg-<?= htmlspecialchars($n['bg_color'] ?? 'primary') ?>">
-                                                <i class="fas <?= htmlspecialchars($n['icon'] ?? 'fa-bell') ?> text-white"></i>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <?php
-                                            $createdAt = $n['created_at'] ?? null;
-                                            $createdLabel = $createdAt ? date('M d, Y H:i', strtotime($createdAt)) : '';
-                                            ?>
-                                            <div class="small text-gray-500"><?= htmlspecialchars($createdLabel) ?></div>
-                                            <div class="font-weight-bold"><?= htmlspecialchars($n['message'] ?? '') ?></div>
-                                        </div>
-                                    </a>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php else: ?>
-                            <div class="dropdown-item text-center small text-gray-500 py-2">No notifications</div>
-                        <?php endif; ?>
-                        <a class="dropdown-item text-center small text-gray-500" href="<?= htmlspecialchars($base) ?>/notifications">Show All Alerts</a>
-                    </div>
-                </li>
+                <?php require_once __DIR__ . '/../notification_dropdown.php'; ?>
 
                 <div class="topbar-divider d-none d-sm-block"></div>
 

@@ -87,6 +87,15 @@
       dt.search("");
       redraw();
     });
+
+    $(document).on("click", ".btn-mark-defective", function () {
+      var inventoryId = $(this).data("inventory-id");
+      var assetNumber = $(this).data("asset-number");
+      $("#defectiveInventoryId").val(inventoryId);
+      $("#defectiveAssetNumber").text(assetNumber || "");
+      $("#defectiveReason").val("");
+      $("#markDefectiveModal").modal("show");
+    });
   }
 
   $(document).ready(initAssetInventoryTable);

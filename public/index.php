@@ -158,6 +158,8 @@ if (strpos($uri, '/admin') === 0) {
         $ticket->history();
     } elseif ($sub === 'tickets/update-assignment' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $ticket->updateAssignment();
+    } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $ticket->downloadTechnicalRecord();
     } elseif ($sub === 'tickets/add') {
         $ticket->add();
     } elseif ($sub === 'tickets/get-assets') {
@@ -200,6 +202,10 @@ if (strpos($uri, '/admin') === 0) {
         $asset->editItem();
     } elseif ($sub === 'assets/item/update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $asset->updateItem();
+    } elseif ($sub === 'assets/item/mark-defective' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $asset->markDefective();
+    } elseif ($sub === 'assets/return' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $asset->returnAsset();
     } elseif ($sub === 'assets/item/delete') {
         $asset->deleteItem();
     } elseif ($sub === 'assets/transfer') {
@@ -516,10 +522,6 @@ if (strpos($uri, '/hr') === 0) {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uniform->processReturn($assignmentId);
         }
-    } elseif ($sub === 'uniforms/pending-returns') {
-        $uniform->pendingReturns();
-    } elseif ($sub === 'uniforms/approve-return' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $uniform->approveReturn();
     } else {
         http_response_code(404);
         echo "HR page not found.";
@@ -551,6 +553,18 @@ if ($uri === '/aom' || strpos($uri, '/aom/') === 0) {
         $aom->branchDetail();
     } elseif ($sub === 'tickets') {
         $aom->tickets();
+    } elseif ($sub === 'tickets/create/my') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $aom->createMyTicketForm();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $aom->submitMyTicket();
+        }
+    } elseif ($sub === 'tickets/create/employee') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $aom->createTicketForm();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $aom->submitTicket();
+        }
     } elseif ($sub === 'tickets/create') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $aom->createTicketForm();
@@ -598,6 +612,18 @@ if ($uri === '/hom' || strpos($uri, '/hom/') === 0) {
         
         if ($sub === 'tickets') {
             $homTicket->index();
+        } elseif ($sub === 'tickets/create/my') {
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                $homTicket->createMy();
+            } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $homTicket->storeMy();
+            }
+        } elseif ($sub === 'tickets/create/employee') {
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                $homTicket->create();
+            } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $homTicket->store();
+            }
         } elseif ($sub === 'tickets/create') {
             if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $homTicket->create();
@@ -652,31 +678,6 @@ if ($uri === '/hom' || strpos($uri, '/hom/') === 0) {
         $hom->assets();
     } elseif ($sub === 'transfer-employee' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $hom->transferEmployee();
-    } elseif ($sub === 'assignments') {
-        $hom->assignments();
-    } elseif ($sub === 'new-assignment') {
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $hom->createAssignment();
-        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $hom->createAssignment();
-        }
-    } elseif (strpos($sub, 'edit-assignment') === 0) {
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $hom->updateAssignment();
-        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $hom->updateAssignment();
-        }
-    } elseif ($sub === 'deactivate-assignment' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $hom->deactivateAssignment();
-    } elseif ($sub === 'api/unassigned-employees' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-        // AJAX endpoint to get unassigned employees
-        $hom->getUnassignedEmployees();
-    } elseif ($sub === 'api/aoms' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-        // AJAX endpoint to get all AOMs
-        $hom->getAOMs();
-    } elseif ($sub === 'api/employee-assignments' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-        // AJAX endpoint to get employee assignments
-        $hom->getEmployeeAssignments();
     } elseif ($sub === 'aom-branches') {
         $hom->aomBranches();
     } elseif (strpos($sub, 'edit-aom-branches') === 0) {
@@ -705,6 +706,18 @@ if ($uri === '/om' || strpos($uri, '/om/') === 0) {
         
         if ($sub === 'tickets') {
             $homTicket->index();
+        } elseif ($sub === 'tickets/create/my') {
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                $homTicket->createMy();
+            } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $homTicket->storeMy();
+            }
+        } elseif ($sub === 'tickets/create/employee') {
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                $homTicket->create();
+            } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $homTicket->store();
+            }
         } elseif ($sub === 'tickets/create') {
             if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $homTicket->create();
@@ -745,31 +758,6 @@ if ($uri === '/om' || strpos($uri, '/om/') === 0) {
         $hom->assets();
     } elseif ($sub === 'transfer-employee' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $hom->transferEmployee();
-    } elseif ($sub === 'assignments') {
-        $hom->assignments();
-    } elseif ($sub === 'new-assignment') {
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $hom->createAssignment();
-        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $hom->createAssignment();
-        }
-    } elseif (strpos($sub, 'edit-assignment') === 0) {
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $hom->updateAssignment();
-        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $hom->updateAssignment();
-        }
-    } elseif ($sub === 'deactivate-assignment' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $hom->deactivateAssignment();
-    } elseif ($sub === 'api/unassigned-employees' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-        // AJAX endpoint to get unassigned employees
-        $hom->getUnassignedEmployees();
-    } elseif ($sub === 'api/aoms' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-        // AJAX endpoint to get all AOMs
-        $hom->getAOMs();
-    } elseif ($sub === 'api/employee-assignments' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-        // AJAX endpoint to get employee assignments
-        $hom->getEmployeeAssignments();
     } elseif ($sub === 'aom-branches') {
         $hom->aomBranches();
     } elseif (strpos($sub, 'edit-aom-branches') === 0) {

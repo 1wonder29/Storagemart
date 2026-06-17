@@ -17,6 +17,12 @@ function it_rating_stars_display(int $rating): string
     return str_repeat('★', $rating) . str_repeat('☆', max(0, 5 - $rating));
 }
 
+function it_rating_class(int $rating): string
+{
+    $rating = max(1, min(5, $rating));
+    return 'rating-' . $rating;
+}
+
 function it_perf_label(float $avg): string
 {
     if ($avg >= 4.5) return 'Excellent';
@@ -28,7 +34,7 @@ function it_perf_label(float $avg): string
 
 $barColors = [1 => 'bar-1', 2 => 'bar-2', 3 => 'bar-3', 4 => 'bar-4', 5 => 'bar-5'];
 $chartData = [];
-for ($i = 1; $i <= 5; $i++) {
+for ($i = 5; $i >= 1; $i--) {
     $chartData[$i] = $distributionMap[$i] ?? 0;
 }
 $hasChartData = array_sum($chartData) > 0;
@@ -180,9 +186,10 @@ $hasChartData = array_sum($chartData) > 0;
                                 <th>Category</th>
                                 <th>Rater</th>
                                 <th>Department</th>
+                                <th>Technician</th>
                                 <th>Rating</th>
-                                <th>Comment</th>
                                 <th>Date</th>
+                                <th class="text-center action-col">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -191,6 +198,7 @@ $hasChartData = array_sum($chartData) > 0;
                                 $starRating = (int)($rating['rating'] ?? 0);
                                 $comment = (string)($rating['comment'] ?? '');
                                 $dept = (string)($rating['department'] ?? '');
+                                $dateLabel = !empty($rating['created_at']) ? date('M d, Y g:i A', strtotime($rating['created_at'])) : '—';
                             ?>
                             <tr>
                                 <td>
@@ -206,18 +214,29 @@ $hasChartData = array_sum($chartData) > 0;
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="star-rating">
-                                        <?= it_rating_stars_display($starRating) ?>
-                                        <span class="rating-num"><?= $starRating ?>/5</span>
-                                    </span>
+                                    <span class="tech-name"><?= htmlspecialchars($displayName) ?></span>
                                 </td>
                                 <td>
-                                    <span class="comment-text" title="<?= htmlspecialchars($comment) ?>">
-                                        <?= htmlspecialchars($comment !== '' ? (strlen($comment) > 60 ? substr($comment, 0, 60) . '…' : $comment) : '—') ?>
+                                    <span class="rating-stars <?= htmlspecialchars(it_rating_class($starRating)) ?>">
+                                        <?= it_rating_stars_display($starRating) ?>
                                     </span>
                                 </td>
                                 <td class="date-cell">
-                                    <?= !empty($rating['created_at']) ? date('M d, Y', strtotime($rating['created_at'])) : '—' ?>
+                                    <?= htmlspecialchars($dateLabel) ?>
+                                </td>
+                                <td class="text-center action-col">
+                                    <button type="button"
+                                        class="btn-rating-details"
+                                        title="View rating details"
+                                        data-ticket="<?= htmlspecialchars($rating['ticket_number'] ?? '') ?>"
+                                        data-rating="<?= $starRating ?>"
+                                        data-rater="<?= htmlspecialchars($raterName !== '' ? $raterName : '—') ?>"
+                                        data-technician="<?= htmlspecialchars($displayName) ?>"
+                                        data-date="<?= htmlspecialchars($dateLabel) ?>"
+                                        data-comment="<?= htmlspecialchars($comment, ENT_QUOTES, 'UTF-8') ?>">
+                                        <span class="btn-rating-details-icon"><i class="fas fa-comment-dots"></i></span>
+                                        <span class="btn-rating-details-label">View Details</span>
+                                    </button>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -244,6 +263,58 @@ $hasChartData = array_sum($chartData) > 0;
     <i class="fas fa-angle-up"></i>
 </a>
 
+<div class="modal fade it-rating-details-modal" id="ratingDetailsModal" tabindex="-1" role="dialog" aria-labelledby="ratingDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <p class="rating-details-eyebrow mb-1">Ticket Rating</p>
+                    <h5 class="modal-title mb-0" id="ratingDetailsModalLabel">Rating Details</h5>
+                </div>
+                <button type="button" class="close rating-details-close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="rating-details-summary">
+                    <div class="rating-details-summary-item">
+                        <span class="summary-label">Ticket #</span>
+                        <span class="summary-value ticket-id" id="ratingDetailTicket"></span>
+                    </div>
+                    <div class="rating-details-summary-item">
+                        <span class="summary-label">Rating</span>
+                        <span class="summary-value" id="ratingDetailStars"></span>
+                    </div>
+                    <div class="rating-details-summary-item">
+                        <span class="summary-label">Rater</span>
+                        <span class="summary-value" id="ratingDetailRater"></span>
+                    </div>
+                    <div class="rating-details-summary-item">
+                        <span class="summary-label">Technician</span>
+                        <span class="summary-value tech-name" id="ratingDetailTechnician"></span>
+                    </div>
+                    <div class="rating-details-summary-item rating-details-summary-item-wide">
+                        <span class="summary-label">Submitted</span>
+                        <span class="summary-value" id="ratingDetailDate"></span>
+                    </div>
+                </div>
+                <div class="rating-details-comment">
+                    <div class="rating-details-comment-head">
+                        <i class="fas fa-quote-left"></i>
+                        <span>Feedback Comment</span>
+                    </div>
+                    <p id="ratingDetailComment" class="mb-0"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-rating-modal-close" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
@@ -267,11 +338,11 @@ $hasChartData = array_sum($chartData) > 0;
     new Chart(ctx.getContext('2d'), {
         type: 'bar',
         data: {
-            labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+            labels: ['5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star'],
             datasets: [{
                 label: 'Ratings',
                 data: <?= json_encode(array_values($chartData)) ?>,
-                backgroundColor: ['#e74c3c', '#f39c12', '#f6c23e', '#a9dfbf', '#27ae60'],
+                backgroundColor: ['#27ae60', '#58d68d', '#f6c23e', '#f39c12', '#e74a3b'],
                 borderRadius: 6,
                 borderSkipped: false
             }]
@@ -305,10 +376,35 @@ $hasChartData = array_sum($chartData) > 0;
 <?php if (!empty($ratings)): ?>
 <script>
 $(document).ready(function () {
+    function ratingStars(rating) {
+        return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+    }
+
+    $(document).on('click', '.btn-rating-details', function() {
+        var $btn = $(this);
+        var rating = parseInt($btn.attr('data-rating'), 10) || 0;
+        var comment = String($btn.attr('data-comment') || '').trim();
+        var ticket = $btn.attr('data-ticket') || '—';
+
+        $('#ratingDetailsModalLabel').text('Ticket ' + ticket);
+        $('#ratingDetailTicket').text(ticket);
+        $('#ratingDetailStars').html(
+            '<span class="rating-stars ' + 'rating-' + rating + '">' + ratingStars(rating) + '</span>'
+        );
+        $('#ratingDetailRater').text($btn.attr('data-rater') || '—');
+        $('#ratingDetailTechnician').text($btn.attr('data-technician') || '—');
+        $('#ratingDetailDate').text($btn.attr('data-date') || '—');
+        $('#ratingDetailComment')
+            .text(comment !== '' ? comment : 'No comment was provided for this rating.')
+            .toggleClass('is-empty', comment === '');
+
+        $('#ratingDetailsModal').modal('show');
+    });
+
     $('#ratingsTable').DataTable({
         pageLength: 10,
         order: [[6, 'desc']],
-        columnDefs: [{ targets: [5], orderable: false }]
+        columnDefs: [{ targets: [7], orderable: false, className: 'text-center action-col' }]
     });
 });
 </script>

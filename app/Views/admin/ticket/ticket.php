@@ -239,6 +239,12 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                                    class="btn btn-sm btn-outline-primary" title="View full detail">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
+                                                <?php if (strcasecmp($status, 'resolved') === 0): ?>
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/tickets/download-record?id=<?= $ticketId ?>"
+                                                   class="btn btn-sm btn-success" title="Generate technical report">
+                                                    <i class="fas fa-file-word"></i>
+                                                </a>
+                                                <?php endif; ?>
                                                 <button type="button" class="btn btn-sm btn-outline-info viewBtn"
                                                     title="View history"
                                                     data-ticketid="<?= $ticketId ?>"
@@ -269,12 +275,6 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                                                 Assignment Locked
                                                             </span>
                                                         <?php endif; ?>
-                                                        <?php
-                                                        $ticketStatus = $status;
-                                                        $ticketNumber = (string) ($row['ticket_number'] ?? '');
-                                                        $btnClass = 'dropdown-item text-danger';
-                                                        require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
-                                                        ?>
                                                     </div>
                                                 </div>
                                             </div>
@@ -411,7 +411,6 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/edit_ticket_action.js"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
-    <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 
 </html>

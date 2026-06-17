@@ -267,12 +267,6 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                                             data-ticket-id="<?= $ticketId ?>">
                                                             <i class="fas fa-times mr-2"></i> Decline
                                                         </button>
-                                                        <button type="button" class="dropdown-item text-danger cancelTicketBtn"
-                                                            data-ticket-id="<?= $ticketId ?>"
-                                                            data-ticket-num="<?= htmlspecialchars((string) ($row['ticket_number'] ?? '')) ?>"
-                                                            data-ticket-status="<?= htmlspecialchars($status) ?>">
-                                                            <i class="fas fa-ban mr-2"></i> Cancel Ticket
-                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -416,7 +410,6 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-pendings.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
-    <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 
 </html>

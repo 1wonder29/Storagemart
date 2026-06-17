@@ -51,7 +51,6 @@ class UniformController extends AuthController {
             $limit = 20;
             $offset = ($page - 1) * $limit;
 
-            $this->uniformModel->syncPendingReturnCounts();
             $uniforms = $this->uniformModel->getAllUniforms($offset, $limit);
             $totalCount = $this->uniformModel->getTotalUniformCount();
             $totalPages = ceil($totalCount / $limit);
@@ -85,7 +84,6 @@ class UniformController extends AuthController {
                 'Reorder Level',
                 'Stock Status',
                 'Status',
-                'Pending Return',
                 'Damaged',
                 'Lost',
                 'Supplier',
@@ -96,19 +94,16 @@ class UniformController extends AuthController {
             $rows = [];
             $totals = [
                 'in_stock' => 0,
-                'pending_return' => 0,
                 'damaged' => 0,
                 'lost' => 0,
             ];
 
             foreach ($uniforms as $uniform) {
                 $inStock = (int) ($uniform['quantity_in_stock'] ?? 0);
-                $pending = max(0, (int) ($uniform['quantity_returned'] ?? 0));
                 $damaged = (int) ($uniform['quantity_damaged'] ?? 0);
                 $lost = (int) ($uniform['quantity_lost'] ?? 0);
 
                 $totals['in_stock'] += $inStock;
-                $totals['pending_return'] += $pending;
                 $totals['damaged'] += $damaged;
                 $totals['lost'] += $lost;
 
@@ -120,7 +115,6 @@ class UniformController extends AuthController {
                     (int) ($uniform['reorder_level'] ?? 0),
                     $uniform['stock_status'] ?? '',
                     strtoupper($uniform['status'] ?? 'ACTIVE'),
-                    $pending,
                     $damaged,
                     $lost,
                     $uniform['supplier'] ?? '',
@@ -139,7 +133,6 @@ class UniformController extends AuthController {
                     '',
                     '',
                     '',
-                    $totals['pending_return'],
                     $totals['damaged'],
                     $totals['lost'],
                     '',
@@ -721,15 +714,40 @@ class UniformController extends AuthController {
                 $this->redirect('/hr/employees');
             }
 
-            // Capture condition and remarks from POST
+            // Capture return quantity breakdown by condition
+            $returnBreakdown = [
+                'GOOD'    => max(0, (int) ($_POST['return_qty_good'] ?? 0)),
+                'DAMAGED' => max(0, (int) ($_POST['return_qty_damaged'] ?? 0)),
+                'LOST'    => max(0, (int) ($_POST['return_qty_lost'] ?? 0)),
+            ];
+            $issuedQty = (int) ($assignment['quantity_issued'] ?? 0);
+            $breakdownTotal = array_sum($returnBreakdown);
+
+            if ($issuedQty <= 0) {
+                $_SESSION['errorMessage'] = 'Invalid issued quantity.';
+                $this->redirect('/hr/employees');
+            }
+
+            if ($breakdownTotal <= 0 || $breakdownTotal > $issuedQty) {
+                $_SESSION['errorMessage'] = 'Returned quantity breakdown must be between 1 and ' . $issuedQty . '.';
+                $this->redirect('/hr/uniforms/return_confirm/' . $assignmentId);
+            }
+
+            // Fallback single-condition support (older form submissions)
             $condition = trim($_POST['condition_upon_return'] ?? 'GOOD');
             $remarks = trim($_POST['remarks'] ?? '');
 
-            $result = $this->uniformModel->returnAssignment($assignmentId, (int) ($_SESSION['account_id'] ?? 0), $condition, $remarks);
+            $result = $this->uniformModel->returnAssignment(
+                $assignmentId,
+                (int) ($_SESSION['account_id'] ?? 0),
+                $condition,
+                $remarks,
+                $returnBreakdown
+            );
 
             if ($result) {
                 $this->hrModel->logAction('RETURNED_UNIFORM', $assignment['employee_id'] ?? null, $assignment['uniform_id'] ?? null, $_SESSION['account_id'] ?? 0,
-                    "Returned assignment: {$assignmentId} (Condition: {$condition})");
+                    "Returned assignment: {$assignmentId} (Breakdown total: {$breakdownTotal})");
                 $_SESSION['successMessage'] = 'Uniform returned successfully.';
             } else {
                 $_SESSION['errorMessage'] = 'Failed to process return.';
@@ -750,59 +768,18 @@ class UniformController extends AuthController {
     }
 
     /**
-     * Show pending returns for approval
+     * Legacy endpoint kept for compatibility.
      */
     public function pendingReturns() {
         $this->requireHR();
-
-        try {
-            $this->uniformModel->syncPendingReturnCounts();
-            $pendingReturns = $this->uniformModel->getPendingReturns();
-            $notifications = $this->notificationModel->getLatest($_SESSION['account_id'] ?? 0, 10);
-            require __DIR__ . '/../../Views/hr/uniforms/pending_returns.php';
-        } catch (\Throwable $e) {
-            error_log('UniformController::pendingReturns error: ' . $e->getMessage());
-            $_SESSION['errorMessage'] = 'Error loading pending returns: ' . $e->getMessage();
-            $this->redirect('/hr/uniforms');
-        }
+        $this->redirect('/hr/uniforms');
     }
 
     /**
-     * Approve or reject a pending return
+     * Legacy endpoint kept for compatibility.
      */
     public function approveReturn() {
         $this->requireHR();
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('/hr/uniforms/pending-returns');
-        }
-
-        try {
-            $returnId = (int) ($_POST['return_id'] ?? 0);
-            $action = trim($_POST['action'] ?? 'approve');
-
-            if ($returnId <= 0) {
-                $_SESSION['errorMessage'] = 'Invalid return ID.';
-                $this->redirect('/hr/uniforms/pending-returns');
-            }
-
-            $approvalStatus = ($action === 'approve') ? 'APPROVED' : 'REJECTED';
-            $result = $this->uniformModel->approveReturn($returnId, $approvalStatus, (int) ($_SESSION['account_id'] ?? 0));
-
-            if ($result) {
-                $status = ($action === 'approve') ? 'approved' : 'rejected';
-                $this->hrModel->logAction('PROCESSED_UNIFORM_RETURN', null, null, $_SESSION['account_id'] ?? 0,
-                    "Return #{$returnId} has been {$status}");
-                $_SESSION['successMessage'] = "Return has been {$status} successfully.";
-            } else {
-                $_SESSION['errorMessage'] = 'Failed to process return approval.';
-            }
-
-            $this->redirect('/hr/uniforms/pending-returns');
-        } catch (\Throwable $e) {
-            error_log('UniformController::approveReturn error: ' . $e->getMessage());
-            $_SESSION['errorMessage'] = 'Error processing approval: ' . $e->getMessage();
-            $this->redirect('/hr/uniforms/pending-returns');
-        }
+        $this->redirect('/hr/uniforms');
     }
 }

@@ -229,7 +229,7 @@ $noAssetsTitle = 'You need at least one assigned asset to create a ticket.';
 </script>
 
 <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
-
 <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
+
 </body>
 </html>

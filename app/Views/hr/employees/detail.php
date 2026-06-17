@@ -5,34 +5,38 @@ $base = rtrim(BASE_URL, '/');
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Storage Mart | Employee Detail</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-pages.css" rel="stylesheet">
 </head>
 <body id="page-top">
     <div id="wrapper">
     <?php 
     $activePage = 'employees';
     require_once dirname(dirname(__DIR__)) . '/partials/hr/sidebar_topbar.php';?>
-        <div class="container-fluid">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <a href="<?= htmlspecialchars($base) ?>/hr/employees" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back
-                    </a>
+        <div class="container-fluid hr-dashboard-page hr-employee-detail-page">
+            <div class="page-hero">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1><i class="fas fa-id-badge mr-2"></i><?= htmlspecialchars(($employee['firstname'] ?? '') . ' ' . ($employee['lastname'] ?? '')) ?></h1>
+                        <p>Employee profile, assets, and uniform accountability overview.</p>
+                    </div>
+                    <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
+                        <a href="<?= htmlspecialchars($base) ?>/hr/employees" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back to Employees
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <h1 class="h3 mb-4 text-gray-800">
-                <?= htmlspecialchars(($employee['firstname'] ?? '') . ' ' . ($employee['lastname'] ?? '')) ?> 
-                <small class="text-muted">(<?= htmlspecialchars((string) ($employee['employee_id'] ?? '')) ?>)</small>
-            </h1>
-
             <?php if (!empty($_SESSION['successMessage'])): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <div class="alert alert-success alert-dismissible fade show alert-modern" role="alert">
                     <?= htmlspecialchars($_SESSION['successMessage']) ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -42,7 +46,7 @@ $base = rtrim(BASE_URL, '/');
             <?php endif; ?>
 
             <?php if (!empty($_SESSION['errorMessage'])): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <div class="alert alert-danger alert-dismissible fade show alert-modern" role="alert">
                     <?= htmlspecialchars($_SESSION['errorMessage']) ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -52,44 +56,69 @@ $base = rtrim(BASE_URL, '/');
             <?php endif; ?>
 
             <!-- Employee Info -->
-            <div class="card shadow mb-4">
+            <div class="card shadow mb-4 detail-card">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Employee Information</h6>
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user mr-1"></i> Employee Information</h6>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>Name:</strong> <?= htmlspecialchars(($employee['firstname'] ?? '') . ' ' . ($employee['lastname'] ?? '')) ?></p>
-                            <p><strong>Position:</strong> <?= htmlspecialchars($employee['position'] ?? '') ?></p>
-                            <p><strong>Department:</strong> <?= htmlspecialchars($employee['department'] ?? '') ?></p>
-                            <p><strong>Branch:</strong> <?= htmlspecialchars($employee['branchName'] ?? 'N/A') ?></p>
+                            <div class="detail-grid-item">
+                                <span class="detail-label">Name</span>
+                                <div class="detail-value"><?= htmlspecialchars(($employee['firstname'] ?? '') . ' ' . ($employee['lastname'] ?? '')) ?></div>
+                            </div>
+                            <div class="detail-grid-item">
+                                <span class="detail-label">Position</span>
+                                <div class="detail-value"><?= htmlspecialchars($employee['position'] ?? '') ?></div>
+                            </div>
+                            <div class="detail-grid-item">
+                                <span class="detail-label">Department</span>
+                                <div class="detail-value"><?= htmlspecialchars($employee['department'] ?? '') ?></div>
+                            </div>
+                            <div class="detail-grid-item">
+                                <span class="detail-label">Branch</span>
+                                <div class="detail-value"><?= htmlspecialchars($employee['branchName'] ?? 'N/A') ?></div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Email:</strong> <?= htmlspecialchars($employee['email'] ?? '') ?></p>
-                            <p><strong>User Type:</strong> <span class="badge bg-primary"><?= htmlspecialchars($employee['usertype'] ?? '') ?></span></p>
-                            <p><strong>Status:</strong> <span class="badge bg-<?= ($employee['status'] === 'ACTIVE') ? 'success' : 'danger' ?>"><?= htmlspecialchars($employee['status'] ?? '') ?></span></p>
-                            <p><strong>Date Created:</strong> <?= date('M d, Y', strtotime($employee['datecreated'])) ?></p>
+                            <div class="detail-grid-item">
+                                <span class="detail-label">Email</span>
+                                <div class="detail-value"><?= htmlspecialchars($employee['email'] ?? '') ?></div>
+                            </div>
+                            <div class="detail-grid-item">
+                                <span class="detail-label">User Type</span>
+                                <div class="detail-value"><span class="badge bg-primary"><?= htmlspecialchars($employee['usertype'] ?? '') ?></span></div>
+                            </div>
+                            <div class="detail-grid-item">
+                                <span class="detail-label">Status</span>
+                                <div class="detail-value"><span class="badge bg-<?= ($employee['status'] === 'ACTIVE') ? 'success' : 'danger' ?>"><?= htmlspecialchars($employee['status'] ?? '') ?></span></div>
+                            </div>
+                            <div class="detail-grid-item">
+                                <span class="detail-label">Date Created</span>
+                                <div class="detail-value"><?= !empty($employee['datecreated']) ? date('M d, Y', strtotime($employee['datecreated'])) : '-' ?></div>
+                            </div>
                         </div>
                     </div>
                     <hr>
-                    <a href="<?= htmlspecialchars($base) ?>/hr/employees/accountability/<?= $employee['employee_id'] ?>" 
-                       class="btn btn-success">
+                    <div class="actions-inline">
+                    <a href="<?= htmlspecialchars($base) ?>/hr/employees/accountability/<?= $employee['employee_id'] ?>" class="btn btn-success">
                         <i class="fas fa-download"></i> Download Accountability Form
                     </a>
+                    </div>
                 </div>
             </div>
 
             <!-- IT Assets -->
-            <div class="card shadow mb-4">
+            <div class="card shadow mb-4 data-card">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Assigned IT Assets</h6>
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-laptop mr-1"></i> Assigned IT Assets</h6>
                 </div>
                 <div class="card-body">
                     <?php if (empty($assets)): ?>
                         <p class="text-muted">No assets assigned.</p>
                     <?php else: ?>
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
+                            <table class="table table-sm table-hover mb-0">
                                 <thead>
                                     <tr>
                                         <th>Asset Code</th>
@@ -130,16 +159,16 @@ $base = rtrim(BASE_URL, '/');
             </div>
 
             <!-- Current Uniforms -->
-            <div class="card shadow mb-4">
+            <div class="card shadow mb-4 data-card">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Current Uniforms</h6>
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-tshirt mr-1"></i> Current Uniforms</h6>
                 </div>
                 <div class="card-body">
                     <?php if (empty($uniforms)): ?>
                         <p class="text-muted">No uniforms assigned.</p>
                     <?php else: ?>
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
+                            <table class="table table-sm table-hover mb-0">
                                 <thead>
                                     <tr>
                                         <th>Type</th>
@@ -173,13 +202,13 @@ $base = rtrim(BASE_URL, '/');
 
             <!-- Uniform History -->
             <?php if (!empty($uniformHistory)): ?>
-            <div class="card shadow mb-4">
+            <div class="card shadow mb-4 data-card">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Uniform History (All)</h6>
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history mr-1"></i> Uniform History (All)</h6>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
+                        <table class="table table-sm table-hover mb-0">
                             <thead>
                                 <tr>
                                     <th>Type</th>

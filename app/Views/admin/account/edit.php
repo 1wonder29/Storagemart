@@ -22,6 +22,7 @@ $base = rtrim(BASE_URL, '/');
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-users.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
 
@@ -35,25 +36,29 @@ $base = rtrim(BASE_URL, '/');
             require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
 
                 <!-- Begin Page Content -->
-                <div class="container-fluid">
+                <div class="container-fluid admin-users-page account-edit-page">
+                    <div class="page-hero hero-accounts">
+                        <div class="row align-items-center">
+                            <div class="col-12">
+                                <h1><i class="fas fa-user-edit mr-2"></i>Update Account</h1>
+                                <p>Update login credentials, role assignments, and employee profile details.</p>
+                            </div>
+                        </div>
+                    </div>
 
-                    <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800"></h1>
-
-
-                    <!-- DataTales Example -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Update Account</h6>
+                    <div class="card data-list-card shadow mb-4">
+                        <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-id-card-alt mr-1"></i> Account Information
+                            </h6>
                         </div>
                         <div class="card-body">
-                            <div class="container mt-4">
-                                <form action="<?= htmlspecialchars($base) ?>/admin/account/edit" method="POST">
+                            <form class="account-edit-form" action="<?= htmlspecialchars($base) ?>/admin/account/edit" method="POST">
                                     <input type="hidden" name="account_id" value="<?= htmlspecialchars($account['account_id'] ?? '') ?>">
                                     <input type="hidden" name="employee_id" value="<?= htmlspecialchars($account ['employee_id'] ?? '') ?>">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                                    <h1>Account Details</h1>
-                                    <div class ="row mb-5">
+                                    <h5 class="form-section-title">Account Details</h5>
+                                    <div class ="row form-row-gap">
                                         <div class = "col-md-6">
                                             <label for="username" class="form-label">Username</label>
                                             <input type="text" class ="form-control" id ="username" name="username" placeholder="Username" value="<?= htmlspecialchars($account['username'] ?? '') ?>" required>
@@ -72,7 +77,7 @@ $base = rtrim(BASE_URL, '/');
 
                                     </div>
 
-                                    <div class="row mb-5">
+                                    <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="usertype" class="form-label">User Type</label>
                                         <select id="usertype" name="usertype" class="form-control" required>
@@ -97,8 +102,8 @@ $base = rtrim(BASE_URL, '/');
                                         </div>
                                     </div>
 
-                                    <h1>Employee Details </h1>
-                                    <div class ="row mb-5">
+                                    <h5 class="form-section-title">Employee Details</h5>
+                                    <div class ="row form-row-gap">
                                             <div class= "col-md-6">
                                                 <label for="employee_id" class="form-label">Employee ID</label>
                                                 <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Employee ID" value="<?= htmlspecialchars($employee['employee_id'] ?? '') ?>" readonly> 
@@ -119,7 +124,7 @@ $base = rtrim(BASE_URL, '/');
 
                                                 </div>
                                             </div>
-                                    <div class="row mb-5">
+                                    <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="last-name" class="form-label">Last Name</label>
                                         <input type="text" class="form-control" id="last-name" name="last-name" placeholder="Last name" value="<?= htmlspecialchars($employee['lastname'] ?? '') ?>" required>
@@ -130,7 +135,7 @@ $base = rtrim(BASE_URL, '/');
                                     </div>
                                     </div>
 
-                                    <div class="row mb-5">
+                                    <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="middle-name" class="form-label">Middle Name</label>
                                         <input type="text" class="form-control" id="middle-name" name="middle-name" placeholder="Middle name" value="<?= htmlspecialchars($employee['middlename'] ?? '') ?>">
@@ -151,16 +156,21 @@ $base = rtrim(BASE_URL, '/');
                                         </select>
                                     </div>
                                     </div>
-                                    <div class="row mb-5">
+                                    <div class="row form-row-gap">
                                         <div class="col-md-6">
                                             <label for="email" class="form-label">Email</label>
                                             <input type="text" class="form-control" id="email" name="email" placeholder="Email" value="<?= htmlspecialchars($employee['email'] ?? '') ?>" required>
                                         </div>
                                     </div>
-                                    <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
-                                    <a href="<?= htmlspecialchars($base) ?>/admin/account" class="btn btn-danger">Cancel</a>
-                                    </form>
-                            </div>
+                                    <div class="form-actions d-flex justify-content-end w-100">
+                                        <button type="submit" class="btn btn-primary" name="btnSubmit">
+                                            <i class="fas fa-save mr-1"></i> Save Changes
+                                        </button>
+                                        <a href="<?= htmlspecialchars($base) ?>/admin/account" class="btn btn-outline-danger ml-2">
+                                            <i class="fas fa-times mr-1"></i> Cancel
+                                        </a>
+                                    </div>
+                            </form>
 
                         </div>
                     </div>

@@ -118,9 +118,6 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
             <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assign" class="quick-action-btn qa-warning">
                 <i class="fas fa-user-tag"></i> Assign Uniform
             </a>
-            <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/pending-returns" class="quick-action-btn qa-secondary">
-                <i class="fas fa-undo"></i> Pending Returns
-            </a>
         </div>
 
         <!-- Chart & Recent Activity -->

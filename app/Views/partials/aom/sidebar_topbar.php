@@ -8,8 +8,10 @@ $loggedDisplayName = trim($loggedFirstname . ' ' . $loggedLastname) ?: 'AOM';
 $base = rtrim(BASE_URL, '/');
 ?>
 
+<?php require_once __DIR__ . '/../sidebar_styles.php'; ?>
+
 <!-- Sidebar -->
-<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion sidebar-modern" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" 
@@ -58,6 +60,22 @@ $base = rtrim(BASE_URL, '/');
         </a>
     </li>
 
+    <!-- My Ticket -->
+    <li class="nav-item <?= ($activePage === 'create-my-ticket') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/aom/tickets/create/my">
+            <i class="fas fa-user"></i>
+            <span>My Ticket</span>
+        </a>
+    </li>
+
+    <!-- Employee Ticket -->
+    <li class="nav-item <?= ($activePage === 'create-employee-ticket') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/aom/tickets/create/employee">
+            <i class="fas fa-plus-circle"></i>
+            <span>Employee Ticket</span>
+        </a>
+    </li>
+
     <hr class="sidebar-divider d-none d-md-block">
 
     <div class="text-center d-none d-md-inline">
@@ -85,54 +103,7 @@ $base = rtrim(BASE_URL, '/');
 
                 <div class="topbar-divider d-none d-sm-block"></div>
                 <!-- Notifications -->
-                <li class="nav-item dropdown no-arrow mx-1">
-                    <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown"
-                    role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-bell fa-fw"></i>
-
-                        <?php if ($count > 0): ?>
-                            <span class="badge badge-danger badge-counter">
-                                <?= $count > 9 ? '9+' : $count ?>
-                            </span>
-                        <?php endif; ?>
-                    </a>
-
-                    <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                        aria-labelledby="alertsDropdown">
-
-                        <h6 class="dropdown-header">Notifications</h6>
-
-                        <?php if (empty($notifications)): ?>
-                            <div class="dropdown-item text-center small text-gray-500">
-                                No new notifications
-                            </div>
-                        <?php else: ?>
-                            <div class="notification-scroll">
-                                <?php foreach ($notifications as $n): ?>
-                                    <a class="dropdown-item d-flex align-items-center notification-item <?= ($n['is_read'] ?? 0) ? 'notification-read' : 'notification-unread' ?>"
-                                       href="<?= htmlspecialchars($n['action_url'] ?? '#') ?>"
-                                       data-id="<?= (int)($n['id'] ?? 0) ?>">
-                                        <div class="mr-3">
-                                            <div class="icon-circle bg-<?= htmlspecialchars($n['bg_color'] ?? 'primary') ?>">
-                                                <i class="fas <?= htmlspecialchars($n['icon'] ?? 'fa-bell') ?> text-white"></i>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <?php
-                                            $createdAt = $n['created_at'] ?? null;
-                                            $createdLabel = $createdAt ? date('M d, Y H:i', strtotime($createdAt)) : '';
-                                            ?>
-                                            <div class="small text-gray-500"><?= htmlspecialchars($createdLabel) ?></div>
-                                            <span class="font-weight-bold"><?= htmlspecialchars($n['message'] ?? '') ?></span>
-                                        </div>
-                                    </a>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-
-                        <a class="dropdown-item text-center small text-gray-500" href="<?= htmlspecialchars($base) ?>/notifications">Show All Alerts</a>
-                    </div>
-                </li>
+                <?php require_once __DIR__ . '/../notification_dropdown.php'; ?>
 
                 <div class="topbar-divider d-none d-sm-block"></div>
 

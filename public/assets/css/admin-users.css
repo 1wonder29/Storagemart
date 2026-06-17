@@ -306,6 +306,80 @@
   border-radius: 0.35rem;
 }
 
+/* Account create/edit form */
+.admin-users-page .account-edit-form .form-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6e707e;
+  margin-bottom: 0.35rem;
+}
+
+.admin-users-page .account-edit-form .form-control,
+.admin-users-page .account-edit-form .input-group-text,
+.admin-users-page .account-edit-form select.form-control {
+  border-radius: 0.45rem;
+  border-color: #d1d3e2;
+  font-size: 0.9rem;
+}
+
+.admin-users-page .account-edit-form .form-control:focus,
+.admin-users-page .account-edit-form select.form-control:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.15rem rgba(78, 115, 223, 0.14);
+}
+
+.admin-users-page .account-edit-form .input-group-text {
+  background: #f8f9fc;
+  color: #5a5c69;
+}
+
+.admin-users-page .account-edit-page .form-section-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #858796;
+  margin: 1.25rem 0 0.9rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid #eaecf4;
+}
+
+.admin-users-page .account-edit-page .form-section-title:first-of-type {
+  margin-top: 0;
+}
+
+.admin-users-page .account-edit-page .form-row-gap {
+  margin-bottom: 1.1rem;
+}
+
+.admin-users-page .account-edit-page .form-actions {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eaecf4;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-users-page .account-edit-page .form-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.admin-users-page .account-edit-page .form-actions .btn i {
+  margin-right: 0 !important;
+  line-height: 1;
+}
+
 @media (max-width: 991px) {
   .admin-users-page .hero-stat {
     margin-top: 0.75rem;

@@ -81,8 +81,11 @@ $ticketStatusClasses = [
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <a href="<?= htmlspecialchars($base) ?>/aom/tickets/create" class="quick-action-btn qa-primary">
-                <i class="fas fa-plus"></i> Create Ticket
+            <a href="<?= htmlspecialchars($base) ?>/aom/tickets/create/my" class="quick-action-btn qa-info">
+                <i class="fas fa-user"></i> My Ticket
+            </a>
+            <a href="<?= htmlspecialchars($base) ?>/aom/tickets/create/employee" class="quick-action-btn qa-primary">
+                <i class="fas fa-plus"></i> Employee Ticket
             </a>
             <a href="<?= htmlspecialchars($base) ?>/aom/employees" class="quick-action-btn qa-success">
                 <i class="fas fa-users"></i> View Employees

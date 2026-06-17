@@ -7,6 +7,23 @@
 /** @var string $role */
 
 $base = rtrim($base ?? (defined('BASE_URL') ? BASE_URL : '/'), '/');
+$totalAlerts = count($notifications ?? []);
+$unreadCount = (int) ($count ?? 0);
+$readCount = max(0, $totalAlerts - $unreadCount);
+
+if (!function_exists('tms_notification_time')) {
+    function tms_notification_time(?string $createdAt): string
+    {
+        if (!$createdAt) {
+            return '';
+        }
+        $ts = strtotime($createdAt);
+        if ($ts === false) {
+            return '';
+        }
+        return date('M d, Y, g:i A', $ts);
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,6 +36,7 @@ $base = rtrim($base ?? (defined('BASE_URL') ? BASE_URL : '/'), '/');
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
 </head>
 <body id="page-top">
 <div id="wrapper">
@@ -50,43 +68,81 @@ $base = rtrim($base ?? (defined('BASE_URL') ? BASE_URL : '/'), '/');
     }
     ?>
 
-    <div class="container-fluid">
-        <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Alerts Center</h1>
-            <span class="small text-muted">
-                Unread: <?= (int)($count ?? 0) ?>
-            </span>
+    <div class="container-fluid alerts-center-page">
+        <div class="page-hero hero-alerts">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h1><i class="fas fa-bell mr-2"></i>Alerts Center</h1>
+                    <p>Stay on top of new tickets, comments, and updates across the system.</p>
+                </div>
+                <div class="col-lg-5">
+                    <div class="row mt-3 mt-lg-0">
+                        <div class="col-4">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int) $totalAlerts ?></div>
+                                <div class="stat-label">Shown</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="hero-stat">
+                                <div class="stat-value" id="alertsUnreadStat"><?= (int) $unreadCount ?></div>
+                                <div class="stat-label">Unread</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="hero-stat">
+                                <div class="stat-value" id="alertsReadStat"><?= (int) $readCount ?></div>
+                                <div class="stat-label">Read</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Latest Alerts</h6>
-            </div>
-            <div class="card-body p-0">
+        <div class="alerts-feed-wrap">
+            <div class="alerts-feed-card shadow">
+                <div class="alerts-feed-header">
+                    <div class="alerts-feed-title">
+                        <i class="fas fa-inbox"></i>
+                        <span>Latest Alerts</span>
+                    </div>
+                    <?php if ($unreadCount > 0): ?>
+                        <span class="alerts-unread-pill" id="alertsUnreadPill">
+                            <?= $unreadCount > 9 ? '9+' : $unreadCount ?> unread
+                        </span>
+                    <?php else: ?>
+                        <span class="alerts-unread-pill d-none" id="alertsUnreadPill">0 unread</span>
+                    <?php endif; ?>
+                </div>
+
                 <?php if (empty($notifications)): ?>
-                    <div class="p-4 text-center text-muted">
-                        No alerts yet.
+                    <div class="notification-empty">
+                        <i class="fas fa-check-circle d-block mb-2"></i>
+                        You're all caught up — no alerts yet.
                     </div>
                 <?php else: ?>
-                    <div class="list-group list-group-flush">
-                        <?php foreach ($notifications as $n): ?>
-                            <a class="list-group-item list-group-item-action d-flex align-items-center notification-item <?= !empty($n['is_read']) ? 'notification-read' : 'notification-unread' ?>"
-                               href="<?= htmlspecialchars($n['action_url'] ?? '#') ?>"
-                               data-id="<?= (int)$n['id'] ?>">
-                                <div class="mr-3">
-                                    <div class="icon-circle bg-<?= htmlspecialchars($n['bg_color'] ?? 'primary') ?>">
-                                        <i class="fas <?= htmlspecialchars($n['icon'] ?? 'fa-bell') ?> text-white"></i>
-                                    </div>
+                    <div class="alerts-feed-list" id="alertsFeedList">
+                        <?php foreach ($notifications as $n):
+                            $isRead = !empty($n['is_read']);
+                            $bgColor = (string) ($n['bg_color'] ?? 'primary');
+                            $icon = (string) ($n['icon'] ?? 'fa-bell');
+                        ?>
+                            <a class="notification-item <?= $isRead ? 'notification-read' : 'notification-unread' ?>"
+                               href="<?= htmlspecialchars((string) ($n['action_url'] ?? '#')) ?>"
+                               data-id="<?= (int) ($n['id'] ?? 0) ?>"
+                               data-related="<?= (int) ($n['related_id'] ?? 0) ?>">
+                                <span class="notification-indicator" aria-hidden="true"></span>
+                                <div class="notification-icon bg-<?= htmlspecialchars($bgColor) ?>">
+                                    <i class="fas <?= htmlspecialchars($icon) ?>"></i>
                                 </div>
-                                <div class="flex-grow-1">
-                                    <div class="small text-gray-500">
-                                        <?= !empty($n['created_at']) ? date('F d, Y h:i A', strtotime($n['created_at'])) : '' ?>
-                                    </div>
-                                    <div><?= htmlspecialchars($n['message'] ?? '') ?></div>
+                                <div class="notification-body">
+                                    <div class="notification-message"><?= htmlspecialchars((string) ($n['message'] ?? '')) ?></div>
+                                    <div class="notification-time"><?= htmlspecialchars(tms_notification_time($n['created_at'] ?? null)) ?></div>
                                 </div>
-                                <div class="ml-2 text-gray-400">
+                                <span class="alerts-feed-chevron" aria-hidden="true">
                                     <i class="fas fa-chevron-right"></i>
-                                </div>
+                                </span>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -95,17 +151,18 @@ $base = rtrim($base ?? (defined('BASE_URL') ? BASE_URL : '/'), '/');
         </div>
     </div>
 
+            </div>
+        </div>
     </div>
-    <!-- End of Main Content -->
-</div>
-<!-- End of Content Wrapper -->
-</div>
-<!-- End of Page Wrapper -->
 
-<script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
-<script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
-<script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+    <?php require __DIR__ . '/../partials/flash_modal.php'; ?>
 </body>
 </html>
-

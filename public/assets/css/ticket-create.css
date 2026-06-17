@@ -1,0 +1,253 @@
+/* Storage Mart — unified Create Ticket page design */
+.ticket-create-page {
+  --tc-accent: #3949ab;
+  --tc-accent-end: #5c6bc0;
+  --tc-personal: #36b9cc;
+  --tc-personal-end: #2c9faf;
+  --tc-border: #eaecf4;
+  --tc-muted: #858796;
+  --tc-heading: #3a3b45;
+}
+
+.ticket-create-page .page-hero {
+  background: linear-gradient(135deg, #1a237e 0%, var(--tc-accent) 55%, var(--tc-accent-end) 100%);
+  border-radius: 0.85rem;
+  color: #fff;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.5rem;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 48rem;
+  box-shadow: 0 0.35rem 1.25rem rgba(26, 35, 126, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.ticket-create-page .page-hero::after {
+  content: '';
+  position: absolute;
+  top: -45%;
+  right: -4%;
+  width: 220px;
+  height: 220px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ticket-create-page .page-hero h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  color: #fff;
+}
+
+.ticket-create-page .page-hero p {
+  margin: 0;
+  opacity: 0.85;
+  font-size: 0.88rem;
+  max-width: 36rem;
+}
+
+/* Center hero, alerts, and form card for all roles */
+.ticket-create-page > .alert {
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ticket-create-page > .row {
+  justify-content: center;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.ticket-create-page > .row > [class*="col-"] {
+  flex: 0 1 48rem;
+  max-width: 48rem;
+  width: 100%;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.ticket-create-page > .row > .col-lg-10,
+.ticket-create-page > .row > .col-xl-9 {
+  flex: 0 1 52rem;
+  max-width: 52rem;
+}
+
+.ticket-create-page .ticket-form-card {
+  border: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.1) !important;
+}
+
+.ticket-create-page .ticket-form-card .card-header {
+  padding: 1rem 1.35rem;
+  border-bottom: none;
+}
+
+.ticket-create-page .ticket-form-card .card-header.bg-primary,
+.ticket-create-page .ticket-form-card .card-header.ticket-header-employee {
+  background: linear-gradient(135deg, #1a237e 0%, var(--tc-accent) 100%) !important;
+}
+
+.ticket-create-page .ticket-form-card .card-header.ticket-header-personal {
+  background: linear-gradient(135deg, #258391 0%, var(--tc-personal) 100%) !important;
+}
+
+.ticket-create-page .ticket-form-card .card-header h6 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.ticket-create-page .ticket-form-card .card-body {
+  padding: 1.5rem 1.75rem;
+}
+
+.ticket-create-page .form-section {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--tc-border);
+}
+
+.ticket-create-page .form-section:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.ticket-create-page .form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tc-heading);
+  margin-bottom: 1.1rem;
+}
+
+.ticket-create-page .form-section-title i {
+  color: var(--tc-accent);
+  font-size: 0.85rem;
+}
+
+.ticket-create-page .form-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tc-muted);
+  margin-bottom: 0.4rem;
+}
+
+.ticket-create-page .form-label i {
+  margin-right: 0.25rem;
+  opacity: 0.85;
+}
+
+.ticket-create-page .form-control,
+.ticket-create-page .form-control-lg {
+  border-radius: 0.5rem;
+  border-color: #d1d3e2;
+  font-size: 0.9rem;
+}
+
+.ticket-create-page .form-control:focus,
+.ticket-create-page .form-control-lg:focus {
+  border-color: var(--tc-accent);
+  box-shadow: 0 0 0 0.15rem rgba(57, 73, 171, 0.15);
+}
+
+.ticket-create-page .form-control[readonly] {
+  background-color: #f8f9fc;
+  color: #5a5c69;
+}
+
+.ticket-create-page .form-text {
+  font-size: 0.78rem;
+}
+
+.ticket-create-page .priority-legend {
+  background: #f0f4ff;
+  border: 1px solid #d4dcf7;
+  border-radius: 0.6rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.82rem;
+}
+
+.ticket-create-page .priority-legend strong {
+  color: var(--tc-heading);
+}
+
+.ticket-create-page .priority-legend ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.ticket-create-page .priority-legend li {
+  margin-bottom: 0.2rem;
+  color: #5a5c69;
+}
+
+.ticket-create-page .ticket-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--tc-border);
+}
+
+.ticket-create-page .ticket-form-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.55rem 1.15rem;
+}
+
+.ticket-create-page .alert-modern {
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 0.88rem;
+}
+
+.ticket-create-page .readonly-grid .form-group {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 767.98px) {
+  .ticket-create-page .page-hero {
+    padding: 1.15rem 1.25rem;
+  }
+
+  .ticket-create-page .ticket-form-card .card-body {
+    padding: 1.15rem;
+  }
+}
+
+/* IT dark mode compatibility */
+html.it-dark .ticket-create-page .form-control[readonly] {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+html.it-dark .ticket-create-page .priority-legend {
+  background: rgba(54, 185, 204, 0.1);
+  border-color: rgba(54, 185, 204, 0.25);
+}
+
+html.it-dark .ticket-create-page .form-section {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+html.it-dark .ticket-create-page .ticket-form-actions {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}

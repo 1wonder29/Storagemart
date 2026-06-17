@@ -1,0 +1,100 @@
+.ticket-detail-layout .card {
+  border: 1px solid #e3e6f0;
+  box-shadow: 0 0.15rem 1.75rem rgba(58, 59, 69, 0.08) !important;
+}
+
+.ticket-detail-layout .ticket-detail-card-header,
+.ticket-detail-layout .ticket-detail-section-header {
+  background: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+  color: #3a3b45;
+}
+
+.ticket-detail-layout .ticket-detail-card-header h6,
+.ticket-detail-layout .ticket-detail-section-header h6 {
+  color: #3a3b45;
+}
+
+.ticket-detail-layout .ticket-detail-card-header i,
+.ticket-detail-layout .ticket-detail-section-header i {
+  color: #858796;
+}
+
+.ticket-detail-layout .ticket-detail-actions .btn {
+  font-weight: 600;
+}
+
+.ticket-detail-layout .ticket-detail-actions .btn-outline-secondary {
+  color: #5a5c69;
+  border-color: #d1d3e2;
+}
+
+.ticket-detail-layout .ticket-detail-actions .btn-outline-secondary:hover {
+  color: #3a3b45;
+  background: #f8f9fc;
+  border-color: #b7b9c6;
+}
+
+.ticket-detail-layout .ticket-history-header {
+  color: #3a3b45;
+}
+
+.ticket-detail-layout .ticket-history-header i {
+  color: #858796;
+}
+
+/* IT dark mode — keep ticket detail readable */
+html.it-dark .ticket-detail-layout .card {
+  background-color: var(--it-surface);
+  border-color: var(--it-border);
+}
+
+html.it-dark .ticket-detail-layout .ticket-detail-card-header,
+html.it-dark .ticket-detail-layout .ticket-detail-section-header {
+  background: var(--it-surface-2);
+  border-bottom-color: var(--it-border);
+  color: var(--it-text);
+}
+
+html.it-dark .ticket-detail-layout .ticket-detail-card-header h6,
+html.it-dark .ticket-detail-layout .ticket-detail-section-header h6,
+html.it-dark .ticket-detail-layout .ticket-history-header {
+  color: var(--it-text);
+}
+
+html.it-dark .ticket-detail-layout .bg-light {
+  background-color: var(--it-input-bg) !important;
+  color: var(--it-text);
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .ticket-detail-layout .text-gray-500,
+html.it-dark .ticket-detail-layout .text-gray-600,
+html.it-dark .ticket-detail-layout .text-gray-800 {
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .ticket-detail-layout .h6 {
+  color: var(--it-text);
+}
+
+html.it-dark .ticket-detail-layout .ticket-detail-actions .btn-outline-secondary {
+  color: var(--it-text-muted);
+  border-color: var(--it-border-light);
+}
+
+html.it-dark .ticket-detail-layout .ticket-detail-actions .btn-outline-secondary:hover {
+  color: var(--it-text);
+  background: var(--it-hover);
+  border-color: var(--it-border-light);
+}
+
+html.it-dark .ticket-comments-section .bg-light {
+  background-color: var(--it-input-bg) !important;
+}
+
+html.it-dark .ticket-comments-section .ticket-comment-input {
+  background-color: var(--it-input-bg);
+  color: var(--it-text);
+  border-color: var(--it-border);
+}

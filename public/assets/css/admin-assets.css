@@ -193,6 +193,11 @@
   color: #856404;
 }
 
+.admin-assets-page .qty-badge.defective {
+  background: #f8d7da;
+  color: #721c24;
+}
+
 .admin-assets-page .asset-number {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 0.82rem;
@@ -213,6 +218,7 @@
 .admin-assets-page .status-badge.status-assigned { background: #d4edda; color: #155724; }
 .admin-assets-page .status-badge.status-unassigned { background: #fff3cd; color: #856404; }
 .admin-assets-page .status-badge.status-defective { background: #f8d7da; color: #721c24; }
+.admin-assets-page .status-badge.status-returned { background: #d1ecf1; color: #0c5460; }
 .admin-assets-page .status-badge.status-default { background: #e2e3e5; color: #383d41; }
 
 .admin-assets-page .branch-pill {
@@ -270,10 +276,40 @@
   border-bottom: 1px solid #eaecf4;
 }
 
+.admin-assets-page .form-card label,
 .admin-assets-page .form-card .form-label {
   font-size: 0.82rem;
   font-weight: 600;
   color: #5a5c69;
+  margin-bottom: 0.35rem;
+}
+
+.admin-assets-page .page-hero.hero-form .hero-stat {
+  max-width: 10rem;
+  margin-left: auto;
+}
+
+.admin-assets-page .page-hero.hero-form .hero-stat-inline {
+  display: inline-block;
+  min-width: 7rem;
+  margin-left: 0.5rem;
+  margin-top: 0;
+}
+
+.admin-assets-page .page-hero .hero-stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.admin-assets-page .form-card .form-row-gap {
+  margin-bottom: 1.25rem;
+}
+
+.admin-assets-page .form-card .form-text {
+  font-size: 0.75rem;
+  margin-top: 0.35rem;
 }
 
 .admin-assets-page .form-card .form-control {

@@ -65,6 +65,7 @@ $base = rtrim(BASE_URL, '/');
                                                 <th>Description</th>
                                                 <th>Item Info</th>
                                                 <th>Serial Number</th>
+                                                <th class="text-right">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -76,6 +77,15 @@ $base = rtrim(BASE_URL, '/');
                                                 <td><?= htmlspecialchars($row['description']);?> </td>
                                                 <td><?= htmlspecialchars($row['itemInfo']); ?></td>
                                                 <td><?= htmlspecialchars($row['serialNumber']);?> </td>
+                                                <td class="text-right">
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-warning btn-return-asset"
+                                                            title="Return Asset"
+                                                            data-inventory-id="<?= (int) ($row['inventory_id'] ?? 0) ?>"
+                                                            data-asset-number="<?= htmlspecialchars((string) ($row['assetNumber'] ?? '')) ?>">
+                                                        <i class="fas fa-undo mr-1"></i> Return
+                                                    </button>
+                                                </td>
                                             </tr>
                                             <?php endforeach; ?>
                                         <?php endif; ?>
@@ -102,6 +112,40 @@ $base = rtrim(BASE_URL, '/');
 
         </div>
         <!-- End of Page Wrapper -->
+
+        <div class="modal fade" id="returnAssetModal" tabindex="-1" role="dialog" aria-labelledby="returnAssetModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/assets/return">
+                        <div class="modal-header bg-warning text-white">
+                            <h5 class="modal-title" id="returnAssetModalLabel">
+                                <i class="fas fa-undo mr-1"></i> Return Asset
+                            </h5>
+                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
+                            <input type="hidden" name="employee_id" value="<?= (int) ($employee_id ?? 0) ?>">
+                            <input type="hidden" name="inventory_id" id="returnInventoryId" value="">
+                            <p class="mb-3">You are returning asset <strong id="returnAssetNumber"></strong> from this employee. The item will be marked as <strong>unassigned</strong> and can then be marked defective from Asset Inventory if needed.</p>
+                            <div class="form-group mb-0">
+                                <label for="returnReason">Reason <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="returnReason" name="reason" rows="4" required
+                                          placeholder="Describe the condition or reason for return"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-undo mr-1"></i> Return Asset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
         <!-- Scroll to Top Button-->
         <a class="scroll-to-top rounded" href="#page-top">
@@ -143,6 +187,17 @@ $base = rtrim(BASE_URL, '/');
 
         <!-- Page level custom scripts -->
         <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
+        <script>
+        (function ($) {
+            $(document).on('click', '.btn-return-asset', function () {
+                $('#returnInventoryId').val($(this).data('inventory-id'));
+                $('#returnAssetNumber').text($(this).data('asset-number') || '');
+                $('#returnReason').val('');
+                $('#returnAssetModal').modal('show');
+            });
+        })(jQuery);
+        </script>
+        <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
     </body>
 
     </html>

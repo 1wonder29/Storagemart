@@ -60,12 +60,12 @@ $backUrl = $returnEmployeeId > 0
                                 <tbody>
                                     <?php foreach ($assignments as $row): ?>
                                         <tr>
-                                            <td><?= htmlspecialchars($row['employee_id']) ?></td>
-                                            <td><?= htmlspecialchars($row['assignedTo']) ?></td>
-                                            <td><?= htmlspecialchars($row['transferDetails']) ?></td>
-                                            <td><?= htmlspecialchars($row['dateIssued']) ?></td>
+                                            <td><?= htmlspecialchars((string) ($row['employee_id'] ?? '')) ?></td>
+                                            <td><?= htmlspecialchars((string) ($row['assignedTo'] ?? '')) ?></td>
+                                            <td><?= htmlspecialchars((string) ($row['transferDetails'] ?? '')) ?></td>
+                                            <td><?= htmlspecialchars((string) ($row['dateIssued'] ?? '')) ?></td>
                                             <td><?= htmlspecialchars($row['dateReturned'] ?? '') ?></td>
-                                            <td><?= htmlspecialchars($row['createdby']) ?></td>
+                                            <td><?= htmlspecialchars((string) ($row['createdByName'] ?? $row['createdby'] ?? '')) ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>

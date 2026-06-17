@@ -534,6 +534,12 @@ class AdminController extends AuthController
             $this->redirect('/admin/employee'); // change target as appropriate
             return;
         }
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+
         $assets = method_exists($accountModel, 'fetchAssetsByEmployeeId')
             ? $accountModel->fetchAssetsByEmployeeId($employee_id)
             : [];

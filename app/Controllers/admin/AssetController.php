@@ -272,11 +272,14 @@ class AssetController extends AuthController {
         }
 
         // If you want to show the add-branch form on GET:
+        $assetModel = new Asset();
+
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             if (empty($_SESSION['csrf_token'])) {
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
             }
             $csrf_token = $_SESSION['csrf_token'];
+            $categories = $assetModel->fetchCategories();
             $ctx = $this->getLoggedUserContext();
             $base = $ctx['base'];
             $loggedFirstname = $ctx['loggedFirstname'];
@@ -313,7 +316,7 @@ class AssetController extends AuthController {
                         'ic_code' => $ic_code
                     ]);
                 $_SESSION['flash_success'] = 'New category added successfully.';
-                $this->redirect('/admin/assets');
+                $this->redirect('/admin/assets/category/add');
                 exit;
             } else {
                 throw new \Exception('Failed to insert category.');
@@ -321,7 +324,7 @@ class AssetController extends AuthController {
         }
         catch (\Throwable $e) {
             $_SESSION['flash_error'] = 'Error adding category: ' . $e->getMessage();
-            $this->redirect('/admin/assets');
+            $this->redirect('/admin/assets/category/add');
             exit;
         }
     }
@@ -341,6 +344,8 @@ class AssetController extends AuthController {
 
         // Always load categories for the form (GET and also in case of re-render on error)
         $categories = $assetModel->fetchCategories();
+        $groups = $assetModel->fetchAllAssets();
+        $totalGroups = count($groups);
 
         // GET → show form
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -389,7 +394,7 @@ class AssetController extends AuthController {
                         'ic_code' => $ic_code
                     ]);
                 $_SESSION['flash_success'] = 'New group added successfully.';
-                $this->redirect('/admin/assets');
+                $this->redirect('/admin/assets/group/add');
                 exit;
             }
 
@@ -397,7 +402,8 @@ class AssetController extends AuthController {
 
         } catch (\Throwable $e) {
             $_SESSION['flash_error'] = 'Error adding group: ' . $e->getMessage();
-            // ensure categories still available if you re-render the form
+            $groups = $assetModel->fetchAllAssets();
+            $totalGroups = count($groups);
             require_once __DIR__ . '/../../Views/admin/asset/add_group.php';
             exit;
         }
@@ -706,9 +712,13 @@ class AssetController extends AuthController {
 
             $count = $notificationData['count'];
             $notifications = $notificationData['notifications'];
-            $group_id = 0;
-            $groups = $assetModel->fetchAllAssets(); // Load all groups for dropdown
-            
+            $groups = $assetModel->fetchAllAssets();
+            $totalGroups = count($groups);
+            $totalItems = 0;
+            foreach ($groups as $groupRow) {
+                $totalItems += (int) ($groupRow['totalItems'] ?? 0);
+            }
+
             // Load the add item view
             require_once __DIR__ . '/../../Views/admin/asset/add_item.php';
             return;
@@ -826,6 +836,16 @@ class AssetController extends AuthController {
         }
 
         $assetModel = new Asset();
+        if (strtoupper($status) === 'DEFECTIVE') {
+            $current = $assetModel->fetchInventoryById($inventoryID);
+            $currentStatus = strtoupper(trim((string) ($current['status'] ?? '')));
+            if (!in_array($currentStatus, ['RETURNED', 'UNASSIGNED'], true)) {
+                $_SESSION['flash_error'] = 'Asset must be returned before marking as defective.';
+                $this->redirect('/admin/assets/item?group_id=' . (int) ($_POST['group_id'] ?? 0));
+                return;
+            }
+        }
+
         $ok = $assetModel->updateItem($inventoryID, $itemInfo, $serialNumber, $yearPurchased, $status, $reason, $_SESSION['account_id'] ?? null);
 
         if ($ok) {
@@ -856,6 +876,106 @@ class AssetController extends AuthController {
         // redirect back to item list for the group
         $group_id = (int) ($_POST['group_id'] ?? 0);
         $this->redirect('/admin/assets/item?group_id=' . $group_id);
+    }
+
+    public function markDefective()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        $posted_token = $_POST['csrf_token'] ?? '';
+        if (empty($posted_token) || $posted_token !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token.';
+            $this->redirect('/admin/assets');
+            return;
+        }
+
+        $inventoryID = isset($_POST['inventory_id']) ? (int) $_POST['inventory_id'] : 0;
+        $group_id = (int) ($_POST['group_id'] ?? 0);
+        $reason = trim($_POST['reason'] ?? '');
+
+        if ($inventoryID <= 0) {
+            $_SESSION['flash_error'] = 'Invalid inventory id.';
+            $this->redirect('/admin/assets/item?group_id=' . $group_id);
+            return;
+        }
+        if ($reason === '') {
+            $_SESSION['flash_error'] = 'Please provide a reason for marking this item defective.';
+            $this->redirect('/admin/assets/item?group_id=' . $group_id);
+            return;
+        }
+
+        $assetModel = new Asset();
+        $ok = $assetModel->markItemDefective($inventoryID, $reason, $_SESSION['account_id'] ?? null);
+
+        if ($ok) {
+            $logger = new Logger();
+            $logger->log('Mark Defective', 'Item Asset', "Inventory {$inventoryID}", $_SESSION['username'] ?? 'Unknown');
+            $_SESSION['flash_success'] = 'Item marked as defective successfully.';
+        } else {
+            $_SESSION['flash_error'] = 'Could not mark item as defective. Return the asset first, then mark it defective from inventory.';
+        }
+
+        $this->redirect('/admin/assets/item?group_id=' . $group_id);
+    }
+
+    public function returnAsset()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        $posted_token = $_POST['csrf_token'] ?? '';
+        if (empty($posted_token) || $posted_token !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token.';
+            $this->redirect('/admin/employee');
+            return;
+        }
+
+        $inventoryID = isset($_POST['inventory_id']) ? (int) $_POST['inventory_id'] : 0;
+        $employeeId = isset($_POST['employee_id']) ? (int) $_POST['employee_id'] : 0;
+        $reason = trim($_POST['reason'] ?? '');
+
+        if ($inventoryID <= 0 || $employeeId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid asset or employee.';
+            $this->redirect('/admin/assets/view?employee_id=' . $employeeId);
+            return;
+        }
+        if ($reason === '') {
+            $_SESSION['flash_error'] = 'Please provide a reason for returning this asset.';
+            $this->redirect('/admin/assets/view?employee_id=' . $employeeId);
+            return;
+        }
+
+        $assetModel = new Asset();
+        $ok = $assetModel->returnAssetFromEmployee($inventoryID, $employeeId, $reason, $_SESSION['account_id'] ?? null);
+
+        if ($ok) {
+            $logger = new Logger();
+            $logger->log('Return Asset', 'Item Asset', "Inventory {$inventoryID}", $_SESSION['username'] ?? 'Unknown');
+            $_SESSION['flash_success'] = 'Asset returned successfully.';
+        } else {
+            $_SESSION['flash_error'] = 'Could not return asset. It may no longer be assigned to this employee.';
+        }
+
+        $this->redirect('/admin/assets/view?employee_id=' . $employeeId);
     }
 
     // Transfer Asset Item Here

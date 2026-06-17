@@ -8,12 +8,14 @@
  * - $ticketNumber (string, optional)
  * - $btnClass (string, optional — default btn-danger btn-sm)
  * - $btnBlock (bool, optional)
+ * - $iconOnly (bool, optional)
  */
 $ticketId = (int) ($ticketId ?? 0);
 $ticketStatus = (string) ($ticketStatus ?? '');
 $ticketNumber = (string) ($ticketNumber ?? '');
 $btnClass = (string) ($btnClass ?? 'btn-danger btn-sm');
 $btnBlock = (bool) ($btnBlock ?? false);
+$iconOnly = (bool) ($iconOnly ?? false);
 $isDropdownItem = strpos($btnClass, 'dropdown-item') !== false;
 $buttonClasses = trim(
     ($isDropdownItem ? '' : 'btn ')
@@ -33,6 +35,6 @@ if (!$showCancel) {
         class="<?= htmlspecialchars($buttonClasses) ?>"
         data-ticket-id="<?= $ticketId ?>"
         data-ticket-num="<?= htmlspecialchars($ticketNumber) ?>"
-        data-ticket-status="<?= htmlspecialchars($ticketStatus) ?>">
-    <i class="fas fa-ban"></i> Cancel Ticket
+        title="Cancel ticket">
+    <i class="fas fa-ban"></i><?= $iconOnly ? '' : ' Cancel Ticket' ?>
 </button>

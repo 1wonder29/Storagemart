@@ -34,7 +34,16 @@ function admin_asset_status_class(string $status): string
     if (strpos($s, 'defect') !== false) {
         return 'status-defective';
     }
+    if (strpos($s, 'return') !== false) {
+        return 'status-returned';
+    }
     return 'status-default';
+}
+
+function admin_can_mark_defective(string $status): bool
+{
+    $s = strtoupper(trim($status));
+    return in_array($s, ['RETURNED', 'UNASSIGNED'], true);
 }
 ?>
 <html lang="en">
@@ -196,10 +205,21 @@ function admin_asset_status_class(string $status): string
                                                    class="btn btn-sm btn-outline-secondary" title="Edit">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                <?php if (admin_can_mark_defective($status)): ?>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-warning btn-mark-defective"
+                                                        title="Mark as Defective"
+                                                        data-inventory-id="<?= (int) ($row['inventory_id'] ?? 0) ?>"
+                                                        data-asset-number="<?= htmlspecialchars((string) ($row['assetNumber'] ?? '')) ?>">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                </button>
+                                                <?php endif; ?>
+                                                <?php if (strtoupper(trim($status)) !== 'DEFECTIVE'): ?>
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/transfer?inventory_id=<?= (int) ($row['inventory_id'] ?? 0) ?>"
                                                    class="btn btn-sm btn-outline-primary" title="Transfer">
                                                     <i class="fas fa-exchange-alt"></i>
                                                 </a>
+                                                <?php endif; ?>
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/transfer-history?inventory_id=<?= (int) ($row['inventory_id'] ?? 0) ?>"
                                                    class="btn btn-sm btn-outline-info" title="History">
                                                     <i class="fas fa-history"></i>
@@ -220,6 +240,40 @@ function admin_asset_status_class(string $status): string
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <div class="modal fade" id="markDefectiveModal" tabindex="-1" role="dialog" aria-labelledby="markDefectiveModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/assets/item/mark-defective">
+                    <div class="modal-header bg-warning text-white">
+                        <h5 class="modal-title" id="markDefectiveModalLabel">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> Mark as Defective
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
+                        <input type="hidden" name="group_id" value="<?= (int) ($group_id ?? 0) ?>">
+                        <input type="hidden" name="inventory_id" id="defectiveInventoryId" value="">
+                        <p class="mb-3">You are marking asset <strong id="defectiveAssetNumber"></strong> as defective. The item must be unassigned (returned from an employee) before it can be marked defective.</p>
+                        <div class="form-group mb-0">
+                            <label for="defectiveReason">Reason <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="defectiveReason" name="reason" rows="4" required
+                                      placeholder="Describe the defect or issue"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> Mark Defective
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 

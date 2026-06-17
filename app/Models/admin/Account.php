@@ -327,7 +327,11 @@ class Account extends BaseModel {
     }
 
     public function fetchAssetsByEmployeeId(int $employeeId): array {
-        $stmt = $this->pdo->prepare("SELECT  i.group_id, i.inventory_id, i.assetNumber, g.groupName, g.description, i.itemInfo, i.serialNumber FROM {$this->tblassets} i JOIN {$this->tblgroup} g ON i.group_id = g.group_id WHERE i.employee_id = ? ORDER BY i.inventory_id ASC");
+        $stmt = $this->pdo->prepare("SELECT i.group_id, i.inventory_id, i.assetNumber, i.status, g.groupName, g.description, i.itemInfo, i.serialNumber
+            FROM {$this->tblassets} i
+            JOIN {$this->tblgroup} g ON i.group_id = g.group_id
+            WHERE i.employee_id = ? AND i.status = 'ASSIGNED'
+            ORDER BY i.inventory_id ASC");
         $stmt->execute([$employeeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
