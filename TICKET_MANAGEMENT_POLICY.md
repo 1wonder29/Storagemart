@@ -1,39 +1,44 @@
 # Storage-Mart Ticket Management System (TMS) Policy
 
-**Document Version:** 1.0  
-**Effective Date:** June 15, 2026  
-**Applies To:** All Storage-Mart employees, contractors, and authorized system users  
-**System:** Storage-Mart Ticketing Management System (TMS)
+**Document Version:** 2.0  
+**Effective Date:** June 17, 2026  
+**Applies To:** All Storage-Mart employees, contractors, and authorized users  
+**System:** Storage-Mart Ticket Management System (TMS)
 
 ---
 
-## 1. Purpose
+## 1. Objective
 
-This policy establishes the standards, responsibilities, and procedures for using the Storage-Mart Ticket Management System (TMS). TMS is the official channel for reporting, tracking, and resolving workplace concerns related to IT support, facilities, assets, and operational issues across all branches.
+This policy defines the official standards for submission, processing, monitoring, and record management of tickets and related accountable records in the Storage-Mart Ticket Management System (TMS).
 
-The goals of this policy are to:
+The objective is to ensure:
 
-- Ensure consistent and timely handling of employee requests
-- Define clear roles and accountability at every stage of a ticket
-- Protect company data and maintain audit integrity
-- Provide a transparent, traceable support process for all branches
+- Consistent ticket handling across all branches and departments
+- Clear ownership and accountability per role
+- Accurate, auditable records of actions and status changes
+- Secure and authorized use of system data and user accounts
 
 ---
 
-## 2. Scope
+## 2. Scope and Limitations
 
-This policy applies to:
+### 2.1 Scope
 
-- All tickets created, updated, assigned, resolved, cancelled, or closed within TMS
-- All user roles with TMS access: **Employee**, **Head**, **HR**, **IT**, **AOM**, **OM**, **HOM**, and **Administrator**
-- All Storage-Mart branches and departments
+The TMS is the official internal platform for:
 
-Issues that must be reported through TMS include, but are not limited to:
+- Ticket filing, approval, assignment, resolution, cancellation, and closure
+- Ticket history and audit logging
+- Role-based ticket visibility and action control
+- Branch and operations monitoring for authorized users
+- Internal notifications related to ticket events
 
-- Hardware, software, and network problems
-- Facility-related concerns
-- Asset-related support requests
-- Operational issues requiring IT or departmental review
+The system currently supports these roles: `ADMIN`, `EMPLOYEE`, `HEAD`, `HR`, `IT`, `AOM`, `OM`, and `HOM`.
+
+### 2.2 Limitations
+
+TMS is for internal organizational use only. It is not an external customer service platform and is not used for payroll or direct procurement transactions.
+
+Policy statements that depend on unimplemented automation must be treated as procedural requirements handled by authorized personnel until system features are added.
 
 ---
 
@@ -41,357 +46,230 @@ Issues that must be reported through TMS include, but are not limited to:
 
 | Term | Definition |
 |------|------------|
-| **Ticket** | A formal service request or incident record filed in TMS |
-| **Ticket Number** | Unique identifier automatically assigned upon creation (format: `STM-YYYYMMDD-XXXX`) |
-| **Requester / Filer** | The employee on whose behalf the ticket is filed |
-| **Created By** | The account that submitted the ticket (may differ from the requester when filed by a manager) |
-| **Assignee** | IT staff member responsible for working on the ticket |
-| **Branch** | The Storage-Mart location associated with the ticket |
-| **Department** | The organizational unit routing the ticket (e.g., IT, HR, Operations) |
-| **Priority** | Urgency level assigned at creation: Low, Medium, or High |
-| **Category** | Type of concern: Network, Hardware, Software, Facility, or Other |
-| **Status** | Current stage of the ticket in the workflow |
-| **Ticket History** | Immutable log of all status changes and actions on a ticket |
-| **Audit Trail** | System-wide activity log of user actions for compliance and review |
+| Ticket | A system record of a concern, request, incident, or issue |
+| Ticket Number | Unique system-generated tracking number |
+| Priority | Ticket urgency level: `Low`, `Medium`, or `High` |
+| Category | Ticket classification (for example: hardware, software, network, facility, or other configured type) |
+| Status | Current workflow state of a ticket |
+| Ticket History | Per-ticket log of actions and status transitions |
+| Audit Trail | System activity logs for accountability and review |
+| Assigned To | IT personnel currently responsible for working the ticket |
+| Branch Scope | Role-based branch access limitation (notably for AOM and operations roles) |
 
 ---
 
-## 4. Roles and Responsibilities
+## 4. General Policy
 
-### 4.1 Employee
-
-- File tickets only for legitimate work-related concerns
-- Provide accurate branch, category, priority, and description details
-- Respond promptly when IT or support staff request additional information
-- Rate IT support after a ticket is marked **Resolved** (one rating per ticket)
-- May cancel tickets they filed while status is **Pending**, **In Progress**, **On Hold**, or **Reopened**
-- May view only their own tickets and related assets
-
-### 4.2 Department Head
-
-- Oversee tickets within their department
-- Create tickets on behalf of department employees when appropriate
-- Monitor ticket progress for their branch/department
-- May cancel tickets within their department while in a cancellable status
-- Escalate unresolved or overdue tickets to IT or Administration
-
-### 4.3 Human Resources (HR)
-
-- Create and manage HR-related tickets
-- View tickets within the HR scope
-- May cancel HR-department tickets while in a cancellable status
-- Coordinate with Administration on employee-related service requests
-
-### 4.4 IT Support
-
-- Review, accept, and work on assigned tickets
-- Update ticket status to **In Progress**, **On Hold**, **Resolved**, or **Unresolved**
-- Add remarks documenting actions taken
-- Reassign tickets only through authorized admin processes
-- May cancel tickets when justified (with documented reason)
-- Must not access tickets outside their assignment scope unless authorized
-
-### 4.5 Area Operation Manager (AOM)
-
-- Manage operations for **assigned branches only**
-- Create tickets for employees within assigned branches
-- Monitor branch ticket activity and employee-related concerns
-- May cancel tickets for their assigned branches while in a cancellable status
-- Must not access data for branches outside their assignment
-
-### 4.6 Operation Manager (OM) / Head of Operations (HOM)
-
-- Oversee operational assignments and branch coverage
-- Create tickets on behalf of employees across branches
-- Monitor tickets they created or that fall under operations oversight
-- May cancel tickets they personally created while in a cancellable status
-- Manage AOM branch and employee assignments as authorized
-
-### 4.7 Administrator
-
-- Full oversight of all tickets across branches
-- Approve pending tickets and assign them to IT staff
-- Decline invalid or duplicate tickets with a documented reason
-- Reassign tickets when necessary
-- Access cancelled ticket records and audit logs
-- Enforce this policy and manage user access
+- All technical and operational concerns requiring action must be submitted through TMS.
+- Users must provide complete and accurate information when creating or updating tickets.
+- Access rights and actions are governed by role-based access control.
+- Unauthorized access, credential sharing, data tampering, and fraudulent submissions are prohibited.
+- Significant ticket events must remain traceable through ticket history and audit logs.
 
 ---
 
-## 5. Ticket Creation Standards
+## 5. Roles and Responsibilities
 
-### 5.1 When to File a Ticket
+### 5.1 Employees and End Users
 
-Employees and authorized managers must file a TMS ticket when:
+- Submit valid, complete, and truthful ticket requests.
+- Monitor their own ticket updates and respond when additional details are requested.
+- Protect account credentials and report suspected account compromise.
+- Use TMS only for legitimate business concerns.
 
-- Equipment or software is not functioning correctly
-- Network or connectivity issues affect work
-- A facility issue impacts safety, access, or operations
-- An asset requires repair, replacement, or technical review
+### 5.2 Department Head (`HEAD`)
 
-### 5.2 Required Information
+- Oversee ticket activity within authorized department scope.
+- Create and monitor tickets in support of supervised personnel.
+- Coordinate escalations with IT and Administration when needed.
 
-Every ticket must include:
+### 5.3 Human Resources (`HR`)
 
-1. **Employee** — The person affected by the issue
-2. **Branch** — The location where the issue occurs
-3. **Category** — Network, Hardware, Software, Facility, or Other
-4. **Priority** — Low, Medium, or High (see Section 6)
-5. **Concern Details** — A clear, factual description of the problem
+- Process HR-related tickets within authorized scope.
+- Coordinate employee/accountability concerns with IT and operations management as needed.
 
-When applicable, link the ticket to the related **asset/inventory record**.
+### 5.4 IT Personnel (`IT`)
 
-### 5.3 Prohibited Ticket Submissions
+- Work assigned tickets and update status/remarks in a timely manner.
+- Record actions taken and outcomes in ticket history.
+- Monitor pending, in-progress, and unresolved work queues.
+- Maintain service quality and communicate updates to stakeholders.
 
-The following are not permitted:
+### 5.5 Area Operations Manager (`AOM`)
 
-- Duplicate tickets for the same unresolved issue
-- Tickets with false, misleading, or incomplete information
-- Personal, non-work-related requests
-- Abusive, threatening, or inappropriate content
-- Tickets filed to circumvent approval or access controls
+- Monitor tickets and employees only within assigned branch scope.
+- Create and track tickets for authorized branches and supervised operations concerns.
 
-Violations may result in ticket closure, account restrictions, and disciplinary action per company HR policy.
+### 5.6 Operations Management (`OM` / `HOM`)
 
-### 5.4 Ticket Numbering
+- Oversee branch assignments, employee-to-AOM assignments, and operations monitoring.
+- Create and monitor tickets under operations authority.
 
-Upon successful submission, TMS automatically assigns a ticket number in the format:
+### 5.7 Administrator (`ADMIN`)
 
-```
-STM-YYYYMMDD-XXXX
-```
-
-Example: `STM-20260615-0042`
-
-This number must be referenced in all follow-up communication.
+- Full ticket oversight and approval authority.
+- Assign/reassign tickets and decline invalid requests.
+- Manage account access, role governance, and audit visibility.
 
 ---
 
-## 6. Priority Guidelines
+## 6. Ticket Submission and Validation
 
-| Priority | When to Use | Target Response |
-|----------|-------------|-----------------|
-| **High** | Work stoppage, security incident, safety risk, or branch-wide outage | Acknowledge within 2 business hours; resolve or escalate same business day |
-| **Medium** | Issue affects productivity but workarounds exist | Acknowledge within 1 business day; resolve within 3 business days |
-| **Low** | Minor issue, enhancement request, or non-urgent maintenance | Acknowledge within 2 business days; resolve within 5 business days |
+Each ticket should include at minimum:
 
-> **Note:** IT and Administration may adjust priority during review if the assigned level does not reflect actual business impact. Repeated misuse of High priority may be flagged for review.
+- Affected employee/requester
+- Branch or location context
+- Category
+- Priority (`Low`, `Medium`, `High`)
+- Concern details sufficient for assessment
 
----
-
-## 7. Ticket Lifecycle and Status Definitions
-
-### 7.1 Status Definitions
-
-| Status | Meaning |
-|--------|---------|
-| **Pending** | Ticket submitted and awaiting admin approval/assignment |
-| **In Progress** | Approved and assigned; IT is actively working on the issue |
-| **On Hold** | Work paused pending external input, parts, vendor action, or user response |
-| **Resolved** | IT has completed work; awaiting requester confirmation or rating |
-| **Unresolved** | Issue could not be fully resolved; requires follow-up or escalation |
-| **Reopened** | Previously resolved ticket returned for additional work |
-| **Closed** | Ticket declined by admin or formally closed with no further action |
-| **Cancelled** | Ticket withdrawn before completion |
-
-### 7.2 Standard Workflow
-
-```
-[Created] → Pending
-              ↓
-         Admin Review
-         ↙         ↘
-    Approve &      Decline
-    Assign            ↓
-       ↓           Closed
-  In Progress
-    ↙  ↓  ↘
-On Hold  Resolved  Unresolved
-           ↓
-    Employee Rating
-           ↓
-      (Closed / Archive)
-```
-
-### 7.3 Approval and Assignment
-
-1. New tickets enter **Pending** status upon creation.
-2. Administrators review pending tickets for validity, priority, and routing.
-3. Upon approval, the ticket is assigned to an IT staff member and moves to **In Progress**.
-4. Invalid tickets may be **Declined** with a mandatory reason; declined tickets are marked **Closed**.
-
-### 7.4 IT Resolution Actions
-
-Assigned IT staff may update tickets to:
-
-- **In Progress** — Active work underway
-- **On Hold** — Waiting on user, vendor, or parts (remarks required)
-- **Resolved** — Work completed; requester is notified to rate support
-- **Unresolved** — Issue remains; remarks must explain next steps
-
-All status changes must include remarks when the action is not self-explanatory.
-
-### 7.5 Post-Resolution Feedback
-
-When a ticket is marked **Resolved**:
-
-1. The requester receives a system notification
-2. The requester may submit a **one-time satisfaction rating** for IT support
-3. Ratings are used for service quality monitoring and must be submitted in good faith
+Invalid, duplicate, unauthorized, or materially incomplete tickets may be declined or cancelled by authorized personnel with a recorded reason.
 
 ---
 
-## 8. Cancellation Policy
+## 7. Priority Classification
 
-### 8.1 Cancellable Statuses
+The system currently enforces three priority values:
 
-Tickets may be cancelled only while in one of the following statuses:
+| Priority | Meaning |
+|----------|---------|
+| High | Urgent concern requiring immediate attention |
+| Medium | Operational concern requiring timely handling |
+| Low | Non-urgent concern handled in normal queue |
 
-- Pending
-- In Progress
-- On Hold
-- Reopened
-
-Tickets that are **Resolved**, **Closed**, **Cancelled**, or **Unresolved** cannot be cancelled through the standard cancel action.
-
-### 8.2 Who May Cancel
-
-| Role | Cancellation Authority |
-|------|------------------------|
-| **Employee** | Own tickets only |
-| **Head / HR** | Tickets within their department |
-| **AOM** | Tickets within their assigned branches |
-| **OM / HOM** | Tickets they created |
-| **IT** | Any ticket (with documented reason) |
-| **Administrator** | Any ticket |
-
-### 8.3 Cancellation Requirements
-
-- A **reason** must be provided for every cancellation
-- Cancellation is recorded in ticket history and the system audit log
-- Cancelled tickets remain in the system for record-keeping and cannot be reactivated; a new ticket must be filed if the issue recurs
+IT or Administration may adjust priority when business impact differs from the submitted value.
 
 ---
 
-## 9. Escalation Procedures
+## 8. Ticket Lifecycle and Status Policy
 
-Escalate a ticket when:
+### 8.1 Primary statuses currently used in system workflows
 
-- Target response times (Section 6) are exceeded
-- A ticket remains **On Hold** for more than 3 business days without update
-- A ticket is marked **Unresolved** and business impact continues
-- A **High** priority ticket has not been acknowledged within the target window
+- `Pending`
+- `In Progress`
+- `Resolved`
+- `Closed`
+- `Cancelled`
 
-### Escalation Path
+### 8.2 Additional statuses recognized in rule logic
 
-1. **Employee / Requester** → Contact their Department Head or AOM
-2. **Department Head / AOM** → Contact IT supervisor or Administrator
-3. **Administrator** → Reassign, reprioritize, or coordinate cross-department resolution
+The cancellation and transition logic also recognizes:
 
-All escalations should reference the **ticket number** and include the current status and business impact.
+- `On Hold`
+- `Reopened`
 
----
+These states may appear through specific actions or legacy transitions depending on module flow.
 
-## 10. Access Control and Data Privacy
+### 8.3 Resolution and Closure
 
-### 10.1 Role-Based Access
-
-TMS enforces role-based access control (RBAC). Users may only view and act on data permitted by their role:
-
-- **Employees** see their own tickets and assets
-- **AOMs** see only their assigned branches
-- **Heads** see their department scope
-- **IT** sees assigned and department-routed tickets
-- **Administrators** have full system visibility
-
-Sharing login credentials or accessing another user's account is strictly prohibited.
-
-### 10.2 Data Handling
-
-- Ticket content may contain operational or personal information; handle it confidentially
-- Do not disclose ticket details to unauthorized persons
-- Screenshots or exports of ticket data for non-business purposes are not permitted
-- All significant actions are logged in the audit trail (`tbllogs`) and ticket history
-
-### 10.3 Notifications
-
-TMS sends in-system notifications to relevant parties when tickets are created, updated, resolved, or cancelled. Users are responsible for checking notifications during working hours.
+- Tickets are marked `Resolved` when IT has completed corrective action.
+- `Resolved` tickets may transition to `Closed` through configured closure behavior and/or authorized administrative action.
+- Closed or cancelled tickets remain retained for audit and reporting.
 
 ---
 
-## 11. Audit, Compliance, and Record Retention
+## 9. Ticket Cancellation Policy
 
-### 11.1 Audit Trail
+### 9.1 Cancellable statuses
 
-All ticket actions — including creation, approval, assignment, status changes, cancellation, and decline — are logged with:
+Tickets are cancellable only while status is one of:
 
-- Date and time (Asia/Manila timezone)
-- User who performed the action
-- Role at time of action
-- Before/after status where applicable
+- `Pending`
+- `In Progress`
+- `On Hold`
+- `Reopened`
 
-### 11.2 Record Retention
+### 9.2 Required controls
 
-Ticket records and history are retained for operational, compliance, and reporting purposes. Administrators may generate monthly and historical ticket reports for management review.
+- Cancellation reason is mandatory.
+- Cancellation action must be recorded in ticket history and logs.
+- Cancelled tickets are retained and are not reactivated; recurring concerns require a new ticket.
 
-### 11.3 Policy Violations
+### 9.3 Role-based cancellation authority
 
-Suspected misuse of TMS — including fraudulent tickets, unauthorized access attempts, or deliberate priority abuse — must be reported to HR and Administration. Violations may result in:
+The system enforces the following cancellation scope:
 
-- Ticket closure without action
-- Restriction or revocation of TMS access
-- Disciplinary action up to and including termination
-
----
-
-## 12. System Availability and User Obligations
-
-### 12.1 User Responsibilities
-
-All TMS users must:
-
-- Keep login credentials secure
-- Log out when leaving a shared or unattended workstation
-- Use TMS as the primary channel for support requests (not informal chat or email alone)
-- Update contact and branch information in the system when changes occur
-- Cooperate with IT during diagnosis and resolution
-
-### 12.2 System Maintenance
-
-Scheduled maintenance may temporarily affect TMS availability. Critical outages affecting multiple branches should be communicated through official company channels in addition to any TMS downtime notices.
+- `ADMIN`: may cancel any cancellable ticket
+- `IT`: may cancel any cancellable ticket
+- `EMPLOYEE`: own tickets only
+- `HEAD` and `HR`: tickets within matching department scope
+- `AOM`: tickets within authorized AOM scope
+- `OM` and `HOM`: tickets created by that account
 
 ---
 
-## 13. Reporting and Performance Monitoring
+## 10. Assignment, Reassignment, and Continuity
 
-Management may use TMS data to monitor:
+- New tickets enter `Pending` and are reviewed by authorized personnel.
+- Approved tickets are assigned to appropriate IT personnel.
+- Reassignment may be performed by authorized administrators/IT supervisors.
+- Ticket ownership changes must preserve ticket number, history, and audit traceability.
 
-- Open, pending, and overdue ticket counts by branch
-- Average resolution time by priority and category
-- IT support ratings and feedback trends
-- Cancellation and decline rates
-- Monthly ticket volume
-
-This data is used for operational planning and service improvement, not for punitive measures against good-faith reporters.
+For branch reassignment scenarios (AOM/operations changes), ongoing operational ownership must be transferred through authorized processes without altering historical records.
 
 ---
 
-## 14. Policy Review and Updates
+## 11. User Access, Authentication, and Session Security
 
-This policy will be reviewed **annually** or when significant TMS changes are deployed (new roles, workflows, or modules). Updates require approval from Operations and IT leadership.
+### 11.1 Access control
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | June 15, 2026 | Initial policy aligned with TMS roles, statuses, and workflows |
+TMS enforces role-based access control, including branch/department scoping where applicable.
+
+### 11.2 Password and login controls
+
+- Password reset uses secure hashing mechanisms (`password_hash` / `password_verify`).
+- Failed login monitoring is enforced; account protection controls apply after repeated failed attempts (currently three consecutive failed attempts trigger deactivation logic).
+
+### 11.3 Session controls
+
+- User session regeneration occurs on successful login.
+- Users must not share credentials or use another user account.
 
 ---
 
-## 15. Acknowledgment
+## 12. Audit Trail, Logging, and Data Privacy
 
-By using the Storage-Mart Ticket Management System, all users acknowledge that they have read, understood, and agree to comply with this policy.
-
-For questions about this policy or TMS access, contact your **Department Head**, **AOM**, or **IT Administration**.
+- Ticket actions (create, update, assign, resolve, cancel, close) must remain auditable.
+- System logs and ticket history are required for accountability, monitoring, and investigations.
+- Users must handle ticket data confidentially and access only authorized records.
+- Unauthorized alteration or deletion of records/logs is prohibited.
 
 ---
 
-*Storage-Mart — Ticketing Management System*
+## 13. Asset and Inventory-Related Records
+
+TMS supports accountable record workflows across modules (including HR/IT/admin operations). Only authorized users may create or modify these records.
+
+Employees may view assigned records where allowed but cannot perform unauthorized record changes.
+
+---
+
+## 14. Violations and Disciplinary Action
+
+Violations of this policy include, but are not limited to:
+
+- Unauthorized access or credential misuse
+- Fraudulent or misleading ticket submissions
+- Unauthorized data modification or deletion
+- Abuse of privileges or attempts to bypass controls
+
+Violations may result in account restriction, access revocation, administrative sanctions, and disciplinary action per company policy.
+
+---
+
+## 15. Policy Review and Revision
+
+This policy shall be reviewed periodically by IT and Management to ensure continued alignment with implemented system behavior, operational requirements, and security standards.
+
+| Version | Date | Change Summary |
+|---------|------|----------------|
+| 2.0 | June 17, 2026 | Aligned with current system enforcement, roles, status logic, cancellation controls, and authentication behavior |
+| 1.0 | June 15, 2026 | Initial policy version |
+
+---
+
+## 16. Acknowledgment
+
+By using TMS, all authorized users acknowledge and agree to comply with this policy and related company procedures.
+
+For clarifications, coordinate with your Department Head, HR, Operations Management, or IT Administration.
