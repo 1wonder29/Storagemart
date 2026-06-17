@@ -12,6 +12,8 @@ class RealtimeModel extends BaseModel
      */
     public function getTicketUpdates(int $accountId, string $usertype, string $since): array
     {
+        $this->autoCloseResolvedTickets();
+
         $since = trim($since);
         if ($since === '') {
             $since = date('Y-m-d H:i:s', time() - 60);
@@ -83,6 +85,8 @@ class RealtimeModel extends BaseModel
 
     public function getTicketSnapshot(int $ticketId, int $accountId, string $usertype): ?array
     {
+        $this->autoCloseResolvedTickets();
+
         $updates = $this->getTicketUpdates($accountId, $usertype, '1970-01-01 00:00:00');
         foreach ($updates as $row) {
             if ((int) ($row['ticket_id'] ?? 0) === $ticketId) {
@@ -129,6 +133,17 @@ class RealtimeModel extends BaseModel
         $val = $stmt->fetchColumn();
 
         return $val !== false ? (string) $val : null;
+    }
+
+    private function autoCloseResolvedTickets(): void
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE {$this->tblTickets}
+             SET status = 'Closed', last_updated = NOW()
+             WHERE status = 'Resolved'
+               AND last_updated <= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+        );
+        $stmt->execute();
     }
 
 }

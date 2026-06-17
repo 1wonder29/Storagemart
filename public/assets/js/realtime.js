@@ -259,12 +259,35 @@
     return '';
   }
 
+  function removeTicketRow(row, table) {
+    if (!row) return;
+    if (window.jQuery && jQuery.fn.DataTable && table && jQuery.fn.DataTable.isDataTable(table)) {
+      jQuery(table).DataTable().row(row).remove().draw(false);
+    } else {
+      row.remove();
+    }
+  }
+
   function updateTicketRow(ticket) {
     var id = parseInt(ticket.ticket_id, 10);
     if (!id) return false;
 
     var row = document.querySelector('tr[data-ticket-id="' + id + '"]');
     if (!row) return false;
+
+    var table = row.closest('.ticket-realtime-table');
+    var keepStatus = table ? table.getAttribute('data-realtime-keep-status') : '';
+
+    if (ticket.status && keepStatus) {
+      var allowed = keepStatus.split(',').map(function (s) {
+        return s.trim().toLowerCase();
+      }).filter(Boolean);
+      var statusLower = String(ticket.status).toLowerCase();
+      if (allowed.length && allowed.indexOf(statusLower) === -1) {
+        removeTicketRow(row, table);
+        return true;
+      }
+    }
 
     if (ticket.status) {
       row.setAttribute('data-status', String(ticket.status).toLowerCase());
@@ -333,25 +356,53 @@
     }
   }
 
-  function showTicketRefreshBanner() {
-    if (document.getElementById('ticketRealtimeBanner')) return;
+  var ticketTableRefreshTimer = null;
 
-    var banner = document.createElement('div');
-    banner.id = 'ticketRealtimeBanner';
-    banner.className = 'alert alert-info alert-dismissible fade show shadow-sm';
-    banner.style.cssText = 'position:fixed;bottom:1.25rem;right:1.25rem;z-index:1050;max-width:320px;margin:0;';
-    banner.innerHTML =
-      '<i class="fas fa-sync-alt mr-1"></i> Ticket list updated. ' +
-      '<button type="button" class="btn btn-sm btn-primary ml-2" id="ticketRealtimeRefreshBtn">Refresh</button>' +
-      '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+  function refreshTicketTableBody(table) {
+    if (!table) return;
 
-    document.body.appendChild(banner);
-    banner.querySelector('#ticketRealtimeRefreshBtn').addEventListener('click', function () {
-      window.location.reload();
-    });
-    banner.querySelector('.close').addEventListener('click', function () {
-      banner.remove();
-    });
+    var url = table.getAttribute('data-realtime-refresh-url');
+    if (!url || table.getAttribute('data-realtime-refreshing') === '1') return;
+
+    table.setAttribute('data-realtime-refreshing', '1');
+
+    fetch(url, {
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function (html) {
+        var tbody = table.querySelector('tbody');
+        if (!tbody) return;
+
+        if (window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable(table)) {
+          jQuery(table).DataTable().destroy();
+        }
+
+        tbody.innerHTML = html;
+
+        document.dispatchEvent(new CustomEvent('tms:ticket-table-refreshed', {
+          detail: { table: table, tableId: table.id || '' },
+        }));
+      })
+      .catch(function () { /* silent */ })
+      .finally(function () {
+        table.removeAttribute('data-realtime-refreshing');
+      });
+  }
+
+  function scheduleTicketTableRefresh(table) {
+    if (!table) return;
+    if (ticketTableRefreshTimer) {
+      window.clearTimeout(ticketTableRefreshTimer);
+    }
+    ticketTableRefreshTimer = window.setTimeout(function () {
+      ticketTableRefreshTimer = null;
+      refreshTicketTableBody(table);
+    }, 300);
   }
 
   var ticketPollSince = new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -384,13 +435,17 @@
         var tickets = res.tickets || [];
         if (!tickets.length) return;
 
-        var anyRowUpdated = false;
+        var table = document.querySelector('.ticket-realtime-table[data-realtime-refresh-url]');
+        var needsBodyRefresh = false;
+
         tickets.forEach(function (ticket) {
-          if (updateTicketRow(ticket)) anyRowUpdated = true;
+          if (!updateTicketRow(ticket)) {
+            needsBodyRefresh = true;
+          }
         });
 
-        if (!anyRowUpdated && tickets.length > 0) {
-          showTicketRefreshBanner();
+        if (needsBodyRefresh && table) {
+          scheduleTicketTableRefresh(table);
         }
       })
       .catch(function () { /* silent */ });

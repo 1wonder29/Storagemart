@@ -1,6 +1,21 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
+$ticketMode = $ticketMode ?? 'in_progress';
+$isPendingMode = ($ticketMode === 'pending');
+$pageTitle = $isPendingMode ? 'Pending Tickets' : 'In Progress Tickets';
+$heroIcon = $isPendingMode ? 'fa-clock' : 'fa-spinner';
+$heroDescription = $isPendingMode
+    ? 'Tickets waiting in pending status. Move them back to progress or resolve when ready.'
+    : 'Active assignments — update status, add notes, or resolve when work is complete.';
+$queueTitle = $isPendingMode ? 'Pending Queue' : 'Active Queue';
+$emptyState = $isPendingMode
+    ? "No pending tickets right now. You're all caught up!"
+    : "No tickets in progress. You're all caught up!";
+$realtimeRefreshUrl = $isPendingMode
+    ? '/it/tickets/pending?realtime_rows=1'
+    : '/it/tickets/in_progress?realtime_rows=1';
+$realtimeKeepStatus = $isPendingMode ? 'pending' : 'in progress';
 
 $totalTickets = count($tickets);
 $branches = [];
@@ -36,7 +51,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | IT In Progress Tickets</title>
+    <title>Storage Mart | IT <?= htmlspecialchars($pageTitle) ?></title>
 
     <link href="<?= htmlspecialchars($base)?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
@@ -60,9 +75,15 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
             <div class="page-hero hero-in-progress">
                 <div class="row align-items-center">
                     <div class="col-lg-7">
-                        <h1><i class="fas fa-spinner mr-2"></i>In Progress Tickets</h1>
-                        <p>Active assignments — update status, add notes, or resolve when work is complete.</p>
+                        <h1><i class="fas <?= htmlspecialchars($heroIcon) ?> mr-2"></i><?= htmlspecialchars($pageTitle) ?></h1>
+                        <p><?= htmlspecialchars($heroDescription) ?></p>
                         <div class="quick-nav mt-3">
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" class="btn btn-sm btn-outline-light mr-1">
+                                <i class="fas fa-spinner mr-1"></i> In Progress
+                            </a>
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/pending" class="btn btn-sm btn-outline-light mr-1">
+                                <i class="fas fa-clock mr-1"></i> Pending
+                            </a>
                             <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" class="btn btn-sm btn-outline-light mr-1">
                                 <i class="fas fa-check-circle mr-1"></i> Resolved
                             </a>
@@ -139,7 +160,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
             <div class="card ticket-list-card shadow mb-4">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-list-ul mr-1"></i> Active Queue
+                        <i class="fas fa-list-ul mr-1"></i> <?= htmlspecialchars($queueTitle) ?>
                     </h6>
                     <span class="badge badge-info"><?= (int) $totalTickets ?> ticket<?= $totalTickets === 1 ? '' : 's' ?></span>
                 </div>
@@ -147,11 +168,15 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                     <?php if (empty($tickets)): ?>
                         <div class="empty-state">
                             <i class="fas fa-inbox d-block"></i>
-                            No tickets in progress. You're all caught up!
+                            <?= htmlspecialchars($emptyState) ?>
                         </div>
                     <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0 ticket-realtime-table" id="IT-TicketDatables" data-employee-id="<?= (int) $employeeId ?>" width="100%" cellspacing="0">
+                        <table class="table table-hover mb-0 ticket-realtime-table" id="IT-TicketDatables"
+                               data-employee-id="<?= (int) $employeeId ?>"
+                               data-realtime-refresh-url="<?= htmlspecialchars($base . $realtimeRefreshUrl) ?>"
+                               data-realtime-keep-status="<?= htmlspecialchars($realtimeKeepStatus) ?>"
+                               width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th>Ticket</th>
@@ -165,169 +190,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                 </tr>
                             </thead>
                             <tbody>
-                                    <?php foreach ($tickets as $row):
-                                        $ticketId = (int) ($row['ticket_id'] ?? 0);
-                                        $isAssignedToMe = (
-                                            $row['assigned_to'] !== null &&
-                                            (int) $row['assigned_to'] === (int) $employeeId
-                                        );
-                                        $status = (string) ($row['status'] ?? '');
-                                        $priority = (string) ($row['priority'] ?? '');
-                                        $date = it_ticket_format_date((string) ($row['date_filed'] ?? ''));
-                                    ?>
-                                        <tr data-ticket-id="<?= $ticketId ?>"
-                                            data-branch="<?= htmlspecialchars(strtolower(trim((string) ($row['branchName'] ?? '')))) ?>"
-                                            data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
-                                            data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>">
-                                            <td>
-                                                <div class="ticket-id-wrap">
-                                                    <span class="ticket-id"><?= htmlspecialchars($row['ticket_number']) ?></span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="employee-name"><?= htmlspecialchars($row['employee_name'] ?? '') ?></div>
-                                                <?php if (!empty($row['branchName'])): ?>
-                                                    <span class="branch-pill">
-                                                        <i class="fas fa-map-marker-alt mr-1"></i><?= htmlspecialchars($row['branchName']) ?>
-                                                    </span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <?php if (!empty($row['category'])): ?>
-                                                    <span class="category-pill" title="<?= htmlspecialchars($row['category']) ?>">
-                                                        <?= htmlspecialchars($row['category']) ?>
-                                                    </span>
-                                                <?php endif; ?>
-                                                <?php if (!empty($row['concern_details'])): ?>
-                                                    <div class="concern-text" title="<?= htmlspecialchars($row['concern_details']) ?>">
-                                                        <?= htmlspecialchars(it_ticket_truncate((string) $row['concern_details'], 80)) ?>
-                                                    </div>
-                                                <?php endif; ?>
-                                                <?php
-                                                $asset = (string) ($row['asset_info'] ?? '');
-                                                if ($asset !== '' && $asset !== 'N/A - General'):
-                                                ?>
-                                                    <div class="asset-hint" title="<?= htmlspecialchars($asset) ?>">
-                                                        <i class="fas fa-laptop mr-1"></i><?= htmlspecialchars($asset) ?>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <?php if ($priority !== ''): ?>
-                                                    <span class="priority-pill <?= it_ticket_priority_class($priority) ?>" data-ticket-priority>
-                                                        <i class="fas fa-flag"></i> <?= htmlspecialchars($priority) ?>
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="text-muted">—</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <?php if ($status !== ''): ?>
-                                                    <span class="status-badge <?= it_ticket_status_class($status) ?>" data-ticket-status>
-                                                        <?= htmlspecialchars($status) ?>
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="text-muted">—</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <div class="employee-name"><?= htmlspecialchars($row['assigned_to_name'] ?? 'Unassigned') ?></div>
-                                                <?php if ($isAssignedToMe): ?>
-                                                    <span class="mine-badge"><i class="fas fa-user-check mr-1"></i>Assigned to you</span>
-                                                <?php endif; ?>
-                                                <?php if (!empty($row['remarks'])): ?>
-                                                    <div class="remarks-hint" title="<?= htmlspecialchars($row['remarks']) ?>">
-                                                        <?= htmlspecialchars(it_ticket_truncate((string) $row['remarks'], 50)) ?>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="date-cell" data-order="<?= (int) $date['order'] ?>">
-                                                <div class="date-main"><?= htmlspecialchars($date['main']) ?></div>
-                                                <?php if ($date['time'] !== ''): ?>
-                                                    <div class="date-time"><?= htmlspecialchars($date['time']) ?></div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="text-right">
-                                                <?php if ($isAssignedToMe): ?>
-                                                    <div class="action-btn-group">
-                                                        <a href="<?= htmlspecialchars($base) ?>/it/tickets/view?id=<?= $ticketId ?>&from=in_progress"
-                                                           class="btn btn-sm btn-outline-primary" title="View full detail">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        <button type="button" class="btn btn-sm btn-outline-info viewTicketBtn"
-                                                            title="View &amp; comments"
-                                                            data-ticket-id="<?= $ticketId ?>"
-                                                            data-ticket-num="<?= htmlspecialchars($row['ticket_number']) ?>"
-                                                            data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
-                                                            data-priority="<?= htmlspecialchars($priority) ?>"
-                                                            data-status="<?= htmlspecialchars($status) ?>"
-                                                            data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>">
-                                                            <i class="fas fa-comments"></i>
-                                                        </button>
-                                                        <div class="dropdown">
-                                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Update ticket">
-                                                                <i class="fas fa-cog"></i>
-                                                            </button>
-                                                            <div class="dropdown-menu dropdown-menu-right shadow">
-                                                                <h6 class="dropdown-header">Update Status</h6>
-                                                                <a href="#" class="dropdown-item openModalBtn" data-action="Resolve"
-                                                                    data-ticket-id="<?= $ticketId ?>"
-                                                                    data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>"
-                                                                    data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
-                                                                    data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
-                                                                    data-priority="<?= htmlspecialchars($priority) ?>"
-                                                                    data-status="<?= htmlspecialchars($status) ?>"
-                                                                    data-category="<?= htmlspecialchars($row['category'] ?? '') ?>"
-                                                                    data-department="<?= htmlspecialchars($row['department'] ?? '') ?>"
-                                                                    data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>"
-                                                                    data-filed="<?= !empty($row['date_filed']) ? date('M d, Y', strtotime((string) $row['date_filed'])) : '' ?>"
-                                                                    data-assigned="<?= $row['assigned_to'] ?>">
-                                                                    <i class="fas fa-check fa-sm fa-fw mr-2 text-success"></i> Resolved
-                                                                </a>
-                                                                <a href="#" class="dropdown-item openModalBtn" data-action="On Hold"
-                                                                    data-ticket-id="<?= $ticketId ?>"
-                                                                    data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>"
-                                                                    data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
-                                                                    data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
-                                                                    data-priority="<?= htmlspecialchars($priority) ?>"
-                                                                    data-status="<?= htmlspecialchars($status) ?>"
-                                                                    data-category="<?= htmlspecialchars($row['category'] ?? '') ?>"
-                                                                    data-department="<?= htmlspecialchars($row['department'] ?? '') ?>"
-                                                                    data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>"
-                                                                    data-filed="<?= !empty($row['date_filed']) ? date('M d, Y', strtotime((string) $row['date_filed'])) : '' ?>"
-                                                                    data-assigned="<?= $row['assigned_to'] ?>">
-                                                                    <i class="fas fa-pause fa-sm fa-fw mr-2 text-warning"></i> On Hold
-                                                                </a>
-                                                                <a href="#" class="dropdown-item openModalBtn" data-action="Unresolved"
-                                                                    data-ticket-id="<?= $ticketId ?>"
-                                                                    data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>"
-                                                                    data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
-                                                                    data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
-                                                                    data-priority="<?= htmlspecialchars($priority) ?>"
-                                                                    data-status="<?= htmlspecialchars($status) ?>"
-                                                                    data-category="<?= htmlspecialchars($row['category'] ?? '') ?>"
-                                                                    data-department="<?= htmlspecialchars($row['department'] ?? '') ?>"
-                                                                    data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>"
-                                                                    data-filed="<?= !empty($row['date_filed']) ? date('M d, Y', strtotime((string) $row['date_filed'])) : '' ?>"
-                                                                    data-assigned="<?= $row['assigned_to'] ?>">
-                                                                    <i class="fas fa-times fa-sm fa-fw mr-2 text-danger"></i> Unresolved
-                                                                </a>
-                                                                <div class="dropdown-divider"></div>
-                                                                <a href="#" class="dropdown-item cancelTicketBtn"
-                                                                    data-ticket-id="<?= $ticketId ?>"
-                                                                    data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>">
-                                                                    <i class="fas fa-ban fa-sm fa-fw mr-2 text-secondary"></i> Cancel
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                <?php else: ?>
-                                                    <span class="not-assigned-label">Not assigned to you</span>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
+                                <?php require __DIR__ . '/../../partials/it/in_progress_ticket_rows.php'; ?>
                             </tbody>
                         </table>
                     </div>
@@ -523,17 +386,11 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                 submitClass: 'btn-success',
                 submitLabel: 'Mark Resolved'
             },
-            'On Hold': {
-                title: 'Put Ticket On Hold',
-                statusLabel: 'On Hold',
+            'Pending': {
+                title: 'Mark Ticket Pending',
+                statusLabel: 'Pending',
                 submitClass: 'btn-warning',
-                submitLabel: 'Put On Hold'
-            },
-            'Unresolved': {
-                title: 'Mark Ticket Unresolved',
-                statusLabel: 'Unresolved',
-                submitClass: 'btn-danger',
-                submitLabel: 'Mark Unresolved'
+                submitLabel: 'Mark Pending'
             }
         };
 
@@ -542,7 +399,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
             return text !== '' ? text : '—';
         }
 
-        $('.openModalBtn').click(function(e) {
+        $(document).on('click', '.openModalBtn', function(e) {
             e.preventDefault();
             const $btn = $(this);
             const ticketId = $btn.data('ticket-id');
@@ -584,7 +441,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
             $('#ticketModal').modal('show');
         });
 
-        $('.viewTicketBtn').click(function(e) {
+        $(document).on('click', '.viewTicketBtn', function(e) {
             e.preventDefault();
             const ticketId = $(this).data('ticket-id');
             $('#view_ticket_number').val($(this).data('ticket-num') || '');

@@ -15,6 +15,8 @@ class ItTicketModel extends BaseModel
 
     public function getInProgressTickets(int $assignedToEmployeeId = 0): array
     {
+        $this->autoCloseResolvedTickets();
+
         $sql = "
             SELECT t.*, 
                    CONCAT(e.firstname,' ',e.lastname) AS employee_name,
@@ -47,6 +49,41 @@ class ItTicketModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function getPendingTickets(int $assignedToEmployeeId = 0): array
+    {
+        $this->autoCloseResolvedTickets();
+
+        $sql = "
+            SELECT t.*, 
+                   CONCAT(e.firstname,' ',e.lastname) AS employee_name,
+                   b.branchName,
+                   CONCAT(IFNULL(i.assetNumber, 'N/A'),' - ', IFNULL(g.groupName, 'General')) AS asset_info,
+                   CONCAT(a2.firstname,' ',a2.lastname) AS assigned_to_name
+            FROM tbltickets t
+            JOIN tblemployee e ON t.employee_id = e.employee_id
+            JOIN tblbranch b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+            LEFT JOIN tblassets_inventory i ON t.inventory_id = i.inventory_id
+            LEFT JOIN tblassets_group g ON i.group_id = g.group_id
+            LEFT JOIN tblemployee a2 ON t.assigned_to = a2.employee_id
+            WHERE t.status = 'Pending'
+        ";
+
+        if ($assignedToEmployeeId > 0) {
+            $sql .= " AND t.assigned_to = :assigned_to";
+        }
+
+        $sql .= " ORDER BY t.date_filed ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = [];
+        if ($assignedToEmployeeId > 0) {
+            $params[':assigned_to'] = $assignedToEmployeeId;
+        }
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function getAssignedTo(int $ticketId): ?int
     {
         $stmt = $this->pdo->prepare(
@@ -70,6 +107,8 @@ class ItTicketModel extends BaseModel
 
     public function getResolvedTechnicalTickets(): array
     {
+        $this->autoCloseResolvedTickets();
+
         $sql = "
             SELECT 
                 t.ticket_id,
@@ -221,6 +260,8 @@ class ItTicketModel extends BaseModel
 
     public function fetchAllTicketsByEmployee(int $employeeId): array
     {
+        $this->autoCloseResolvedTickets();
+
         $sql = "
             SELECT 
                 t.ticket_id, 
@@ -322,6 +363,18 @@ class ItTicketModel extends BaseModel
             error_log("Error inserting PDF record: " . $e->getMessage());
             return false;
         }
+    }
+
+    public function autoCloseResolvedTickets(): int
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE {$this->tbltickets}
+             SET status = 'Closed', last_updated = NOW()
+             WHERE status = 'Resolved'
+               AND last_updated <= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+        );
+        $stmt->execute();
+        return (int) $stmt->rowCount();
     }
 
 

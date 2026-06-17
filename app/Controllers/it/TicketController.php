@@ -90,6 +90,8 @@ class TicketController extends AuthController
 
         // ✅ ticket operations use ItTicketModel
         $ticketModel = new ItTicketModel();
+        $ticketData = $ticketModel->fetchTicketById($ticketId);
+        $oldStatus = (string) ($ticketData['status'] ?? 'In Progress');
 
         // normalize priority
         $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
@@ -325,6 +327,53 @@ class TicketController extends AuthController
 
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
+        $ticketMode = 'in_progress';
+
+        if (!empty($_GET['realtime_rows'])) {
+            header('Content-Type: text/html; charset=utf-8');
+            require __DIR__ . '/../../Views/partials/it/in_progress_ticket_rows.php';
+            exit;
+        }
+
+        require __DIR__ . '/../../Views/it/ticket/in_progress.php';
+    }
+
+    public function pending()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $accountId = (int) $_SESSION['account_id'];
+        $itModel = new IT();
+
+        $employeeId = $itModel->getEmployeeIdByAccountId($accountId);
+        if (!$employeeId) {
+            die('Employee not found');
+        }
+
+        $ticketModel = new ItTicketModel();
+        $tickets = $ticketModel->getPendingTickets($employeeId);
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        $ticketMode = 'pending';
+
+        if (!empty($_GET['realtime_rows'])) {
+            header('Content-Type: text/html; charset=utf-8');
+            require __DIR__ . '/../../Views/partials/it/in_progress_ticket_rows.php';
+            exit;
+        }
+
         require __DIR__ . '/../../Views/it/ticket/in_progress.php';
     }
     public function update()
@@ -373,10 +422,11 @@ class TicketController extends AuthController
 
         // ✅ action → status
         switch ($action) {
-            case 'Resolve':    $status = 'Resolved';   break;
-            case 'On Hold':    $status = 'On Hold';    break;
-            case 'Unresolved': $status = 'Unresolved'; break;
-            default:           $status = 'In Progress';
+            case 'Resolve': $status = 'Resolved'; break;
+            case 'In Progress': $status = 'In Progress'; break;
+            case 'On Hold':
+            case 'Pending': $status = 'Pending'; break;
+            default:        $status = 'In Progress';
         }
         // 🔔 Notify ticket owner (employee) when resolved
         if ($status === 'Resolved') {
@@ -426,7 +476,7 @@ class TicketController extends AuthController
             'ticket_id'       => $ticketId,
             'action_type'     => $status,
             'action_details'  => "Ticket {$status} by IT Staff (Account ID: {$_SESSION['account_id']})",
-            'old_status'      => 'In Progress',
+            'old_status'      => $oldStatus,
             'new_status'      => $status,
             'performed_by'    => $_SESSION['account_id'],
             'performed_role'  => 'IT Staff'

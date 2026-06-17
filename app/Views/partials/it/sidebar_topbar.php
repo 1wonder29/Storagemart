@@ -34,6 +34,7 @@ $base = rtrim(BASE_URL, '/');
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Ticket:</h6>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/in_progress">In Progress</a>
+                        <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/pending">Pending</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/resolve">Resolve</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/cancelled">Cancel History</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets">My Ticket</a>
