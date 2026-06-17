@@ -239,12 +239,6 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                                    class="btn btn-sm btn-outline-primary" title="View full detail">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (strcasecmp($status, 'resolved') === 0): ?>
-                                                <a href="<?= htmlspecialchars($base) ?>/admin/tickets/download-record?id=<?= $ticketId ?>"
-                                                   class="btn btn-sm btn-success" title="Generate technical report">
-                                                    <i class="fas fa-file-word"></i>
-                                                </a>
-                                                <?php endif; ?>
                                                 <button type="button" class="btn btn-sm btn-outline-info viewBtn"
                                                     title="View history"
                                                     data-ticketid="<?= $ticketId ?>"
@@ -255,6 +249,12 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                                     data-status="<?= htmlspecialchars($status) ?>">
                                                     <i class="fas fa-history"></i>
                                                 </button>
+                                                <?php if (strcasecmp($status, 'resolved') === 0): ?>
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/tickets/download-record?id=<?= $ticketId ?>"
+                                                   class="btn btn-sm btn-success" title="Generate technical report">
+                                                    <i class="fas fa-file-word"></i>
+                                                </a>
+                                                <?php endif; ?>
                                                 <div class="dropdown">
                                                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="More actions">
