@@ -206,6 +206,8 @@ if (strpos($uri, '/admin') === 0) {
         $asset->markDefective();
     } elseif ($sub === 'assets/return' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $asset->returnAsset();
+    } elseif ($sub === 'assets/accountability-remarks' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $asset->updateAccountabilityRemarks();
     } elseif ($sub === 'assets/item/delete') {
         $asset->deleteItem();
     } elseif ($sub === 'assets/transfer') {
@@ -312,6 +314,10 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
         $it->viewUploads();
     } elseif ($sub === 'assets') {
         $asset->asset();
+    } elseif ($sub === 'assets/accountability-remarks' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $asset->updateAccountabilityRemarks();
+    } elseif ($sub === 'assets/transfer-history') {
+        $asset->transferHistory();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $ticket->create();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -440,6 +446,10 @@ if (strpos($uri, '/hr') === 0) {
         $hrAsset->searchEmployee();
     } elseif ($sub === 'assets/transfer-history') {
         $hrAsset->transferHistory();
+    } elseif ($sub === 'assets/return' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $hrAsset->returnAsset();
+    } elseif ($sub === 'assets/accountability-remarks' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $hrAsset->updateAccountabilityRemarks();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $hrTicket->create();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {

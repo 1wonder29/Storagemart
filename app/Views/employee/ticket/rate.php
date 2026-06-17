@@ -1,6 +1,13 @@
 <?php if ($alreadyRated): ?>
     <!-- Popup Modal for Already Rated -->
     <style>
+        #rateTicketModal .modal-header {
+            display: none;
+        }
+        #rateTicketModal .modal-body {
+            padding: 0;
+            background: transparent;
+        }
         @keyframes popIn {
             0% {
                 opacity: 0;
@@ -30,10 +37,23 @@
     
     <script>
         (function() {
+            var modalEl = document.getElementById('rateTicketModal');
             var btn = document.getElementById('closeOverlay');
             if (!btn) return;
+
+            function restoreRateModalLayout() {
+                if (!modalEl) return;
+                var header = modalEl.querySelector('.modal-header');
+                var body = modalEl.querySelector('.modal-body');
+                if (header) header.style.display = '';
+                if (body) {
+                    body.style.padding = '';
+                    body.style.background = '';
+                }
+            }
             btn.addEventListener('click', function () {
                 try {
+                    restoreRateModalLayout();
                     if (window.jQuery && jQuery('#rateTicketModal').length) {
                         jQuery('#rateTicketModal').modal('hide');
                     } else if (document.getElementById('rateTicketModal')) {
@@ -47,6 +67,9 @@
             });
             btn.addEventListener('mouseover', function() { this.style.background = '#f5f5f5'; });
             btn.addEventListener('mouseout', function() { this.style.background = 'white'; });
+            if (window.jQuery && modalEl) {
+                jQuery(modalEl).one('hidden.bs.modal', restoreRateModalLayout);
+            }
         })();
     </script>
 <?php else: ?>

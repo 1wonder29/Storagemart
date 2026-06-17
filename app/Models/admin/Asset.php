@@ -283,8 +283,26 @@ class Asset extends BaseModel {
         );
     }
 
-    public function returnAssetFromEmployee(int $inventoryId, int $employeeId, string $reason, ?int $performedByAccountId = null): bool
+    public function buildAssetReturnRemarks(string $assetNumber, string $roleLabel = 'HR', string $customRemarks = ''): string
     {
+        $autoRemarks = sprintf(
+            'Asset %s returned on %s. Status: Returned. Processed by %s.',
+            $assetNumber !== '' ? $assetNumber : 'N/A',
+            date('F j, Y'),
+            strtoupper($roleLabel)
+        );
+
+        $customRemarks = trim($customRemarks);
+        return $customRemarks !== '' ? $autoRemarks . ' ' . $customRemarks : $autoRemarks;
+    }
+
+    public function returnAssetFromEmployee(
+        int $inventoryId,
+        int $employeeId,
+        string $remarks = '',
+        ?int $performedByAccountId = null,
+        string $roleLabel = 'HR'
+    ): bool {
         $inventory = $this->fetchInventoryById($inventoryId);
         if (!$inventory) {
             return false;
@@ -299,41 +317,63 @@ class Asset extends BaseModel {
         try {
             $this->pdo->beginTransaction();
             $now = date('Y-m-d H:i:s');
-            $transferDetails = trim($reason) !== '' ? trim($reason) : 'Returned from employee';
+            $returnDate = date('Y-m-d');
+            $assignmentId = (int) ($inventory['assignment_id'] ?? 0);
+            $finalRemarks = $this->buildAssetReturnRemarks(
+                (string) ($inventory['assetNumber'] ?? ''),
+                $roleLabel,
+                $remarks
+            );
+
+            if ($assignmentId > 0) {
+                $sqlAssign = "UPDATE {$this->tblassign}
+                              SET dateReturned = :dateReturned,
+                                  transferDetails = :transferDetails
+                              WHERE assignment_id = :assignment_id
+                                AND employee_id = :employee_id
+                                AND inventory_id = :inventory_id";
+                $stmtAssign = $this->pdo->prepare($sqlAssign);
+                if (!$stmtAssign->execute([
+                    ':dateReturned' => $returnDate,
+                    ':transferDetails' => $finalRemarks,
+                    ':assignment_id' => $assignmentId,
+                    ':employee_id' => $employeeId,
+                    ':inventory_id' => $inventoryId,
+                ])) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+            } else {
+                $sqlIns = "INSERT INTO {$this->tblassign}
+                        (employee_id, inventory_id, assignedTo, dateIssued, transferDetails, dateReturned, datecreated, createdby)
+                        VALUES (:employee_id, :inventory_id, :assignedTo, :dateIssued, :transferDetails, :dateReturned, :datecreated, :createdby)";
+                $stmtIns = $this->pdo->prepare($sqlIns);
+                if (!$stmtIns->execute([
+                    ':employee_id' => $employeeId,
+                    ':inventory_id' => $inventoryId,
+                    ':assignedTo' => 'Returned',
+                    ':dateIssued' => $returnDate,
+                    ':transferDetails' => $finalRemarks,
+                    ':dateReturned' => $returnDate,
+                    ':datecreated' => $now,
+                    ':createdby' => $performedByAccountId ?? 'SYSTEM',
+                ])) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+                $assignmentId = (int) $this->pdo->lastInsertId();
+            }
 
             $sqlUp = "UPDATE {$this->tblassets}
                     SET employee_id = NULL,
-                        status = 'UNASSIGNED'
+                        status = 'RETURNED',
+                        assignment_id = :assignment_id
                     WHERE inventory_id = :inventory_id";
             $stmt = $this->pdo->prepare($sqlUp);
-            if (!$stmt->execute([':inventory_id' => $inventoryId])) {
-                $this->pdo->rollBack();
-                return false;
-            }
-
-            $sqlIns = "INSERT INTO {$this->tblassign}
-                    (employee_id, inventory_id, assignedTo, dateIssued, transferDetails, dateReturned, datecreated, createdby)
-                    VALUES (:employee_id, :inventory_id, :assignedTo, :dateIssued, :transferDetails, :dateReturned, :datecreated, :createdby)";
-            $stmt2 = $this->pdo->prepare($sqlIns);
-            $ok2 = $stmt2->execute([
-                ':employee_id'     => $employeeId,
-                ':inventory_id'    => $inventoryId,
-                ':assignedTo'      => 'Unassigned',
-                ':dateIssued'      => date('Y-m-d'),
-                ':transferDetails' => $transferDetails,
-                ':dateReturned'    => date('Y-m-d'),
-                ':datecreated'     => $now,
-                ':createdby'       => $performedByAccountId ?? 'SYSTEM',
-            ]);
-            if (!$ok2) {
-                $this->pdo->rollBack();
-                return false;
-            }
-
-            $newAssignmentId = (int) $this->pdo->lastInsertId();
-            $sqlUpd = "UPDATE {$this->tblassets} SET assignment_id = :assignment_id WHERE inventory_id = :inventory_id";
-            $stmt3 = $this->pdo->prepare($sqlUpd);
-            if (!$stmt3->execute([':assignment_id' => $newAssignmentId, ':inventory_id' => $inventoryId])) {
+            if (!$stmt->execute([
+                ':assignment_id' => $assignmentId > 0 ? $assignmentId : null,
+                ':inventory_id' => $inventoryId,
+            ])) {
                 $this->pdo->rollBack();
                 return false;
             }
@@ -344,12 +384,13 @@ class Asset extends BaseModel {
             ActivityLogger::transfer(
                 'Asset Inventory',
                 (string) $inventoryId,
-                'Asset returned from employee and marked unassigned',
+                'Asset returned from employee and accountability form updated',
                 (string) ($performedByAccountId ?? 'SYSTEM'),
                 [
-                    'status' => 'UNASSIGNED',
+                    'status' => 'RETURNED',
                     'employee_id' => $employeeId,
-                    'reason' => $transferDetails,
+                    'date_returned' => $returnDate,
+                    'remarks' => $finalRemarks,
                 ]
             );
 
@@ -358,6 +399,39 @@ class Asset extends BaseModel {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
+            return false;
+        }
+    }
+
+    public function updateAccountabilityRemarks(int $assignmentId, string $remarks, ?int $performedByAccountId = null): bool
+    {
+        if ($assignmentId <= 0) {
+            return false;
+        }
+
+        try {
+            $sql = "UPDATE {$this->tblassign}
+                    SET transferDetails = :transferDetails
+                    WHERE assignment_id = :assignment_id";
+            $stmt = $this->pdo->prepare($sql);
+            $ok = $stmt->execute([
+                ':transferDetails' => trim($remarks),
+                ':assignment_id' => $assignmentId,
+            ]);
+
+            if ($ok) {
+                require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
+                ActivityLogger::transfer(
+                    'Asset Accountability',
+                    (string) $assignmentId,
+                    'Accountability remarks updated',
+                    (string) ($performedByAccountId ?? 'SYSTEM'),
+                    ['remarks' => trim($remarks)]
+                );
+            }
+
+            return $ok;
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -727,6 +801,7 @@ class Asset extends BaseModel {
 
     public function fetchAssignmentsByInventoryId(int $inventoryId): array {
         $sql = "SELECT
+            asn.assignment_id,
             asn.employee_id,
             asn.assignedTo,
             asn.transferDetails,

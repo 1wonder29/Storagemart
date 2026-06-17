@@ -176,6 +176,13 @@ foreach ($rawTicketStats as $status => $count) {
                                         <a href="<?= htmlspecialchars($base) ?>/hr/tickets/view?id=<?php echo (int) ($ticket['ticket_id'] ?? 0); ?>" class="btn btn-sm btn-info btn-view-icon" title="View ticket">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        <?php
+                                        $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
+                                        $ticketStatus = $status;
+                                        $iconOnly = true;
+                                        $btnClass = 'btn-danger btn-sm btn-view-icon';
+                                        require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
+                                        ?>
                                         </div>
                                     </td>
                                 </tr>
@@ -235,6 +242,7 @@ foreach ($rawTicketStats as $status => $count) {
     document.getElementById('priorityFilter').addEventListener('change', filterTickets);
     document.getElementById('searchInput').addEventListener('input', filterTickets);
 </script>
+<?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 
 </body>
 </html>

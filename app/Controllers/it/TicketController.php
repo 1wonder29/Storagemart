@@ -388,12 +388,13 @@ class TicketController extends AuthController
                 require_once __DIR__ . '/../../Models/NotificationModel.php';
 
                 $notificationModel = new NotificationModel();
+                $receiverUsertype = $notificationModel->getAccountUsertype((int) $receiverAccountId);
                 $notificationModel->create(
                     (int) $receiverAccountId,
-                    'Your ticket has been resolved. Click to rate IT support.',
-                    'fa-star',
+                    'Your ticket has been resolved. Click to view details.',
+                    'fa-check-circle',
                     'success',
-                    '/employee/tickets/rate?id=' . $ticketId,
+                    $notificationModel->getTicketViewUrlForRole($receiverUsertype, $ticketId),
                     $ticketId
                 );
 

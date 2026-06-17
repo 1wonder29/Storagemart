@@ -129,11 +129,11 @@ $base = rtrim(BASE_URL, '/');
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
                             <input type="hidden" name="employee_id" value="<?= (int) ($employee_id ?? 0) ?>">
                             <input type="hidden" name="inventory_id" id="returnInventoryId" value="">
-                            <p class="mb-3">You are returning asset <strong id="returnAssetNumber"></strong> from this employee. The item will be marked as <strong>unassigned</strong> and can then be marked defective from Asset Inventory if needed.</p>
+                            <p class="mb-3">You are returning asset <strong id="returnAssetNumber"></strong> from this employee. The item will be marked as <strong>Returned</strong> and the accountability form will update automatically.</p>
                             <div class="form-group mb-0">
-                                <label for="returnReason">Reason <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="returnReason" name="reason" rows="4" required
-                                          placeholder="Describe the condition or reason for return"></textarea>
+                                <label for="returnReason">Additional Remarks <span class="text-muted">(optional)</span></label>
+                                <textarea class="form-control" id="returnReason" name="reason" rows="4"
+                                          placeholder="Optional notes. System remarks are generated automatically."></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">

@@ -171,26 +171,21 @@
     });
   }
 
-  function navigateAfterNotificationRead(url) {
-    if (!url || url === '#') return;
-
+  function resolveNotificationUrl(url) {
+    if (!url || url === '#') return url;
     if (url.indexOf('/tickets/rate') !== -1) {
-      var body = document.getElementById('rateTicketModalBody');
-      if (body && window.jQuery) {
-        body.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
-        window.jQuery('#rateTicketModal').modal('show');
-        fetch(url, { credentials: 'same-origin' })
-          .then(function (res) { return res.text(); })
-          .then(function (html) { body.innerHTML = html; })
-          .catch(function () {
-            body.innerHTML = '<div class="text-danger p-3">Unable to load rating form.</div>';
-          });
-        return;
-      }
+      return url.replace('/tickets/rate', '/tickets/view');
     }
+    return url;
+  }
 
+  function navigateAfterNotificationRead(url) {
+    url = resolveNotificationUrl(url);
+    if (!url || url === '#') return;
     window.location.href = url;
   }
+
+  var lastNotificationPayload = '';
 
   function pollNotifications() {
     var dropdown = document.querySelector('[aria-labelledby="alertsDropdown"]');
@@ -200,11 +195,6 @@
       .then(function (res) {
         if (!res || !res.success) return;
         updateBadge(res.count);
-
-        var header = dropdown.querySelector('.notification-dropdown-header, .dropdown-header');
-        var footer = dropdown.querySelector('.notification-dropdown-footer');
-        var showAll = footer ? footer.querySelector('a[href*="/notifications"]') : dropdown.querySelector('a[href*="/notifications"]');
-        var html = renderNotificationList(res.notifications || []);
 
         var unreadPill = dropdown.querySelector('.notification-unread-pill');
         if (unreadPill) {
@@ -217,6 +207,18 @@
           }
         }
 
+        var payload = JSON.stringify(res.notifications || []);
+        if (payload === lastNotificationPayload) return;
+        lastNotificationPayload = payload;
+
+        var scrollEl = dropdown.querySelector('.notification-scroll');
+        var savedScrollTop = scrollEl ? scrollEl.scrollTop : 0;
+
+        var header = dropdown.querySelector('.notification-dropdown-header, .dropdown-header');
+        var footer = dropdown.querySelector('.notification-dropdown-footer');
+        var showAll = footer ? footer.querySelector('a[href*="/notifications"]') : dropdown.querySelector('a[href*="/notifications"]');
+        var html = renderNotificationList(res.notifications || []);
+
         Array.from(dropdown.children).forEach(function (child) {
           if (child === header || child === footer || child === showAll) return;
           child.remove();
@@ -228,6 +230,11 @@
           if (footer) dropdown.insertBefore(temp.firstChild, footer);
           else if (showAll) dropdown.insertBefore(temp.firstChild, showAll);
           else dropdown.appendChild(temp.firstChild);
+        }
+
+        var newScrollEl = dropdown.querySelector('.notification-scroll');
+        if (newScrollEl && savedScrollTop > 0) {
+          newScrollEl.scrollTop = savedScrollTop;
         }
       })
       .catch(function () { /* silent */ });

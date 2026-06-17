@@ -42,6 +42,26 @@ $base = rtrim(BASE_URL, '/');
                             <p>Past assignments and returns recorded for this asset item.</p>
                         </div>
 
+                        <?php if (!empty($_SESSION['flash_success'])): ?>
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <?= htmlspecialchars($_SESSION['flash_success']) ?>
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <?php unset($_SESSION['flash_success']); ?>
+                        <?php endif; ?>
+
+                        <?php if (!empty($_SESSION['flash_error'])): ?>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <?= htmlspecialchars($_SESSION['flash_error']) ?>
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <?php unset($_SESSION['flash_error']); ?>
+                        <?php endif; ?>
+
                         <div class="card asset-list-card shadow mb-4">
                             <div class="card-header">
                                 <h6 class="m-0 font-weight-bold text-primary">Assignment History</h6>
@@ -60,10 +80,15 @@ $base = rtrim(BASE_URL, '/');
                                                 <th>Date Issued</th>
                                                 <th>Date Returned</th>
                                                 <th>Created By</th>
+                                                <th class="text-right">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php foreach ($assignments as $row): ?>
+                                            <?php
+                                            $hasReturn = !empty($row['dateReturned']);
+                                            $assignmentId = (int) ($row['assignment_id'] ?? 0);
+                                            ?>
                                             <tr>
                                                 <td><?= htmlspecialchars((string) ($row['employee_id'] ?? '')); ?> </td>
                                                 <td><?= htmlspecialchars((string) ($row['assignedTo'] ?? '')); ?> </td>
@@ -71,6 +96,18 @@ $base = rtrim(BASE_URL, '/');
                                                 <td><?= htmlspecialchars((string) ($row['dateIssued'] ?? '')); ?></td>
                                                 <td><?= htmlspecialchars((string) ($row['dateReturned'] ?? '')); ?> </td>
                                                 <td><?= htmlspecialchars((string) ($row['createdByName'] ?? $row['createdby'] ?? '')); ?></td>
+                                                <td class="text-right">
+                                                    <?php if ($hasReturn && $assignmentId > 0): ?>
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-primary btn-edit-accountability-remarks"
+                                                                data-assignment-id="<?= $assignmentId ?>"
+                                                                data-remarks="<?= htmlspecialchars((string) ($row['transferDetails'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                                            <i class="fas fa-edit"></i> Edit Remarks
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <span class="text-muted">—</span>
+                                                    <?php endif; ?>
+                                                </td>
                                             </tr>
                                             <?php endforeach; ?>
                                         </tbody>
@@ -139,6 +176,7 @@ $base = rtrim(BASE_URL, '/');
     <!-- Page level custom scripts -->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/transfer_history.js"></script>
+    <?php require __DIR__ . '/../../partials/asset/accountability_remarks_modal.php'; ?>
     </body>
 
     </html>

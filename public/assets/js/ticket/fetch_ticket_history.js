@@ -113,17 +113,11 @@ document.querySelectorAll(".notification-item").forEach((item) => {
       this.classList.remove("notification-unread");
       this.classList.add("notification-read");
 
-      // 3️⃣ If it's a rating link → load modal
-      if (url.includes("/employee/tickets/rate")) {
-        fetch(url)
-          .then((res) => res.text())
-          .then((html) => {
-            document.getElementById("rateModalContent").innerHTML = html;
-            $("#rateTicketModal").modal("show");
-          });
-      } else {
-        window.location.href = url;
-      }
+      // 3️⃣ Resolved ticket notifications → ticket detail page
+      const targetUrl = url.includes("/tickets/rate")
+        ? url.replace("/tickets/rate", "/tickets/view")
+        : url;
+      window.location.href = targetUrl;
     });
   });
 });

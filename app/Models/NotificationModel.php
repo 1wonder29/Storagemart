@@ -54,7 +54,12 @@ class NotificationModel extends BaseModel
              LIMIT $limit"
         );
         $stmt->execute([$userId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        return $this->normalizeNotificationsForUser(
+            $rows,
+            $this->getAccountUsertype((int) $userId)
+        );
     }
 
     public function markAsRead(int $id, int $userId): bool
@@ -108,6 +113,34 @@ class NotificationModel extends BaseModel
     /**
      * Build role-specific ticket detail URL for comment notifications.
      */
+    public function getAccountUsertype(int $accountId): string
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT usertype FROM {$this->tblaccounts} WHERE account_id = ? LIMIT 1"
+        );
+        $stmt->execute([$accountId]);
+
+        return strtoupper((string) ($stmt->fetchColumn() ?: 'EMPLOYEE'));
+    }
+
+    /**
+     * Rewrite legacy resolved-ticket rate links to role-specific ticket detail pages.
+     */
+    public function normalizeNotificationsForUser(array $notifications, string $usertype): array
+    {
+        foreach ($notifications as &$notification) {
+            $actionUrl = (string) ($notification['action_url'] ?? '');
+            $ticketId = (int) ($notification['related_id'] ?? 0);
+
+            if ($ticketId > 0 && strpos($actionUrl, '/tickets/rate') !== false) {
+                $notification['action_url'] = $this->getTicketViewUrlForRole($usertype, $ticketId);
+            }
+        }
+        unset($notification);
+
+        return $notifications;
+    }
+
     public function getTicketViewUrlForRole(string $usertype, int $ticketId): string
     {
         $role = strtoupper(trim($usertype));

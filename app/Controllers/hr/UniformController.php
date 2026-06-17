@@ -748,7 +748,7 @@ class UniformController extends AuthController {
             if ($result) {
                 $this->hrModel->logAction('RETURNED_UNIFORM', $assignment['employee_id'] ?? null, $assignment['uniform_id'] ?? null, $_SESSION['account_id'] ?? 0,
                     "Returned assignment: {$assignmentId} (Breakdown total: {$breakdownTotal})");
-                $_SESSION['successMessage'] = 'Uniform returned successfully.';
+                $_SESSION['successMessage'] = 'Uniform returned successfully. Accountability form has been updated.';
             } else {
                 $_SESSION['errorMessage'] = 'Failed to process return.';
             }
@@ -756,7 +756,7 @@ class UniformController extends AuthController {
             // Redirect back to employee detail if possible
             $employeeId = (int) ($assignment['employee_id'] ?? 0);
             if ($employeeId > 0) {
-                $this->redirect('/hr/employees/detail/' . $employeeId);
+                $this->redirect('/hr/employees/detail/' . $employeeId . '#accountability-form');
             } else {
                 $this->redirect('/hr/uniforms');
             }

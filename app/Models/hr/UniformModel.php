@@ -498,13 +498,21 @@ class UniformModel extends HRModel {
                 $overallCondition = 'DAMAGED';
             }
 
+            if ($remarks === '') {
+                $remarks = sprintf(
+                    'Uniform returned on %s. Condition: %s. Processed by HR.',
+                    date('F j, Y'),
+                    $overallCondition
+                );
+            }
+
             // 1) Mark assignment as fully returned or reduce outstanding quantity for partial return.
             if ($returnQuantity >= $quantity) {
                 $sql = "UPDATE {$this->tbluniform_assignment}
-                        SET date_returned = CURDATE(), condition_upon_return = ?
+                        SET date_returned = CURDATE(), condition_upon_return = ?, remarks = ?
                         WHERE assignment_id = ?";
                 $stmt = $this->pdo->prepare($sql);
-                $ok = $stmt->execute([$overallCondition, $assignmentId]);
+                $ok = $stmt->execute([$overallCondition, $remarks, $assignmentId]);
             } else {
                 $sql = "UPDATE {$this->tbluniform_assignment}
                         SET quantity_issued = GREATEST(0, quantity_issued - ?)

@@ -216,6 +216,119 @@ class HrAssetController extends AuthController
         $notifications = (new NotificationModel())->getLatest((int) $_SESSION['account_id'], 10);
         $return_employee_id = $returnEmployeeId;
 
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+        $base = rtrim(BASE_URL, '/');
+        $remarksFormAction = $base . '/hr/assets/accountability-remarks';
+        $returnUrl = $base . '/hr/assets/transfer-history?inventory_id=' . $inventoryId;
+        if ($returnEmployeeId > 0) {
+            $returnUrl .= '&return_employee_id=' . $returnEmployeeId;
+        }
+
         require __DIR__ . '/../../Views/hr/asset/transfer_history.php';
+    }
+
+    public function returnAsset()
+    {
+        $this->requireHR();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+
+        $postedToken = $_POST['csrf_token'] ?? '';
+        if (empty($postedToken) || $postedToken !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['errorMessage'] = 'Invalid CSRF token.';
+            $this->redirect('/hr/employees');
+            return;
+        }
+
+        $inventoryId = (int) ($_POST['inventory_id'] ?? 0);
+        $employeeId = (int) ($_POST['employee_id'] ?? 0);
+        $remarks = trim((string) ($_POST['remarks'] ?? ''));
+
+        if ($inventoryId <= 0 || $employeeId <= 0) {
+            $_SESSION['errorMessage'] = 'Invalid asset or employee.';
+            $this->redirect('/hr/employees/detail/' . max($employeeId, 0));
+            return;
+        }
+
+        $assetModel = new Asset();
+        $ok = $assetModel->returnAssetFromEmployee(
+            $inventoryId,
+            $employeeId,
+            $remarks,
+            (int) ($_SESSION['account_id'] ?? 0),
+            'HR'
+        );
+
+        if ($ok) {
+            $this->hrModel->logAction(
+                'RETURNED_ASSET',
+                $employeeId,
+                null,
+                (int) ($_SESSION['account_id'] ?? 0),
+                'Returned inventory ID ' . $inventoryId . ' and updated accountability form.'
+            );
+            $_SESSION['successMessage'] = 'Asset returned successfully. Accountability form has been updated.';
+        } else {
+            $_SESSION['errorMessage'] = 'Could not return asset. It may no longer be assigned to this employee.';
+        }
+
+        $this->redirect('/hr/employees/detail/' . $employeeId . '#accountability-form');
+    }
+
+    public function updateAccountabilityRemarks()
+    {
+        $this->requireHR();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+
+        $postedToken = $_POST['csrf_token'] ?? '';
+        if (empty($postedToken) || $postedToken !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['errorMessage'] = 'Invalid CSRF token.';
+            $this->redirect('/hr/employees');
+            return;
+        }
+
+        $assignmentId = (int) ($_POST['assignment_id'] ?? 0);
+        $employeeId = (int) ($_POST['employee_id'] ?? 0);
+        $remarks = trim((string) ($_POST['remarks'] ?? ''));
+        $returnUrl = trim((string) ($_POST['return_url'] ?? ''));
+
+        if ($assignmentId <= 0 || $remarks === '') {
+            $_SESSION['errorMessage'] = 'Remarks are required.';
+            $this->redirect($returnUrl !== '' ? $returnUrl : '/hr/employees/detail/' . max($employeeId, 0) . '#accountability-form');
+            return;
+        }
+
+        $assetModel = new Asset();
+        if ($assetModel->updateAccountabilityRemarks($assignmentId, $remarks, (int) ($_SESSION['account_id'] ?? 0))) {
+            $this->hrModel->logAction(
+                'UPDATED_ACCOUNTABILITY',
+                $employeeId > 0 ? $employeeId : null,
+                null,
+                (int) ($_SESSION['account_id'] ?? 0),
+                'Updated accountability remarks for assignment ID ' . $assignmentId
+            );
+            $_SESSION['successMessage'] = 'Accountability remarks updated.';
+        } else {
+            $_SESSION['errorMessage'] = 'Unable to update accountability remarks.';
+        }
+
+        if ($returnUrl !== '') {
+            $this->redirect($returnUrl);
+            return;
+        }
+
+        $this->redirect('/hr/employees/detail/' . $employeeId . '#accountability-form');
     }
 }

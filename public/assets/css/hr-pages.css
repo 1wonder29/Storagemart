@@ -89,6 +89,24 @@
   justify-content: center;
 }
 
+.hr-ticket-page .action-btn-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.hr-ticket-page .action-btn-group .btn-view-icon.btn-danger {
+  background-color: #e74a3b;
+  border-color: #e74a3b;
+  color: #fff;
+}
+
+.hr-ticket-page .action-btn-group .btn-view-icon.btn-danger:hover {
+  background-color: #d52a1a;
+  border-color: #c82333;
+  color: #fff;
+}
+
 .hr-employees-page .search-inline .form-control {
   min-width: 280px;
 }

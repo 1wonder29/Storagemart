@@ -959,23 +959,66 @@ class AssetController extends AuthController {
             return;
         }
         if ($reason === '') {
-            $_SESSION['flash_error'] = 'Please provide a reason for returning this asset.';
-            $this->redirect('/admin/assets/view?employee_id=' . $employeeId);
-            return;
+            $reason = '';
         }
 
         $assetModel = new Asset();
-        $ok = $assetModel->returnAssetFromEmployee($inventoryID, $employeeId, $reason, $_SESSION['account_id'] ?? null);
+        $ok = $assetModel->returnAssetFromEmployee($inventoryID, $employeeId, $reason, $_SESSION['account_id'] ?? null, 'ADMIN');
 
         if ($ok) {
             $logger = new Logger();
             $logger->log('Return Asset', 'Item Asset', "Inventory {$inventoryID}", $_SESSION['username'] ?? 'Unknown');
-            $_SESSION['flash_success'] = 'Asset returned successfully.';
+            $_SESSION['flash_success'] = 'Asset returned successfully. Accountability record updated.';
         } else {
             $_SESSION['flash_error'] = 'Could not return asset. It may no longer be assigned to this employee.';
         }
 
         $this->redirect('/admin/assets/view?employee_id=' . $employeeId);
+    }
+
+    public function updateAccountabilityRemarks()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+
+        $role = strtoupper($_SESSION['usertype'] ?? '');
+        if (empty($_SESSION['account_id']) || !in_array($role, ['ADMIN', 'IT'], true)) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $posted_token = $_POST['csrf_token'] ?? '';
+        if (empty($posted_token) || $posted_token !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token.';
+            $this->redirect('/admin/employee');
+            return;
+        }
+
+        $assignmentId = (int) ($_POST['assignment_id'] ?? 0);
+        $remarks = trim((string) ($_POST['remarks'] ?? ''));
+        $returnUrl = trim((string) ($_POST['return_url'] ?? '/admin/employee'));
+
+        if ($assignmentId <= 0 || $remarks === '') {
+            $_SESSION['flash_error'] = 'Remarks are required.';
+            $this->redirect($returnUrl !== '' ? $returnUrl : '/admin/employee');
+            return;
+        }
+
+        $assetModel = new Asset();
+        if ($assetModel->updateAccountabilityRemarks($assignmentId, $remarks, $_SESSION['account_id'] ?? null)) {
+            $_SESSION['flash_success'] = 'Accountability remarks updated.';
+        } else {
+            $_SESSION['flash_error'] = 'Unable to update accountability remarks.';
+        }
+
+        $this->redirect($returnUrl !== '' ? $returnUrl : '/admin/employee');
     }
 
     // Transfer Asset Item Here
@@ -1182,6 +1225,8 @@ class AssetController extends AuthController {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
         }
         $csrf_token = $_SESSION['csrf_token'];
+        $remarksFormAction = rtrim(BASE_URL, '/') . '/admin/assets/accountability-remarks';
+        $returnUrl = rtrim(BASE_URL, '/') . '/admin/assets/transfer-history?inventory_id=' . $inventoryId;
 
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];

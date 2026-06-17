@@ -1,57 +1,59 @@
 <?php
 $base = rtrim(BASE_URL, '/');
-$returnEmployeeId = (int) ($return_employee_id ?? 0);
-$backUrl = $returnEmployeeId > 0
-    ? $base . '/hr/employees/detail/' . $returnEmployeeId
-    : $base . '/hr/employees';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | Transfer History</title>
+    <title>Storage Mart | IT — Transfer History</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <?php require_once __DIR__ . '/../../partials/it/theme_head.php'; ?>
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/it-assets.css" rel="stylesheet">
 </head>
 <body id="page-top">
     <div id="wrapper">
         <?php
-        $activePage = 'employees';
-        require_once dirname(dirname(__DIR__)) . '/partials/hr/sidebar_topbar.php';
+        $activePage = 'assets';
+        require_once __DIR__ . '/../../partials/it/sidebar_topbar.php';
         ?>
-        <div class="container-fluid">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back
-                    </a>
+        <div class="container-fluid it-assets-page">
+            <div class="page-hero hero-assets">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1><i class="fas fa-history mr-2"></i>Transfer History</h1>
+                        <p>Review assignment and return records for accountability tracking.</p>
+                    </div>
+                    <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
+                        <a href="<?= htmlspecialchars($base) ?>/it/assets" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back to My Assets
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <h1 class="h3 mb-4 text-gray-800">Transfer History</h1>
-
-            <?php if (!empty($_SESSION['successMessage'])): ?>
+            <?php if (!empty($_SESSION['flash_success'])): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <?= htmlspecialchars($_SESSION['successMessage']) ?>
+                    <?= htmlspecialchars($_SESSION['flash_success']) ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <?php unset($_SESSION['successMessage']); ?>
+                <?php unset($_SESSION['flash_success']); ?>
             <?php endif; ?>
 
-            <?php if (!empty($_SESSION['errorMessage'])): ?>
+            <?php if (!empty($_SESSION['flash_error'])): ?>
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <?= htmlspecialchars($_SESSION['errorMessage']) ?>
+                    <?= htmlspecialchars($_SESSION['flash_error']) ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <?php unset($_SESSION['errorMessage']); ?>
+                <?php unset($_SESSION['flash_error']); ?>
             <?php endif; ?>
 
             <div class="card shadow mb-4">
@@ -71,7 +73,7 @@ $backUrl = $returnEmployeeId > 0
                                     <tr>
                                         <th>Employee ID</th>
                                         <th>Name</th>
-                                        <th>Transfer Details</th>
+                                        <th>Remarks</th>
                                         <th>Date Issued</th>
                                         <th>Date Returned</th>
                                         <th>Created By</th>
@@ -89,7 +91,7 @@ $backUrl = $returnEmployeeId > 0
                                             <td><?= htmlspecialchars((string) ($row['assignedTo'] ?? '')) ?></td>
                                             <td><?= htmlspecialchars((string) ($row['transferDetails'] ?? '')) ?></td>
                                             <td><?= htmlspecialchars((string) ($row['dateIssued'] ?? '')) ?></td>
-                                            <td><?= htmlspecialchars($row['dateReturned'] ?? '') ?></td>
+                                            <td><?= htmlspecialchars((string) ($row['dateReturned'] ?? '')) ?></td>
                                             <td><?= htmlspecialchars((string) ($row['createdByName'] ?? $row['createdby'] ?? '')) ?></td>
                                             <td class="text-right">
                                                 <?php if ($hasReturn && $assignmentId > 0): ?>

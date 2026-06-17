@@ -92,11 +92,11 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                 </div>
 
                 <div class="row mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="small text-gray-500 text-uppercase font-weight-bold">Department</div>
                         <div class="h6 mb-0"><?= htmlspecialchars((string) ($ticket['department'] ?? '-')) ?></div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="small text-gray-500 text-uppercase font-weight-bold">Category</div>
                         <div class="h6 mb-0"><?= htmlspecialchars((string) ($ticket['category'] ?? '-')) ?></div>
                     </div>

@@ -154,7 +154,14 @@ class HrController extends AuthController {
             $assets = $this->employeeModel->getEmployeeAssets($employeeId);
             $uniforms = $this->employeeModel->getEmployeeCurrentUniforms($employeeId);
             $uniformHistory = $this->employeeModel->getEmployeeUniforms($employeeId);
+            $accountabilityAssets = $this->employeeModel->getAccountabilityAssetItems($employeeId);
+            $accountabilityUniforms = $this->employeeModel->getAccountabilityUniformItems($employeeId);
             $notifications = $this->notificationModel->getLatest($_SESSION['account_id'], 10);
+
+            if (empty($_SESSION['csrf_token'])) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+            }
+            $csrf_token = $_SESSION['csrf_token'];
 
             // Log view action
             $this->hrModel->logAction('VIEWED_EMPLOYEE', $employeeId, null, $_SESSION['account_id'], 
@@ -206,8 +213,8 @@ class HrController extends AuthController {
                 $this->redirect('/hr/employees');
             }
 
-            $assets = $this->employeeModel->getEmployeeAssets($employeeId);
-            $uniforms = $this->employeeModel->getEmployeeCurrentUniforms($employeeId);
+            $assets = $this->employeeModel->getAccountabilityAssetItems($employeeId);
+            $uniforms = $this->employeeModel->getAccountabilityUniformItems($employeeId);
 
             // Log download action
             $this->hrModel->logAction('DOWNLOADED_FORM', $employeeId, null, $_SESSION['account_id'], 

@@ -163,6 +163,7 @@ if (!function_exists('tms_notification_time')) {
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+    <?php require __DIR__ . '/../partials/realtime_scripts.php'; ?>
     <?php require __DIR__ . '/../partials/flash_modal.php'; ?>
 </body>
 </html>

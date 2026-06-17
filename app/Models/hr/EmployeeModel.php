@@ -108,6 +108,99 @@ class EmployeeModel extends HRModel {
      * @param int $employeeId
      * @return array
      */
+    /**
+     * Accountability form asset rows (active + returned history).
+     */
+    public function getAccountabilityAssetItems(int $employeeId): array {
+        try {
+            $sql = "SELECT
+                        aa.assignment_id,
+                        ai.inventory_id,
+                        ai.assetNumber,
+                        ai.itemInfo,
+                        ai.serialNumber,
+                        ai.status AS asset_status,
+                        ag.groupName,
+                        ac.categoryName,
+                        aa.dateIssued,
+                        aa.dateReturned,
+                        aa.transferDetails AS remarks,
+                        COALESCE(
+                            NULLIF(CONCAT(COALESCE(ie.firstname, ''), ' ', COALESCE(ie.lastname, '')), ' '),
+                            ia.username,
+                            'N/A'
+                        ) AS issued_by_display,
+                        CASE
+                            WHEN aa.dateReturned IS NOT NULL AND aa.dateReturned <> '' THEN 'RETURNED'
+                            WHEN ai.employee_id = aa.employee_id THEN 'ASSIGNED'
+                            ELSE 'RETURNED'
+                        END AS accountability_status
+                    FROM {$this->tblassets_assignment} aa
+                    INNER JOIN {$this->tblassets_inventory} ai ON ai.inventory_id = aa.inventory_id
+                    LEFT JOIN {$this->tblassets_group} ag ON ai.group_id = ag.group_id
+                    LEFT JOIN {$this->tblassets_category} ac ON ag.category_id = ac.category_id
+                    LEFT JOIN {$this->tblaccounts} ia ON aa.createdby = ia.account_id
+                    LEFT JOIN {$this->tblemployee} ie ON ie.account_id = ia.account_id
+                    WHERE aa.employee_id = ?
+                    ORDER BY
+                        CASE WHEN aa.dateReturned IS NULL OR aa.dateReturned = '' THEN 0 ELSE 1 END,
+                        aa.dateIssued DESC,
+                        aa.assignment_id DESC";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$employeeId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log('EmployeeModel::getAccountabilityAssetItems error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Accountability form uniform rows (active + returned history).
+     */
+    public function getAccountabilityUniformItems(int $employeeId): array {
+        try {
+            $sql = "SELECT
+                        ua.assignment_id,
+                        ua.uniform_id,
+                        ua.date_issued,
+                        ua.date_returned,
+                        ua.quantity_issued,
+                        ua.condition_upon_issue,
+                        ua.condition_upon_return,
+                        ua.remarks,
+                        ui.uniform_type,
+                        ui.size,
+                        ui.color,
+                        COALESCE(
+                            NULLIF(CONCAT(COALESCE(ue.firstname, ''), ' ', COALESCE(ue.lastname, '')), ' '),
+                            uaacc.username,
+                            'N/A'
+                        ) AS issued_by_display,
+                        CASE
+                            WHEN ua.date_returned IS NULL THEN 'ASSIGNED'
+                            ELSE 'RETURNED'
+                        END AS accountability_status
+                    FROM {$this->tbluniform_assignment} ua
+                    LEFT JOIN {$this->tbluniform_inventory} ui ON ua.uniform_id = ui.uniform_id
+                    LEFT JOIN {$this->tblaccounts} uaacc ON ua.createdby = uaacc.account_id
+                    LEFT JOIN {$this->tblemployee} ue ON ue.account_id = uaacc.account_id
+                    WHERE ua.employee_id = ?
+                    ORDER BY
+                        CASE WHEN ua.date_returned IS NULL THEN 0 ELSE 1 END,
+                        ua.date_issued DESC,
+                        ua.assignment_id DESC";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$employeeId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log('EmployeeModel::getAccountabilityUniformItems error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public function getEmployeeAssets(int $employeeId): array {
         try {
             $sql = "SELECT 
