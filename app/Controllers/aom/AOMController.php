@@ -591,7 +591,6 @@ class AOMController extends AuthController
             // Get form data
             $branch_id = (int)($_POST['branch_id'] ?? 0);
             $employee_id = (int)($_POST['employee_id'] ?? 0);
-            $department = $_POST['department'] ?? null;
             $category = $_POST['category'] ?? null;
             $concern_details = $_POST['concern_details'] ?? null;
             $priority = $_POST['priority'] ?? 'Low';
@@ -632,6 +631,12 @@ class AOMController extends AuthController
                 $_SESSION['flash_error'] = 'Unauthorized: You do not have access to this employee.';
                 $this->redirect('/aom/tickets/create/employee');
                 return;
+            }
+
+            $empRow = $this->employeeModel->getEmployeeById($employee_id);
+            $department = trim((string) ($empRow['department'] ?? 'Operations'));
+            if ($department === '') {
+                $department = 'Operations';
             }
 
             // Validate priority

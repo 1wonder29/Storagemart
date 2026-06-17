@@ -143,7 +143,7 @@ $roleLabel = ($user_role ?? '') === 'OM' ? 'OM' : 'HOM';
 
                                     </label>
 
-                                    <select id="branch_id" name="branch_id" class="form-control form-control-lg" required>
+                                    <select id="branch_id" class="form-control form-control-lg" required disabled>
 
                                         <option value="">-- Select Branch --</option>
 
@@ -163,7 +163,8 @@ $roleLabel = ($user_role ?? '') === 'OM' ? 'OM' : 'HOM';
 
                                     </select>
 
-                                    <small class="form-text text-muted">Branch auto-fills when an employee is selected; you can override if needed.</small>
+                                    <small class="form-text text-muted">Branch is set automatically from the selected employee.</small>
+                                    <input type="hidden" id="branch_id_hidden" name="branch_id" value="">
 
                                 </div>
 
@@ -237,28 +238,36 @@ $roleLabel = ($user_role ?? '') === 'OM' ? 'OM' : 'HOM';
 
 
 
+    var branchHidden = document.getElementById('branch_id_hidden');
+
     function syncBranchFromEmployee() {
-
         var option = employeeSelect.options[employeeSelect.selectedIndex];
-
         var branchId = option ? option.getAttribute('data-branch-id') : '';
+        var hasEmployee = !!employeeSelect.value;
         var hasAssets = option ? option.getAttribute('data-has-assets') === '1' : true;
 
-        if (branchId) {
-
+        if (hasEmployee && branchId) {
             branchSelect.value = branchId;
-
+            if (branchHidden) {
+                branchHidden.value = branchId;
+            }
+        } else {
+            branchSelect.value = '';
+            if (branchHidden) {
+                branchHidden.value = '';
+            }
         }
 
+        branchSelect.disabled = true;
+
         if (submitButton) {
-            submitButton.disabled = !hasAssets && !!employeeSelect.value;
+            submitButton.disabled = !hasAssets && hasEmployee;
         }
 
         if (assetWarning) {
-            var shouldShowWarning = !hasAssets && !!employeeSelect.value;
+            var shouldShowWarning = !hasAssets && hasEmployee;
             assetWarning.classList.toggle('d-none', !shouldShowWarning);
         }
-
     }
 
 

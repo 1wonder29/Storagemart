@@ -343,22 +343,9 @@ class HOMTicketController extends AuthController
             return;
         }
 
-        $branchId = (int) ($_POST['branch_id'] ?? 0);
+        $branchId = (int) ($empRow['branch_id'] ?? 0);
         if ($branchId <= 0) {
-            $_SESSION['flash_error'] = 'Please select a branch.';
-            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
-            return;
-        }
-
-        $validBranch = false;
-        foreach ((new HOMModel())->getAllBranches() as $branch) {
-            if ((int) ($branch['branch_id'] ?? 0) === $branchId) {
-                $validBranch = true;
-                break;
-            }
-        }
-        if (!$validBranch) {
-            $_SESSION['flash_error'] = 'Invalid branch selected.';
+            $_SESSION['flash_error'] = 'Selected employee has no branch assigned.';
             $this->redirect('/' . $routePrefix . '/tickets/create/employee');
             return;
         }

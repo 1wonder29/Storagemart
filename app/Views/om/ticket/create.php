@@ -27,7 +27,7 @@ $roleLabel = ($user_role ?? '') === 'HOM' ? 'HOM' : 'OM';
     <div class="container-fluid ticket-create-page">
         <div class="page-hero">
             <h1><i class="fas fa-ticket-alt mr-2"></i>Create New Ticket</h1>
-            <p>File a ticket on behalf of an employee. Branch auto-fills from the selected employee when available.</p>
+            <p>File a ticket on behalf of an employee. Branch is set automatically from the selected employee.</p>
         </div>
 
         <?php require __DIR__ . '/../../partials/ticket/flash_messages.php'; ?>
@@ -71,7 +71,7 @@ $roleLabel = ($user_role ?? '') === 'HOM' ? 'HOM' : 'OM';
                                     <label for="branch_id" class="form-label">
                                         <i class="fas fa-building"></i> Branch <span class="text-danger">*</span>
                                     </label>
-                                    <select id="branch_id" name="branch_id" class="form-control form-control-lg" required>
+                                    <select id="branch_id" class="form-control form-control-lg" required disabled>
                                         <option value="">-- Select Branch --</option>
                                         <?php if (!empty($branches)): ?>
                                             <?php foreach ($branches as $branch): ?>
@@ -81,6 +81,8 @@ $roleLabel = ($user_role ?? '') === 'HOM' ? 'HOM' : 'OM';
                                             <?php endforeach; ?>
                                         <?php endif; ?>
                                     </select>
+                                    <small class="form-text text-muted">Branch is set automatically from the selected employee.</small>
+                                    <input type="hidden" id="branch_id_hidden" name="branch_id" value="">
                                 </div>
                             </div>
 
@@ -108,12 +110,26 @@ $roleLabel = ($user_role ?? '') === 'HOM' ? 'HOM' : 'OM';
     var branchSelect = document.getElementById('branch_id');
     if (!employeeSelect || !branchSelect) return;
 
+    var branchHidden = document.getElementById('branch_id_hidden');
+
     function syncBranchFromEmployee() {
         var option = employeeSelect.options[employeeSelect.selectedIndex];
         var branchId = option ? option.getAttribute('data-branch-id') : '';
-        if (branchId) {
+        var hasEmployee = !!employeeSelect.value;
+
+        if (hasEmployee && branchId) {
             branchSelect.value = branchId;
+            if (branchHidden) {
+                branchHidden.value = branchId;
+            }
+        } else {
+            branchSelect.value = '';
+            if (branchHidden) {
+                branchHidden.value = '';
+            }
         }
+
+        branchSelect.disabled = true;
     }
 
     employeeSelect.addEventListener('change', syncBranchFromEmployee);
