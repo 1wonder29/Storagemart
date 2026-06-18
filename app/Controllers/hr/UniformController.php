@@ -53,7 +53,7 @@ class UniformController extends AuthController {
 
             $uniforms = $this->uniformModel->getAllUniforms($offset, $limit);
             $totalCount = $this->uniformModel->getTotalUniformCount();
-            $totalPages = ceil($totalCount / $limit);
+            $totalPages = max(1, (int) ceil($totalCount / $limit));
             $uniformsNeedingReorder = count($this->uniformModel->getUniformsNeedingReorder());
 
             require __DIR__ . '/../../Views/hr/uniforms/list.php';
