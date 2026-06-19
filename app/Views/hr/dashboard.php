@@ -145,7 +145,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                 <div class="card dash-card shadow">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <h6><i class="fas fa-history"></i>Recent Activity</h6>
-                        <span class="text-muted" style="font-size:0.75rem;">Last 7 days</span>
+                        <span class="activity-period">Last 7 days</span>
                     </div>
                     <div class="card-body">
                         <?php if (empty($recentLogs)): ?>
@@ -190,7 +190,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                             <?= $uniformsNeedingReorder ?> need reorder
                         </span>
                     <?php endif; ?>
-                    <span class="badge badge-primary" style="border-radius:2rem;padding:0.4rem 0.75rem;">
+                    <span class="total-badge">
                         <?= $totalEmployeesWithUniforms ?> total
                     </span>
                 </div>
@@ -249,8 +249,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                                     </td>
                                     <td class="text-right">
                                         <a href="<?= htmlspecialchars($base) ?>/hr/employees/detail/<?= $employeeId ?>"
-                                           class="btn btn-sm btn-outline-primary"
-                                           style="border-radius:2rem;font-size:0.72rem;font-weight:600;">
+                                           class="btn btn-sm btn-view-sm">
                                             <i class="fas fa-eye mr-1"></i> View
                                         </a>
                                     </td>
@@ -262,7 +261,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                 <?php if ($totalEmployeesWithUniforms > 10): ?>
                     <div class="text-center py-3 border-top">
                         <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assign"
-                           class="btn btn-sm btn-outline-primary" style="border-radius:2rem;">
+                           class="btn btn-sm btn-view-all">
                             View All Assignments
                         </a>
                     </div>
@@ -301,7 +300,8 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
             labels: <?= json_encode(array_keys($chartUniformStats)) ?>,
             datasets: [{
                 data: <?= json_encode(array_values($chartUniformStats)) ?>,
-                backgroundColor: ['#ec407a', '#e0e0e0'],
+                backgroundColor: ['#ec407a', '#cbd5e1'],
+                hoverBackgroundColor: ['#ad1457', '#94a3b8'],
                 borderColor: '#fff',
                 borderWidth: 2
             }]
@@ -312,7 +312,11 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { padding: 14, usePointStyle: true, font: { size: 11 } }
+                    labels: {
+                        padding: 16,
+                        usePointStyle: true,
+                        font: { family: 'Nunito, sans-serif', size: 12 }
+                    }
                 }
             },
             cutout: '62%'

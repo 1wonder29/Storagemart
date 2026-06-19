@@ -199,16 +199,20 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
     var centerText = {
         id: 'centerText',
         afterDraw: function (chart) {
+            if (chart.config.type !== 'doughnut') return;
             var meta = chart.getDatasetMeta(0);
             if (!meta || !meta.data || !meta.data.length) return;
             var c = chart.ctx;
             var pt = meta.data[0];
             c.save();
-            c.font = 'bold 22px Nunito';
-            c.fillStyle = '#5a5c69';
+            c.font = 'bold 24px Nunito, sans-serif';
+            c.fillStyle = '#0f172a';
             c.textAlign = 'center';
             c.textBaseline = 'middle';
             c.fillText(total, pt.x, pt.y);
+            c.font = '600 11px Nunito, sans-serif';
+            c.fillStyle = '#64748b';
+            c.fillText('total', pt.x, pt.y + 18);
             c.restore();
         }
     };
@@ -220,7 +224,8 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
             labels: ['Pending', 'In Progress', 'Resolved'],
             datasets: [{
                 data: window.ticketData,
-                backgroundColor: ['#f6c23e', '#36b9cc', '#1cc88a'],
+                backgroundColor: ['#f59e0b', '#06b6d4', '#22c55e'],
+                hoverBackgroundColor: ['#d97706', '#0891b2', '#16a34a'],
                 borderColor: '#fff',
                 borderWidth: 2
             }]
@@ -232,7 +237,11 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { padding: 14, usePointStyle: true, font: { size: 11 } }
+                    labels: {
+                        padding: 16,
+                        usePointStyle: true,
+                        font: { family: 'Nunito, sans-serif', size: 12 }
+                    }
                 }
             }
         }
