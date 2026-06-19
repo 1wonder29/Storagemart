@@ -25,23 +25,21 @@ $activePage = 'tickets';
 require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
 ?>
 
-<div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Ticket Details</h1>
-        <a href="<?= htmlspecialchars($base) ?>/aom/tickets" class="btn btn-sm btn-secondary shadow-sm">
-            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back
-        </a>
-    </div>
+<div class="container-fluid ticket-detail-page theme-aom">
+    <?php
+    $ticketBackUrl = $base . '/aom/tickets';
+    require __DIR__ . '/../partials/ticket/ticket_detail_page_header.php';
+    ?>
 
     <?php if (!empty($_SESSION['flash_success'])): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show alert-modern" role="alert">
             <i class="fas fa-check-circle"></i> <?= htmlspecialchars((string) $_SESSION['flash_success']) ?>
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         </div>
         <?php unset($_SESSION['flash_success']); ?>
     <?php endif; ?>
     <?php if (!empty($_SESSION['flash_error'])): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show alert-modern" role="alert">
             <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars((string) $_SESSION['flash_error']) ?>
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         </div>

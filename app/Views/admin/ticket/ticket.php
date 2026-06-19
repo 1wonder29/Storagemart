@@ -47,6 +47,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-ticket-list.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/ticket-history-modal.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
@@ -261,7 +262,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                                                         <i class="fas fa-ellipsis-v"></i>
                                                     </button>
                                                     <div class="dropdown-menu dropdown-menu-right shadow">
-                                                        <?php if (strcasecmp($status, 'resolved') !== 0): ?>
+                                                        <?php if (ticket_assignment_can_update($status)): ?>
                                                             <a href="#" class="dropdown-item openUpdateAssignBtn"
                                                             data-ticket-id="<?= $ticketId ?>"
                                                             data-assignedid="<?= htmlspecialchars((string) ($row['assigned_to_id'] ?? '')) ?>"
@@ -295,49 +296,54 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
         <i class="fas fa-angle-up"></i>
     </a>
 
-    <div class="modal fade" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal fade ticket-history-modal theme-admin" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="viewTicketLabel">Ticket History</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <span class="modal-icon"><i class="fas fa-history"></i></span>
+                        <h5 class="modal-title" id="viewTicketLabel">Ticket History</h5>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Ticket Number</label>
-                            <input type="text" id="ticket_number" class="form-control" readonly>
+                    <div class="modal-meta-grid">
+                        <div class="modal-meta-field">
+                            <label for="ticket_number">Ticket Number</label>
+                            <input type="text" id="ticket_number" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label>Status</label>
-                            <input type="text" id="status" class="form-control" readonly>
+                        <div class="modal-meta-field">
+                            <label for="status">Status</label>
+                            <input type="text" id="status" class="form-control form-control-sm" readonly>
                         </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Employee</label>
-                            <input type="text" id="employee" class="form-control" readonly>
+                        <div class="modal-meta-field">
+                            <label for="employee">Employee</label>
+                            <input type="text" id="employee" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label>Priority</label>
-                            <input type="text" id="priority" class="form-control" readonly>
+                        <div class="modal-meta-field">
+                            <label for="priority">Priority</label>
+                            <input type="text" id="priority" class="form-control form-control-sm" readonly>
                         </div>
                     </div>
 
-                    <h6 class="mt-4">History Records</h6>
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="ticketHistoryTable" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Action Taken</th>
-                                    <th>Technician</th>
-                                    <th>Old Status</th>
-                                    <th>New Status</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                    <h6 class="modal-section-title"><i class="fas fa-list-alt"></i>History Records</h6>
+                    <div class="modal-table-card">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="ticketHistoryTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Action Taken</th>
+                                        <th>Technician</th>
+                                        <th>Old Status</th>
+                                        <th>New Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <?php
@@ -347,10 +353,10 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                     ?>
                 </div>
                 <div class="modal-footer">
-                    <a href="#" id="viewFullDetailLink" class="btn btn-info mr-auto">
-                        <i class="fas fa-external-link-alt"></i> View Full Detail
+                    <a href="#" id="viewFullDetailLink" class="btn btn-sm btn-view-full-detail mr-auto">
+                        <i class="fas fa-external-link-alt mr-1"></i> View Full Detail
                     </a>
-                    <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button class="btn btn-sm btn-modal-close" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -385,7 +391,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                             <textarea class="form-control" name="remarks" rows="3" placeholder="Add a short note (optional)"></textarea>
                         </div>
                         <div class="alert alert-info small mb-0">
-                            Note: Reassignment is <strong>not allowed</strong> if ticket status = <em>Resolved</em>.
+                            Note: Reassignment is not allowed for <em>Resolved</em>, <em>Closed</em>, or <em>Cancelled</em> tickets.
                         </div>
                     </div>
                     <div class="modal-footer">

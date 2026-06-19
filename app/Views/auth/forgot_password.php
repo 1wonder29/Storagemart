@@ -13,6 +13,7 @@ $base = rtrim(BASE_URL, '/');
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png">
     <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/auth-login.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/ui-readonly-interaction.css?v=2">
 </head>
 
 <body class="auth-page">

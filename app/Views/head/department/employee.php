@@ -235,37 +235,44 @@ ksort($positions);
     </a>
 
     <!-- Employee Tickets Modal -->
-    <div class="modal fade" id="employeeTicketsModal" tabindex="-1">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal fade head-employee-modal" id="employeeTicketsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="fas fa-ticket-alt mr-2"></i>Employee Tickets</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <span class="modal-icon"><i class="fas fa-ticket-alt"></i></span>
+                        <h5 class="modal-title mb-0">Employee Tickets</h5>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Employee</label>
-                            <input type="text" id="ticketEmployeeName" class="form-control" readonly>
+                    <div class="modal-meta-grid">
+                        <div class="modal-meta-field">
+                            <label for="ticketEmployeeName">Employee</label>
+                            <input type="text" id="ticketEmployeeName" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label>Employee ID</label>
-                            <input type="text" id="ticketEmployeeId" class="form-control" readonly>
+                        <div class="modal-meta-field">
+                            <label for="ticketEmployeeId">Employee ID</label>
+                            <input type="text" id="ticketEmployeeId" class="form-control form-control-sm" readonly>
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="employeeTicketsTable" width="100%" data-dt-ignore="true">
-                            <thead>
-                                <tr>
-                                    <th>Ticket #</th>
-                                    <th>Category</th>
-                                    <th>Priority</th>
-                                    <th>Status</th>
-                                    <th>Date Filed</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                    <div class="modal-table-card">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="employeeTicketsTable" width="100%" data-dt-ignore="true">
+                                <thead>
+                                    <tr>
+                                        <th>Ticket #</th>
+                                        <th>Category</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        <th>Date Filed</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -273,38 +280,45 @@ ksort($positions);
     </div>
 
     <!-- Employee Assets Modal -->
-    <div class="modal fade" id="employeeAssetsModal" tabindex="-1">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal fade head-employee-modal" id="employeeAssetsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="fas fa-box mr-2"></i>Employee Assets</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <span class="modal-icon"><i class="fas fa-box"></i></span>
+                        <h5 class="modal-title mb-0">Employee Assets</h5>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Employee</label>
-                            <input type="text" id="assetEmployeeName" class="form-control" readonly>
+                    <div class="modal-meta-grid">
+                        <div class="modal-meta-field">
+                            <label for="assetEmployeeName">Employee</label>
+                            <input type="text" id="assetEmployeeName" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label>Employee ID</label>
-                            <input type="text" id="assetEmployeeId" class="form-control" readonly>
+                        <div class="modal-meta-field">
+                            <label for="assetEmployeeId">Employee ID</label>
+                            <input type="text" id="assetEmployeeId" class="form-control form-control-sm" readonly>
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="employeeAssetsTable" data-dt-ignore="true" width="100%">
-                            <thead>
-                                <tr>
-                                    <th>Asset #</th>
-                                    <th>Model</th>
-                                    <th>Description</th>
-                                    <th>Item Info</th>
-                                    <th>Serial Number</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                    <div class="modal-table-card">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="employeeAssetsTable" data-dt-ignore="true" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>Asset #</th>
+                                        <th>Model</th>
+                                        <th>Description</th>
+                                        <th>Item Info</th>
+                                        <th>Serial Number</th>
+                                        <th class="text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -312,37 +326,44 @@ ksort($positions);
     </div>
 
     <!-- Asset Tickets Modal -->
-    <div class="modal fade" id="assetTicketsModal" tabindex="-1">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal fade head-employee-modal" id="assetTicketsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="fas fa-history mr-2"></i>Asset Ticket History</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <span class="modal-icon"><i class="fas fa-history"></i></span>
+                        <h5 class="modal-title mb-0">Asset Ticket History</h5>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Item Info</label>
-                            <input type="text" id="assetTicketItemInfo" class="form-control" readonly>
+                    <div class="modal-meta-grid">
+                        <div class="modal-meta-field">
+                            <label for="assetTicketItemInfo">Item Info</label>
+                            <input type="text" id="assetTicketItemInfo" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label>Asset Number</label>
-                            <input type="text" id="assetTicketAssetNumber" class="form-control" readonly>
+                        <div class="modal-meta-field">
+                            <label for="assetTicketAssetNumber">Asset Number</label>
+                            <input type="text" id="assetTicketAssetNumber" class="form-control form-control-sm" readonly>
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="assetTicketsTable" data-dt-ignore="true" width="100%">
-                            <thead>
-                                <tr>
-                                    <th>Ticket #</th>
-                                    <th>Category</th>
-                                    <th>Priority</th>
-                                    <th>Status</th>
-                                    <th>Date Filed</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                    <div class="modal-table-card">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="assetTicketsTable" data-dt-ignore="true" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>Ticket #</th>
+                                        <th>Category</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        <th>Date Filed</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -421,7 +442,7 @@ ksort($positions);
                     data: null,
                     orderable: false,
                     render: function (row) {
-                        return '<button class="btn btn-sm btn-primary viewAssetTicketsBtn"' +
+                        return '<button class="btn btn-sm btn-view-asset-tickets viewAssetTicketsBtn"' +
                             ' data-inventory-id="' + row.inventory_id + '"' +
                             ' data-iteminfo="' + $('<div>').text(row.itemInfo || '').html() + '"' +
                             ' data-assetnumber="' + $('<div>').text(row.assetNumber || '').html() + '">' +

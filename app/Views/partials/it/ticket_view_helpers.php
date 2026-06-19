@@ -73,3 +73,11 @@ if (!function_exists('it_ticket_format_date')) {
         ];
     }
 }
+
+if (!function_exists('ticket_assignment_can_update')) {
+    function ticket_assignment_can_update(string $status): bool
+    {
+        $status = strtolower(trim($status));
+        return !in_array($status, ['resolved', 'closed', 'cancelled'], true);
+    }
+}

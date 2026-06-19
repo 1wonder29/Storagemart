@@ -23,7 +23,7 @@ $canShowTransfer = !empty($showTransferTicket)
 
 $showUpdateInSidebar = $showUpdateAssignment
     && !$showUpdateAssignmentInHeader
-    && strcasecmp($status, 'resolved') !== 0;
+    && ticket_assignment_can_update($status);
 
 $hasSidebarActions = ($showRateDownload && $status === 'Resolved')
     || $showUpdateInSidebar

@@ -480,3 +480,178 @@
     font-size: 1.5rem;
   }
 }
+
+/* Head ticket & asset list pages */
+.head-dashboard-page .hero-stat {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--dash-radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(6px);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.head-dashboard-page .hero-stat:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.head-dashboard-page .hero-stat .stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.head-dashboard-page .hero-stat .stat-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.8;
+  margin-top: 0.2rem;
+}
+
+.head-dashboard-page .hero-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.head-dashboard-page.head-asset-page .asset-list-card {
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  overflow: hidden;
+  box-shadow: var(--dash-shadow) !important;
+  background: var(--dash-surface);
+}
+
+.head-dashboard-page.head-asset-page .asset-list-card .card-header {
+  background: linear-gradient(180deg, #fafbff 0%, #fff 100%);
+  border-bottom: 1px solid var(--dash-border);
+  padding: 1.1rem 1.4rem;
+}
+
+.head-dashboard-page.head-asset-page .asset-list-card .card-header h6 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--dash-text);
+  margin: 0;
+}
+
+.head-dashboard-page.head-asset-page .asset-list-card .card-header h6 i {
+  color: var(--dash-blue);
+  margin-right: 0.45rem;
+}
+
+.head-dashboard-page.head-asset-page .asset-count-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  background: rgba(0, 70, 173, 0.08);
+  color: var(--dash-blue);
+  border: 1px solid rgba(0, 70, 173, 0.15);
+}
+
+.head-dashboard-page.head-asset-page .asset-list-card thead th {
+  background: #f8faff;
+  border-top: none;
+  border-bottom: 1px solid var(--dash-border);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dash-muted);
+  padding: 0.85rem 1rem;
+}
+
+.head-dashboard-page.head-asset-page .asset-list-card tbody tr:hover {
+  background: rgba(0, 106, 212, 0.04);
+}
+
+.head-dashboard-page.head-asset-page .asset-list-card td {
+  vertical-align: middle;
+  padding: 0.9rem 1rem;
+  border-color: var(--dash-border);
+}
+
+.head-dashboard-page.head-asset-page .asset-number {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--dash-blue);
+}
+
+.head-dashboard-page.head-asset-page .device-type-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.head-dashboard-page.head-asset-page .device-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  background: rgba(0, 70, 173, 0.1);
+  color: var(--dash-blue);
+}
+
+.head-dashboard-page.head-asset-page .device-name {
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.head-dashboard-page.head-asset-page .device-desc {
+  font-size: 0.78rem;
+  color: var(--dash-muted);
+  margin-top: 0.15rem;
+}
+
+.head-dashboard-page.head-asset-page .item-info-text {
+  font-size: 0.85rem;
+  color: var(--dash-muted);
+}
+
+.head-dashboard-page.head-asset-page .serial-hint {
+  font-size: 0.75rem;
+  color: var(--dash-muted);
+}
+
+.head-dashboard-page.head-asset-page .serial-hint i {
+  margin-right: 0.25rem;
+  color: #94a3b8;
+}
+
+.head-dashboard-page.head-asset-page .btn-file-ticket {
+  font-size: 0.78rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--dash-orange), #f59e0b);
+  border: none;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(243, 112, 33, 0.25);
+}
+
+.head-dashboard-page.head-asset-page .btn-file-ticket:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .head-dashboard-page .hero-stat:hover {
+    transform: none;
+  }
+}

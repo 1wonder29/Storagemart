@@ -2,35 +2,47 @@
 $base = rtrim(BASE_URL, '/');
 $isEditing = $isEditing ?? false;
 $uniform = $uniform ?? null;
+$pageTitle = $isEditing ? 'Edit Uniform' : 'Add Uniform';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | <?= $isEditing ? 'Edit' : 'Add' ?> Uniform</title>
+    <title>Storage Mart | <?= $pageTitle ?></title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-uniforms.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
 </head>
 <body id="page-top">
     <div id="wrapper">
     <?php 
     $activePage = 'uniforms';
     require_once dirname(dirname(__DIR__)) . '/partials/hr/sidebar_topbar.php';?>
-        <div class="container-fluid">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back
-                    </a>
+        <div class="container-fluid hr-dashboard-page hr-uniform-page role-form-page">
+
+            <div class="page-hero">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1><i class="fas fa-tshirt mr-2"></i><?= htmlspecialchars($pageTitle) ?></h1>
+                        <p><?= $isEditing ? 'Update uniform stock levels and reorder thresholds.' : 'Add a new uniform type and size to inventory.' ?></p>
+                    </div>
+                    <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
+                        <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <h1 class="h3 mb-4 text-gray-800"><?= $isEditing ? 'Edit' : 'Add' ?> Uniform</h1>
-
-            <div class="card shadow">
+            <div class="card uniform-card form-card shadow">
+                <div class="card-header">
+                    <h6><i class="fas fa-clipboard-list mr-1"></i>Uniform Details</h6>
+                </div>
                 <div class="card-body">
                     <form method="POST" action="<?= $isEditing ? htmlspecialchars($base) . '/hr/uniforms/edit/' . $uniform['uniform_id'] : htmlspecialchars($base) . '/hr/uniforms/add' ?>" class="needs-validation">
                         
@@ -63,13 +75,11 @@ $uniform = $uniform ?? null;
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> <?= $isEditing ? 'Update' : 'Add' ?> Uniform
-                                </button>
-                                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-secondary">Cancel</a>
-                            </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> <?= $isEditing ? 'Update' : 'Add' ?> Uniform
+                            </button>
+                            <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>

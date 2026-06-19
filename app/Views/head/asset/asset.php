@@ -1,8 +1,18 @@
 <?php
-// Defensive defaults
 $assets = $assets ?? [];
 $employee_id = $employee_id ?? null;
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../partials/it/asset_view_helpers.php';
+
+$totalAssets = count($assets);
+$laptopCount = 0;
+
+foreach ($assets as $asset) {
+    $meta = it_asset_device_meta((string) ($asset['groupName'] ?? ''));
+    if ($meta[0] === 'laptop') {
+        $laptopCount++;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -17,6 +27,7 @@ $base = rtrim(BASE_URL, '/');
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/head-dashboard.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
@@ -29,71 +40,123 @@ $activePage = 'assets';
 require_once __DIR__ . '/../../partials/head/sidebar_topbar.php';
 ?>
 
-<div id="content-wrapper" class="d-flex flex-column">
-<div id="content">
-<div class="container-fluid">
+    <div class="container-fluid head-dashboard-page head-asset-page">
 
-    <h1 class="h3 mb-4 text-gray-800">My Assets</h1>
-
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">Assigned Assets</h6>
+        <div class="page-hero">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h1><i class="fas fa-archive mr-2"></i>My Assets</h1>
+                    <p>Equipment assigned to you — view details and file a support ticket when something needs attention.</p>
+                    <div class="quick-nav mt-3">
+                        <a href="<?= htmlspecialchars($base) ?>/head/dashboard" class="btn btn-sm btn-outline-light mr-1">
+                            <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
+                        </a>
+                        <a href="<?= htmlspecialchars($base) ?>/head/tickets" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-ticket-alt mr-1"></i> Tickets
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="row mt-3 mt-lg-0">
+                        <div class="col-6">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int) $totalAssets ?></div>
+                                <div class="stat-label">Assigned</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int) $laptopCount ?></div>
+                                <div class="stat-label">Laptops</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="card-body">
-            <?php if (empty($assets)): ?>
-                <div class="alert alert-info text-center">
-                    No assets assigned to you.
-                </div>
-            <?php else: ?>
-                <div class="table-responsive">
-                    <table class="table table-bordered" id="assetUser" width="100%" cellspacing="0">
-                        <thead>
-                        <tr>
-                            <th>Asset Number</th>
-                            <th>Model</th>
-                            <th>Description</th>
-                            <th>Item Info</th>
-                            <th>Serial Number</th>
-                            <th>Action</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($assets as $row): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($row['assetNumber']) ?></td>
-                                <td><?= htmlspecialchars($row['groupName']) ?></td>
-                                <td><?= htmlspecialchars($row['description']) ?></td>
-                                <td><?= htmlspecialchars($row['itemInfo']) ?></td>
-                                <td><?= htmlspecialchars($row['serialNumber']) ?></td>
-                                <td>
-                                    <div class="dropdown">
-                                        <a class="btn btn-sm btn-secondary dropdown-toggle"
-                                           href="#"
-                                           role="button"
-                                           data-toggle="dropdown">
-                                            Action
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item"
-                                               href="<?= htmlspecialchars($base) ?>/head/tickets/create?inventory_id=<?= (int)$row['inventory_id'] ?>">
-                                                <i class="fas fa-edit mr-2"></i> File Ticket
-                                            </a>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
+        <div class="card asset-list-card shadow mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6><i class="fas fa-laptop"></i>Assigned Assets</h6>
+                <span class="asset-count-badge"><?= (int) $totalAssets ?> asset<?= $totalAssets === 1 ? '' : 's' ?></span>
+            </div>
+            <div class="card-body p-0">
+                <?php if (empty($assets)): ?>
+                    <div class="empty-state">
+                        <i class="fas fa-box-open d-block"></i>
+                        <h5 class="font-weight-bold text-gray-700">No assets assigned</h5>
+                        <p class="mb-0">Equipment assigned to you will appear here.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="assetUser" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Asset Number</th>
+                                    <th>Device</th>
+                                    <th>Item Info</th>
+                                    <th>Serial Number</th>
+                                    <th class="text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($assets as $row):
+                                    $inventoryId = (int) ($row['inventory_id'] ?? 0);
+                                    $assetNumber = (string) ($row['assetNumber'] ?? '');
+                                    $groupName = (string) ($row['groupName'] ?? '');
+                                    $description = (string) ($row['description'] ?? '');
+                                    $itemInfo = (string) ($row['itemInfo'] ?? '');
+                                    $serialNumber = (string) ($row['serialNumber'] ?? '');
+                                    [$deviceClass, $deviceIcon] = it_asset_device_meta($groupName);
+                                ?>
+                                    <tr>
+                                        <td>
+                                            <div class="asset-number"><?= htmlspecialchars($assetNumber) ?></div>
+                                        </td>
+                                        <td>
+                                            <div class="device-type-wrap">
+                                                <div class="device-icon <?= htmlspecialchars($deviceClass) ?>">
+                                                    <i class="fas <?= htmlspecialchars($deviceIcon) ?>"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="device-name"><?= htmlspecialchars($groupName ?: 'Unknown Device') ?></div>
+                                                    <?php if ($description !== ''): ?>
+                                                        <div class="device-desc"><?= htmlspecialchars($description) ?></div>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="item-info-text"><?= htmlspecialchars($itemInfo ?: '—') ?></div>
+                                        </td>
+                                        <td>
+                                            <?php if ($serialNumber !== ''): ?>
+                                                <div class="serial-hint">
+                                                    <i class="fas fa-barcode"></i><?= htmlspecialchars($serialNumber) ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-muted">—</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="action-btn-group">
+                                                <a href="<?= htmlspecialchars($base) ?>/head/tickets/create?inventory_id=<?= $inventoryId ?>"
+                                                   class="btn btn-sm btn-file-ticket"
+                                                   title="File a support ticket for this asset">
+                                                    <i class="fas fa-ticket-alt mr-1"></i> File Ticket
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
+
     </div>
-
-</div>
-</div>
-</div>
 </div>
 
 <a class="scroll-to-top rounded" href="#page-top">
@@ -106,7 +169,9 @@ require_once __DIR__ . '/../../partials/head/sidebar_topbar.php';
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
+<?php if (!empty($assets)): ?>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
+<?php endif; ?>
 
 <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 

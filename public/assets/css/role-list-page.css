@@ -1,0 +1,298 @@
+/* Shared ticket list / form page components — pair with role dashboard CSS */
+
+.role-list-page,
+.role-form-page {
+  padding-bottom: 1.5rem;
+}
+
+.role-list-page .summary-stats,
+.role-form-page .summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.role-list-page .summary-stat-card,
+.role-form-page .summary-stat-card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.role-list-page .summary-stat-card::before,
+.role-form-page .summary-stat-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.role-list-page .summary-stat-card:hover,
+.role-form-page .summary-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+}
+
+.role-list-page .summary-stat-card .stat-label,
+.role-form-page .summary-stat-card .stat-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.35rem;
+}
+
+.role-list-page .summary-stat-card .stat-value,
+.role-form-page .summary-stat-card .stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+}
+
+.role-list-page .summary-stat-card.stat-warning { color: #d97706; }
+.role-list-page .summary-stat-card.stat-info { color: #0891b2; }
+.role-list-page .summary-stat-card.stat-success { color: #16a34a; }
+.role-list-page .summary-stat-card.stat-danger { color: #dc2626; }
+.role-list-page .summary-stat-card.stat-secondary { color: #64748b; }
+
+.role-list-page .filter-toolbar,
+.role-form-page .filter-toolbar {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 1.15rem 1.35rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.role-list-page .filter-toolbar label,
+.role-form-page .filter-toolbar label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 0.4rem;
+}
+
+.role-list-page .filter-toolbar .form-control,
+.role-form-page .filter-toolbar .form-control {
+  font-size: 0.85rem;
+  border-radius: 10px;
+}
+
+.role-list-page .btn-reset-filters {
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.role-list-page .ticket-list-card,
+.role-form-page .data-card {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+  background: #fff;
+}
+
+.role-list-page .ticket-list-card .card-header,
+.role-form-page .data-card .card-header {
+  background: linear-gradient(180deg, #fafbff 0%, #fff 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 1.1rem 1.4rem;
+}
+
+.role-list-page .ticket-list-card .card-header h6,
+.role-form-page .data-card .card-header h6 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.role-list-page .ticket-count-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  background: rgba(0, 70, 173, 0.08);
+  color: #0046ad;
+  border: 1px solid rgba(0, 70, 173, 0.15);
+}
+
+.role-list-page .ticket-list-card thead th {
+  background: #f8faff;
+  border-top: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  padding: 0.85rem 1rem;
+}
+
+.role-list-page .ticket-list-card tbody tr:hover {
+  background: rgba(0, 106, 212, 0.04);
+}
+
+.role-list-page .ticket-list-card td {
+  vertical-align: middle;
+  padding: 0.9rem 1rem;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.role-list-page .ticket-id {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0046ad;
+}
+
+.role-list-page .status-badge {
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+}
+
+.role-list-page .status-badge.status-pending { background: #fef3c7; color: #92400e; }
+.role-list-page .status-badge.status-in-progress { background: #dbeafe; color: #1e40af; }
+.role-list-page .status-badge.status-resolved { background: #dcfce7; color: #166534; }
+.role-list-page .status-badge.status-closed { background: #e2e8f0; color: #334155; }
+.role-list-page .status-badge.status-cancelled { background: #fee2e2; color: #991b1b; }
+.role-list-page .status-badge.status-default { background: #e2e8f0; color: #475569; }
+
+.role-list-page .priority-pill {
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+}
+
+.role-list-page .priority-pill.high { background: #fee2e2; color: #991b1b; }
+.role-list-page .priority-pill.medium { background: #fef3c7; color: #92400e; }
+.role-list-page .priority-pill.low { background: #dcfce7; color: #166534; }
+
+.role-list-page .branch-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+  background: #eef4fc;
+  color: #0046ad;
+}
+
+.role-list-page .btn-view-ticket {
+  font-size: 0.78rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #012b90, #006ad4);
+  border: none;
+  color: #fff;
+}
+
+.role-list-page .btn-view-ticket:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+.role-list-page .btn-create-ticket {
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  background: linear-gradient(135deg, #f37021, #f59e0b);
+  border: none;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(243, 112, 33, 0.3);
+}
+
+.role-list-page .btn-create-ticket:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+.role-list-page .empty-state,
+.role-form-page .empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #64748b;
+}
+
+.role-form-page .form-card {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  background: #fff;
+}
+
+.role-form-page .form-card .card-header {
+  background: linear-gradient(180deg, #fafbff 0%, #fff 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 1.1rem 1.4rem;
+}
+
+.role-form-page .form-card .card-header h6 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.role-form-page .btn-back-link {
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.4rem 0.95rem;
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  color: #64748b;
+  background: #f8fafc;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+}
+
+.role-form-page .btn-back-link:hover {
+  background: #f1f5f9;
+  color: #475569;
+  text-decoration: none;
+}
+
+.role-form-page .page-hero-form h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: #fff;
+}
+
+.role-form-page .page-hero-form p {
+  margin: 0.35rem 0 0;
+  opacity: 0.9;
+  font-size: 0.92rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .role-list-page .summary-stat-card:hover { transform: none; }
+}

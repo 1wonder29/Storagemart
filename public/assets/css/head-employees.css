@@ -249,3 +249,166 @@
     margin-top: 0.75rem;
   }
 }
+
+/* Head employee modals — tickets & assets */
+.head-employee-modal .modal-content {
+  border: none;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 24px 48px rgba(26, 35, 126, 0.22);
+}
+
+.head-employee-modal .modal-header {
+  background: linear-gradient(135deg, #1a237e 0%, #3949ab 55%, #5c6bc0 100%);
+  border-bottom: none;
+  padding: 1.15rem 1.4rem;
+  align-items: center;
+}
+
+.head-employee-modal .modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.head-employee-modal .modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 1rem;
+}
+
+.head-employee-modal .modal-title {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.head-employee-modal .close {
+  color: #fff;
+  opacity: 0.9;
+  text-shadow: none;
+  font-size: 1.5rem;
+}
+
+.head-employee-modal .close:hover {
+  opacity: 1;
+  color: #fff;
+}
+
+.head-employee-modal .modal-body {
+  padding: 1.35rem 1.4rem 1.5rem;
+  background: #f8faff;
+}
+
+.head-employee-modal .modal-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.head-employee-modal .modal-meta-field label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+}
+
+.head-employee-modal .modal-meta-field .form-control[readonly] {
+  background: #fff;
+  border: 1px solid rgba(57, 73, 171, 0.12);
+  border-radius: 10px;
+  font-weight: 600;
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(26, 35, 126, 0.05);
+}
+
+.head-employee-modal .modal-table-card {
+  background: #fff;
+  border: 1px solid rgba(57, 73, 171, 0.1);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(26, 35, 126, 0.06);
+}
+
+.head-employee-modal .modal-table-card table {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.head-employee-modal .modal-table-card thead th {
+  background: #f1f3fb;
+  border-top: none;
+  border-bottom: 1px solid rgba(57, 73, 171, 0.1);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  white-space: nowrap;
+  padding: 0.85rem 1rem;
+}
+
+.head-employee-modal .modal-table-card tbody td {
+  vertical-align: middle;
+  border-color: rgba(57, 73, 171, 0.08);
+  padding: 0.85rem 1rem;
+  color: #0f172a;
+}
+
+.head-employee-modal .modal-table-card tbody tr:hover {
+  background: rgba(57, 73, 171, 0.04);
+}
+
+.head-employee-modal .btn-view-asset-tickets {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #012b90, #006ad4);
+  border: none;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(1, 43, 144, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.head-employee-modal .btn-view-asset-tickets:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(1, 43, 144, 0.3);
+  color: #fff;
+}
+
+.head-employee-modal .dt-container .dt-search input,
+.head-employee-modal .dt-container .dt-length select {
+  border-radius: 10px;
+  border-color: rgba(57, 73, 171, 0.15);
+  font-size: 0.85rem;
+}
+
+.head-employee-modal .dt-container .dt-paging .dt-paging-button.current {
+  background: #3949ab !important;
+  color: #fff !important;
+  border-color: #3949ab !important;
+  border-radius: 8px;
+}
+
+.head-employee-modal .dt-container .dt-info {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+@media (max-width: 767.98px) {
+  .head-employee-modal .modal-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}

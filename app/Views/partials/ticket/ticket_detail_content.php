@@ -6,6 +6,7 @@
  * Optional: $history, $ticketHistory, $routePrefix, $base, $canPostComments,
  *           plus flags passed through to ticket_detail_actions.php
  */
+require_once __DIR__ . '/../it/ticket_view_helpers.php';
 $status = (string) ($ticket['status'] ?? 'Pending');
 $historyEntries = $history ?? $ticketHistory ?? [];
 $ticketId = (int) ($ticket['ticket_id'] ?? 0);
@@ -42,7 +43,7 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                         <i class="fas fa-ticket-alt"></i>
                         <?= htmlspecialchars((string) ($ticket['ticket_number'] ?? ('#' . $ticketId))) ?>
                     </h6>
-                    <?php if ($showUpdateAssignmentInHeader && !empty($showUpdateAssignment) && strcasecmp($status, 'resolved') !== 0): ?>
+                    <?php if ($showUpdateAssignmentInHeader && !empty($showUpdateAssignment) && ticket_assignment_can_update($status)): ?>
                         <button type="button" class="btn btn-primary btn-sm openUpdateAssignBtn"
                             data-ticket-id="<?= $ticketId ?>"
                             data-assignedid="<?= (int) ($ticket['assigned_to'] ?? 0) ?>"

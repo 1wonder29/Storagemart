@@ -50,6 +50,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
         <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/it-ticket-list.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/ticket-history-modal.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -282,49 +283,54 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
         </div>
     </div>
 
-    <div class="modal fade" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal fade ticket-history-modal theme-it" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="viewTicketLabel"><i class="fas fa-history mr-2"></i>Ticket History</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <span class="modal-icon"><i class="fas fa-history"></i></span>
+                        <h5 class="modal-title" id="viewTicketLabel">Ticket History</h5>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="small text-muted text-uppercase">Ticket Number</label>
+                    <div class="modal-meta-grid">
+                        <div class="modal-meta-field">
+                            <label for="ticket_number">Ticket Number</label>
                             <input type="text" id="ticket_number" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label class="small text-muted text-uppercase">Status</label>
+                        <div class="modal-meta-field">
+                            <label for="status">Status</label>
                             <input type="text" id="status" class="form-control form-control-sm" readonly>
                         </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="small text-muted text-uppercase">Employee</label>
+                        <div class="modal-meta-field">
+                            <label for="employee">Employee</label>
                             <input type="text" id="employee" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label class="small text-muted text-uppercase">Priority</label>
+                        <div class="modal-meta-field">
+                            <label for="priority">Priority</label>
                             <input type="text" id="priority" class="form-control form-control-sm" readonly>
                         </div>
                     </div>
 
-                    <h6 class="mt-4 font-weight-bold text-gray-800">History Records</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered" id="ticketHistoryTable" width="100%" cellspacing="0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Action Taken</th>
-                                    <th>Technician</th>
-                                    <th>Old Status</th>
-                                    <th>New Status</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                    <h6 class="modal-section-title"><i class="fas fa-list-alt"></i>History Records</h6>
+                    <div class="modal-table-card">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="ticketHistoryTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Action Taken</th>
+                                        <th>Technician</th>
+                                        <th>Old Status</th>
+                                        <th>New Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <?php
@@ -334,10 +340,10 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                     ?>
                 </div>
                 <div class="modal-footer">
-                    <a href="#" id="viewFullDetailLink" class="btn btn-info mr-auto">
-                        <i class="fas fa-external-link-alt"></i> View Full Detail
+                    <a href="#" id="viewFullDetailLink" class="btn btn-sm btn-view-full-detail mr-auto">
+                        <i class="fas fa-external-link-alt mr-1"></i> View Full Detail
                     </a>
-                    <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button class="btn btn-sm btn-modal-close" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

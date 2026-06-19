@@ -23,27 +23,23 @@ $base = rtrim(BASE_URL, '/');
     $activePage = 'tickets';
     require_once __DIR__ . '/../../partials/hr/sidebar_topbar.php';
     ?>
-    <div class="container-fluid">
-        <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Ticket Details</h1>
-            <div class="d-flex align-items-center">
-                <?php if ($ticket): ?>
-                    <?php
-                    $ticketId = (int) ($ticket['ticket_id'] ?? 0);
-                    $ticketStatus = (string) ($ticket['status'] ?? '');
-                    $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
-                    $btnClass = 'btn-danger btn-sm mr-2';
-                    require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
-                    ?>
-                <?php endif; ?>
-                <a href="<?= htmlspecialchars($base) ?>/hr/tickets" class="btn btn-sm btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-            </div>
-        </div>
+    <div class="container-fluid ticket-detail-page theme-hr">
+        <?php
+        ob_start();
+        if ($ticket) {
+            $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+            $ticketStatus = (string) ($ticket['status'] ?? '');
+            $ticketNumber = (string) ($ticket['ticket_number'] ?? '');
+            $btnClass = 'btn-danger btn-sm mr-2';
+            require __DIR__ . '/../../partials/ticket/cancel_ticket_button.php';
+        }
+        $ticketDetailHeaderExtra = ob_get_clean();
+        $ticketBackUrl = $base . '/hr/tickets';
+        require __DIR__ . '/../../partials/ticket/ticket_detail_page_header.php';
+        ?>
 
         <?php if (!empty($_SESSION['flash_error'])): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show alert-modern" role="alert">
                 <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars((string) $_SESSION['flash_error']); ?>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>

@@ -4,6 +4,40 @@ $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
 $roleLabel = ($user_role ?? '') === 'HOM' ? 'HOM' : 'OM';
 $loggedFirstname = $ctx['loggedFirstname'] ?? $roleLabel;
 $loggedLastname = $ctx['loggedLastname'] ?? '';
+
+$rawTicketStats = $ticketStats ?? [];
+$statusOrder = ['Pending', 'In Progress', 'Cancelled', 'Resolved', 'Closed'];
+$summaryTicketStats = [];
+foreach ($statusOrder as $status) {
+    $count = (int) ($rawTicketStats[$status] ?? 0);
+    if ($count > 0 || in_array($status, ['Pending', 'Resolved'], true)) {
+        $summaryTicketStats[$status] = $count;
+    }
+}
+foreach ($rawTicketStats as $status => $count) {
+    if (!isset($summaryTicketStats[$status])) {
+        $summaryTicketStats[$status] = (int) $count;
+    }
+}
+
+$omTicketStatTone = static function (string $status): string {
+    if ($status === 'Pending') {
+        return 'warning';
+    }
+    if ($status === 'In Progress') {
+        return 'info';
+    }
+    if ($status === 'Resolved') {
+        return 'success';
+    }
+    if ($status === 'Cancelled') {
+        return 'danger';
+    }
+    return 'secondary';
+};
+
+$totalTickets = count($tickets ?? []);
+$openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicketStats['In Progress'] ?? 0);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,6 +51,8 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/om-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -26,149 +62,168 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
     $activePage = 'tickets';
     require_once __DIR__ . '/../../partials/om/sidebar_topbar.php';
     ?>
-    <div class="container-fluid">
-        <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Tickets</h1>
-            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
-            </a>
+    <div class="container-fluid om-dashboard-page om-ticket-page role-list-page">
+
+        <div class="page-hero">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h1><i class="fas fa-ticket-alt mr-2"></i>Tickets</h1>
+                    <p>Track support requests across your operations area with quick filters and status visibility.</p>
+                </div>
+                <div class="col-lg-5 text-lg-right mt-3 mt-lg-0">
+                    <div class="row mb-3 mb-lg-0">
+                        <div class="col-4">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int) $totalTickets ?></div>
+                                <div class="stat-label">Total</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int) $openCount ?></div>
+                                <div class="stat-label">Open</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int) ($summaryTicketStats['Resolved'] ?? 0) ?></div>
+                                <div class="stat-label">Resolved</div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create" class="btn btn-light btn-sm shadow-sm">
+                        <i class="fas fa-plus fa-sm"></i> Create New Ticket
+                    </a>
+                </div>
+            </div>
         </div>
 
         <?php if (!empty($_SESSION['flash_success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-success alert-dismissible fade show alert-modern" role="alert">
                 <i class="fas fa-check-circle"></i> <?= htmlspecialchars((string) $_SESSION['flash_success']) ?>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <?php unset($_SESSION['flash_success']); ?>
         <?php endif; ?>
         <?php if (!empty($_SESSION['flash_error'])): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show alert-modern" role="alert">
                 <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars((string) $_SESSION['flash_error']) ?>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <?php unset($_SESSION['flash_error']); ?>
         <?php endif; ?>
 
-        <div class="row">
-            <?php foreach ($ticketStats as $status => $count): ?>
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-<?php echo $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary')); ?> shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="text-xs font-weight-bold text-<?php echo $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary')); ?> text-uppercase mb-1">
-                                <?php echo htmlspecialchars((string) $status); ?>
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                <?php echo (int) $count; ?>
-                            </div>
-                        </div>
-                    </div>
+        <div class="summary-stats">
+            <?php foreach ($summaryTicketStats as $status => $count): ?>
+                <?php $tone = $omTicketStatTone($status); ?>
+                <div class="summary-stat-card stat-<?= htmlspecialchars($tone) ?>">
+                    <div class="stat-label"><?= htmlspecialchars((string) $status) ?></div>
+                    <div class="stat-value"><?= (int) $count ?></div>
                 </div>
             <?php endforeach; ?>
         </div>
 
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <label class="form-label text-xs font-weight-bold text-gray-600 text-uppercase mb-2">Status</label>
-                        <select id="statusFilter" class="form-control form-control-sm">
-                            <option value="">All Status</option>
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Cancelled">Cancelled</option>
-                            <option value="Resolved">Resolved</option>
-                            <option value="Closed">Closed</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-xs font-weight-bold text-gray-600 text-uppercase mb-2">Priority</label>
-                        <select id="priorityFilter" class="form-control form-control-sm">
-                            <option value="">All Priority</option>
-                            <option value="Low">Low</option>
-                            <option value="Medium">Medium</option>
-                            <option value="High">High</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-xs font-weight-bold text-gray-600 text-uppercase mb-2">Search</label>
-                        <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Ticket number...">
-                    </div>
-                    <div class="col-md-3 align-self-end">
-                        <button class="btn btn-secondary btn-sm w-100" onclick="resetFilters()">
-                            <i class="fas fa-redo"></i> Reset
-                        </button>
-                    </div>
+        <div class="filter-toolbar">
+            <div class="row align-items-end">
+                <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                    <label for="statusFilter">Status</label>
+                    <select id="statusFilter" class="form-control form-control-sm">
+                        <option value="">All Status</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Cancelled">Cancelled</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Closed">Closed</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                    <label for="priorityFilter">Priority</label>
+                    <select id="priorityFilter" class="form-control form-control-sm">
+                        <option value="">All Priority</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                    <label for="searchInput">Search</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Ticket number...">
+                </div>
+                <div class="col-md-3 col-sm-6 text-md-right">
+                    <button type="button" class="btn btn-sm btn-reset-filters" onclick="resetFilters()">
+                        <i class="fas fa-redo mr-1"></i> Reset
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">All Tickets</h6>
+        <div class="card ticket-list-card shadow mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6><i class="fas fa-list-ul mr-1"></i>All Tickets</h6>
+                <span class="ticket-count-badge"><?= (int) $totalTickets ?> ticket<?= $totalTickets === 1 ? '' : 's' ?></span>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0 ticket-realtime-table" id="omTicketsTable">
-                    <thead class="bg-light">
-                        <tr>
-                            <th>Ticket #</th>
-                            <th>Employee</th>
-                            <th>Category</th>
-                            <th>Priority</th>
-                            <th>Status</th>
-                            <th>Filed Date</th>
-                            <th>Branch</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($tickets)): ?>
-                            <?php foreach ($tickets as $ticket): ?>
-                                <?php
-                                $ticketId = (int) ($ticket['ticket_id'] ?? 0);
-                                $priority = (string) ($ticket['priority'] ?? 'Low');
-                                $status = (string) ($ticket['status'] ?? 'Pending');
-                                $priorityClass = $priority === 'High' ? 'danger' : ($priority === 'Medium' ? 'warning' : 'success');
-                                $statusClass = $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
-                                ?>
-                                <tr data-ticket-id="<?= $ticketId ?>"
-                                    data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
-                                    data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>">
-                                    <td class="font-weight-bold"><?php echo htmlspecialchars((string) ($ticket['ticket_number'] ?? '')); ?></td>
-                                    <td><?php echo htmlspecialchars((string) ($ticket['employee_name'] ?? '')); ?></td>
-                                    <td><?php echo htmlspecialchars((string) ($ticket['category'] ?? '')); ?></td>
-                                    <td>
-                                        <span class="badge badge-<?php echo $priorityClass; ?>" data-ticket-priority>
-                                            <?php echo htmlspecialchars($priority); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-<?php echo $statusClass; ?> status-badge" data-ticket-status>
-                                            <?php echo htmlspecialchars($status); ?>
-                                        </span>
-                                    </td>
-                                    <td><?php echo htmlspecialchars(date('M d, Y', strtotime((string) ($ticket['date_filed'] ?? '')))); ?></td>
-                                    <td><?php echo htmlspecialchars((string) ($ticket['branchName'] ?? '')); ?></td>
-                                    <td>
-                                        <div class="action-btn-group">
-                                        <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/view?id=<?php echo (int) ($ticket['ticket_id'] ?? 0); ?>" class="btn btn-sm btn-info" title="View ticket">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 ticket-realtime-table" id="omTicketsTable">
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Employee</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Filed Date</th>
+                                <th>Branch</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($tickets)): ?>
+                                <?php foreach ($tickets as $ticket): ?>
+                                    <?php
+                                    $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+                                    $priority = (string) ($ticket['priority'] ?? 'Low');
+                                    $status = (string) ($ticket['status'] ?? 'Pending');
+                                    $priorityClass = $priority === 'High' ? 'danger' : ($priority === 'Medium' ? 'warning' : 'success');
+                                    $statusClass = $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
+                                    ?>
+                                    <tr data-ticket-id="<?= $ticketId ?>"
+                                        data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"
+                                        data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>">
+                                        <td><div class="ticket-id"><?php echo htmlspecialchars((string) ($ticket['ticket_number'] ?? '')); ?></div></td>
+                                        <td><?php echo htmlspecialchars((string) ($ticket['employee_name'] ?? '')); ?></td>
+                                        <td><?php echo htmlspecialchars((string) ($ticket['category'] ?? '')); ?></td>
+                                        <td>
+                                            <span class="badge badge-<?php echo $priorityClass; ?>" data-ticket-priority>
+                                                <?php echo htmlspecialchars($priority); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-<?php echo $statusClass; ?> status-badge" data-ticket-status>
+                                                <?php echo htmlspecialchars($status); ?>
+                                            </span>
+                                        </td>
+                                        <td><?php echo htmlspecialchars(date('M d, Y', strtotime((string) ($ticket['date_filed'] ?? '')))); ?></td>
+                                        <td><?php echo htmlspecialchars((string) ($ticket['branchName'] ?? '')); ?></td>
+                                        <td class="text-right">
+                                            <div class="action-btn-group">
+                                            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/view?id=<?php echo (int) ($ticket['ticket_id'] ?? 0); ?>" class="btn btn-sm btn-info" title="View ticket">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        No tickets found
                                     </td>
                                 </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="8" class="text-center py-4 text-muted">
-                                    No tickets found
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 

@@ -19,6 +19,9 @@ if ($conditionFilter === 'DAMAGED') {
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-uniforms.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
 </head>
 <body id="page-top">
     <div id="wrapper">
@@ -26,16 +29,36 @@ if ($conditionFilter === 'DAMAGED') {
         $activePage = 'uniforms';
         require_once __DIR__ . '/../../partials/hr/sidebar_topbar.php';
         ?>
-        <div class="container-fluid">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($listTitle) ?></h1>
-                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-left"></i> Back to Uniforms
-                </a>
+        <div class="container-fluid hr-dashboard-page hr-uniform-page role-list-page">
+
+            <div class="page-hero">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1><i class="fas fa-user-tag mr-2"></i><?= htmlspecialchars($listTitle) ?></h1>
+                        <?php if (!empty($uniform)): ?>
+                            <p>
+                                <?= htmlspecialchars($uniform['uniform_type'] ?? '') ?>
+                                <span class="text-white-50">(<?= htmlspecialchars($uniform['size'] ?? '') ?>)</span>
+                            </p>
+                        <?php else: ?>
+                            <p>Review assignment and return history for this uniform.</p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
+                        <div class="hero-stat d-inline-block text-center px-4 mb-3">
+                            <div class="stat-value"><?= (int) $returnedCount ?></div>
+                            <div class="stat-label">Records</div>
+                        </div>
+                        <br>
+                        <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back to Uniforms
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <?php if (!empty($_SESSION['successMessage'])): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <div class="alert alert-success alert-dismissible fade show alert-modern" role="alert">
                     <?= htmlspecialchars($_SESSION['successMessage']) ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -45,7 +68,7 @@ if ($conditionFilter === 'DAMAGED') {
             <?php endif; ?>
 
             <?php if (!empty($_SESSION['errorMessage'])): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <div class="alert alert-danger alert-dismissible fade show alert-modern" role="alert">
                     <?= htmlspecialchars($_SESSION['errorMessage']) ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -54,40 +77,16 @@ if ($conditionFilter === 'DAMAGED') {
                 <?php unset($_SESSION['errorMessage']); ?>
             <?php endif; ?>
 
-            <?php if (!empty($uniform)): ?>
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card border-left-primary shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Uniform</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    <?= htmlspecialchars($uniform['uniform_type'] ?? '') ?>
-                                    <span class="text-muted">(<?= htmlspecialchars($uniform['size'] ?? '') ?>)</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-left-secondary shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Returned</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $returnedCount ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
-
             <?php if (empty($assignments)): ?>
-                <div class="alert alert-info">
-                    <h5><i class="fas fa-info-circle"></i> No Assignments</h5>
+                <div class="alert alert-info alert-modern">
+                    <h5 class="mb-1"><i class="fas fa-info-circle"></i> No Assignments</h5>
                     <p class="mb-0">No assignment history found for this uniform.</p>
                 </div>
             <?php else: ?>
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-list"></i>
+                <div class="card uniform-card data-card shadow mb-4">
+                    <div class="card-header">
+                        <h6>
+                            <i class="fas fa-list mr-1"></i>
                             <?php if ($conditionFilter === 'DAMAGED'): ?>
                                 Damaged Return History
                             <?php elseif ($conditionFilter === 'LOST'): ?>
@@ -97,17 +96,17 @@ if ($conditionFilter === 'DAMAGED') {
                             <?php endif; ?>
                         </h6>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
-                                <thead class="table-light">
+                            <table class="table table-hover mb-0">
+                                <thead>
                                     <tr>
                                         <th>Employee</th>
                                         <th>Date Issued</th>
                                         <th>Quantity</th>
                                         <th>Date Returned</th>
                                         <th>Status</th>
-                                        <th>Actions</th>
+                                        <th class="text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -144,7 +143,7 @@ if ($conditionFilter === 'DAMAGED') {
                                                     </span>
                                                 <?php endif; ?>
                                             </td>
-                                            <td>
+                                            <td class="text-right">
                                                 <?php if ($isActive): ?>
                                                     <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/return_confirm/<?= (int) $a['assignment_id'] ?>"
                                                        class="btn btn-sm btn-warning"

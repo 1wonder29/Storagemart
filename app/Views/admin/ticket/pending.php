@@ -44,6 +44,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-ticket-list.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/ticket-history-modal.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
@@ -353,36 +354,39 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
         </div>
     </div>
 
-    <div class="modal fade" id="viewTicketModal" tabindex="-1" role="dialog" aria-labelledby="viewTicketLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal fade ticket-communication-modal theme-communication" id="viewTicketModal" tabindex="-1" role="dialog" aria-labelledby="viewTicketLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title" id="viewTicketLabel"><i class="fas fa-comments mr-1"></i> Ticket Communication</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <span class="modal-icon"><i class="fas fa-comments"></i></span>
+                        <h5 class="modal-title" id="viewTicketLabel">Ticket Communication</h5>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="small text-muted text-uppercase">Ticket #</label>
+                    <div class="modal-meta-grid cols-4">
+                        <div class="modal-meta-field">
+                            <label for="view_ticket_number">Ticket #</label>
                             <input type="text" id="view_ticket_number" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-4">
-                            <label class="small text-muted text-uppercase">Employee</label>
+                        <div class="modal-meta-field">
+                            <label for="view_employee">Employee</label>
                             <input type="text" id="view_employee" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-2">
-                            <label class="small text-muted text-uppercase">Priority</label>
+                        <div class="modal-meta-field">
+                            <label for="view_priority">Priority</label>
                             <input type="text" id="view_priority" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-2">
-                            <label class="small text-muted text-uppercase">Status</label>
+                        <div class="modal-meta-field">
+                            <label for="view_status">Status</label>
                             <input type="text" id="view_status" class="form-control form-control-sm" readonly>
                         </div>
                     </div>
-                    <div class="form-group mb-3">
-                        <label class="small text-muted text-uppercase">Concern</label>
+                    <div class="modal-meta-field modal-concern-field mb-3">
+                        <label for="view_concern">Concern</label>
                         <textarea id="view_concern" class="form-control form-control-sm" rows="2" readonly></textarea>
                     </div>
                     <?php
@@ -392,7 +396,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                     ?>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-sm btn-modal-close" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

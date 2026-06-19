@@ -1,0 +1,88 @@
+/* TMS global: non-editable UI must not show text cursor or insertion caret */
+
+html,
+body {
+  cursor: default !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Readonly/disabled fields are display-only */
+input[readonly],
+textarea[readonly],
+.form-control[readonly],
+.form-control:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+  cursor: default !important;
+  caret-color: transparent !important;
+  pointer-events: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+input[readonly]:focus,
+textarea[readonly]:focus,
+.form-control[readonly]:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Interactive controls */
+a[href],
+button:not(:disabled),
+.btn,
+[role="button"],
+label[for],
+.nav-link,
+.dropdown-toggle,
+.cursor-pointer,
+input[type="checkbox"],
+input[type="radio"],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+input[type="file"],
+select:not(:disabled),
+.pagination .page-link,
+.page-link:not(.disabled) {
+  cursor: pointer !important;
+}
+
+/* Truly editable fields */
+input:not([readonly]):not([disabled]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="hidden"]):not([type="file"]):not([type="image"]):not([type="range"]):not([type="color"]),
+textarea:not([readonly]):not([disabled]),
+[contenteditable="true"],
+.dataTables_filter input,
+.dataTables_filter input:focus {
+  cursor: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Copyable content */
+.ticket-comments-section,
+.ticket-comments-section *,
+.selectable-text,
+.user-select-auto,
+.user-select-all {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  user-select: text !important;
+}
+
+.ticket-comments-section textarea,
+.ticket-comments-section input:not([readonly]):not([disabled]) {
+  cursor: text !important;
+}
+
+.user-select-none,
+.user-select-none * {
+  cursor: default !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  user-select: none !important;
+}

@@ -4,6 +4,7 @@ $returnEmployeeId = (int) ($return_employee_id ?? 0);
 $backUrl = $returnEmployeeId > 0
     ? $base . '/hr/employees/detail/' . $returnEmployeeId
     : $base . '/hr/employees';
+$historyCount = count($assignments ?? []);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,6 +15,9 @@ $backUrl = $returnEmployeeId > 0
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-pages.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
@@ -23,19 +27,32 @@ $backUrl = $returnEmployeeId > 0
         $activePage = 'employees';
         require_once dirname(dirname(__DIR__)) . '/partials/hr/sidebar_topbar.php';
         ?>
-        <div class="container-fluid">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back
-                    </a>
+        <div class="container-fluid hr-dashboard-page role-form-page">
+
+            <div class="page-hero">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1><i class="fas fa-history mr-2"></i>Transfer History</h1>
+                        <p>
+                            <?= htmlspecialchars($inventory['itemInfo'] ?? 'Asset') ?>
+                            (<?= htmlspecialchars($inventory['assetNumber'] ?? '') ?>)
+                        </p>
+                    </div>
+                    <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
+                        <div class="hero-stat d-inline-block text-center px-4 mb-3">
+                            <div class="stat-value"><?= (int) $historyCount ?></div>
+                            <div class="stat-label">Records</div>
+                        </div>
+                        <br>
+                        <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <h1 class="h3 mb-4 text-gray-800">Transfer History</h1>
-
             <?php if (!empty($_SESSION['successMessage'])): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <div class="alert alert-success alert-dismissible fade show alert-modern" role="alert">
                     <?= htmlspecialchars($_SESSION['successMessage']) ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -45,7 +62,7 @@ $backUrl = $returnEmployeeId > 0
             <?php endif; ?>
 
             <?php if (!empty($_SESSION['errorMessage'])): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <div class="alert alert-danger alert-dismissible fade show alert-modern" role="alert">
                     <?= htmlspecialchars($_SESSION['errorMessage']) ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -54,19 +71,18 @@ $backUrl = $returnEmployeeId > 0
                 <?php unset($_SESSION['errorMessage']); ?>
             <?php endif; ?>
 
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <?= htmlspecialchars($inventory['itemInfo'] ?? 'Asset') ?>
-                        (<?= htmlspecialchars($inventory['assetNumber'] ?? '') ?>)
-                    </h6>
+            <div class="card data-card shadow mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-list mr-1"></i>Assignment History</h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <?php if (empty($assignments)): ?>
-                        <p class="text-muted mb-0">No transfer history found for this asset.</p>
+                        <div class="empty-state p-4">
+                            <p class="text-muted mb-0">No transfer history found for this asset.</p>
+                        </div>
                     <?php else: ?>
                         <div class="table-responsive">
-                            <table class="table table-bordered" id="asset-history" width="100%" cellspacing="0">
+                            <table class="table table-hover mb-0" id="asset-history" width="100%" cellspacing="0">
                                 <thead>
                                     <tr>
                                         <th>Employee ID</th>

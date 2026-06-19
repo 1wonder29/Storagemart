@@ -14,6 +14,9 @@ $cancelUrl = $returnEmployeeId > 0
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-pages.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
 </head>
 <body id="page-top">
@@ -22,31 +25,36 @@ $cancelUrl = $returnEmployeeId > 0
         $activePage = 'employees';
         require_once dirname(dirname(__DIR__)) . '/partials/hr/sidebar_topbar.php';
         ?>
-        <div class="container-fluid">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <a href="<?= htmlspecialchars($cancelUrl) ?>" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back
-                    </a>
+        <div class="container-fluid hr-dashboard-page role-form-page">
+
+            <div class="page-hero">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1><i class="fas fa-exchange-alt mr-2"></i>Transfer Asset</h1>
+                        <p>Assign this asset to another employee and record transfer details.</p>
+                    </div>
+                    <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
+                        <a href="<?= htmlspecialchars($cancelUrl) ?>" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <h1 class="h3 mb-4 text-gray-800">Transfer Asset</h1>
-
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Asset Details</h6>
+            <div class="card form-card shadow mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-archive mr-1"></i>Asset Details</h6>
                 </div>
                 <div class="card-body">
                     <p><strong>Item:</strong> <?= htmlspecialchars($inventory['itemInfo'] ?? '') ?></p>
                     <p><strong>Asset Number:</strong> <?= htmlspecialchars($inventory['assetNumber'] ?? '') ?></p>
-                    <p><strong>Serial Number:</strong> <?= htmlspecialchars($inventory['serialNumber'] ?? '') ?></p>
+                    <p class="mb-0"><strong>Serial Number:</strong> <?= htmlspecialchars($inventory['serialNumber'] ?? '') ?></p>
                 </div>
             </div>
 
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Transfer To Employee</h6>
+            <div class="card form-card shadow mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-user-plus mr-1"></i>Transfer To Employee</h6>
                 </div>
                 <div class="card-body">
                     <form action="<?= htmlspecialchars($base) ?>/hr/assets/transfer?inventory_id=<?= (int) ($inventory['inventory_id'] ?? 0) ?>" method="POST" id="transferForm">
@@ -77,8 +85,10 @@ $cancelUrl = $returnEmployeeId > 0
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Submit Transfer</button>
-                        <a class="btn btn-secondary" href="<?= htmlspecialchars($cancelUrl) ?>">Cancel</a>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Submit Transfer</button>
+                            <a class="btn btn-secondary" href="<?= htmlspecialchars($cancelUrl) ?>">Cancel</a>
+                        </div>
                     </form>
                 </div>
             </div>

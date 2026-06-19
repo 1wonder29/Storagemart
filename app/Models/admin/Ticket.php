@@ -145,10 +145,14 @@ class Ticket extends BaseModel {
 
         $currentStatus   = $row['status'];
         $currentAssigned = (int)($row['assigned_to'] ?? 0);
+        $statusLower     = strtolower(trim((string) $currentStatus));
 
-        // block reassignment if resolved
-        if (strcasecmp($currentStatus, 'resolved') === 0) {
-            return [false, 'This ticket is already resolved and cannot be reassigned.'];
+        if (in_array($statusLower, ['resolved', 'closed'], true)) {
+            return [false, 'This ticket is already ' . $currentStatus . ' and cannot be reassigned.'];
+        }
+
+        if ($statusLower === 'cancelled') {
+            return [false, 'This ticket is cancelled and cannot be reassigned.'];
         }
 
         // nothing changed
@@ -190,10 +194,12 @@ class Ticket extends BaseModel {
             $this->pdo->beginTransaction();
 
             // 4) Update tbltickets — also set status to In Progress when assigning
+            $newStatus = 'In Progress';
             $sql = "UPDATE tbltickets 
-                    SET assigned_to = :new_assigned, status = 'In Progress', last_updated = NOW()";
+                    SET assigned_to = :new_assigned, status = :new_status, last_updated = NOW()";
             $params = [
                 ':new_assigned' => $newAssignedTo,
+                ':new_status'   => $newStatus,
                 ':ticket_id'    => $ticketId,
             ];
 
@@ -223,7 +229,7 @@ class Ticket extends BaseModel {
                 ':action_type'    => $actionType,
                 ':action_details' => $actionDetails,
                 ':old_status'     => $currentStatus,
-                ':new_status'     => $currentStatus,
+                ':new_status'     => $newStatus,
                 ':performed_by'   => $performedByEmployeeId ?? 0,
                 ':performed_role' => $performedRole,
             ]);

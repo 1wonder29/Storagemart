@@ -13,6 +13,9 @@ if (!empty($branches) && $branchId > 0) {
         }
     }
 }
+
+$employeeCount = count($employees ?? []);
+$ticketCount = count($tickets ?? []);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,6 +29,8 @@ if (!empty($branches) && $branchId > 0) {
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/aom-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -35,31 +40,50 @@ $activePage = 'branches';
 require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
 ?>
 
-<div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            Branch Details <?= $branchName ? ' - ' . htmlspecialchars($branchName) : '' ?>
-        </h1>
-        <a href="<?= htmlspecialchars($base) ?>/aom/dashboard" class="btn btn-sm btn-secondary shadow-sm">
-            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back
-        </a>
+<div class="container-fluid aom-dashboard-page aom-detail-page role-form-page">
+
+    <div class="page-hero">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1><i class="fas fa-building mr-2"></i>Branch Details<?= $branchName ? ' — ' . htmlspecialchars($branchName) : '' ?></h1>
+                <p>Review employees and recent tickets for this branch.</p>
+            </div>
+            <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
+                <div class="row mb-3 mb-lg-0">
+                    <div class="col-6">
+                        <div class="hero-stat">
+                            <div class="stat-value"><?= (int) $employeeCount ?></div>
+                            <div class="stat-label">Employees</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="hero-stat">
+                            <div class="stat-value"><?= (int) $ticketCount ?></div>
+                            <div class="stat-label">Tickets</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="<?= htmlspecialchars($base) ?>/aom/dashboard" class="btn btn-light btn-sm shadow-sm">
+                    <i class="fas fa-arrow-left fa-sm"></i> Back
+                </a>
+            </div>
+        </div>
     </div>
 
-    <!-- Employees -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-primary">
-            <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-users"></i> Employees</h6>
+    <div class="card data-card shadow mb-4">
+        <div class="card-header">
+            <h6><i class="fas fa-users mr-1"></i>Employees</h6>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                    <thead class="table-light">
+                <table class="table table-hover mb-0">
+                    <thead>
                         <tr>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Position</th>
                             <th>Department</th>
-                            <th>Action</th>
+                            <th class="text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -72,7 +96,7 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                                 <td><?= htmlspecialchars($e['email'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($e['position'] ?? '-') ?></td>
                                 <td><?= htmlspecialchars($e['department'] ?? '-') ?></td>
-                                <td>
+                                <td class="text-right">
                                     <a class="btn btn-sm btn-primary"
                                        href="<?= htmlspecialchars($base) ?>/aom/employees/detail?id=<?= (int)($e['employee_id'] ?? 0) ?>">
                                         <i class="fas fa-eye"></i> View
@@ -87,22 +111,21 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
         </div>
     </div>
 
-    <!-- Tickets -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-primary">
-            <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-ticket-alt"></i> Recent Tickets</h6>
+    <div class="card data-card shadow mb-4">
+        <div class="card-header">
+            <h6><i class="fas fa-ticket-alt mr-1"></i>Recent Tickets</h6>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                    <thead class="table-light">
+                <table class="table table-hover mb-0">
+                    <thead>
                         <tr>
                             <th>Ticket #</th>
                             <th>Employee</th>
                             <th>Status</th>
                             <th>Priority</th>
                             <th>Date</th>
-                            <th>Action</th>
+                            <th class="text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -111,12 +134,12 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
                     <?php else: ?>
                         <?php foreach ($tickets as $t): ?>
                             <tr>
-                                <td><strong><?= htmlspecialchars($t['ticket_number'] ?? $t['ticket_id'] ?? '') ?></strong></td>
+                                <td><div class="ticket-id"><?= htmlspecialchars($t['ticket_number'] ?? $t['ticket_id'] ?? '') ?></div></td>
                                 <td><?= htmlspecialchars(trim(($t['employee_firstname'] ?? '') . ' ' . ($t['employee_lastname'] ?? '')) ?: 'Unassigned') ?></td>
                                 <td><?= htmlspecialchars($t['status'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($t['priority'] ?? '') ?></td>
                                 <td><?= !empty($t['date_filed']) ? date('M d, Y', strtotime($t['date_filed'])) : '-' ?></td>
-                                <td>
+                                <td class="text-right">
                                     <a class="btn btn-sm btn-primary"
                                        href="<?= htmlspecialchars($base) ?>/aom/tickets/view?id=<?= (int)($t['ticket_id'] ?? 0) ?>">
                                         <i class="fas fa-eye"></i> View
@@ -140,4 +163,3 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
 </body>
 </html>
-

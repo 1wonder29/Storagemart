@@ -31,6 +31,7 @@ $todayLabel = date('l, F j, Y');
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/head-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/ticket-history-modal.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -220,48 +221,53 @@ $todayLabel = date('l, F j, Y');
         <i class="fas fa-angle-up"></i>
     </a>
 
-    <div class="modal fade" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal fade ticket-history-modal theme-head" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="viewTicketLabel">Ticket Details</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <span class="modal-icon"><i class="fas fa-history"></i></span>
+                        <h5 class="modal-title" id="viewTicketLabel">Ticket Details</h5>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Ticket Number</label>
-                            <input type="text" id="ticket_number" class="form-control" readonly>
+                    <div class="modal-meta-grid">
+                        <div class="modal-meta-field">
+                            <label for="ticket_number">Ticket Number</label>
+                            <input type="text" id="ticket_number" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label>Status</label>
-                            <input type="text" id="status" class="form-control" readonly>
+                        <div class="modal-meta-field">
+                            <label for="status">Status</label>
+                            <input type="text" id="status" class="form-control form-control-sm" readonly>
                         </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Employee</label>
-                            <input type="text" id="employee" class="form-control" readonly>
+                        <div class="modal-meta-field">
+                            <label for="employee">Employee</label>
+                            <input type="text" id="employee" class="form-control form-control-sm" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label>Priority</label>
-                            <input type="text" id="priority" class="form-control" readonly>
+                        <div class="modal-meta-field">
+                            <label for="priority">Priority</label>
+                            <input type="text" id="priority" class="form-control form-control-sm" readonly>
                         </div>
                     </div>
-                    <h6 class="mt-4">History Records</h6>
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="ticketHistoryTable" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Action Taken</th>
-                                    <th>Technician</th>
-                                    <th>Old Status</th>
-                                    <th>New Status</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                    <h6 class="modal-section-title"><i class="fas fa-list-alt"></i>History Records</h6>
+                    <div class="modal-table-card">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="ticketHistoryTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Action Taken</th>
+                                        <th>Technician</th>
+                                        <th>Old Status</th>
+                                        <th>New Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <?php
@@ -271,10 +277,10 @@ $todayLabel = date('l, F j, Y');
                     ?>
                 </div>
                 <div class="modal-footer">
-                    <a id="downloadPdfBtn" class="btn btn-success d-none" download>
-                        <i class="fas fa-download"></i> Download Technical Report
+                    <a id="downloadPdfBtn" class="btn btn-sm btn-view-full-detail mr-auto d-none" download>
+                        <i class="fas fa-download mr-1"></i> Download Technical Report
                     </a>
-                    <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button class="btn btn-sm btn-modal-close" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

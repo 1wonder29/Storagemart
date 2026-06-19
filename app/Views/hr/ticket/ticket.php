@@ -15,6 +15,22 @@ foreach ($rawTicketStats as $status => $count) {
         $summaryTicketStats[$status] = (int)$count;
     }
 }
+
+$hrTicketStatTone = static function (string $status): string {
+    if ($status === 'Pending') {
+        return 'warning';
+    }
+    if ($status === 'In Progress') {
+        return 'info';
+    }
+    if ($status === 'Resolved') {
+        return 'success';
+    }
+    if ($status === 'Cancelled') {
+        return 'danger';
+    }
+    return 'secondary';
+};
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,6 +46,7 @@ foreach ($rawTicketStats as $status => $count) {
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-pages.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -39,7 +56,7 @@ foreach ($rawTicketStats as $status => $count) {
     $activePage = 'tickets';
     require_once __DIR__ . '/../../partials/hr/sidebar_topbar.php';
     ?>
-    <div class="container-fluid hr-dashboard-page hr-ticket-page">
+    <div class="container-fluid hr-dashboard-page hr-ticket-page role-list-page">
         <div class="page-hero">
             <div class="row align-items-center">
                 <div class="col-lg-8">
@@ -69,66 +86,56 @@ foreach ($rawTicketStats as $status => $count) {
             <?php unset($_SESSION['flash_error']); ?>
         <?php endif; ?>
 
-        <div class="row">
+        <div class="summary-stats">
             <?php foreach ($summaryTicketStats as $status => $count): ?>
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-<?php echo $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary')); ?> shadow h-100 py-2 summary-stat-card">
-                        <div class="card-body">
-                            <div class="text-xs font-weight-bold text-<?php echo $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary')); ?> text-uppercase mb-1">
-                                <?php echo htmlspecialchars((string) $status); ?>
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                <?php echo (int) $count; ?>
-                            </div>
-                        </div>
-                    </div>
+                <?php $tone = $hrTicketStatTone($status); ?>
+                <div class="summary-stat-card stat-<?= htmlspecialchars($tone) ?>">
+                    <div class="stat-label"><?= htmlspecialchars((string) $status) ?></div>
+                    <div class="stat-value"><?= (int) $count ?></div>
                 </div>
             <?php endforeach; ?>
         </div>
 
-        <div class="card shadow mb-4 filter-card">
-            <div class="card-header py-3">
-                <h6 class="m-0"><i class="fas fa-filter"></i> Filters</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <label class="form-label">Status</label>
-                        <select id="statusFilter" class="form-control form-control-sm">
-                            <option value="">All Status</option>
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Cancelled">Cancelled</option>
-                            <option value="Resolved">Resolved</option>
-                            <option value="Closed">Closed</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Priority</label>
-                        <select id="priorityFilter" class="form-control form-control-sm">
-                            <option value="">All Priority</option>
-                            <option value="Low">Low</option>
-                            <option value="Medium">Medium</option>
-                            <option value="High">High</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Search</label>
-                        <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Ticket number...">
-                    </div>
-                    <div class="col-md-3 align-self-end">
-                        <button class="btn btn-secondary btn-sm w-100" onclick="resetFilters()">
-                            <i class="fas fa-redo"></i> Reset
-                        </button>
-                    </div>
+        <div class="filter-toolbar">
+            <div class="row align-items-end">
+                <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                    <label for="statusFilter">Status</label>
+                    <select id="statusFilter" class="form-control form-control-sm">
+                        <option value="">All Status</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Cancelled">Cancelled</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Closed">Closed</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                    <label for="priorityFilter">Priority</label>
+                    <select id="priorityFilter" class="form-control form-control-sm">
+                        <option value="">All Priority</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                    <label for="searchInput">Search</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Ticket number...">
+                </div>
+                <div class="col-md-3 col-sm-6 text-md-right">
+                    <button type="button" class="btn btn-sm btn-reset-filters" onclick="resetFilters()">
+                        <i class="fas fa-redo mr-1"></i> Reset
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="card shadow mb-4 ticket-table-card">
-            <div class="card-header py-3">
-                <h6 class="m-0"><i class="fas fa-list"></i> All Tickets</h6>
+        <div class="card ticket-list-card shadow mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6><i class="fas fa-list-ul"></i>All Tickets</h6>
+                <span class="ticket-count-badge"><?= count($tickets ?? []) ?> ticket<?= count($tickets ?? []) === 1 ? '' : 's' ?></span>
             </div>
+            <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0 ticket-realtime-table" id="hrTicketsTable">
                     <thead class="bg-light">
@@ -196,6 +203,7 @@ foreach ($rawTicketStats as $status => $count) {
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
             </div>
         </div>
 

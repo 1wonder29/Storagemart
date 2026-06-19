@@ -4,53 +4,45 @@ $base = rtrim(BASE_URL, '/');
 <html lang="en">
 
 <head>
-
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
     <title>Storage Mart - Add Ticket</title>
 
-    <!-- Custom fonts for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-        rel="stylesheet">
-
-    <!-- Custom styles for this template -->
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-ticket-list.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
 
-    <!-- Page Wrapper -->
     <div id="wrapper">
             <?php 
             $activePage = 'tickets';
             require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
-                <!-- End of Topbar -->
 
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
+                <div class="container-fluid admin-ticket-page role-form-page">
 
-                    <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800"></h1>
+                    <div class="page-hero">
+                        <div class="row align-items-center">
+                            <div class="col-12">
+                                <h1><i class="fas fa-ticket-alt mr-2"></i>Add Ticket</h1>
+                                <p>Search for an employee and select assets to file a new support ticket.</p>
+                            </div>
+                        </div>
+                    </div>
 
-
-                    <!-- DataTales Example -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Add Ticket</h6>
+                    <div class="card form-card shadow mb-4">
+                        <div class="card-header">
+                            <h6><i class="fas fa-user mr-1"></i>Employee Details</h6>
                         </div>
                         <div class="card-body">
-                            <div class="container mt-4">
-                                <form action="<?= htmlspecialchars($base) ?>/admin/tickets/add" method="POST">
-                                <h1>Employee Details</h1>
-                                <div class="row mb-5">
+                            <form action="<?= htmlspecialchars($base) ?>/admin/tickets/add" method="POST">
+                                <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="employee_search" class="form-label">Search Employee</label>
                                         <div class="input-group mb-3">
@@ -63,74 +55,63 @@ $base = rtrim(BASE_URL, '/');
                                         <label for="fullname" class="form-label">Fullname</label>
                                         <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" required>
                                     </div>
+                                </div>
+                                <div class="row form-row-gap">
+                                    <div class="col-md-6">
+                                        <label for="department" class="form-label">Department</label>
+                                        <input type="text" class="form-control" id="department" name="department" placeholder="Department" required>
                                     </div>
-                                    <div class ="row mb-5">
-                                        <div class="col-md-6">
-                                            <label for="department" class="form-label">Department</label>
-                                            <input type="text" class="form-control" id="department" name="department" placeholder="Department" required>
-                                        </div>
                                     <div class="col-md-6">
                                         <label for="branch" class="form-label">Branch</label>
                                         <input type="text" class="form-control" id="branch" name="branch" placeholder="Branch" required>
                                     </div>
-                                    </div>
+                                </div>
 
-                                    <hr></hr>
-                            <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered" id="asset-ticket" width="100%" cellspacing="0">
-                                    <thead>
-                                        <tr>
-                                            <th>Asset Number</th>
-                                            <th>Name</th>
-                                            <th>IC CODE</th>
-                                            <th>Description</th>
-											<th>Serial Number</th>
-                                            <th>Year Purchased</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tfoot>
-                                        <tr>
-                                            <th>Asset Number</th>
-                                            <th>Name</th>
-                                            <th>IC CODE</th>
-                                            <th>Description</th>
-											<th>Serial Number</th>
-                                            <th>Year Purchased</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </tfoot>
-                                    <tbody id="assetsTable">
-                                    </tbody>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                                <h5 class="form-section-title mt-4">Employee Assets</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="asset-ticket" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Asset Number</th>
+                                                <th>Name</th>
+                                                <th>IC CODE</th>
+                                                <th>Description</th>
+                                                <th>Serial Number</th>
+                                                <th>Year Purchased</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tfoot>
+                                            <tr>
+                                                <th>Asset Number</th>
+                                                <th>Name</th>
+                                                <th>IC CODE</th>
+                                                <th>Description</th>
+                                                <th>Serial Number</th>
+                                                <th>Year Purchased</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </tfoot>
+                                        <tbody id="assetsTable">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </form>
                         </div>
                     </div>
                     
                 </div>
-                <!-- /.container-fluid -->
 
             </div>
-            <!-- End of Main Content -->
-
-            <!-- Footer -->
-            <!-- End of Footer -->
 
         </div>
-        <!-- End of Content Wrapper -->
 
     </div>
-    <!-- End of Page Wrapper -->
 
-    <!-- Scroll to Top Button-->
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
 
-    <!-- Logout Modal-->
     <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
         aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -150,22 +131,13 @@ $base = rtrim(BASE_URL, '/');
         </div>
     </div>
 
-    <!-- Bootstrap core JavaScript-->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Core plugin JavaScript-->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <!-- Custom scripts for all pages-->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-
-    <!-- Page level plugins -->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-
-    <!-- Page level custom scripts -->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         window.BASE_URL = "<?= htmlspecialchars($base) ?>";
     </script>

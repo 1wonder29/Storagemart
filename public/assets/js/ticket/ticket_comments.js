@@ -26,14 +26,14 @@
 
   function roleBadgeClass(role) {
     const r = String(role || '').toUpperCase();
-    if (r === 'ADMIN') return 'badge-danger';
-    if (r === 'IT') return 'badge-primary';
-    if (r === 'EMPLOYEE') return 'badge-success';
-    if (r === 'HEAD') return 'badge-dark';
-    if (r === 'HR') return 'badge-warning';
-    if (r === 'OM' || r === 'HOM') return 'badge-secondary';
-    if (r === 'AOM') return 'badge-info';
-    return 'badge-secondary';
+    if (r === 'ADMIN') return 'role-pill role-pill-admin';
+    if (r === 'IT') return 'role-pill role-pill-it';
+    if (r === 'EMPLOYEE') return 'role-pill role-pill-employee';
+    if (r === 'HEAD') return 'role-pill role-pill-head';
+    if (r === 'HR') return 'role-pill role-pill-hr';
+    if (r === 'OM' || r === 'HOM') return 'role-pill role-pill-om';
+    if (r === 'AOM') return 'role-pill role-pill-aom';
+    return 'role-pill role-pill-default';
   }
 
   function renderComment(comment) {
@@ -43,15 +43,15 @@
     const date = formatDate(comment.created_at);
 
     return (
-      '<div class="ticket-comment-item mb-3 pb-3 border-bottom">' +
+      '<div class="ticket-comment-item">' +
         '<div class="d-flex justify-content-between align-items-start mb-1">' +
           '<div>' +
-            '<strong class="text-gray-800">' + name + '</strong> ' +
-            '<span class="badge ' + roleBadgeClass(comment.author_role) + ' badge-pill ml-1">' + role + '</span>' +
+            '<span class="ticket-comment-author">' + name + '</span>' +
+            '<span class="' + roleBadgeClass(comment.author_role) + '">' + role + '</span>' +
           '</div>' +
           '<small class="text-muted text-nowrap ml-2">' + date + '</small>' +
         '</div>' +
-        '<div class="text-gray-700 small">' + text + '</div>' +
+        '<div class="ticket-comment-text">' + text + '</div>' +
       '</div>'
     );
   }

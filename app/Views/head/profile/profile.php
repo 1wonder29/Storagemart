@@ -1,6 +1,9 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 $fullName = trim(($profile['lastname'] ?? '') . ', ' . ($profile['firstname'] ?? '') . ' ' . ($profile['middlename'] ?? ''));
+$displayName = $fullName !== ',' ? trim($fullName) : '-';
+$dateCreated = $profile['account_datecreated'] ?? null;
+$dateCreatedLabel = $dateCreated ? date('M d, Y', strtotime($dateCreated)) : '-';
 ?>
 <html lang="en">
 <head>
@@ -12,6 +15,7 @@ $fullName = trim(($profile['lastname'] ?? '') . ', ' . ($profile['firstname'] ??
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/profile-page.css" rel="stylesheet">
 </head>
 <body id="page-top">
 <div id="wrapper">
@@ -20,33 +24,89 @@ $fullName = trim(($profile['lastname'] ?? '') . ', ' . ($profile['firstname'] ??
     require_once __DIR__ . '/../../partials/head/sidebar_topbar.php';
     ?>
 
-    <div class="container-fluid">
-        <h1 class="h3 mb-3 text-gray-800">My Profile</h1>
+    <div class="container-fluid profile-page theme-head">
 
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Account Information</h6>
+        <div class="profile-hero">
+            <div class="d-flex align-items-center flex-wrap">
+                <div class="profile-avatar mr-3 mb-3 mb-md-0">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div>
+                    <h1><?= htmlspecialchars($displayName) ?></h1>
+                    <div class="profile-role"><?= htmlspecialchars($profile['position'] ?? '-') ?></div>
+                    <?php if (!empty($profile['status'])): ?>
+                        <span class="profile-badge"><?= htmlspecialchars($profile['status']) ?></span>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="card profile-card shadow mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-id-card"></i>Account Information</h6>
             </div>
             <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6"><strong>Full Name:</strong> <?= htmlspecialchars($fullName !== ',' ? trim($fullName) : '-') ?></div>
-                    <div class="col-md-6"><strong>Username:</strong> <?= htmlspecialchars($profile['username'] ?? '-') ?></div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-6"><strong>Employee ID:</strong> <?= htmlspecialchars((string)($profile['employee_id'] ?? '-')) ?></div>
-                    <div class="col-md-6"><strong>User Type:</strong> <?= htmlspecialchars($profile['usertype'] ?? '-') ?></div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-6"><strong>Department:</strong> <?= htmlspecialchars($profile['department'] ?? '-') ?></div>
-                    <div class="col-md-6"><strong>Position:</strong> <?= htmlspecialchars($profile['position'] ?? '-') ?></div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-6"><strong>Email:</strong> <?= htmlspecialchars($profile['email'] ?? '-') ?></div>
-                    <div class="col-md-6"><strong>Branch:</strong> <?= htmlspecialchars($profile['branchName'] ?? '-') ?></div>
-                </div>
                 <div class="row">
-                    <div class="col-md-6"><strong>Status:</strong> <?= htmlspecialchars($profile['status'] ?? '-') ?></div>
-                    <div class="col-md-6"><strong>Date Created:</strong> <?= htmlspecialchars($profile['account_datecreated'] ?? '-') ?></div>
+                    <div class="col-md-6">
+                        <div class="profile-field">
+                            <div class="profile-field-label">Full Name</div>
+                            <div class="profile-field-value"><?= htmlspecialchars($displayName) ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="profile-field">
+                            <div class="profile-field-label">Username</div>
+                            <div class="profile-field-value"><?= htmlspecialchars($profile['username'] ?? '-') ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="profile-field">
+                            <div class="profile-field-label">Employee ID</div>
+                            <div class="profile-field-value"><?= htmlspecialchars((string)($profile['employee_id'] ?? '-')) ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="profile-field">
+                            <div class="profile-field-label">User Type</div>
+                            <div class="profile-field-value"><?= htmlspecialchars($profile['usertype'] ?? '-') ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="profile-field">
+                            <div class="profile-field-label">Department</div>
+                            <div class="profile-field-value"><?= htmlspecialchars($profile['department'] ?? '-') ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="profile-field">
+                            <div class="profile-field-label">Position</div>
+                            <div class="profile-field-value"><?= htmlspecialchars($profile['position'] ?? '-') ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="profile-field">
+                            <div class="profile-field-label">Email</div>
+                            <div class="profile-field-value"><?= htmlspecialchars($profile['email'] ?? '-') ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="profile-field">
+                            <div class="profile-field-label">Branch</div>
+                            <div class="profile-field-value"><?= htmlspecialchars($profile['branchName'] ?? '-') ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="profile-field">
+                            <div class="profile-field-label">Status</div>
+                            <div class="profile-field-value"><?= htmlspecialchars($profile['status'] ?? '-') ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="profile-field">
+                            <div class="profile-field-label">Date Created</div>
+                            <div class="profile-field-value"><?= htmlspecialchars($dateCreatedLabel) ?></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,5 +1,8 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$branchCount = count($branches ?? []);
+$categoryCount = count($categories ?? []);
+$groupCount = count($groups ?? []);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -11,6 +14,9 @@ $base = rtrim(BASE_URL, '/');
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
 </head>
 <body id="page-top">
 <div id="wrapper">
@@ -18,16 +24,46 @@ $base = rtrim(BASE_URL, '/');
     $activePage = 'assets';
     require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';
     ?>
-    <div class="container-fluid">
-        <h1 class="h3 mb-3 text-gray-800">Branch, Category &amp; Group Lists</h1>
+    <div class="container-fluid admin-assets-page role-form-page">
 
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Branches</h6>
+        <div class="page-hero hero-inventory">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h1><i class="fas fa-book mr-2"></i>Branch, Category &amp; Group Lists</h1>
+                    <p>Reference lists for branches, asset categories, and inventory groups.</p>
+                </div>
+                <div class="col-lg-5 mt-3 mt-lg-0">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int) $branchCount ?></div>
+                                <div class="stat-label">Branches</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int) $categoryCount ?></div>
+                                <div class="stat-label">Categories</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="hero-stat">
+                                <div class="stat-value"><?= (int) $groupCount ?></div>
+                                <div class="stat-label">Groups</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
+        </div>
+
+        <div class="card data-card shadow mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-building mr-1"></i>Branches</h6>
+            </div>
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-sm mb-0" width="100%" cellspacing="0">
+                    <table class="table table-hover table-sm mb-0" width="100%" cellspacing="0">
                         <thead>
                         <tr>
                             <th>Branch ID</th>
@@ -44,7 +80,7 @@ $base = rtrim(BASE_URL, '/');
                             </tr>
                         <?php endforeach; ?>
                         <?php if (empty($branches)): ?>
-                            <tr><td colspan="3" class="text-center text-muted">No branches found.</td></tr>
+                            <tr><td colspan="3" class="text-center text-muted py-4">No branches found.</td></tr>
                         <?php endif; ?>
                         </tbody>
                     </table>
@@ -52,13 +88,13 @@ $base = rtrim(BASE_URL, '/');
             </div>
         </div>
 
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Categories</h6>
+        <div class="card data-card shadow mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-tags mr-1"></i>Categories</h6>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-sm mb-0" width="100%" cellspacing="0">
+                    <table class="table table-hover table-sm mb-0" width="100%" cellspacing="0">
                         <thead>
                         <tr>
                             <th>Category ID</th>
@@ -75,7 +111,7 @@ $base = rtrim(BASE_URL, '/');
                             </tr>
                         <?php endforeach; ?>
                         <?php if (empty($categories)): ?>
-                            <tr><td colspan="3" class="text-center text-muted">No categories found.</td></tr>
+                            <tr><td colspan="3" class="text-center text-muted py-4">No categories found.</td></tr>
                         <?php endif; ?>
                         </tbody>
                     </table>
@@ -83,13 +119,13 @@ $base = rtrim(BASE_URL, '/');
             </div>
         </div>
 
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Groups</h6>
+        <div class="card data-card shadow mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-layer-group mr-1"></i>Groups</h6>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-sm mb-0" width="100%" cellspacing="0">
+                    <table class="table table-hover table-sm mb-0" width="100%" cellspacing="0">
                         <thead>
                         <tr>
                             <th>Group ID</th>
@@ -108,7 +144,7 @@ $base = rtrim(BASE_URL, '/');
                             </tr>
                         <?php endforeach; ?>
                         <?php if (empty($groups)): ?>
-                            <tr><td colspan="4" class="text-center text-muted">No groups found.</td></tr>
+                            <tr><td colspan="4" class="text-center text-muted py-4">No groups found.</td></tr>
                         <?php endif; ?>
                         </tbody>
                     </table>
@@ -116,16 +152,8 @@ $base = rtrim(BASE_URL, '/');
             </div>
         </div>
     </div>
-    <!-- /.container-fluid -->
-
-    </div>
-    <!-- End of Main Content -->
-
-    </div>
-    <!-- End of Content Wrapper -->
 
 </div>
-<!-- End of Page Wrapper -->
 
 <a class="scroll-to-top rounded" href="#page-top">
     <i class="fas fa-angle-up"></i>
