@@ -224,6 +224,7 @@
 .auth-brand {
   position: relative;
   padding: 52px 44px;
+  min-width: 0;
   background: linear-gradient(
     160deg,
     var(--auth-blue-dark) 0%,
@@ -393,6 +394,7 @@
 .auth-form-panel {
   position: relative;
   padding: 52px 44px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -628,7 +630,7 @@
   }
 }
 
-/* Responsive */
+/* Responsive — tablet & mobile */
 @media (max-width: 768px) {
   .auth-page {
     padding: 16px;
@@ -659,19 +661,162 @@
   }
 }
 
+/* Forgot-password / multi-field forms — centered with scroll when needed */
 .auth-page:has(.auth-form--compact) {
-  align-items: flex-start;
-  padding-top: 32px;
-  padding-bottom: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .auth-page:has(.auth-form--compact) .auth-shell {
-  max-width: 980px;
+  max-width: min(980px, 100%);
+  margin: auto;
+  flex-shrink: 0;
+}
+
+/* Narrow laptop — tighten horizontal spacing while keeping two columns */
+@media (min-width: 769px) and (max-width: 1200px) {
+  .auth-page:has(.auth-form--compact) {
+    padding: 20px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-shell {
+    max-width: min(900px, 100%);
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-brand,
+  .auth-page:has(.auth-form--compact) .auth-form-panel {
+    padding: 32px 28px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-brand-content {
+    margin-top: 24px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-brand h1 {
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-form-header {
+    margin-bottom: 20px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-form-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-form--compact {
+    gap: 14px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-input-wrap input {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
+
+/* Short laptop screens — reduce vertical footprint (keep side-by-side layout) */
+@media (max-height: 820px) {
+  .auth-page:has(.auth-form--compact) {
+    padding: 16px 24px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-brand,
+  .auth-page:has(.auth-form--compact) .auth-form-panel {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-brand-content {
+    margin-top: 14px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-brand-badge {
+    margin-bottom: 14px;
+    padding: 5px 12px;
+    font-size: 0.68rem;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-brand h1 {
+    font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+    margin-bottom: 8px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-brand p {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-brand-logo img {
+    max-width: 150px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-brand-footer {
+    margin-top: 20px;
+    font-size: 0.75rem;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-form-header {
+    margin-bottom: 16px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-form-header h2 {
+    font-size: 1.35rem;
+    margin-bottom: 4px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-form-header p {
+    font-size: 0.85rem;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-form--compact {
+    gap: 11px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-field {
+    gap: 5px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-field label {
+    font-size: 0.78rem;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-input-wrap input {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 0.875rem;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-submit {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    margin-top: 2px;
+    font-size: 0.9rem;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-footer-link {
+    margin-top: 2px;
+    font-size: 0.82rem;
+  }
+}
+
+/* Very short viewports — hide brand footer to save space */
+@media (max-height: 700px) {
+  .auth-page:has(.auth-form--compact) .auth-brand-footer {
+    display: none;
+  }
 }
 
 @media (max-width: 400px) {
   .auth-form-panel,
   .auth-brand {
+    padding: 28px 20px;
+  }
+
+  .auth-page:has(.auth-form--compact) .auth-form-panel,
+  .auth-page:has(.auth-form--compact) .auth-brand {
     padding: 28px 20px;
   }
 }
