@@ -119,6 +119,19 @@ if ($uri === '/realtime/tickets' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+// DEV LIVE RELOAD (development only)
+if ($uri === '/dev/reload-check' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Helpers/DevReload.php';
+    if (!DevReload::isEnabled()) {
+        http_response_code(404);
+        exit;
+    }
+    header('Content-Type: application/json');
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    echo json_encode(['version' => DevReload::version()]);
+    exit;
+}
+
 // NOTIFICATIONS LIST PAGE
 if ($uri === '/notifications' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     require_once __DIR__ . '/../app/Controllers/NotificationController.php';

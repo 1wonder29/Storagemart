@@ -156,5 +156,6 @@ $base = rtrim(BASE_URL, '/');
     </div>
 
     <script src="<?= htmlspecialchars($base) ?>/assets/js/auth-login.js"></script>
+    <?php require_once __DIR__ . '/../partials/dev_livereload.php'; ?>
 </body>
 </html>
