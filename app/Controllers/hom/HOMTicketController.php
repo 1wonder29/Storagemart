@@ -58,13 +58,7 @@ class HOMTicketController extends AuthController
             if ($receiverAccountId === $accountId) {
                 continue;
             }
-            if ($receiverType === 'ADMIN') {
-                $actionUrl = '/admin/tickets';
-            } elseif ($receiverType === 'HEAD') {
-                $actionUrl = '/head/tickets';
-            } else {
-                $actionUrl = '/it/tickets';
-            }
+            $actionUrl = $notificationModel->getTicketViewUrlForRole($receiverType, (int) $ticketId);
             $notificationModel->create(
                 $receiverAccountId,
                 'New Ticket Filed by ' . $filerName,

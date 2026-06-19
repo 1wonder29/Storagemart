@@ -61,7 +61,7 @@ class HeadController extends AuthController
         /* ===========================
            DEPARTMENT TOTALS
         =========================== */
-        $employees = $employeeModel->fetchEmployeesByDepartment($department);
+        $employees = $employeeModel->fetchDepartmentStaffForHead($department, $headId);
 
         foreach ($employees as $emp) {
             $eid = (int)$emp['employee_id'];
@@ -117,7 +117,10 @@ class HeadController extends AuthController
         }
 
         // 👥 Employees under this HEAD
-        $employees = $employeeModel->fetchEmployeesByDepartment($department);
+        $employees = $employeeModel->fetchDepartmentStaffForHead(
+            $department,
+            (int) ($headEmployee['employee_id'] ?? 0)
+        );
 
         // Layout context
         $ctx = $this->getLoggedUserContext();

@@ -20,7 +20,7 @@ $resultCount = count($uniforms ?? []);
     <div id="wrapper">
     <?php 
     $activePage = 'uniforms';
-    require_once dirname(dirname(__DIR__)) . '/partials/hr/sidebar_topbar.php';?>
+    require_once dirname(dirname(__DIR__)) . '/partials/uniform_sidebar_topbar.php';?>
         <div class="container-fluid hr-dashboard-page hr-uniform-page role-list-page">
 
             <div class="page-hero">

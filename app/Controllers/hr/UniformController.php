@@ -26,7 +26,7 @@ class UniformController extends AuthController {
     }
 
     /**
-     * Check if user is HR role
+     * Check if user is HR role or Head of HRMD department
      */
     protected function requireHR() {
         if (empty($_SESSION['account_id'])) {
@@ -34,7 +34,9 @@ class UniformController extends AuthController {
             $this->redirect('/login');
         }
 
-        if (strtoupper($_SESSION['usertype'] ?? '') !== 'HR') {
+        require_once __DIR__ . '/../../Helpers/HrDepartmentAccess.php';
+
+        if (!HrDepartmentAccess::canManageUniforms()) {
             $_SESSION['loginMessage'] = 'Access denied. HR only.';
             $this->redirect('/login');
         }
@@ -60,7 +62,10 @@ class UniformController extends AuthController {
         } catch (\Throwable $e) {
             error_log('UniformController::list error: ' . $e->getMessage());
             $_SESSION['errorMessage'] = 'Error loading uniforms: ' . $e->getMessage();
-            $this->redirect('/hr/uniforms');
+            $redirectPath = strtoupper($_SESSION['usertype'] ?? '') === 'HEAD'
+                ? '/head/dashboard'
+                : '/hr/dashboard';
+            $this->redirect($redirectPath);
         }
     }
 

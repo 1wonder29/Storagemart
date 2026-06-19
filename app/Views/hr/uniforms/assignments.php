@@ -27,7 +27,7 @@ if ($conditionFilter === 'DAMAGED') {
     <div id="wrapper">
         <?php
         $activePage = 'uniforms';
-        require_once __DIR__ . '/../../partials/hr/sidebar_topbar.php';
+        require_once __DIR__ . '/../../partials/uniform_sidebar_topbar.php';
         ?>
         <div class="container-fluid hr-dashboard-page hr-uniform-page role-list-page">
 

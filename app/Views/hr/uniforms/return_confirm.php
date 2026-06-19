@@ -18,7 +18,7 @@ $base = rtrim(BASE_URL, '/');
     <div id="wrapper">
         <?php
         $activePage = 'uniforms';
-        require_once __DIR__ . '/../../partials/hr/sidebar_topbar.php';
+        require_once __DIR__ . '/../../partials/uniform_sidebar_topbar.php';
         ?>
         <div class="container-fluid hr-uniform-page">
             <div class="page-hero">

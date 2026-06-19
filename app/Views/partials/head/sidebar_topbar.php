@@ -3,6 +3,9 @@ $count = $count ?? 0;
 $notifications = $notifications ?? [];
 
 $base = rtrim(BASE_URL, '/');
+
+require_once dirname(__DIR__, 3) . '/Helpers/HrDepartmentAccess.php';
+$showUniformsNav = HrDepartmentAccess::isHrDepartmentHead();
 ?>
 
 
@@ -58,6 +61,16 @@ $base = rtrim(BASE_URL, '/');
             <span>Employees</span>
         </a>
     </li>
+
+    <?php if ($showUniformsNav): ?>
+    <li class="nav-item <?= ($activePage === 'uniforms') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/hr/uniforms">
+            <i class="fas fa-tshirt"></i>
+            <span>Uniforms</span>
+        </a>
+    </li>
+    <?php endif; ?>
+
     <hr class="sidebar-divider d-none d-md-block">
 
     <div class="text-center d-none d-md-inline">

@@ -131,14 +131,35 @@ class NotificationModel extends BaseModel
         foreach ($notifications as &$notification) {
             $actionUrl = (string) ($notification['action_url'] ?? '');
             $ticketId = (int) ($notification['related_id'] ?? 0);
+            $message = (string) ($notification['message'] ?? '');
 
-            if ($ticketId > 0 && strpos($actionUrl, '/tickets/rate') !== false) {
+            if ($ticketId <= 0) {
+                continue;
+            }
+
+            if (strpos($actionUrl, '/tickets/rate') !== false) {
+                $notification['action_url'] = $this->getTicketViewUrlForRole($usertype, $ticketId);
+                continue;
+            }
+
+            if ($this->isNewTicketFiledNotification($message) && $this->isTicketListActionUrl($actionUrl)) {
                 $notification['action_url'] = $this->getTicketViewUrlForRole($usertype, $ticketId);
             }
         }
         unset($notification);
 
         return $notifications;
+    }
+
+    private function isNewTicketFiledNotification(string $message): bool
+    {
+        return str_starts_with($message, 'New Ticket Filed')
+            || str_starts_with($message, 'New IT Ticket Filed');
+    }
+
+    private function isTicketListActionUrl(string $actionUrl): bool
+    {
+        return (bool) preg_match('#^/[a-z]+/tickets/?$#', $actionUrl);
     }
 
     public function getTicketViewUrlForRole(string $usertype, int $ticketId): string

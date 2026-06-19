@@ -127,27 +127,26 @@ class TicketController extends AuthController
 
         $notificationModel = new NotificationModel();
 
-        // 🔔 Get recipients
-        $recipients = $notificationModel->getTicketRecipients($department);
-
-        // 🔗 Link IT users will click
-        $actionUrl = '/it/tickets';
+        // 🔔 Get recipients with their usertype for role-based redirect
+        $recipients = $notificationModel->getTicketRecipientsWithType($department);
 
         // 🔕 Do not notify the ticket filer
         $currentAccountId = (int) $_SESSION['account_id'];
 
-        foreach ($recipients as $receiverAccountId) {
+        foreach ($recipients as $recipient) {
+            $receiverAccountId = (int) ($recipient['account_id'] ?? 0);
+            $receiverType = strtoupper($recipient['usertype'] ?? '');
 
-            if ((int)$receiverAccountId === $currentAccountId) {
+            if ($receiverAccountId === $currentAccountId) {
                 continue;
             }
 
             $notificationModel->create(
-                (int)$receiverAccountId,
+                $receiverAccountId,
                 'New IT Ticket Filed',
                 'fa-ticket-alt',
                 'primary',
-                $actionUrl,
+                $notificationModel->getTicketViewUrlForRole($receiverType, (int) $ticketId),
                 $ticketId
             );
         }

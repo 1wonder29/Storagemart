@@ -19,7 +19,7 @@ $base = rtrim(BASE_URL, '/');
     <div id="wrapper">
     <?php 
     $activePage = 'uniforms';
-    require_once dirname(dirname(__DIR__)) . '/partials/hr/sidebar_topbar.php';?>
+    require_once dirname(dirname(__DIR__)) . '/partials/uniform_sidebar_topbar.php';?>
         <div class="container-fluid hr-uniform-page">
             <div class="page-hero">
                 <h1><i class="fas fa-user-tag mr-2"></i>Assign Uniform to Employee</h1>

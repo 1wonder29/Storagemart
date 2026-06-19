@@ -239,14 +239,7 @@ class headTicketController extends AuthController
                 continue;
             }
 
-            // Route each role to their own tickets page
-            if ($receiverType === 'ADMIN') {
-                $actionUrl = '/admin/tickets';
-            } elseif ($receiverType === 'HEAD') {
-                $actionUrl = '/head/tickets';
-            } else {
-                $actionUrl = '/it/tickets';
-            }
+            $actionUrl = $notificationModel->getTicketViewUrlForRole($receiverType, (int) $ticketId);
 
             $notificationModel->create(
                 $receiverAccountId,
