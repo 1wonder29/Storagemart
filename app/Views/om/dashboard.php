@@ -137,7 +137,7 @@ $hasChartData = array_sum($chartTicketStats) > 0;
                     <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
                         <h6><i class="fas fa-clipboard-list"></i>Recent Tickets</h6>
                         <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets"
-                           class="btn btn-sm btn-outline-success" style="border-radius:2rem;font-size:0.75rem;">
+                           class="btn btn-sm btn-view-all">
                             View All
                         </a>
                     </div>
@@ -172,7 +172,7 @@ $hasChartData = array_sum($chartTicketStats) > 0;
                                         <td><span class="employee-name"><?= htmlspecialchars($employeeName) ?></span></td>
                                         <td class="text-right">
                                             <button type="button"
-                                                class="btn btn-sm btn-outline-success btn-view-sm viewTicketBtn"
+                                                class="btn btn-sm btn-view-sm viewTicketBtn"
                                                 data-ticket-number="<?= htmlspecialchars($ticketNumber, ENT_QUOTES) ?>"
                                                 data-employee="<?= htmlspecialchars($employeeName, ENT_QUOTES) ?>"
                                                 data-status="<?= htmlspecialchars($status, ENT_QUOTES) ?>"
@@ -287,7 +287,8 @@ $hasChartData = array_sum($chartTicketStats) > 0;
             labels: <?= json_encode(array_keys($chartTicketStats)) ?>,
             datasets: [{
                 data: <?= json_encode(array_values($chartTicketStats)) ?>,
-                backgroundColor: ['#f6c23e', '#36b9cc', '#1cc88a'],
+                backgroundColor: ['#f59e0b', '#0891b2', '#16a34a'],
+                hoverBackgroundColor: ['#d97706', '#0e7490', '#15803d'],
                 borderColor: '#fff',
                 borderWidth: 2
             }]
@@ -298,7 +299,11 @@ $hasChartData = array_sum($chartTicketStats) > 0;
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { padding: 14, usePointStyle: true, font: { size: 11 } }
+                    labels: {
+                        padding: 16,
+                        usePointStyle: true,
+                        font: { family: 'Nunito, sans-serif', size: 12 }
+                    }
                 }
             },
             cutout: '62%'

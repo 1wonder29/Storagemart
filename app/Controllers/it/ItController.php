@@ -50,14 +50,16 @@ class itController extends AuthController{
         $dashboardModel = new DashboardModel();
         $employeeId = (int) $employeeId; // already defined earlier in your controller
 
-        $rows = $dashboardModel->getItTicketResolutionTimes();
+        $rows = ($employeeId !== null && (int) $employeeId > 0)
+            ? $dashboardModel->getItTicketResolutionTimes((int) $employeeId)
+            : [];
 
         $resolutionLabels = [];
         $resolutionData   = [];
 
         foreach ($rows as $row) {
-            $resolutionLabels[] = 'Ticket #' . $row['ticket_number'];
-            $resolutionData[]   = (int)$row['resolution_hours'];
+            $resolutionLabels[] = (string) $row['ticket_number'];
+            $resolutionData[]   = round(((float) $row['resolution_hours']) / 24, 1);
         }
         require_once __DIR__ . '/../../Views/it/dashboard/dashboard.php';
     }

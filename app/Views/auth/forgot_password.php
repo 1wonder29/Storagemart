@@ -16,6 +16,12 @@ $base = rtrim(BASE_URL, '/');
 </head>
 
 <body class="auth-page">
+    <div class="auth-ambient" aria-hidden="true">
+        <span class="auth-ambient-orb auth-ambient-orb--a"></span>
+        <span class="auth-ambient-orb auth-ambient-orb--b"></span>
+        <span class="auth-ambient-orb auth-ambient-orb--c"></span>
+    </div>
+
     <div class="auth-shell">
         <aside class="auth-brand" aria-hidden="true">
             <div class="auth-brand-logo">

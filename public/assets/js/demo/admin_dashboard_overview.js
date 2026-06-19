@@ -22,8 +22,8 @@
       datasets: [
         {
           data: hasData ? values : [1, 1, 1, 1], // placeholder for empty state
-          backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
-          hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a'],
+          backgroundColor: ['#4f46e5', '#16a34a', '#0891b2', '#f37021'],
+          hoverBackgroundColor: ['#4338ca', '#15803d', '#0e7490', '#de6126'],
           borderColor: 'rgba(234, 236, 244, 1)'
         }
       ]
@@ -34,12 +34,17 @@
       plugins: {
         legend: {
           position: 'bottom',
-          labels: { usePointStyle: true, padding: 16 }
+          labels: {
+            usePointStyle: true,
+            padding: 16,
+            font: { family: "'Nunito', sans-serif", size: 12 }
+          }
         },
         tooltip: {
           backgroundColor: '#fff',
-          bodyColor: '#858796',
-          borderColor: '#dddfeb',
+          titleColor: '#0f172a',
+          bodyColor: '#64748b',
+          borderColor: 'rgba(1, 43, 144, 0.1)',
           borderWidth: 1,
           padding: 12,
           callbacks: {

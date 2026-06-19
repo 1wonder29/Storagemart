@@ -101,11 +101,11 @@ $ticketStatusClasses = [
                 <div class="card dash-card shadow">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <h6><i class="fas fa-store"></i>Assigned Branches</h6>
-                        <span class="badge badge-primary" style="border-radius:2rem;">
+                        <span class="branch-count-badge">
                             <?= count($branches ?? []) ?> branch<?= count($branches ?? []) === 1 ? '' : 'es' ?>
                         </span>
                     </div>
-                    <div class="card-body" style="max-height:340px;overflow-y:auto;">
+                    <div class="card-body card-body-scroll">
                         <?php if (!empty($branches)): ?>
                             <?php foreach ($branches as $branch): ?>
                                 <a href="<?= htmlspecialchars($base) ?>/aom/branches/detail?id=<?= (int)$branch['branch_id'] ?>"
@@ -158,7 +158,7 @@ $ticketStatusClasses = [
         <div class="card dash-card shadow mb-4">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
                 <h6><i class="fas fa-clipboard-list"></i>Recent Tickets</h6>
-                <a href="<?= htmlspecialchars($base) ?>/aom/tickets" class="btn btn-sm btn-outline-primary" style="border-radius:2rem;font-size:0.75rem;">
+                <a href="<?= htmlspecialchars($base) ?>/aom/tickets" class="btn btn-sm btn-view-all">
                     View All
                 </a>
             </div>
@@ -197,7 +197,7 @@ $ticketStatusClasses = [
                                     </td>
                                     <td class="text-right">
                                         <a href="<?= htmlspecialchars($base) ?>/aom/tickets/view?id=<?= (int)$ticket['ticket_id'] ?>"
-                                           class="btn btn-sm btn-outline-primary btn-view-sm">
+                                           class="btn btn-sm btn-view-sm">
                                             <i class="fas fa-eye mr-1"></i> View
                                         </a>
                                     </td>
@@ -248,7 +248,8 @@ $ticketStatusClasses = [
             labels: labels,
             datasets: [{
                 data: data,
-                backgroundColor: ['#f6c23e', '#1cc88a', '#858796', '#36b9cc', '#e74a3b'],
+                backgroundColor: ['#f59e0b', '#0891b2', '#94a3b8', '#16a34a'],
+                hoverBackgroundColor: ['#d97706', '#0e7490', '#64748b', '#15803d'],
                 borderColor: '#fff',
                 borderWidth: 2
             }]
@@ -260,9 +261,9 @@ $ticketStatusClasses = [
                 legend: {
                     position: 'bottom',
                     labels: {
-                        padding: 14,
+                        padding: 16,
                         usePointStyle: true,
-                        font: { size: 11 }
+                        font: { family: 'Nunito, sans-serif', size: 12 }
                     }
                 }
             },

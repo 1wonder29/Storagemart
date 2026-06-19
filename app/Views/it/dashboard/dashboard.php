@@ -140,10 +140,9 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
                     </div>
                     <div class="card-body">
                         <?php if ($hasResolutionChart): ?>
-                            <div class="chart-wrap">
+                            <div class="chart-wrap chart-wrap-wide">
                                 <canvas id="myAreaChart"></canvas>
                             </div>
-                            <p class="chart-caption mb-0">Resolution time per ticket (hours converted to days)</p>
                         <?php else: ?>
                             <div class="empty-state">
                                 <i class="fas fa-chart-line"></i>

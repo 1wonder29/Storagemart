@@ -20,6 +20,8 @@ function itChartTheme() {
 const centerText = {
   id: 'centerText',
   afterDraw(chart) {
+    if (chart.config.type !== 'doughnut') return;
+
     const { ctx } = chart;
     const meta = chart.getDatasetMeta(0);
     if (!meta?.data?.length) return;
@@ -62,8 +64,8 @@ if (ctx && window.ticketData) {
       labels: ["Assigned", "In Progress", "Resolved"],
       datasets: [{
         data: chartData,
-        backgroundColor: ['#36b9cc','#1cc88a', '#f6c23e'],
-        hoverBackgroundColor: ['#2c9faf','#17a673','#dda20a'],
+        backgroundColor: ['#0891b2', '#16a34a', '#f37021'],
+        hoverBackgroundColor: ['#0e7490', '#15803d', '#de6126'],
         borderColor: theme.doughnutBorder,
       }]
     },
