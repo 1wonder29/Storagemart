@@ -72,6 +72,16 @@ class NotificationModel extends BaseModel
         return $stmt->execute([$id, $userId]);
     }
 
+    public function markAllAsRead(int $userId): bool
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE notifications
+             SET is_read = 1
+             WHERE user_id = ? AND is_read = 0"
+        );
+        return $stmt->execute([$userId]);
+    }
+
     public function getTicketRecipients(string $department): array
     {
         $sql = "

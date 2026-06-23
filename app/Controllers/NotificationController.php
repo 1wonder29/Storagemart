@@ -33,6 +33,28 @@ class NotificationController extends AuthController
         echo json_encode(['success' => true]);
     }
 
+    public function markAllRead()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        header('Content-Type: application/json');
+
+        if (empty($_SESSION['account_id'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+            exit;
+        }
+
+        $userId = (int) $_SESSION['account_id'];
+        $model = new NotificationModel();
+        $model->markAllAsRead($userId);
+
+        echo json_encode([
+            'success' => true,
+            'count' => $model->getUnreadCount($userId),
+        ]);
+    }
+
     public function index()
     {
         if (session_status() === PHP_SESSION_NONE) session_start();

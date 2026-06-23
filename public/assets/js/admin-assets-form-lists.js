@@ -38,6 +38,6 @@
 
   $(function () {
     initAssetFormTable("#branchList", 1, 4);
-    initAssetFormTable("#categoryList", 1, null);
+    initAssetFormTable("#categoryList", 1, 2);
   });
 })(jQuery);

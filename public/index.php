@@ -106,6 +106,12 @@ if ($uri === '/notifications/read' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($uri === '/notifications/read-all' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../app/Controllers/NotificationController.php';
+    (new NotificationController())->markAllRead();
+    exit;
+}
+
 // REALTIME POLLING (notifications + tickets)
 if ($uri === '/realtime/notifications' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     require_once __DIR__ . '/../app/Controllers/RealtimeController.php';
@@ -197,6 +203,8 @@ if (strpos($uri, '/admin') === 0) {
         $asset->referenceLists();
     } elseif ($sub === 'assets/category/add') {
         $asset->category();
+    } elseif ($sub === 'assets/category/delete') {
+        $asset->deleteCategory();
     } elseif ($sub === 'assets/group/add') {
         $asset->group();
     } elseif ($sub === 'assets/group/update') {

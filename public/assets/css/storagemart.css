@@ -10417,6 +10417,42 @@ body.sidebar-toggled footer.sticky-footer {
     white-space: nowrap;
 }
 
+.topbar .notification-dropdown-actions,
+.alerts-feed-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-shrink: 0;
+}
+
+.notification-mark-all-read {
+    border: none;
+    background: transparent;
+    color: #1877f2;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0;
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.notification-mark-all-read:hover,
+.notification-mark-all-read:focus {
+    text-decoration: underline;
+    outline: none;
+}
+
+.notification-mark-all-read:disabled {
+    opacity: 0.6;
+    cursor: wait;
+    text-decoration: none;
+}
+
+.alerts-mark-all-read {
+    font-size: 0.8rem;
+}
+
 .topbar .notification-item {
     display: flex;
     align-items: center;

@@ -99,6 +99,7 @@ $totalCategories = count($categories);
                                 <tr>
                                     <th>IC Code</th>
                                     <th>Category Name</th>
+                                    <th class="text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -110,6 +111,15 @@ $totalCategories = count($categories);
                                                 <i class="fas fa-tag"></i>
                                                 <?= htmlspecialchars((string) ($category['categoryName'] ?? '')) ?>
                                             </span>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="action-btn-group">
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/assets/category/delete?category_id=<?= (int) ($category['category_id'] ?? 0) ?>"
+                                                   class="btn btn-sm btn-outline-danger" title="Delete category"
+                                                   onclick="return confirm('Are you sure you want to delete this category?');">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

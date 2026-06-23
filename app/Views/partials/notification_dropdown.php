@@ -35,9 +35,14 @@ if (!function_exists('tms_notification_time')) {
                 <i class="fas fa-bell"></i>
                 <span>Notifications</span>
             </div>
-            <?php if ($count > 0): ?>
-                <span class="notification-unread-pill"><?= $count > 9 ? '9+' : $count ?> new</span>
-            <?php endif; ?>
+            <div class="notification-dropdown-actions">
+                <?php if ($count > 0): ?>
+                    <button type="button" class="notification-mark-all-read" aria-label="Mark all notifications as read">
+                        Mark all read
+                    </button>
+                    <span class="notification-unread-pill"><?= $count > 9 ? '9+' : $count ?> new</span>
+                <?php endif; ?>
+            </div>
         </div>
 
         <?php if (empty($notifications)): ?>

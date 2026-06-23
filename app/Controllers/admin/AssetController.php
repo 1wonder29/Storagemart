@@ -329,6 +329,62 @@ class AssetController extends AuthController {
         }
     }
 
+    public function deleteCategory()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $_SESSION['flash_error'] = 'Unauthorized access.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $categoryId = isset($_GET['category_id']) ? (int) $_GET['category_id'] : 0;
+        if ($categoryId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid category ID.';
+            $this->redirect('/admin/assets/category/add');
+            return;
+        }
+
+        $assetModel = new Asset();
+        $category = $assetModel->fetchCategoryById($categoryId);
+        if (!$category) {
+            $_SESSION['flash_error'] = 'Category not found.';
+            $this->redirect('/admin/assets/category/add');
+            return;
+        }
+
+        if ($assetModel->isCategoryInUse($categoryId)) {
+            $_SESSION['flash_error'] = 'Cannot delete this category because it is assigned to one or more asset groups.';
+            $this->redirect('/admin/assets/category/add');
+            return;
+        }
+
+        try {
+            $ok = $assetModel->deleteCategory($categoryId);
+            if ($ok) {
+                ActivityLogger::delete('Admin - Assets', (string) $categoryId,
+                    "Category deleted: {$category['categoryName']} ({$category['ic_code']})",
+                    $_SESSION['username'] ?? 'Unknown', [
+                        'category_id' => $categoryId,
+                        'category_name' => $category['categoryName'] ?? '',
+                        'ic_code' => $category['ic_code'] ?? '',
+                    ]);
+                $_SESSION['flash_success'] = 'Category deleted successfully.';
+                $this->redirect('/admin/assets/category/add');
+                return;
+            }
+
+            throw new \Exception('Failed to delete category.');
+        } catch (\Throwable $e) {
+            $_SESSION['flash_error'] = 'Error deleting category: ' . $e->getMessage();
+            $this->redirect('/admin/assets/category/add');
+            return;
+        }
+    }
+
     //adding Group Asset Here 
     public function group(){
         if (session_status() === PHP_SESSION_NONE) {

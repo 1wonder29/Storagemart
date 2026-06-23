@@ -107,13 +107,16 @@ if (!function_exists('tms_notification_time')) {
                         <i class="fas fa-inbox"></i>
                         <span>Latest Alerts</span>
                     </div>
-                    <?php if ($unreadCount > 0): ?>
-                        <span class="alerts-unread-pill" id="alertsUnreadPill">
+                    <div class="alerts-feed-actions">
+                        <?php if ($unreadCount > 0): ?>
+                            <button type="button" class="notification-mark-all-read alerts-mark-all-read" aria-label="Mark all notifications as read">
+                                Mark all read
+                            </button>
+                        <?php endif; ?>
+                        <span class="alerts-unread-pill<?= $unreadCount > 0 ? '' : ' d-none' ?>" id="alertsUnreadPill">
                             <?= $unreadCount > 9 ? '9+' : $unreadCount ?> unread
                         </span>
-                    <?php else: ?>
-                        <span class="alerts-unread-pill d-none" id="alertsUnreadPill">0 unread</span>
-                    <?php endif; ?>
+                    </div>
                 </div>
 
                 <?php if (empty($notifications)): ?>

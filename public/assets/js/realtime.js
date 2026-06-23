@@ -80,6 +80,112 @@
     badge.textContent = label;
   }
 
+  function syncNotificationHeaderState(dropdown, count) {
+    if (!dropdown) return;
+
+    var header = dropdown.querySelector('.notification-dropdown-header');
+    if (!header) return;
+
+    var n = parseInt(count, 10) || 0;
+    var actions = header.querySelector('.notification-dropdown-actions');
+
+    if (n <= 0) {
+      if (actions) actions.remove();
+      return;
+    }
+
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.className = 'notification-dropdown-actions';
+      header.appendChild(actions);
+    }
+
+    var btn = actions.querySelector('.notification-mark-all-read');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'notification-mark-all-read';
+      btn.setAttribute('aria-label', 'Mark all notifications as read');
+      btn.textContent = 'Mark all read';
+      actions.insertBefore(btn, actions.firstChild);
+    }
+    btn.disabled = false;
+
+    var pill = actions.querySelector('.notification-unread-pill');
+    if (!pill) {
+      pill = document.createElement('span');
+      pill.className = 'notification-unread-pill';
+      actions.appendChild(pill);
+    }
+    pill.textContent = (n > 9 ? '9+' : String(n)) + ' new';
+    pill.style.display = '';
+  }
+
+  function applyAllNotificationsRead() {
+    document.querySelectorAll('.notification-item.notification-unread').forEach(function (item) {
+      item.classList.remove('notification-unread');
+      item.classList.add('notification-read');
+    });
+
+    updateBadge(0);
+
+    document.querySelectorAll('.notification-unread-pill').forEach(function (pill) {
+      pill.style.display = 'none';
+    });
+
+    document.querySelectorAll('.notification-mark-all-read').forEach(function (btn) {
+      btn.remove();
+    });
+
+    var pageUnread = document.getElementById('alertsUnreadStat');
+    var pageRead = document.getElementById('alertsReadStat');
+    if (pageUnread && pageRead) {
+      var unreadN = parseInt(pageUnread.textContent, 10) || 0;
+      var readN = parseInt(pageRead.textContent, 10) || 0;
+      if (unreadN > 0) {
+        pageRead.textContent = String(readN + unreadN);
+        pageUnread.textContent = '0';
+      }
+    }
+
+    var pagePill = document.getElementById('alertsUnreadPill');
+    if (pagePill) {
+      pagePill.classList.add('d-none');
+    }
+
+    lastNotificationPayload = '';
+  }
+
+  function handleMarkAllReadClick(e) {
+    var btn = e.target.closest('.notification-mark-all-read');
+    if (!btn || btn.disabled) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    btn.disabled = true;
+
+    fetch(baseUrl() + '/notifications/read-all', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (res) {
+        if (res && res.success) {
+          applyAllNotificationsRead();
+        } else {
+          btn.disabled = false;
+        }
+      })
+      .catch(function () {
+        btn.disabled = false;
+      });
+  }
+
   function renderNotificationItem(n) {
     var isRead = parseInt(n.is_read, 10) === 1;
     var readClass = isRead ? 'notification-read' : 'notification-unread';
@@ -195,17 +301,7 @@
       .then(function (res) {
         if (!res || !res.success) return;
         updateBadge(res.count);
-
-        var unreadPill = dropdown.querySelector('.notification-unread-pill');
-        if (unreadPill) {
-          var unreadCount = parseInt(res.count, 10) || 0;
-          if (unreadCount > 0) {
-            unreadPill.textContent = (unreadCount > 9 ? '9+' : String(unreadCount)) + ' new';
-            unreadPill.style.display = '';
-          } else {
-            unreadPill.style.display = 'none';
-          }
-        }
+        syncNotificationHeaderState(dropdown, res.count);
 
         var payload = JSON.stringify(res.notifications || []);
         if (payload === lastNotificationPayload) return;
@@ -455,6 +551,7 @@
     if (!baseUrl()) return;
 
     document.addEventListener('click', handleNotificationClick);
+    document.addEventListener('click', handleMarkAllReadClick);
 
     pollNotifications();
     window.setInterval(pollNotifications, POLL.notifications);

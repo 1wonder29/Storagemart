@@ -129,6 +129,33 @@ class Asset extends BaseModel {
         return null;
     }
 
+    public function fetchCategoryById(int $categoryId): ?array
+    {
+        $sql = "SELECT category_id, ic_code, categoryName, createdby, datecreated
+                FROM {$this->tblcategory}
+                WHERE category_id = :category_id
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':category_id' => $categoryId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    public function isCategoryInUse(int $categoryId): bool
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->tblgroup} WHERE category_id = :category_id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':category_id' => $categoryId]);
+        return (int) ($stmt->fetchColumn() ?: 0) > 0;
+    }
+
+    public function deleteCategory(int $categoryId): bool
+    {
+        $sql = "DELETE FROM {$this->tblcategory} WHERE category_id = :category_id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([':category_id' => $categoryId]);
+    }
+
     public function addGroup(string $groupName, string $description, int $categoryId, string $ic_code, string $createdBy): ?int
     {
         $sql = "
@@ -471,6 +498,9 @@ class Asset extends BaseModel {
     public function addItem(int $groupId, string $serialNumber, string $itemInfo, string $year_purchased, string $createdBy): ?int
     {
         try {
+            // DDL must run outside a transaction; CREATE TABLE causes an implicit commit in MySQL.
+            $this->ensureAssetSequenceTable();
+
             $this->pdo->beginTransaction();
 
             // 1) get ic_code and category_id from group -> category
@@ -485,19 +515,12 @@ class Asset extends BaseModel {
             $ic_code = $row['ic_code'] ?? null;
             $categoryId = isset($row['category_id']) ? (int)$row['category_id'] : null;
 
-            if (empty($ic_code)) {
+            if (empty($ic_code) || $categoryId <= 0) {
                 $this->pdo->rollBack();
                 return null;
             }
-            // 2) ensure a persistent per-category sequence table exists and allocate next sequence
-            $this->pdo->exec("CREATE TABLE IF NOT EXISTS {$this->tblseq} (
-                category_id INT PRIMARY KEY,
-                last_sequence INT NOT NULL,
-                ic_code VARCHAR(64),
-                datecreated DATETIME DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
-            // fetch and lock the sequence row for this category
+            // 2) allocate next per-category sequence
             $seqStmt = $this->pdo->prepare("SELECT last_sequence FROM {$this->tblseq} WHERE category_id = :cid FOR UPDATE");
             $seqStmt->execute([':cid' => $categoryId]);
             $seqRow = $seqStmt->fetch(PDO::FETCH_ASSOC);
@@ -544,9 +567,19 @@ class Asset extends BaseModel {
             return $newId;
         } catch (\Throwable $e) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
-            // optionally rethrow or log
+            error_log('Asset::addItem failed: ' . $e->getMessage());
             return null;
         }
+    }
+
+    private function ensureAssetSequenceTable(): void
+    {
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS {$this->tblseq} (
+            category_id INT PRIMARY KEY,
+            last_sequence INT NOT NULL,
+            ic_code VARCHAR(64),
+            datecreated DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     }
 
     // inside class Asset extends BaseModel
