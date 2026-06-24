@@ -1,5 +1,9 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$groupId = (int) ($inventory['group_id'] ?? 0);
+$backUrl = $groupId > 0
+    ? $base . '/admin/assets/item?group_id=' . $groupId
+    : $base . '/admin/assets';
 ?>
 <html lang="en">
 
@@ -40,6 +44,11 @@ $base = rtrim(BASE_URL, '/');
                         <div class="page-hero hero-inventory">
                             <h1><i class="fas fa-history mr-2"></i>Transfer History</h1>
                             <p>Past assignments and returns recorded for this asset item.</p>
+                            <div class="quick-nav mt-3">
+                                <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-sm btn-outline-light">
+                                    <i class="fas fa-arrow-left mr-1"></i> Back to Inventory
+                                </a>
+                            </div>
                         </div>
 
                         <?php if (!empty($_SESSION['flash_success'])): ?>

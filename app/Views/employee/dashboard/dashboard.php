@@ -142,7 +142,7 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
                             <div class="chart-wrap">
                                 <canvas id="myAreaChart"></canvas>
                             </div>
-                            <p class="chart-caption mb-0">Resolution time per ticket (hours converted to days)</p>
+                            <p class="chart-caption mb-0">Actual resolution time per ticket</p>
                         <?php else: ?>
                             <div class="empty-state">
                                 <i class="fas fa-chart-line"></i>

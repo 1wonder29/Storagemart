@@ -9,6 +9,8 @@
   --auth-blue-dark: #003a8f;
   --auth-orange: #f37021;
   --auth-orange-hover: #de6126;
+  --auth-orange-light: #ddb090;
+  --auth-orange-glow: rgba(255, 185, 135, 0.14);
   --auth-surface: rgba(255, 255, 255, 0.96);
   --auth-text: #0f172a;
   --auth-muted: #64748b;
@@ -40,6 +42,8 @@
     var(--auth-page-bg),
     var(--auth-blue-bright),
     #1a8cff,
+    #2a5a9e,
+    #3a5890,
     var(--auth-page-bg-light),
     var(--auth-page-bg)
   );
@@ -74,6 +78,16 @@
   mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, #000 20%, transparent 75%);
 }
 
+.auth-ambient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 48% 42% at 78% 82%, var(--auth-orange-glow) 0%, transparent 72%),
+    radial-gradient(ellipse 36% 32% at 18% 22%, rgba(255, 205, 165, 0.09) 0%, transparent 68%);
+  pointer-events: none;
+}
+
 .auth-ambient-orb {
   position: absolute;
   border-radius: 50%;
@@ -100,11 +114,13 @@
 }
 
 .auth-ambient-orb--c {
-  width: 320px;
-  height: 320px;
-  top: 40%;
-  left: 50%;
-  background: rgba(243, 112, 33, 0.22);
+  width: 280px;
+  height: 280px;
+  bottom: -50px;
+  right: 10%;
+  top: auto;
+  left: auto;
+  background: rgba(255, 175, 120, 0.17);
   animation: authOrbDriftC 12s ease-in-out infinite;
 }
 

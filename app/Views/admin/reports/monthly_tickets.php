@@ -163,6 +163,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                         <label for="monthlyStatusFilter">Status</label>
                         <select id="monthlyStatusFilter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
+                            <option value="<?= htmlspecialchars(it_ticket_status_filter_open_value()) ?>">Open</option>
                             <?php foreach (array_keys($statuses) as $status): ?>
                                 <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
                             <?php endforeach; ?>
@@ -290,6 +291,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket-status-filter.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-monthly-report.js"></script>
 
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>

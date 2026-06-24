@@ -10,7 +10,7 @@ class DashboardModel extends BaseModel
             FROM (
                 SELECT 
                     ticket_number,
-                    TIMESTAMPDIFF(HOUR, date_filed, last_updated) AS resolution_hours,
+                    ROUND(TIMESTAMPDIFF(MINUTE, date_filed, last_updated) / 60, 2) AS resolution_hours,
                     last_updated
                 FROM {$this->tbltickets}
                 WHERE status = 'Resolved'
@@ -34,7 +34,7 @@ class DashboardModel extends BaseModel
             FROM (
                 SELECT 
                     ticket_number,
-                    TIMESTAMPDIFF(HOUR, date_filed, last_updated) AS resolution_hours,
+                    ROUND(TIMESTAMPDIFF(MINUTE, date_filed, last_updated) / 60, 2) AS resolution_hours,
                     last_updated
                 FROM {$this->tbltickets}
                 WHERE status = 'Resolved'
@@ -66,7 +66,7 @@ class DashboardModel extends BaseModel
             FROM (
                 SELECT 
                     ticket_number,
-                    TIMESTAMPDIFF(HOUR, date_filed, last_updated) AS resolution_hours,
+                    ROUND(TIMESTAMPDIFF(MINUTE, date_filed, last_updated) / 60, 2) AS resolution_hours,
                     last_updated
                 FROM {$this->tbltickets}
                 WHERE status = 'Resolved'

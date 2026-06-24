@@ -64,7 +64,7 @@ class EmployeeController extends AuthController
 
         foreach ($rows as $row) {
             $resolutionLabels[] = 'Ticket #' . $row['ticket_number'];
-            $resolutionData[]   = (int)$row['resolution_hours'];
+            $resolutionData[]   = round((float) $row['resolution_hours'], 2);
         }
 
 

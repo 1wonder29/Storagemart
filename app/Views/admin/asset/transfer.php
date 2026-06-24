@@ -1,5 +1,18 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$assetStatus = strtoupper(trim((string) ($inventory['status'] ?? '')));
+$isAssignMode = in_array($assetStatus, ['UNASSIGNED', 'RETURNED'], true);
+$pageTitle = $isAssignMode ? 'Assign Asset' : 'Transfer Asset';
+$pageDescription = $isAssignMode
+    ? 'Assign this asset item to an employee.'
+    : 'Reassign this asset item to another employee and record transfer details.';
+$submitLabel = $isAssignMode ? 'Confirm' : 'Complete Transfer';
+$detailsLabel = $isAssignMode ? 'Assign Details' : 'Transfer Details';
+$heroIcon = $isAssignMode ? 'fa-user-plus' : 'fa-exchange-alt';
+$groupId = (int) ($inventory['group_id'] ?? 0);
+$backUrl = $groupId > 0
+    ? $base . '/admin/assets/item?group_id=' . $groupId
+    : $base . '/admin/assets';
 ?>
 <html lang="en">
 
@@ -38,48 +51,77 @@ $base = rtrim(BASE_URL, '/');
                 <div class="container-fluid admin-assets-page">
 
                     <div class="page-hero hero-form">
-                        <h1><i class="fas fa-exchange-alt mr-2"></i>Transfer Asset</h1>
-                        <p>Assign this asset item to an employee and record transfer details.</p>
+                        <h1><i class="fas <?= htmlspecialchars($heroIcon) ?> mr-2"></i><?= htmlspecialchars($pageTitle) ?></h1>
+                        <p><?= htmlspecialchars($pageDescription) ?></p>
+                        <div class="quick-nav mt-3">
+                            <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-sm btn-outline-light">
+                                <i class="fas fa-arrow-left mr-1"></i> Back to Inventory
+                            </a>
+                        </div>
                     </div>
 
                     <div class="card form-card shadow mb-4">
+                        <?php if (!$isAssignMode): ?>
                         <div class="card-header">
                             <h6 class="m-0 font-weight-bold text-primary">Transfer Details</h6>
                         </div>
+                        <?php endif; ?>
                         <div class="card-body">
                             <form action="<?= htmlspecialchars($base) ?>/admin/assets/transfer?inventory_id=<?= (int)($inventory['inventory_id'] ?? 0) ?>" method="POST" id="transferForm">
                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                                 <input type="hidden" name="item_id" value="<?= (int)($inventory['inventory_id'] ?? 0) ?>">
                                 <input type="hidden" name="group_id" value="<?= (int)($inventory['group_id'] ?? 0) ?>">
-                                    <div class="form-section-title">Assignment Information</div>
                                     <div class="row mb-5">
                                         <div class="col-md-6">
                                             <label for="employee_search" class="form-label">Search Employee</label>
-                                            <div class="input-group">
-                                                <input type="text" id="employee_search" class="form-control" placeholder="Type employee name or ID">
-                                                <button type="button" class="btn btn-primary" id="btnSearchEmployee">Search</button>
+                                            <div class="employee-search-field"
+                                                 data-employee-search
+                                                 data-suggest-url="<?= htmlspecialchars($base) ?>/admin/assets/search-employees"
+                                                 data-search-url="<?= htmlspecialchars($base) ?>/admin/assets/search-employee">
+                                                <div class="input-group">
+                                                    <input type="text"
+                                                           id="employee_search"
+                                                           class="form-control"
+                                                           placeholder="Type employee name or ID"
+                                                           autocomplete="off"
+                                                           data-employee-search-input>
+                                                    <button type="button" class="btn btn-primary" id="btnSearchEmployee" data-employee-search-button>Search</button>
+                                                </div>
+                                                <div id="employee_search_suggestions"
+                                                     class="employee-search-suggestions"
+                                                     data-employee-suggestions
+                                                     hidden></div>
+                                                <input type="hidden" id="employee_id" name="employee_id" data-employee-id-input>
                                             </div>
-                                            <input type="hidden" id="employee_id" name="employee_id">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="branchName" class="form-label">Employee Branch</label>
-                                            <input type="text" class="form-control" id="branchName" name="branchName" placeholder="Employee Branch" readonly>
+                                            <input type="text" class="form-control" id="branchName" name="branchName" placeholder="Employee Branch" readonly data-employee-branch-input>
                                         </div>
                                     </div>
 
-                                    <div class ="row mb-5">
-                                            <div class="col-md-6">
-                                                <label for = "transferDetails" class ="form-label">Transfer Details</label>
-                                                <textarea id ="transferDetails" name="transferDetails" class="form-control" rows="6" maxlength="1000" required></textarea>
-                                                <small class="form-text text-muted">Maximum 1000 characters.</small>
-                                            </div>
+                                    <?php if ($isAssignMode): ?>
+                                    <input type="hidden" name="transferDetails" value="Asset assigned">
+                                    <?php else: ?>
+                                    <div class="row mb-5">
+                                        <div class="col-md-6">
+                                            <label for="transferDetails" class="form-label"><?= htmlspecialchars($detailsLabel) ?></label>
+                                            <textarea id="transferDetails"
+                                                      name="transferDetails"
+                                                      class="form-control"
+                                                      rows="6"
+                                                      maxlength="1000"
+                                                      required></textarea>
+                                            <small class="form-text text-muted">Maximum 1000 characters.</small>
+                                        </div>
                                     </div>
+                                    <?php endif; ?>
 
                                     <div class="form-actions">
                                         <button type="submit" class="btn btn-primary" name="btnSubmit">
-                                            <i class="fas fa-check mr-1"></i> Complete Transfer
+                                            <i class="fas fa-check mr-1"></i> <?= htmlspecialchars($submitLabel) ?>
                                         </button>
-                                        <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= (int)($inventory['group_id'] ?? 0) ?>">Cancel</a>
+                                        <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($backUrl) ?>">Cancel</a>
                                     </div>
                                     </form>
                         </div>
@@ -134,34 +176,7 @@ $base = rtrim(BASE_URL, '/');
 
     <!-- Custom scripts for all pages-->
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-<script>
-document.getElementById('btnSearchEmployee').addEventListener('click', function () {
-    var q = document.getElementById('employee_search').value.trim();
-    if (!q) { alert('Enter employee id or name'); return; }
-
-    // $base rendered by PHP here
-    var url = "<?= htmlspecialchars($base, ENT_QUOTES) ?>/admin/assets/search-employee?q=" + encodeURIComponent(q);
-
-    fetch(url, { credentials: 'same-origin' })
-        .then(r => {
-            if (!r.ok) return r.text().then(t => { throw new Error('HTTP '+r.status+': '+t); });
-            return r.json();
-        })
-        .then(data => {
-            if (data.success) {
-                document.getElementById("employee_id").value = data.employee_id;
-                document.getElementById("employee_search").value = data.full_name || data.fullName || '';
-                document.getElementById("branchName").value = data.branchName || '';
-            } else {
-                alert(data.message || 'Employee not found');
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Error contacting server: " + err.message);
-        });
-});
-</script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/employee-search-autocomplete.js"></script>
 
 </body>
 

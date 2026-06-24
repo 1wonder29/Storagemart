@@ -71,7 +71,7 @@
       if (priorityFilter && priority !== priorityFilter) {
         return false;
       }
-      if (statusFilter && status !== statusFilter) {
+      if (statusFilter && !window.tmsMatchesStatusFilter(status, statusFilter)) {
         return false;
       }
       return true;

@@ -45,6 +45,16 @@ function admin_can_mark_defective(string $status): bool
     $s = strtoupper(trim($status));
     return in_array($s, ['RETURNED', 'UNASSIGNED'], true);
 }
+
+function admin_can_assign_asset(string $status): bool
+{
+    return in_array(strtoupper(trim($status)), ['UNASSIGNED', 'RETURNED'], true);
+}
+
+function admin_can_transfer_asset(string $status): bool
+{
+    return strtoupper(trim($status)) === 'ASSIGNED';
+}
 ?>
 <html lang="en">
 
@@ -214,7 +224,12 @@ function admin_can_mark_defective(string $status): bool
                                                     <i class="fas fa-exclamation-triangle"></i>
                                                 </button>
                                                 <?php endif; ?>
-                                                <?php if (strtoupper(trim($status)) !== 'DEFECTIVE'): ?>
+                                                <?php if (admin_can_assign_asset($status)): ?>
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/assets/transfer?inventory_id=<?= (int) ($row['inventory_id'] ?? 0) ?>"
+                                                   class="btn btn-sm btn-outline-success" title="Assign Asset">
+                                                    <i class="fas fa-user-plus"></i>
+                                                </a>
+                                                <?php elseif (admin_can_transfer_asset($status)): ?>
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/transfer?inventory_id=<?= (int) ($row['inventory_id'] ?? 0) ?>"
                                                    class="btn btn-sm btn-outline-primary" title="Transfer">
                                                     <i class="fas fa-exchange-alt"></i>

@@ -1247,6 +1247,51 @@ class AssetController extends AuthController {
         }
     }
 
+    public function searchEmployeeSuggestions()
+    {
+        header('Content-Type: application/json');
+
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        try {
+            if (empty($_SESSION['account_id'])) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Not authenticated']);
+                return;
+            }
+
+            $q = trim($_GET['q'] ?? '');
+            if ($q === '') {
+                echo json_encode(['success' => true, 'results' => []]);
+                return;
+            }
+
+            $assetModel = new Asset();
+            $rows = $assetModel->searchEmployeesByQuery($q, 10);
+            $results = array_map(static function (array $row): array {
+                return [
+                    'employee_id' => (int) ($row['employee_id'] ?? 0),
+                    'full_name' => trim((string) ($row['fullname'] ?? '')),
+                    'branchName' => (string) ($row['branchName'] ?? ''),
+                    'branchCode' => (string) ($row['branchCode'] ?? ''),
+                ];
+            }, $rows);
+
+            echo json_encode([
+                'success' => true,
+                'results' => $results,
+            ]);
+        } catch (\Throwable $e) {
+            file_put_contents(__DIR__ . '/../../../public/debug.log',
+                date('c') . " searchEmployeeSuggestions EXCEPTION: " . $e->getMessage() . PHP_EOL, FILE_APPEND);
+
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+        }
+    }
+
 
     // View Transfer History Here
     public function transferHistory()

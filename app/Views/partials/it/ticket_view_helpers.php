@@ -74,6 +74,20 @@ if (!function_exists('it_ticket_format_date')) {
     }
 }
 
+if (!function_exists('it_ticket_open_statuses')) {
+    function it_ticket_open_statuses(): array
+    {
+        return ['Pending', 'In Progress', 'On Hold', 'Reopened'];
+    }
+}
+
+if (!function_exists('it_ticket_status_filter_open_value')) {
+    function it_ticket_status_filter_open_value(): string
+    {
+        return '__open__';
+    }
+}
+
 if (!function_exists('ticket_assignment_can_update')) {
     function ticket_assignment_can_update(string $status): bool
     {

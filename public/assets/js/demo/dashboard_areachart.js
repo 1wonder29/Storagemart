@@ -15,11 +15,29 @@ function itAreaChartTheme() {
   };
 }
 
-function formatDays(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return '0 days';
-  if (n < 1) return `${n.toFixed(1)} day${n === 1 ? '' : 's'}`;
-  return `${n.toFixed(1)} days`;
+function formatDuration(hours) {
+  const totalMinutes = Math.round(Number(hours) * 60);
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) return '0m';
+
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const remainderAfterDays = totalMinutes % (24 * 60);
+  const h = Math.floor(remainderAfterDays / 60);
+  const m = remainderAfterDays % 60;
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (h > 0) parts.push(`${h}h`);
+  if (m > 0 || parts.length === 0) parts.push(`${m}m`);
+
+  return parts.join(' ');
+}
+
+function formatAxisDuration(hours) {
+  const value = Number(hours);
+  if (!Number.isFinite(value) || value <= 0) return '0h';
+  if (value < 24) return `${Math.round(value)}h`;
+  if (value % 24 === 0) return `${value / 24}d`;
+  return formatDuration(value);
 }
 
 function shortenTicketLabel(label) {
@@ -31,23 +49,20 @@ function shortenTicketLabel(label) {
 const areaCtx = document.getElementById('myAreaChart');
 
 if (areaCtx && window.ticketResolution) {
-  const SLA_DAYS = 1;
+  const SLA_HOURS = 24;
   const rawLabels = Array.isArray(window.ticketResolution.labels) ? window.ticketResolution.labels : [];
   const rawSeries = Array.isArray(window.ticketResolution.data) ? window.ticketResolution.data : [];
 
   const labels = rawLabels.map(shortenTicketLabel);
   const series = rawSeries.map((value) => {
     const hours = Number(value);
-    if (Number.isFinite(hours) && hours > 24 && hours === Math.floor(hours)) {
-      return Math.round((hours / 24) * 10) / 10;
-    }
-    return Math.round(Number(value) * 10) / 10 || 0;
+    return Number.isFinite(hours) ? Math.round(hours * 100) / 100 : 0;
   });
 
   const hasData = series.length > 0 && series.some((v) => v > 0);
   const safeSeries = hasData ? series : labels.map(() => 0);
-  const maxValue = Math.max(SLA_DAYS, ...safeSeries, 0);
-  const yMax = Math.ceil((maxValue + 0.5) * 2) / 2;
+  const maxValue = Math.max(SLA_HOURS, ...safeSeries, 0);
+  const yMax = Math.ceil((maxValue + 2) / 4) * 4;
 
   const theme = itAreaChartTheme();
 
@@ -66,13 +81,13 @@ if (areaCtx && window.ticketResolution) {
           borderWidth: 2.5,
           pointRadius: safeSeries.map((v) => (v > 0 ? 5 : 3)),
           pointHoverRadius: 7,
-          pointBackgroundColor: safeSeries.map((v) => (v > SLA_DAYS ? theme.sla : theme.line)),
+          pointBackgroundColor: safeSeries.map((v) => (v > SLA_HOURS ? theme.sla : theme.line)),
           pointBorderColor: theme.dark ? '#252932' : '#fff',
           pointBorderWidth: 2,
         },
         {
-          label: `SLA (${SLA_DAYS} day)`,
-          data: Array(safeSeries.length).fill(SLA_DAYS),
+          label: 'SLA (24h)',
+          data: Array(safeSeries.length).fill(SLA_HOURS),
           borderColor: theme.sla,
           borderDash: [6, 6],
           borderWidth: 1.5,
@@ -117,8 +132,8 @@ if (areaCtx && window.ticketResolution) {
               if (context.dataset.label.startsWith('SLA')) {
                 return `${context.dataset.label}`;
               }
-              const breached = y > SLA_DAYS ? ' (over SLA)' : ' (within SLA)';
-              return `Resolution: ${formatDays(y)}${breached}`;
+              const breached = y > SLA_HOURS ? ' (over SLA)' : ' (within SLA)';
+              return `Resolution: ${formatDuration(y)}${breached}`;
             },
           },
         },
@@ -138,10 +153,16 @@ if (areaCtx && window.ticketResolution) {
         y: {
           beginAtZero: true,
           max: yMax,
+          title: {
+            display: true,
+            text: 'Hours',
+            color: theme.text,
+            font: { size: 11, weight: '600' },
+          },
           ticks: {
             color: theme.text,
             maxTicksLimit: 6,
-            callback: (value) => formatDays(value),
+            callback: (value) => formatAxisDuration(value),
           },
           grid: {
             color: theme.grid,

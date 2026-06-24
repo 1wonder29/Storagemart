@@ -59,7 +59,7 @@ class itController extends AuthController{
 
         foreach ($rows as $row) {
             $resolutionLabels[] = (string) $row['ticket_number'];
-            $resolutionData[]   = round(((float) $row['resolution_hours']) / 24, 1);
+            $resolutionData[]   = round((float) $row['resolution_hours'], 2);
         }
         require_once __DIR__ . '/../../Views/it/dashboard/dashboard.php';
     }

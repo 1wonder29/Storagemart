@@ -46,7 +46,7 @@
 
       if (branchFilter && branch !== branchFilter) return false;
       if (priorityFilter && priority !== priorityFilter) return false;
-      if (statusFilter && status !== statusFilter) return false;
+      if (statusFilter && !window.tmsMatchesStatusFilter(status, statusFilter)) return false;
       return true;
     });
 

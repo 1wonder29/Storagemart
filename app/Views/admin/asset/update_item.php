@@ -1,5 +1,9 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$groupId = (int) ($inventory['group_id'] ?? ($_GET['group_id'] ?? 0));
+$backUrl = $groupId > 0
+    ? $base . '/admin/assets/item?group_id=' . $groupId
+    : $base . '/admin/assets';
 ?>
 <html lang="en">
 
@@ -34,6 +38,11 @@ $base = rtrim(BASE_URL, '/');
                 <div class="page-hero hero-form">
                     <h1><i class="fas fa-edit mr-2"></i>Update Item</h1>
                     <p>Edit asset item details, status, and serial number information.</p>
+                    <div class="quick-nav mt-3">
+                        <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-arrow-left mr-1"></i> Back to Inventory
+                        </a>
+                    </div>
                 </div>
 
                 <div class="card form-card shadow mb-4">
@@ -103,7 +112,7 @@ $base = rtrim(BASE_URL, '/');
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save mr-1"></i> Save Changes
                                 </button>
-                                <a href="<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= (int)($inventory['group_id'] ?? ($_GET['group_id'] ?? 0)); ?>"
+                                <a href="<?= htmlspecialchars($backUrl) ?>"
                                    class="btn btn-outline-secondary">
                                     Cancel
                                 </a>

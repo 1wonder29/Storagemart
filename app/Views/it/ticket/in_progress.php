@@ -145,6 +145,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                         <label for="ipStatusFilter">Status</label>
                         <select id="ipStatusFilter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
+                            <option value="<?= htmlspecialchars(it_ticket_status_filter_open_value()) ?>">Open</option>
                             <?php foreach (array_keys($statuses) as $status): ?>
                                 <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
                             <?php endforeach; ?>
@@ -377,6 +378,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket-status-filter.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/it-in-progress-tickets.js"></script>
 
     <script>

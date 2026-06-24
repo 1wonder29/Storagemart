@@ -129,6 +129,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                         <label for="myStatusFilter">Status</label>
                         <select id="myStatusFilter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
+                            <option value="<?= htmlspecialchars(it_ticket_status_filter_open_value()) ?>">Open</option>
                             <?php foreach (array_keys($statuses) as $status): ?>
                                 <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
                             <?php endforeach; ?>
@@ -359,6 +360,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
     window.BASE_URL = "<?= htmlspecialchars($base) ?>";
     const base = window.BASE_URL;
     </script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket-status-filter.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/it-my-tickets.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/fetch_ticket_history.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>

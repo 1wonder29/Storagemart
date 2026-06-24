@@ -59,7 +59,7 @@ class AdminController extends AuthController
         $resolutionData = [];
         foreach ($resolutionRows as $row) {
             $resolutionLabels[] = 'Ticket #' . $row['ticket_number'];
-            $resolutionData[] = (int)$row['resolution_hours'];
+            $resolutionData[] = round((float) $row['resolution_hours'], 2);
         }
         
         $notificationData = $this->loadNotifications();

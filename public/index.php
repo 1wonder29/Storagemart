@@ -235,6 +235,8 @@ if (strpos($uri, '/admin') === 0) {
         $asset->transferItem();
     } elseif ($sub === 'assets/search-employee') {
         $asset->searchEmployee();
+    } elseif ($sub === 'assets/search-employees') {
+        $asset->searchEmployeeSuggestions();
     } elseif ($sub === 'assets/transfer-history') {
         $asset->transferHistory();
     } elseif ($sub === 'pendings') {

@@ -695,33 +695,52 @@ class Asset extends BaseModel {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
     }
-// find employee by approximate name or ID (for AJAX search)
     public function findEmployeeByQuery(string $q): ?array
     {
-        // match numeric id or name parts
-        if (ctype_digit($q)) {
-            $sql = "SELECT e.employee_id, CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) AS fullname, b.branchName, b.branchCode
-                    FROM {$this->tblemployee} e
-                    LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
-                    WHERE e.employee_id = :id
-                    LIMIT 1";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([':id' => (int)$q]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $row ?: null;
-        } else {
-            $like = '%' . $q . '%';
-            $sql = "SELECT e.employee_id, CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) AS fullname, b.branchName, b.branchCode
-                    FROM {$this->tblemployee} e
-                    LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
-                    WHERE e.firstname LIKE :like OR e.lastname LIKE :like OR CONCAT(e.firstname, ' ', e.lastname) LIKE :like
-                    ORDER BY e.lastname ASC
-                    LIMIT 1";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([':like' => $like]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $row ?: null;
+        $rows = $this->searchEmployeesByQuery($q, 1);
+        return $rows[0] ?? null;
+    }
+
+    public function searchEmployeesByQuery(string $q, int $limit = 10): array
+    {
+        $q = trim($q);
+        if ($q === '') {
+            return [];
         }
+
+        $limit = max(1, min($limit, 20));
+        $params = [':limit' => $limit];
+
+        if (ctype_digit($q)) {
+            $params[':like'] = $q . '%';
+            $where = 'CAST(e.employee_id AS CHAR) LIKE :like';
+        } else {
+            $params[':like'] = '%' . $q . '%';
+            $where = "e.firstname LIKE :like
+                OR e.lastname LIKE :like
+                OR e.middlename LIKE :like
+                OR CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) LIKE :like
+                OR CONCAT(e.firstname, ' ', e.lastname) LIKE :like
+                OR CONCAT(e.firstname, ' ', IFNULL(e.middlename, ''), ' ', e.lastname) LIKE :like";
+        }
+
+        $sql = "SELECT e.employee_id,
+                       CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) AS fullname,
+                       b.branchName,
+                       b.branchCode
+                FROM {$this->tblemployee} e
+                LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+                WHERE {$where}
+                ORDER BY e.lastname ASC, e.firstname ASC
+                LIMIT :limit";
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, $key === ':limit' ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
     public function transferAssetToEmployee(int $inventoryId, int $employeeId, string $transferDetails, $performedBy): array
