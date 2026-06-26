@@ -34,7 +34,29 @@ ksort($branches);
 ksort($statuses);
 $priorityOptions = it_ticket_priority_options(array_keys($priorities));
 
-$openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 0) + ($statusCounts['On Hold'] ?? 0) + ($statusCounts['Reopened'] ?? 0);
+$statusOrder = it_ticket_all_statuses();
+$summaryTicketStats = [];
+foreach ($statusOrder as $status) {
+    $summaryTicketStats[$status] = (int) ($statusCounts[$status] ?? 0);
+}
+$adminTicketStatTone = static function (string $status): string {
+    if ($status === 'Open') {
+        return 'warning';
+    }
+    if ($status === 'In Progress') {
+        return 'info';
+    }
+    if ($status === 'On Hold') {
+        return 'secondary';
+    }
+    if ($status === 'Resolved') {
+        return 'success';
+    }
+    if ($status === 'Cancelled') {
+        return 'danger';
+    }
+    return 'secondary';
+};
 ?>
 <html lang="en">
 
@@ -75,20 +97,14 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                         </div>
                     </div>
                     <div class="col-lg-5">
-                        <div class="row mt-3 mt-lg-0">
-                            <div class="col-4">
+                        <div class="row mt-3 mt-lg-0 justify-content-lg-end">
+                            <div class="col-6 col-md-4">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $totalTickets ?></div>
                                     <div class="stat-label">Total</div>
                                 </div>
                             </div>
-                            <div class="col-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $openCount ?></div>
-                                    <div class="stat-label">Open</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
+                            <div class="col-6 col-md-4">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $thisMonth ?></div>
                                     <div class="stat-label">This Month</div>
@@ -97,6 +113,16 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="summary-stats">
+                <?php foreach ($summaryTicketStats as $status => $count): ?>
+                    <?php $tone = $adminTicketStatTone($status); ?>
+                    <div class="summary-stat-card stat-<?= htmlspecialchars($tone) ?>">
+                        <div class="stat-label"><?= htmlspecialchars((string) $status) ?></div>
+                        <div class="stat-value"><?= (int) $count ?></div>
+                    </div>
+                <?php endforeach; ?>
             </div>
 
             <div class="filter-toolbar">
@@ -123,8 +149,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                         <label for="adminStatusFilter">Status</label>
                         <select id="adminStatusFilter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
-                            <option value="<?= htmlspecialchars(it_ticket_status_filter_open_value()) ?>">Open</option>
-                            <?php foreach (array_keys($statuses) as $status): ?>
+                            <?php foreach (it_ticket_status_filter_options(array_keys($statuses)) as $status): ?>
                                 <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
                             <?php endforeach; ?>
                         </select>

@@ -62,8 +62,8 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
             <div class="page-hero hero-pending">
                 <div class="row align-items-center">
                     <div class="col-lg-7">
-                        <h1><i class="fas fa-clock mr-2"></i>Pending Tickets</h1>
-                        <p>Review new ticket requests — approve and assign to IT, decline, or communicate with the requester.</p>
+                        <h1><i class="fas fa-folder-open mr-2"></i>Open Tickets</h1>
+                        <p>Review newly filed tickets — approve and assign to IT to move them to In Progress.</p>
                         <div class="quick-nav mt-3">
                             <a href="<?= htmlspecialchars($base) ?>/admin/tickets" class="btn btn-sm btn-outline-light">
                                 <i class="fas fa-ticket-alt mr-1"></i> All Tickets
@@ -75,7 +75,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                             <div class="col-4">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $totalPending ?></div>
-                                    <div class="stat-label">Pending</div>
+                                    <div class="stat-label">Open</div>
                                 </div>
                             </div>
                             <div class="col-4">

@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../admin/BaseModel.php';
+require_once __DIR__ . '/../../Helpers/TicketStatus.php';
 
 class ItTicketModel extends BaseModel
 {
@@ -65,7 +66,7 @@ class ItTicketModel extends BaseModel
             LEFT JOIN tblassets_inventory i ON t.inventory_id = i.inventory_id
             LEFT JOIN tblassets_group g ON i.group_id = g.group_id
             LEFT JOIN tblemployee a2 ON t.assigned_to = a2.employee_id
-            WHERE t.status = 'Pending'
+            WHERE t.status = :open_status
         ";
 
         if ($assignedToEmployeeId > 0) {
@@ -75,7 +76,7 @@ class ItTicketModel extends BaseModel
         $sql .= " ORDER BY t.date_filed ASC";
 
         $stmt = $this->pdo->prepare($sql);
-        $params = [];
+        $params = [':open_status' => TicketStatus::OPEN];
         if ($assignedToEmployeeId > 0) {
             $params[':assigned_to'] = $assignedToEmployeeId;
         }
@@ -222,7 +223,7 @@ class ItTicketModel extends BaseModel
             ':category'        => $data['category'],
             ':concern_details' => $data['concern_details'],
             ':priority'        => $data['priority'],
-            ':status'          => 'Pending',
+            ':status'          => TicketStatus::initial(),
             ':created_by'      => $data['created_by'],
         ]);
 
@@ -244,9 +245,10 @@ class ItTicketModel extends BaseModel
         $this->pdo->prepare("
             INSERT INTO {$this->tblticket_history} 
             (ticket_id, action_type, action_details, old_status, new_status, performed_by, performed_role, date_logged)
-            VALUES (:id, 'Created', 'Ticket filed by employee', NULL, 'Pending', :pid, 'Employee', NOW())
+            VALUES (:id, 'Created', 'Ticket filed by employee', NULL, :new_status, :pid, 'Employee', NOW())
         ")->execute([
             ':id'  => $ticketId,
+            ':new_status' => TicketStatus::initial(),
             ':pid' => $data['employee_id']
         ]);
 

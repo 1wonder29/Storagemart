@@ -125,7 +125,7 @@ foreach ($tickets as $row):
                             data-assigned="<?= $row['assigned_to'] ?>">
                             <i class="fas fa-check fa-sm fa-fw mr-2 text-success"></i> Resolved
                         </a>
-                        <a href="#" class="dropdown-item openModalBtn" data-action="Pending"
+                        <a href="#" class="dropdown-item openModalBtn" data-action="Open"
                             data-ticket-id="<?= $ticketId ?>"
                             data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>"
                             data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
@@ -137,7 +137,7 @@ foreach ($tickets as $row):
                             data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>"
                             data-filed="<?= !empty($row['date_filed']) ? date('M d, Y', strtotime((string) $row['date_filed'])) : '' ?>"
                             data-assigned="<?= $row['assigned_to'] ?>">
-                            <i class="fas fa-clock fa-sm fa-fw mr-2 text-warning"></i> Pending
+                            <i class="fas fa-folder-open fa-sm fa-fw mr-2 text-warning"></i> Open
                         </a>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="dropdown-item cancelTicketBtn"

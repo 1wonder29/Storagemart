@@ -33,7 +33,7 @@ class EmployeeController extends AuthController
         // use model methods to get counts
         $assetsCount       = $model->countAssetsByEmployee($employeeId);
         $totalTickets      = $model->countTicketsByEmployee($employeeId);
-        $pendingTickets    = $model->countTicketsByEmployee($employeeId, 'Pending');
+        $pendingTickets    = $model->countTicketsByEmployee($employeeId, 'Open');
         $inProgressTickets = $model->countTicketsByEmployee($employeeId, 'In Progress');
         $resolvedTickets   = $model->countTicketsByEmployee($employeeId, 'Resolved');
 

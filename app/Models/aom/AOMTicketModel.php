@@ -2,6 +2,7 @@
 // app/Models/aom/AOMTicketModel.php
 
 require_once __DIR__ . '/../admin/BaseModel.php';
+require_once __DIR__ . '/../../Helpers/TicketStatus.php';
 
 /**
  * AOMTicketModel - Manages tickets created and managed by AOMs
@@ -47,7 +48,7 @@ class AOMTicketModel extends BaseModel
                     :category,
                     :concern_details,
                     :priority,
-                    'Pending',
+                    :initial_status,
                     :aom_id,
                     'AOM',
                     :created_by,
@@ -64,6 +65,7 @@ class AOMTicketModel extends BaseModel
                 'category' => $data['category'] ?? null,
                 'concern_details' => $data['concern_details'] ?? null,
                 'priority' => $data['priority'] ?? 'Low',
+                'initial_status' => TicketStatus::initial(),
                 'aom_id' => $data['aom_id'],
                 'created_by' => $data['created_by'],
                 'inventory_id' => $data['inventory_id'] ?? null,
@@ -85,7 +87,7 @@ class AOMTicketModel extends BaseModel
                 'Created',
                 'Ticket filed by AOM',
                 null,
-                'Pending',
+                TicketStatus::initial(),
                 $performedBy,
                 'AOM'
             );

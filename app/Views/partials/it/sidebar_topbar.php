@@ -120,22 +120,5 @@ $base = rtrim(BASE_URL, '/');
 <?php require_once __DIR__ . '/../realtime_scripts.php'; ?>
 <?php if (!isset($base)) { $base = rtrim(BASE_URL, '/'); } ?>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/it-dark-mode.js"></script>
-
-<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="logoutModalLabel">Ready to Leave?</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <a class="btn btn-primary" href="<?= htmlspecialchars($base) ?>/logout">Logout</a>
-            </div>
-        </div>
-    </div>
-</div>
+<?php require_once __DIR__ . '/../logout_modal.php'; ?>
 

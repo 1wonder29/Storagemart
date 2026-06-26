@@ -55,7 +55,7 @@ class HeadController extends AuthController
 
         $totalAssets    = $employeeModel->countAssetsByEmployee($headId);
         $totalTickets   = $employeeModel->countTicketsByEmployee($headId);
-        $pendingTickets = $employeeModel->countTicketsByEmployee($headId, 'Pending');
+        $pendingTickets = $employeeModel->countTicketsByEmployee($headId, 'Open');
         $resolvedTickets= $employeeModel->countTicketsByEmployee($headId, 'Resolved');
 
         /* ===========================
@@ -68,7 +68,7 @@ class HeadController extends AuthController
 
             $departmentAssets          += $employeeModel->countAssetsByEmployee($eid);
             $totalDepartmentTickets    += $employeeModel->countTicketsByEmployee($eid);
-            $pendingDepartmentTickets  += $employeeModel->countTicketsByEmployee($eid, 'Pending');
+            $pendingDepartmentTickets  += $employeeModel->countTicketsByEmployee($eid, 'Open');
             $resolvedDepartmentTickets += $employeeModel->countTicketsByEmployee($eid, 'Resolved');
         }
 

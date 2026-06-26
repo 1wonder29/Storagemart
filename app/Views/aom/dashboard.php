@@ -4,14 +4,14 @@ $loggedFirstname = $ctx['loggedFirstname'] ?? 'AOM';
 $loggedLastname = $ctx['loggedLastname'] ?? '';
 $displayName = trim($loggedFirstname . ' ' . $loggedLastname) ?: 'AOM';
 $chartTicketStats = [
-    'Pending'     => (int)($ticketStats['Pending'] ?? 0),
+    'Open'        => (int)($ticketStats['Open'] ?? 0),
     'In Progress' => (int)($ticketStats['In Progress'] ?? 0),
     'Cancelled'   => (int)($ticketStats['Cancelled'] ?? 0),
     'Resolved'    => (int)($ticketStats['Resolved'] ?? 0),
 ];
 $hasChartData = array_sum($chartTicketStats) > 0;
 $ticketStatusClasses = [
-    'Pending'     => 'status-pending',
+    'Open'        => 'status-open',
     'In Progress' => 'status-in-progress',
     'Resolved'    => 'status-resolved',
     'Cancelled'   => 'status-cancelled',

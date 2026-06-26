@@ -7,7 +7,7 @@
  *           plus flags passed through to ticket_detail_actions.php
  */
 require_once __DIR__ . '/../it/ticket_view_helpers.php';
-$status = (string) ($ticket['status'] ?? 'Pending');
+$status = (string) ($ticket['status'] ?? 'Open');
 $historyEntries = $history ?? $ticketHistory ?? [];
 $ticketId = (int) ($ticket['ticket_id'] ?? 0);
 $employeeName = trim(

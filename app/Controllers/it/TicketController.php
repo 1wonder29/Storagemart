@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../Models/it/ItTicketModel.php';
 require_once __DIR__ . '/../../Models/TicketCancelModel.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
+require_once __DIR__ . '/../../Helpers/TicketStatus.php';
 class TicketController extends AuthController
 {
     public function create()
@@ -424,7 +425,8 @@ class TicketController extends AuthController
             case 'Resolve': $status = 'Resolved'; break;
             case 'In Progress': $status = 'In Progress'; break;
             case 'On Hold':
-            case 'Pending': $status = 'Pending'; break;
+            case 'Open':
+            case 'Pending': $status = TicketStatus::OPEN; break;
             default:        $status = 'In Progress';
         }
         // 🔔 Notify ticket owner (employee) when resolved

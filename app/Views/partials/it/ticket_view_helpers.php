@@ -2,10 +2,13 @@
 /**
  * Shared helpers for IT ticket list views.
  */
+require_once dirname(__DIR__, 3) . '/Helpers/TicketStatus.php';
+
 if (!function_exists('it_ticket_status_class')) {
     function it_ticket_status_class(string $status): string
     {
         $map = [
+            'Open'        => 'status-open',
             'Pending'     => 'status-pending',
             'In Progress' => 'status-in-progress',
             'On Hold'     => 'status-on-hold',
@@ -74,17 +77,27 @@ if (!function_exists('it_ticket_format_date')) {
     }
 }
 
-if (!function_exists('it_ticket_open_statuses')) {
-    function it_ticket_open_statuses(): array
+if (!function_exists('it_ticket_all_statuses')) {
+    function it_ticket_all_statuses(): array
     {
-        return ['Pending', 'In Progress', 'On Hold', 'Reopened'];
+        return TicketStatus::all();
     }
 }
 
-if (!function_exists('it_ticket_status_filter_open_value')) {
-    function it_ticket_status_filter_open_value(): string
+if (!function_exists('it_ticket_status_filter_options')) {
+    /**
+     * @param string[] $foundStatuses
+     */
+    function it_ticket_status_filter_options(array $foundStatuses = []): array
     {
-        return '__open__';
+        $options = it_ticket_all_statuses();
+        foreach ($foundStatuses as $status) {
+            $status = trim((string) $status);
+            if ($status !== '' && !in_array($status, $options, true) && in_array($status, TicketStatus::all(), true)) {
+                $options[] = $status;
+            }
+        }
+        return $options;
     }
 }
 

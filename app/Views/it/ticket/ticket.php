@@ -34,7 +34,29 @@ ksort($branches);
 ksort($statuses);
 $priorityOptions = it_ticket_priority_options(array_keys($priorities));
 
-$openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 0) + ($statusCounts['On Hold'] ?? 0) + ($statusCounts['Reopened'] ?? 0);
+$statusOrder = it_ticket_all_statuses();
+$summaryTicketStats = [];
+foreach ($statusOrder as $status) {
+    $summaryTicketStats[$status] = (int) ($statusCounts[$status] ?? 0);
+}
+$itTicketStatTone = static function (string $status): string {
+    if ($status === 'Open') {
+        return 'warning';
+    }
+    if ($status === 'In Progress') {
+        return 'info';
+    }
+    if ($status === 'On Hold') {
+        return 'secondary';
+    }
+    if ($status === 'Resolved') {
+        return 'success';
+    }
+    if ($status === 'Cancelled') {
+        return 'danger';
+    }
+    return 'secondary';
+};
 ?>
 <html lang="en">
 <head>
@@ -81,20 +103,14 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                         </div>
                     </div>
                     <div class="col-lg-5">
-                        <div class="row mt-3 mt-lg-0">
-                            <div class="col-4">
+                        <div class="row mt-3 mt-lg-0 justify-content-lg-end">
+                            <div class="col-6 col-md-4">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $totalTickets ?></div>
                                     <div class="stat-label">Total</div>
                                 </div>
                             </div>
-                            <div class="col-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $openCount ?></div>
-                                    <div class="stat-label">Open</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
+                            <div class="col-6 col-md-4">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $thisMonth ?></div>
                                     <div class="stat-label">This Month</div>
@@ -103,6 +119,16 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="summary-stats">
+                <?php foreach ($summaryTicketStats as $status => $count): ?>
+                    <?php $tone = $itTicketStatTone($status); ?>
+                    <div class="summary-stat-card stat-<?= htmlspecialchars($tone) ?>">
+                        <div class="stat-label"><?= htmlspecialchars((string) $status) ?></div>
+                        <div class="stat-value"><?= (int) $count ?></div>
+                    </div>
+                <?php endforeach; ?>
             </div>
 
             <div class="filter-toolbar">
@@ -129,8 +155,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
                         <label for="myStatusFilter">Status</label>
                         <select id="myStatusFilter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
-                            <option value="<?= htmlspecialchars(it_ticket_status_filter_open_value()) ?>">Open</option>
-                            <?php foreach (array_keys($statuses) as $status): ?>
+                            <?php foreach (it_ticket_status_filter_options(array_keys($statuses)) as $status): ?>
                                 <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
                             <?php endforeach; ?>
                         </select>
@@ -265,24 +290,7 @@ $openCount = ($statusCounts['Pending'] ?? 0) + ($statusCounts['In Progress'] ?? 
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
-
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="<?= htmlspecialchars($base) ?>/logout">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
+</div>
 
     <div class="modal fade ticket-history-modal theme-it" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">

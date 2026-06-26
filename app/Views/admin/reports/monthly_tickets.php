@@ -163,8 +163,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                         <label for="monthlyStatusFilter">Status</label>
                         <select id="monthlyStatusFilter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
-                            <option value="<?= htmlspecialchars(it_ticket_status_filter_open_value()) ?>">Open</option>
-                            <?php foreach (array_keys($statuses) as $status): ?>
+                            <?php foreach (it_ticket_status_filter_options(array_keys($statuses)) as $status): ?>
                                 <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
                             <?php endforeach; ?>
                         </select>

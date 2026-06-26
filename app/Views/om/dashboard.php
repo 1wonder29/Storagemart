@@ -5,12 +5,19 @@ $dashboardTitle = ($user_role ?? '') === 'HOM' ? 'Dashboard' : 'OM Dashboard';
 $roleLabel = ($user_role ?? '') === 'HOM' ? 'Head of Operations' : 'Operations Manager';
 $displayName = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? '')) ?: 'User';
 
-$chartTicketStats = [
-    'Open'        => (int)($ticketStats['open'] ?? 0),
-    'In Progress' => (int)($ticketStats['in_progress'] ?? 0),
-    'Completed'   => (int)($ticketStats['completed'] ?? 0),
-];
+$statusOrder = ['Open', 'In Progress', 'Cancelled', 'Resolved', 'Closed'];
+$chartTicketStats = [];
+foreach ($statusOrder as $status) {
+    $chartTicketStats[$status] = (int) ($ticketStats[$status] ?? 0);
+}
+foreach ($ticketStats as $status => $count) {
+    if ($status === 'total' || isset($chartTicketStats[$status])) {
+        continue;
+    }
+    $chartTicketStats[$status] = (int) $count;
+}
 $hasChartData = array_sum($chartTicketStats) > 0;
+$chartColors = ['#f59e0b', '#0891b2', '#dc2626', '#16a34a', '#64748b', '#7c3aed', '#ea580c'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -159,7 +166,7 @@ $hasChartData = array_sum($chartTicketStats) > 0;
                                         if ($employeeName === '') {
                                             $employeeName = '—';
                                         }
-                                        $status = (string) ($ticket['status'] ?? 'Pending');
+                                        $status = (string) ($ticket['status'] ?? 'Open');
                                         $priority = (string) ($ticket['priority'] ?? 'Low');
                                         $branchName = (string) ($ticket['branchName'] ?? 'N/A');
                                         $dateFiled = !empty($ticket['date_filed'])
@@ -287,8 +294,8 @@ $hasChartData = array_sum($chartTicketStats) > 0;
             labels: <?= json_encode(array_keys($chartTicketStats)) ?>,
             datasets: [{
                 data: <?= json_encode(array_values($chartTicketStats)) ?>,
-                backgroundColor: ['#f59e0b', '#0891b2', '#16a34a'],
-                hoverBackgroundColor: ['#d97706', '#0e7490', '#15803d'],
+                backgroundColor: <?= json_encode(array_slice($chartColors, 0, count($chartTicketStats))) ?>,
+                hoverBackgroundColor: <?= json_encode(array_slice(['#d97706', '#0e7490', '#b91c1c', '#15803d', '#475569', '#6d28d9', '#c2410c'], 0, count($chartTicketStats))) ?>,
                 borderColor: '#fff',
                 borderWidth: 2
             }]
@@ -316,7 +323,7 @@ $hasChartData = array_sum($chartTicketStats) > 0;
 <script>
 (function () {
     function statusBadgeClass(status) {
-        if (status === 'Pending') return 'badge-warning';
+        if (status === 'Open') return 'badge-warning';
         if (status === 'In Progress') return 'badge-info';
         if (status === 'Resolved' || status === 'Completed') return 'badge-success';
         if (status === 'Closed') return 'badge-secondary';

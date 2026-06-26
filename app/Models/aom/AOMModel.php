@@ -289,7 +289,7 @@ class AOMModel extends BaseModel
 
         // Pending tickets
         $sql = "SELECT COUNT(*) as total FROM {$this->tbltickets}
-                WHERE aom_id = :aom_employee_id AND status = 'Pending'";
+                WHERE aom_id = :aom_employee_id AND status = 'Open'";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['aom_employee_id' => $aom_employee_id]);
         $stats['pending_tickets'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
@@ -759,7 +759,7 @@ class AOMModel extends BaseModel
             $tickets = $ticketStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
             foreach ($tickets as $ticket) {
-                $status = (string) ($ticket['status'] ?? 'Pending');
+                $status = (string) ($ticket['status'] ?? 'Open');
                 $historyStmt->execute([
                     'ticket_id' => (int) $ticket['ticket_id'],
                     'action_type' => $actionType,

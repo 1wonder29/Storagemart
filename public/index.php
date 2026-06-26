@@ -721,6 +721,8 @@ if ($uri === '/hom' || strpos($uri, '/hom/') === 0) {
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hom->editAOMBranches();
         }
+    } elseif ($sub === 'profile') {
+        $hom->profile();
     } else {
         http_response_code(404);
         echo "HOM page not found.";
@@ -801,6 +803,8 @@ if ($uri === '/om' || strpos($uri, '/om/') === 0) {
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hom->editAOMBranches();
         }
+    } elseif ($sub === 'profile') {
+        $hom->profile();
     } else {
         http_response_code(404);
         echo "OM page not found.";

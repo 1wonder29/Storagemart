@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 require_once __DIR__ . '/../../Models/admin/Ticket.php';
 require_once __DIR__ . '/../../Models/TicketCancelModel.php';
+require_once __DIR__ . '/../../Helpers/TicketStatus.php';
 
 class TicketController extends AuthController
 {
@@ -398,10 +399,8 @@ class TicketController extends AuthController
             $priority = 'Low';
         }
 
-        $status = 'Pending'; // must match enum case
-
-        // assigned_to is the IT employee id or null
         $assigned_to = $ticket_assign !== '' ? (int)$ticket_assign : null;
+        $status = $assigned_to ? TicketStatus::assigned() : TicketStatus::initial();
 
         try {
             // 1) Insert main ticket

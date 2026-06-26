@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../Models/aom/AOMModel.php';
 require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
+require_once __DIR__ . '/../../Helpers/TicketStatus.php';
 
 /**
  * HOMController - Head Of Operation Controller
@@ -64,17 +65,10 @@ class HOMController extends AuthController
             : $ticketModel->getTicketsByCreatedBy($accountId);
         
         // Count tickets by status
-        $ticketStats = ['total' => 0, 'open' => 0, 'in_progress' => 0, 'completed' => 0];
-        $ticketStats['total'] = count($tickets);
+        $ticketStats = ['total' => count($tickets)];
         foreach ($tickets as $t) {
-            $status = strtolower($t['status'] ?? 'open');
-            if ($status === 'completed') {
-                $ticketStats['completed']++;
-            } elseif ($status === 'in progress') {
-                $ticketStats['in_progress']++;
-            } else {
-                $ticketStats['open']++;
-            }
+            $status = (string) ($t['status'] ?? TicketStatus::OPEN);
+            $ticketStats[$status] = ($ticketStats[$status] ?? 0) + 1;
         }
 
         // Get dashboard overview counts
@@ -353,5 +347,28 @@ class HOMController extends AuthController
 
         extract($data);
         require __DIR__ . '/../../Views/om/edit-aom-branches.php';
+    }
+
+    /**
+     * View logged-in HOM/OM user profile
+     */
+    public function profile()
+    {
+        $user = $this->requireHOM();
+        if (!$user) return;
+
+        $role = strtoupper($user['usertype'] ?? '');
+        $profile = $this->employeeModel->fetchProfileByAccountId((int) $_SESSION['account_id']) ?? [];
+
+        $data = [
+            'page_title' => 'Profile',
+            'user' => $user,
+            'profile' => $profile,
+            'user_role' => $role === 'OM' ? 'OM' : 'HOM',
+            'routePrefix' => $role === 'OM' ? 'om' : 'hom',
+        ];
+
+        extract($data);
+        require __DIR__ . '/../../Views/om/profile/profile.php';
     }
 }

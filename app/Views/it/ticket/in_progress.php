@@ -145,8 +145,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                         <label for="ipStatusFilter">Status</label>
                         <select id="ipStatusFilter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
-                            <option value="<?= htmlspecialchars(it_ticket_status_filter_open_value()) ?>">Open</option>
-                            <?php foreach (array_keys($statuses) as $status): ?>
+                            <?php foreach (it_ticket_status_filter_options(array_keys($statuses)) as $status): ?>
                                 <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
                             <?php endforeach; ?>
                         </select>
@@ -204,20 +203,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     </div>
 
     <a class="scroll-to-top rounded" href="#page-top"><i class="fas fa-angle-up"></i></a>
-
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document"><div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                <button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            </div>
-            <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                <a class="btn btn-primary" href="<?= htmlspecialchars($base) ?>/logout">Logout</a>
-            </div>
-        </div></div>
-    </div>
+</div>
 
     <div class="modal fade it-update-ticket-modal" id="ticketModal" tabindex="-1" role="dialog" aria-labelledby="ticketModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered it-update-ticket-dialog" role="document">
@@ -392,11 +378,11 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                 submitClass: 'btn-success',
                 submitLabel: 'Mark Resolved'
             },
-            'Pending': {
-                title: 'Mark Ticket Pending',
-                statusLabel: 'Pending',
+            'Open': {
+                title: 'Mark Ticket Open',
+                statusLabel: 'Open',
                 submitClass: 'btn-warning',
-                submitLabel: 'Mark Pending'
+                submitLabel: 'Mark Open'
             }
         };
 

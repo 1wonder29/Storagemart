@@ -1,5 +1,6 @@
 <?php 
     require_once 'BaseModel.php';
+    require_once __DIR__ . '/../../Helpers/TicketStatus.php';
 
 class Ticket extends BaseModel {
     protected $table = 'tbltickets';
@@ -194,7 +195,7 @@ class Ticket extends BaseModel {
             $this->pdo->beginTransaction();
 
             // 4) Update tbltickets — also set status to In Progress when assigning
-            $newStatus = 'In Progress';
+            $newStatus = TicketStatus::assigned();
             $sql = "UPDATE tbltickets 
                     SET assigned_to = :new_assigned, status = :new_status, last_updated = NOW()";
             $params = [
@@ -384,7 +385,7 @@ public function searchEmployee(string $q): ?array
             'category'        => null,
             'concern_details' => null,
             'priority'        => 'Low',       // enum('Low','Medium','High')
-            'status'          => 'Pending',   // enum in tbltickets + history
+            'status'          => TicketStatus::initial(),
             'remarks'         => null,
             'assigned_to'     => null,
         ];
@@ -542,10 +543,10 @@ public function searchEmployee(string $q): ?array
         LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
         LEFT JOIN {$this->tblassets} i ON t.inventory_id = i.inventory_id
         LEFT JOIN {$this->tblgroup} g ON i.group_id = g.group_id
-        WHERE t.status = 'Pending'
+        WHERE t.status = :open_status
         ORDER BY t.date_filed ASC";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([':open_status' => TicketStatus::OPEN]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
@@ -625,10 +626,11 @@ public function searchEmployee(string $q): ?array
 
             // update ticket
             $sql = "UPDATE {$this->tbltickets}
-                    SET status = 'In Progress', assigned_to = :assigned_to, approved_by = :approved_by, remarks = :remarks, date_approved = NOW(), last_updated = NOW()
+                    SET status = :in_progress_status, assigned_to = :assigned_to, approved_by = :approved_by, remarks = :remarks, date_approved = NOW(), last_updated = NOW()
                     WHERE ticket_id = :ticket_id";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([
+                ':in_progress_status' => TicketStatus::IN_PROGRESS,
                 ':assigned_to' => $assignedToEmployeeId,
                 ':approved_by' => $approvedByAccountId,
                 ':remarks'     => $remarks,
@@ -637,12 +639,14 @@ public function searchEmployee(string $q): ?array
 
             // insert ticket history
             $sqlHist = "INSERT INTO {$this->tblhistory} (ticket_id, action_type, action_details, old_status, new_status, performed_by, performed_role, date_logged)
-                        VALUES (:ticket_id, 'Approved', :details, 'Pending', 'In Progress', :performed_by, 'Admin', NOW())";
+                        VALUES (:ticket_id, 'Approved', :details, :old_status, :new_status, :performed_by, 'Admin', NOW())";
             $details = "Approved & assigned to employee {$assignedToEmployeeId}";
             $stmt = $this->pdo->prepare($sqlHist);
             $stmt->execute([
                 ':ticket_id'    => $ticketId,
                 ':details'      => $details,
+                ':old_status'   => TicketStatus::OPEN,
+                ':new_status'   => TicketStatus::IN_PROGRESS,
                 ':performed_by' => $approvedByAccountId
             ]);
 
@@ -687,10 +691,11 @@ public function searchEmployee(string $q): ?array
             // only log if update affected a row
             if ($stmt->rowCount() > 0) {
                 $sqlHist = "INSERT INTO {$this->tblhistory} (ticket_id, action_type, action_details, old_status, new_status, performed_by, performed_role, date_logged)
-                            VALUES (:ticket_id, 'Closed', 'Ticket Declined by Admin', 'Pending', 'Closed', :performed_by, 'Admin', NOW())";
+                            VALUES (:ticket_id, 'Closed', 'Ticket Declined by Admin', :old_status, 'Closed', :performed_by, 'Admin', NOW())";
                 $stmt2 = $this->pdo->prepare($sqlHist);
                 $stmt2->execute([
                     ':ticket_id'   => $ticketId,
+                    ':old_status'  => TicketStatus::OPEN,
                     ':performed_by'=> $declinedByAccountId
                 ]);
 

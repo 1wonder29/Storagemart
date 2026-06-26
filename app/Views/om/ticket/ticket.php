@@ -6,13 +6,10 @@ $loggedFirstname = $ctx['loggedFirstname'] ?? $roleLabel;
 $loggedLastname = $ctx['loggedLastname'] ?? '';
 
 $rawTicketStats = $ticketStats ?? [];
-$statusOrder = ['Pending', 'In Progress', 'Cancelled', 'Resolved', 'Closed'];
+$statusOrder = ['Open', 'In Progress', 'Cancelled', 'Resolved', 'Closed'];
 $summaryTicketStats = [];
 foreach ($statusOrder as $status) {
-    $count = (int) ($rawTicketStats[$status] ?? 0);
-    if ($count > 0 || in_array($status, ['Pending', 'Resolved'], true)) {
-        $summaryTicketStats[$status] = $count;
-    }
+    $summaryTicketStats[$status] = (int) ($rawTicketStats[$status] ?? 0);
 }
 foreach ($rawTicketStats as $status => $count) {
     if (!isset($summaryTicketStats[$status])) {
@@ -21,7 +18,7 @@ foreach ($rawTicketStats as $status => $count) {
 }
 
 $omTicketStatTone = static function (string $status): string {
-    if ($status === 'Pending') {
+    if ($status === 'Open') {
         return 'warning';
     }
     if ($status === 'In Progress') {
@@ -37,7 +34,6 @@ $omTicketStatTone = static function (string $status): string {
 };
 
 $totalTickets = count($tickets ?? []);
-$openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicketStats['In Progress'] ?? 0);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,26 +67,6 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
                     <p>Track support requests across your operations area with quick filters and status visibility.</p>
                 </div>
                 <div class="col-lg-5 text-lg-right mt-3 mt-lg-0">
-                    <div class="row mb-3 mb-lg-0">
-                        <div class="col-4">
-                            <div class="hero-stat">
-                                <div class="stat-value"><?= (int) $totalTickets ?></div>
-                                <div class="stat-label">Total</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="hero-stat">
-                                <div class="stat-value"><?= (int) $openCount ?></div>
-                                <div class="stat-label">Open</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="hero-stat">
-                                <div class="stat-value"><?= (int) ($summaryTicketStats['Resolved'] ?? 0) ?></div>
-                                <div class="stat-label">Resolved</div>
-                            </div>
-                        </div>
-                    </div>
                     <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/create" class="btn btn-light btn-sm shadow-sm">
                         <i class="fas fa-plus fa-sm"></i> Create New Ticket
                     </a>
@@ -114,6 +90,10 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
         <?php endif; ?>
 
         <div class="summary-stats">
+            <div class="summary-stat-card stat-secondary">
+                <div class="stat-label">Total</div>
+                <div class="stat-value"><?= (int) $totalTickets ?></div>
+            </div>
             <?php foreach ($summaryTicketStats as $status => $count): ?>
                 <?php $tone = $omTicketStatTone($status); ?>
                 <div class="summary-stat-card stat-<?= htmlspecialchars($tone) ?>">
@@ -129,7 +109,7 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
                     <label for="statusFilter">Status</label>
                     <select id="statusFilter" class="form-control form-control-sm">
                         <option value="">All Status</option>
-                        <option value="Pending">Pending</option>
+                        <option value="Open">Open</option>
                         <option value="In Progress">In Progress</option>
                         <option value="Cancelled">Cancelled</option>
                         <option value="Resolved">Resolved</option>
@@ -183,9 +163,9 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
                                     <?php
                                     $ticketId = (int) ($ticket['ticket_id'] ?? 0);
                                     $priority = (string) ($ticket['priority'] ?? 'Low');
-                                    $status = (string) ($ticket['status'] ?? 'Pending');
+                                    $status = (string) ($ticket['status'] ?? 'Open');
                                     $priorityClass = $priority === 'High' ? 'danger' : ($priority === 'Medium' ? 'warning' : 'success');
-                                    $statusClass = $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
+                                    $statusClass = $status === 'Open' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
                                     ?>
                                     <tr data-ticket-id="<?= $ticketId ?>"
                                         data-priority="<?= htmlspecialchars(strtolower(trim($priority))) ?>"

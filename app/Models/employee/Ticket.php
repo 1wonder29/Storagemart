@@ -2,6 +2,7 @@
 // app/Models/employee/Ticket.php
 
 require_once __DIR__ . '/../admin/BaseModel.php';
+require_once __DIR__ . '/../../Helpers/TicketStatus.php';
 
 class EmployeeTicket extends BaseModel
 {
@@ -62,7 +63,7 @@ class EmployeeTicket extends BaseModel
             ':category'        => $data['category'],
             ':concern_details' => $data['concern_details'],
             ':priority'        => $data['priority'],
-            ':status'          => 'Pending',
+            ':status'          => TicketStatus::initial(),
             ':created_by'      => $data['created_by'],
         ]);
 
@@ -84,9 +85,10 @@ class EmployeeTicket extends BaseModel
         $this->pdo->prepare("
             INSERT INTO {$this->tblticket_history} 
             (ticket_id, action_type, action_details, old_status, new_status, performed_by, performed_role, date_logged)
-            VALUES (:id, 'Created', 'Ticket filed by employee', NULL, 'Pending', :pid, 'Employee', NOW())
+            VALUES (:id, 'Created', 'Ticket filed by employee', NULL, :new_status, :pid, 'Employee', NOW())
         ")->execute([
             ':id'  => $ticketId,
+            ':new_status' => TicketStatus::initial(),
             ':pid' => $data['employee_id']
         ]);
 

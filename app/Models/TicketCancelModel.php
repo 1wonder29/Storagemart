@@ -11,10 +11,9 @@ class TicketCancelModel extends BaseModel
     protected $tbllogs = 'tbllogs';
 
     private const CANCELLABLE_STATUSES = [
-        'Pending',
+        'Open',
         'In Progress',
         'On Hold',
-        'Reopened',
     ];
 
     public function isCancellableStatus(string $status): bool
