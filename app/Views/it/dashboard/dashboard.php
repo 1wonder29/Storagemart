@@ -4,13 +4,13 @@ $displayName = trim($loggedFirstname ?? '') ?: 'IT User';
 $position = trim($loggedPosition ?? '') ?: 'IT Support';
 
 $assignedCount = (int)($assignedCount ?? 0);
-$pendingTickets = (int)($pendingTickets ?? 0);
+$inProgressTickets = (int)($inProgressTickets ?? 0);
 $resolveTickets = (int)($resolveTickets ?? 0);
 $myAssets = (int)($myAssets ?? 0);
 $myTickets = (int)($myTickets ?? 0);
 $myOngoingTickets = (int)($myOngoingTickets ?? 0);
 
-$hasTicketChart = ($assignedCount + $pendingTickets + $resolveTickets) > 0;
+$hasTicketChart = ($assignedCount + $inProgressTickets + $resolveTickets) > 0;
 $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
 ?>
 <!DOCTYPE html>
@@ -58,7 +58,7 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
                         </div>
                         <div class="col-4">
                             <div class="hero-stat">
-                                <div class="stat-value"><?= $pendingTickets ?></div>
+                                <div class="stat-value"><?= $inProgressTickets ?></div>
                                 <div class="stat-label">In Progress</div>
                             </div>
                         </div>
@@ -175,7 +175,7 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
 <script>
     window.ticketData = [
         <?= $assignedCount ?>,
-        <?= $pendingTickets ?>,
+        <?= $inProgressTickets ?>,
         <?= $resolveTickets ?>
     ];
     window.ticketResolution = {

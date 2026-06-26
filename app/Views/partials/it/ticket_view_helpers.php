@@ -11,7 +11,7 @@ if (!function_exists('it_ticket_status_class')) {
             'Open'        => 'status-open',
             'Pending'     => 'status-pending',
             'In Progress' => 'status-in-progress',
-            'On Hold'     => 'status-on-hold',
+            'On Hold'     => 'status-pending',
             'Resolved'    => 'status-resolved',
             'Unresolved'  => 'status-unresolved',
             'Closed'      => 'status-closed',
@@ -98,6 +98,47 @@ if (!function_exists('it_ticket_status_filter_options')) {
             }
         }
         return $options;
+    }
+}
+
+if (!function_exists('it_ticket_stat_tone')) {
+    function it_ticket_stat_tone(string $status): string
+    {
+        if ($status === 'Open') {
+            return 'warning';
+        }
+        if ($status === 'In Progress') {
+            return 'info';
+        }
+        if ($status === 'Pending') {
+            return 'secondary';
+        }
+        if ($status === 'Resolved') {
+            return 'success';
+        }
+        if ($status === 'Cancelled') {
+            return 'danger';
+        }
+        return 'secondary';
+    }
+}
+
+if (!function_exists('it_ticket_summary_links')) {
+  /**
+   * @return array<string, string>
+   */
+    function it_ticket_summary_links(string $base): array
+    {
+        $base = rtrim($base, '/');
+
+        return [
+            TicketStatus::OPEN         => $base . '/it/tickets/open',
+            TicketStatus::IN_PROGRESS  => $base . '/it/tickets/in_progress',
+            TicketStatus::PENDING      => $base . '/it/tickets/pending',
+            TicketStatus::RESOLVED     => $base . '/it/tickets/resolve',
+            TicketStatus::CLOSED       => $base . '/it/tickets/closed',
+            TicketStatus::CANCELLED    => $base . '/it/tickets/cancelled',
+        ];
     }
 }
 

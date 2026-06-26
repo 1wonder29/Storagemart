@@ -2,8 +2,16 @@
 /** @var array $tickets */
 /** @var string $base */
 /** @var int $employeeId */
+/** @var bool $isOpenMode */
+/** @var bool $isPendingMode */
+/** @var bool $isClosedMode */
 
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
+
+$isOpenMode = $isOpenMode ?? false;
+$isPendingMode = $isPendingMode ?? false;
+$isClosedMode = $isClosedMode ?? false;
+$viewFrom = $isOpenMode ? 'open' : ($isPendingMode ? 'pending' : ($isClosedMode ? 'closed' : 'in_progress'));
 
 foreach ($tickets as $row):
     $ticketId = (int) ($row['ticket_id'] ?? 0);
@@ -88,9 +96,26 @@ foreach ($tickets as $row):
         <?php endif; ?>
     </td>
     <td class="text-right">
-        <?php if ($isAssignedToMe): ?>
+        <?php if ($isClosedMode): ?>
             <div class="action-btn-group">
-                <a href="<?= htmlspecialchars($base) ?>/it/tickets/view?id=<?= $ticketId ?>&from=in_progress"
+                <a href="<?= htmlspecialchars($base) ?>/it/tickets/view?id=<?= $ticketId ?>&from=closed"
+                   class="btn btn-sm btn-outline-primary" title="View full detail">
+                    <i class="fas fa-eye"></i>
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-info viewTicketBtn"
+                    title="View &amp; comments"
+                    data-ticket-id="<?= $ticketId ?>"
+                    data-ticket-num="<?= htmlspecialchars($row['ticket_number']) ?>"
+                    data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
+                    data-priority="<?= htmlspecialchars($priority) ?>"
+                    data-status="<?= htmlspecialchars($status) ?>"
+                    data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>">
+                    <i class="fas fa-comments"></i>
+                </button>
+            </div>
+        <?php elseif ($isAssignedToMe): ?>
+            <div class="action-btn-group">
+                <a href="<?= htmlspecialchars($base) ?>/it/tickets/view?id=<?= $ticketId ?>&from=<?= htmlspecialchars($viewFrom) ?>"
                    class="btn btn-sm btn-outline-primary" title="View full detail">
                     <i class="fas fa-eye"></i>
                 </a>
@@ -125,7 +150,8 @@ foreach ($tickets as $row):
                             data-assigned="<?= $row['assigned_to'] ?>">
                             <i class="fas fa-check fa-sm fa-fw mr-2 text-success"></i> Resolved
                         </a>
-                        <a href="#" class="dropdown-item openModalBtn" data-action="Open"
+                        <?php if ($isOpenMode): ?>
+                        <a href="#" class="dropdown-item openModalBtn" data-action="In Progress"
                             data-ticket-id="<?= $ticketId ?>"
                             data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>"
                             data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
@@ -137,8 +163,39 @@ foreach ($tickets as $row):
                             data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>"
                             data-filed="<?= !empty($row['date_filed']) ? date('M d, Y', strtotime((string) $row['date_filed'])) : '' ?>"
                             data-assigned="<?= $row['assigned_to'] ?>">
-                            <i class="fas fa-folder-open fa-sm fa-fw mr-2 text-warning"></i> Open
+                            <i class="fas fa-spinner fa-sm fa-fw mr-2 text-info"></i> In Progress
                         </a>
+                        <?php elseif ($isPendingMode): ?>
+                        <a href="#" class="dropdown-item openModalBtn" data-action="In Progress"
+                            data-ticket-id="<?= $ticketId ?>"
+                            data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>"
+                            data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
+                            data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
+                            data-priority="<?= htmlspecialchars($priority) ?>"
+                            data-status="<?= htmlspecialchars($status) ?>"
+                            data-category="<?= htmlspecialchars($row['category'] ?? '') ?>"
+                            data-department="<?= htmlspecialchars($row['department'] ?? '') ?>"
+                            data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>"
+                            data-filed="<?= !empty($row['date_filed']) ? date('M d, Y', strtotime((string) $row['date_filed'])) : '' ?>"
+                            data-assigned="<?= $row['assigned_to'] ?>">
+                            <i class="fas fa-spinner fa-sm fa-fw mr-2 text-info"></i> In Progress
+                        </a>
+                        <?php else: ?>
+                        <a href="#" class="dropdown-item openModalBtn" data-action="Pending"
+                            data-ticket-id="<?= $ticketId ?>"
+                            data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>"
+                            data-employee="<?= htmlspecialchars($row['employee_name'] ?? '') ?>"
+                            data-branch="<?= htmlspecialchars($row['branchName'] ?? '') ?>"
+                            data-priority="<?= htmlspecialchars($priority) ?>"
+                            data-status="<?= htmlspecialchars($status) ?>"
+                            data-category="<?= htmlspecialchars($row['category'] ?? '') ?>"
+                            data-department="<?= htmlspecialchars($row['department'] ?? '') ?>"
+                            data-concern="<?= htmlspecialchars($row['concern_details'] ?? '') ?>"
+                            data-filed="<?= !empty($row['date_filed']) ? date('M d, Y', strtotime((string) $row['date_filed'])) : '' ?>"
+                            data-assigned="<?= $row['assigned_to'] ?>">
+                            <i class="fas fa-clock fa-sm fa-fw mr-2 text-warning"></i> Pending
+                        </a>
+                        <?php endif; ?>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="dropdown-item cancelTicketBtn"
                             data-ticket-id="<?= $ticketId ?>"

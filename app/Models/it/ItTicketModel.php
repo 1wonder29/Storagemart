@@ -50,6 +50,76 @@ class ItTicketModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function getOpenTickets(int $assignedToEmployeeId = 0): array
+    {
+        $this->autoCloseResolvedTickets();
+
+        $sql = "
+            SELECT t.*,
+                   CONCAT(e.firstname,' ',e.lastname) AS employee_name,
+                   b.branchName,
+                   CONCAT(IFNULL(i.assetNumber, 'N/A'),' - ', IFNULL(g.groupName, 'General')) AS asset_info,
+                   CONCAT(a2.firstname,' ',a2.lastname) AS assigned_to_name
+            FROM tbltickets t
+            JOIN tblemployee e ON t.employee_id = e.employee_id
+            JOIN tblbranch b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+            LEFT JOIN tblassets_inventory i ON t.inventory_id = i.inventory_id
+            LEFT JOIN tblassets_group g ON i.group_id = g.group_id
+            LEFT JOIN tblemployee a2 ON t.assigned_to = a2.employee_id
+            WHERE t.status = :status
+        ";
+
+        if ($assignedToEmployeeId > 0) {
+            $sql .= " AND t.assigned_to = :assigned_to";
+        }
+
+        $sql .= " ORDER BY t.date_filed ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = [':status' => TicketStatus::OPEN];
+        if ($assignedToEmployeeId > 0) {
+            $params[':assigned_to'] = $assignedToEmployeeId;
+        }
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function getClosedTickets(int $assignedToEmployeeId = 0): array
+    {
+        $this->autoCloseResolvedTickets();
+
+        $sql = "
+            SELECT t.*,
+                   CONCAT(e.firstname,' ',e.lastname) AS employee_name,
+                   b.branchName,
+                   CONCAT(IFNULL(i.assetNumber, 'N/A'),' - ', IFNULL(g.groupName, 'General')) AS asset_info,
+                   CONCAT(a2.firstname,' ',a2.lastname) AS assigned_to_name
+            FROM tbltickets t
+            JOIN tblemployee e ON t.employee_id = e.employee_id
+            JOIN tblbranch b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+            LEFT JOIN tblassets_inventory i ON t.inventory_id = i.inventory_id
+            LEFT JOIN tblassets_group g ON i.group_id = g.group_id
+            LEFT JOIN tblemployee a2 ON t.assigned_to = a2.employee_id
+            WHERE t.status = :status
+        ";
+
+        if ($assignedToEmployeeId > 0) {
+            $sql .= " AND t.assigned_to = :assigned_to";
+        }
+
+        $sql .= " ORDER BY t.last_updated DESC, t.date_filed DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = [':status' => TicketStatus::CLOSED];
+        if ($assignedToEmployeeId > 0) {
+            $params[':assigned_to'] = $assignedToEmployeeId;
+        }
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function getPendingTickets(int $assignedToEmployeeId = 0): array
     {
         $this->autoCloseResolvedTickets();
@@ -76,7 +146,7 @@ class ItTicketModel extends BaseModel
         $sql .= " ORDER BY t.date_filed ASC";
 
         $stmt = $this->pdo->prepare($sql);
-        $params = [':open_status' => TicketStatus::OPEN];
+        $params = [':open_status' => TicketStatus::PENDING];
         if ($assignedToEmployeeId > 0) {
             $params[':assigned_to'] = $assignedToEmployeeId;
         }
@@ -94,6 +164,39 @@ class ItTicketModel extends BaseModel
         $val = $stmt->fetchColumn();
 
         return $val !== null ? (int)$val : null;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function getTicketStatusCounts(): array
+    {
+        $this->autoCloseResolvedTickets();
+
+        $counts = [];
+        foreach (TicketStatus::all() as $status) {
+            $counts[$status] = 0;
+        }
+
+        $stmt = $this->pdo->query("
+            SELECT status, COUNT(*) AS total
+            FROM {$this->tbltickets}
+            GROUP BY status
+        ");
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $status = (string) ($row['status'] ?? '');
+            if ($status !== '') {
+                $counts[$status] = (int) ($row['total'] ?? 0);
+            }
+        }
+
+        $summary = [];
+        foreach (TicketStatus::all() as $status) {
+            $summary[$status] = (int) ($counts[$status] ?? 0);
+        }
+
+        return $summary;
     }
 
     public function updateTicket(int $ticketId, string $status, string $remarks): void
@@ -258,6 +361,36 @@ class ItTicketModel extends BaseModel
     private function generateTicketNumber(int $id): string
     {
         return 'STM-' . date('Ymd') . '-' . str_pad($id, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * All tickets filed in the system (IT oversight view).
+     */
+    public function fetchAllFiledTickets(): array
+    {
+        $this->autoCloseResolvedTickets();
+
+        $sql = "
+            SELECT
+                t.ticket_id,
+                t.ticket_number,
+                CONCAT(e.lastname, ', ', e.firstname) AS employee_name,
+                t.category,
+                t.priority,
+                t.status,
+                t.date_filed,
+                t.concern_details,
+                b.branchName,
+                t.assigned_to AS assigned_to_id,
+                CONCAT(a2.firstname, ' ', a2.lastname) AS assigned_to_name
+            FROM {$this->tbltickets} t
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+            LEFT JOIN {$this->tblemployee} a2 ON t.assigned_to = a2.employee_id
+            ORDER BY t.date_filed DESC
+        ";
+
+        return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
     public function fetchAllTicketsByEmployee(int $employeeId): array

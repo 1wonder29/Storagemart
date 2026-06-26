@@ -2,27 +2,62 @@
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
 $ticketMode = $ticketMode ?? 'in_progress';
+$isOpenMode = ($ticketMode === 'open');
 $isPendingMode = ($ticketMode === 'pending');
-$pageTitle = $isPendingMode ? 'Pending Tickets' : 'In Progress Tickets';
-$heroIcon = $isPendingMode ? 'fa-clock' : 'fa-spinner';
-$heroDescription = $isPendingMode
-    ? 'Tickets waiting in pending status. Move them back to progress or resolve when ready.'
-    : 'Active assignments — update status, add notes, or resolve when work is complete.';
-$queueTitle = $isPendingMode ? 'Pending Queue' : 'Active Queue';
-$emptyState = $isPendingMode
-    ? "No pending tickets right now. You're all caught up!"
-    : "No tickets in progress. You're all caught up!";
-$realtimeRefreshUrl = $isPendingMode
-    ? '/it/tickets/pending?realtime_rows=1'
-    : '/it/tickets/in_progress?realtime_rows=1';
-$realtimeKeepStatus = $isPendingMode ? 'pending' : 'in progress';
+$isClosedMode = ($ticketMode === 'closed');
+$pageTitle = match ($ticketMode) {
+    'open' => 'Open Tickets',
+    'pending' => 'Pending Tickets',
+    'closed' => 'Closed Tickets',
+    default => 'In Progress Tickets',
+};
+$heroIcon = match ($ticketMode) {
+    'open' => 'fa-folder-open',
+    'pending' => 'fa-clock',
+    'closed' => 'fa-archive',
+    default => 'fa-spinner',
+};
+$heroDescription = match ($ticketMode) {
+    'open' => 'Newly filed tickets waiting for assignment or pickup.',
+    'pending' => 'Tickets waiting in pending status. Move them back to progress or resolve when ready.',
+    'closed' => 'Completed tickets that have been closed — review history and details.',
+    default => 'Active assignments — update status, add notes, or resolve when work is complete.',
+};
+$queueTitle = match ($ticketMode) {
+    'open' => 'Open Queue',
+    'pending' => 'Pending Queue',
+    'closed' => 'Closed Queue',
+    default => 'Active Queue',
+};
+$emptyState = match ($ticketMode) {
+    'open' => 'No open tickets right now. All caught up!',
+    'pending' => "No pending tickets right now. You're all caught up!",
+    'closed' => 'No closed tickets yet.',
+    default => "No tickets in progress. You're all caught up!",
+};
+$realtimeRefreshUrl = match ($ticketMode) {
+    'open' => '/it/tickets/open?realtime_rows=1',
+    'pending' => '/it/tickets/pending?realtime_rows=1',
+    'closed' => '/it/tickets/closed?realtime_rows=1',
+    default => '/it/tickets/in_progress?realtime_rows=1',
+};
+$realtimeKeepStatus = match ($ticketMode) {
+    'open' => 'open',
+    'pending' => 'pending',
+    'closed' => 'closed',
+    default => 'in progress',
+};
+$summaryActiveStatus = match ($ticketMode) {
+    'open' => 'Open',
+    'pending' => 'Pending',
+    'closed' => 'Closed',
+    default => 'In Progress',
+};
 
 $totalTickets = count($tickets);
 $branches = [];
 $priorities = [];
 $statuses = [];
-$highPriority = 0;
-$now = time();
 
 foreach ($tickets as $t) {
     $bn = trim((string) ($t['branchName'] ?? ''));
@@ -32,9 +67,6 @@ foreach ($tickets as $t) {
     $pr = trim((string) ($t['priority'] ?? ''));
     if ($pr !== '') {
         $priorities[$pr] = true;
-        if (strtolower($pr) === 'high') {
-            $highPriority++;
-        }
     }
     $st = trim((string) ($t['status'] ?? ''));
     if ($st !== '') {
@@ -75,51 +107,14 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
 
             <div class="page-hero hero-in-progress">
                 <div class="row align-items-center">
-                    <div class="col-lg-7">
+                    <div class="col-lg-12">
                         <h1><i class="fas <?= htmlspecialchars($heroIcon) ?> mr-2"></i><?= htmlspecialchars($pageTitle) ?></h1>
                         <p><?= htmlspecialchars($heroDescription) ?></p>
-                        <div class="quick-nav mt-3">
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" class="btn btn-sm btn-outline-light mr-1">
-                                <i class="fas fa-spinner mr-1"></i> In Progress
-                            </a>
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/pending" class="btn btn-sm btn-outline-light mr-1">
-                                <i class="fas fa-clock mr-1"></i> Pending
-                            </a>
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" class="btn btn-sm btn-outline-light mr-1">
-                                <i class="fas fa-check-circle mr-1"></i> Resolved
-                            </a>
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/cancelled" class="btn btn-sm btn-outline-light mr-1">
-                                <i class="fas fa-ban mr-1"></i> Cancel History
-                            </a>
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets" class="btn btn-sm btn-outline-light">
-                                <i class="fas fa-ticket-alt mr-1"></i> My Tickets
-                            </a>
-                        </div>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="row mt-3 mt-lg-0">
-                            <div class="col-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $totalTickets ?></div>
-                                    <div class="stat-label">Active</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $highPriority ?></div>
-                                    <div class="stat-label">High Priority</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= count($branches) ?></div>
-                                    <div class="stat-label">Branches</div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
+
+            <?php require __DIR__ . '/../../partials/it/ticket_summary_stats.php'; ?>
 
             <div class="filter-toolbar">
                 <div class="row align-items-end">
@@ -378,11 +373,17 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                 submitClass: 'btn-success',
                 submitLabel: 'Mark Resolved'
             },
-            'Open': {
-                title: 'Mark Ticket Open',
-                statusLabel: 'Open',
+            'Pending': {
+                title: 'Mark Ticket Pending',
+                statusLabel: 'Pending',
                 submitClass: 'btn-warning',
-                submitLabel: 'Mark Open'
+                submitLabel: 'Mark Pending'
+            },
+            'In Progress': {
+                title: 'Resume Ticket',
+                statusLabel: 'In Progress',
+                submitClass: 'btn-info',
+                submitLabel: 'Resume Work'
             }
         };
 

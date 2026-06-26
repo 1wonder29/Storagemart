@@ -25,19 +25,20 @@ $base = rtrim(BASE_URL, '/');
             <div class="sidebar-heading">Interface</div>
 
             <li class="nav-item <?= ($activePage === 'tickets') ? 'active' : '' ?>">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                    aria-expanded="true" aria-controls="collapseTwo">
+                <a class="nav-link <?= ($activePage === 'tickets') ? '' : 'collapsed' ?>" href="<?= htmlspecialchars($base)?>/it/tickets"
+                    aria-expanded="<?= ($activePage === 'tickets') ? 'true' : 'false' ?>" aria-controls="collapseTwo">
                     <i class="fas fa-ticket-alt"></i>
                     <span>Ticket</span>	
                 </a>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                <div id="collapseTwo" class="collapse <?= ($activePage === 'tickets') ? 'show' : '' ?>" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Ticket:</h6>
+                        <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/open">Open</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/in_progress">In Progress</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/pending">Pending</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/resolve">Resolve</a>
+                        <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/closed">Closed</a>
                         <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets/cancelled">Cancel History</a>
-                        <a class="collapse-item" href="<?= htmlspecialchars($base)?>/it/tickets">My Ticket</a>
                     </div>
                 </div>
             </li>

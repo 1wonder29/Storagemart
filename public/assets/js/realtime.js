@@ -338,9 +338,10 @@
 
   function statusClass(status) {
     var s = String(status || '').toLowerCase();
+    if (s === 'open') return 'status-open';
     if (s === 'pending') return 'status-pending';
     if (s === 'in progress') return 'status-in-progress';
-    if (s === 'on hold') return 'status-on-hold';
+    if (s === 'on hold') return 'status-pending';
     if (s === 'resolved') return 'status-resolved';
     if (s === 'closed') return 'status-closed';
     if (s === 'reopened') return 'status-reopened';

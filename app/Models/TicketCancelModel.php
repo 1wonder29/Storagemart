@@ -13,7 +13,7 @@ class TicketCancelModel extends BaseModel
     private const CANCELLABLE_STATUSES = [
         'Open',
         'In Progress',
-        'On Hold',
+        'Pending',
     ];
 
     public function isCancellableStatus(string $status): bool

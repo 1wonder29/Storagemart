@@ -6,7 +6,7 @@ $loggedFirstname = $ctx['loggedFirstname'] ?? $roleLabel;
 $loggedLastname = $ctx['loggedLastname'] ?? '';
 
 $rawTicketStats = $ticketStats ?? [];
-$statusOrder = ['Open', 'In Progress', 'Cancelled', 'Resolved', 'Closed'];
+$statusOrder = ['Open', 'In Progress', 'Pending', 'Cancelled', 'Resolved', 'Closed'];
 $summaryTicketStats = [];
 foreach ($statusOrder as $status) {
     $summaryTicketStats[$status] = (int) ($rawTicketStats[$status] ?? 0);
@@ -23,6 +23,9 @@ $omTicketStatTone = static function (string $status): string {
     }
     if ($status === 'In Progress') {
         return 'info';
+    }
+    if ($status === 'Pending') {
+        return 'secondary';
     }
     if ($status === 'Resolved') {
         return 'success';
@@ -111,6 +114,7 @@ $totalTickets = count($tickets ?? []);
                         <option value="">All Status</option>
                         <option value="Open">Open</option>
                         <option value="In Progress">In Progress</option>
+                        <option value="Pending">Pending</option>
                         <option value="Cancelled">Cancelled</option>
                         <option value="Resolved">Resolved</option>
                         <option value="Closed">Closed</option>

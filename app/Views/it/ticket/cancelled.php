@@ -2,11 +2,8 @@
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
 
-$totalCancelled = count($tickets);
 $branches = [];
 $priorities = [];
-$thisMonth = 0;
-$now = time();
 
 foreach ($tickets as $t) {
     $bn = trim((string) ($t['branchName'] ?? ''));
@@ -16,10 +13,6 @@ foreach ($tickets as $t) {
     $pr = trim((string) ($t['priority'] ?? ''));
     if ($pr !== '') {
         $priorities[$pr] = true;
-    }
-    $dc = strtotime((string) ($t['date_cancelled'] ?? ''));
-    if ($dc && (int) date('Y', $dc) === (int) date('Y', $now) && (int) date('n', $dc) === (int) date('n', $now)) {
-        $thisMonth++;
     }
 }
 
@@ -55,45 +48,17 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
 
             <div class="page-hero hero-cancelled">
                 <div class="row align-items-center">
-                    <div class="col-lg-7">
+                    <div class="col-lg-12">
                         <h1><i class="fas fa-ban mr-2"></i>Cancel History</h1>
                         <p>Cancelled tickets linked to you — filed by you, assigned to you, or cancelled by you.</p>
-                        <div class="quick-nav mt-3">
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" class="btn btn-sm btn-outline-light mr-1">
-                                <i class="fas fa-spinner mr-1"></i> In Progress
-                            </a>
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" class="btn btn-sm btn-outline-light mr-1">
-                                <i class="fas fa-check-circle mr-1"></i> Resolved
-                            </a>
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets" class="btn btn-sm btn-outline-light">
-                                <i class="fas fa-ticket-alt mr-1"></i> My Tickets
-                            </a>
-                        </div>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="row mt-3 mt-lg-0">
-                            <div class="col-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $totalCancelled ?></div>
-                                    <div class="stat-label">Cancelled</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $thisMonth ?></div>
-                                    <div class="stat-label">This Month</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= count($branches) ?></div>
-                                    <div class="stat-label">Branches</div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
+
+            <?php
+            $summaryActiveStatus = 'Cancelled';
+            require __DIR__ . '/../../partials/it/ticket_summary_stats.php';
+            ?>
 
             <div class="filter-toolbar">
                 <div class="row align-items-end">
@@ -128,7 +93,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                     <h6 class="m-0 font-weight-bold text-primary">
                         <i class="fas fa-history mr-1"></i> Cancelled Tickets
                     </h6>
-                    <span class="badge badge-danger"><?= (int) $totalCancelled ?> ticket<?= $totalCancelled === 1 ? '' : 's' ?></span>
+                    <span class="badge badge-danger"><?= count($tickets) ?> ticket<?= count($tickets) === 1 ? '' : 's' ?></span>
                 </div>
                 <div class="card-body p-0">
                     <?php if (empty($tickets)): ?>

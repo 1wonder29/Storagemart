@@ -1,19 +1,17 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
+require_once __DIR__ . '/../../../Helpers/TicketStatus.php';
 
 $loggedFirstname = $loggedFirstname ?? 'Employee';
 $hasAssets = (int) ($assetsCount ?? 0) > 0;
 $noAssetsTitle = 'You need at least one assigned asset to create a ticket.';
 
 $rawTicketStats = $ticketStats ?? [];
-$statusOrder = ['Pending', 'In Progress', 'Cancelled', 'Resolved', 'Closed'];
+$statusOrder = TicketStatus::all();
 $summaryTicketStats = [];
 foreach ($statusOrder as $status) {
-    $count = (int) ($rawTicketStats[$status] ?? 0);
-    if ($count > 0 || in_array($status, ['Pending', 'Cancelled', 'Resolved', 'Closed'], true)) {
-        $summaryTicketStats[$status] = $count;
-    }
+    $summaryTicketStats[$status] = (int) ($rawTicketStats[$status] ?? 0);
 }
 foreach ($rawTicketStats as $status => $count) {
     if (!isset($summaryTicketStats[$status])) {
@@ -22,7 +20,7 @@ foreach ($rawTicketStats as $status => $count) {
 }
 
 $employeeTicketStatTone = static function (string $status): string {
-    if ($status === 'Pending') {
+    if ($status === 'Open' || $status === 'Pending') {
         return 'warning';
     }
     if ($status === 'In Progress') {
@@ -41,7 +39,7 @@ $employeeTicketStatTone = static function (string $status): string {
 };
 
 $totalTickets = count($tickets ?? []);
-$openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicketStats['In Progress'] ?? 0);
+$openCount = (int) ($summaryTicketStats['Open'] ?? 0) + (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicketStats['In Progress'] ?? 0);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -152,11 +150,9 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
                     <label for="statusFilter">Status</label>
                     <select id="statusFilter" class="form-control form-control-sm">
                         <option value="">All Status</option>
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Resolved">Resolved</option>
-                        <option value="Closed">Closed</option>
-                        <option value="Cancelled">Cancelled</option>
+                        <?php foreach (it_ticket_status_filter_options(array_keys($rawTicketStats)) as $status): ?>
+                            <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-3 col-sm-6 mb-2 mb-md-0">

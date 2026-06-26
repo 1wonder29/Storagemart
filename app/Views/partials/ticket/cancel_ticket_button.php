@@ -24,7 +24,7 @@ $buttonClasses = trim(
     . ' cancelTicketBtn'
 );
 
-$cancellableStatuses = ['Open', 'In Progress', 'On Hold'];
+$cancellableStatuses = ['Open', 'In Progress', 'Pending'];
 $showCancel = $ticketId > 0 && in_array($ticketStatus, $cancellableStatuses, true);
 
 if (!$showCancel) {

@@ -5,7 +5,7 @@ $dashboardTitle = ($user_role ?? '') === 'HOM' ? 'Dashboard' : 'OM Dashboard';
 $roleLabel = ($user_role ?? '') === 'HOM' ? 'Head of Operations' : 'Operations Manager';
 $displayName = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? '')) ?: 'User';
 
-$statusOrder = ['Open', 'In Progress', 'Cancelled', 'Resolved', 'Closed'];
+$statusOrder = ['Open', 'In Progress', 'Pending', 'Cancelled', 'Resolved', 'Closed'];
 $chartTicketStats = [];
 foreach ($statusOrder as $status) {
     $chartTicketStats[$status] = (int) ($ticketStats[$status] ?? 0);
@@ -325,6 +325,7 @@ $chartColors = ['#f59e0b', '#0891b2', '#dc2626', '#16a34a', '#64748b', '#7c3aed'
     function statusBadgeClass(status) {
         if (status === 'Open') return 'badge-warning';
         if (status === 'In Progress') return 'badge-info';
+        if (status === 'Pending') return 'badge-secondary';
         if (status === 'Resolved' || status === 'Completed') return 'badge-success';
         if (status === 'Closed') return 'badge-secondary';
         return 'badge-primary';

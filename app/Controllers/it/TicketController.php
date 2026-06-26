@@ -186,9 +186,11 @@ class TicketController extends AuthController
         if (!$employeeId) {
             $_SESSION['flash_error'] = 'No employee record linked to your account.';
             $tickets = [];
+            $summaryTicketStats = (new ItTicketModel())->getTicketStatusCounts();
         } else {
             $ticketModel = new ItTicketModel();
-            $tickets = $ticketModel->fetchAllTicketsByEmployee((int)$employeeId);
+            $tickets = $ticketModel->fetchAllFiledTickets();
+            $summaryTicketStats = $ticketModel->getTicketStatusCounts();
         }
 
         // supply variables to view
@@ -231,18 +233,7 @@ class TicketController extends AuthController
         $ticketModel = new EmployeeTicket();
         $ticket = $ticketModel->fetchTicketById($ticketId);
 
-        $itTicketModel = new ItTicketModel();
-        $assignedTo = $itTicketModel->getAssignedTo($ticketId);
-        $isOwner = $ticket && (int) ($ticket['employee_id'] ?? 0) === (int) $employeeId;
-        $isAssigned = $assignedTo !== null && (int) $assignedTo === (int) $employeeId;
-        $cancelModel = new TicketCancelModel();
-        $canViewCancelled = $cancelModel->canItViewCancelledTicket(
-            $ticketId,
-            (int) $employeeId,
-            (int) $_SESSION['account_id']
-        );
-
-        if (!$ticket || (!$isOwner && !$isAssigned && !$canViewCancelled)) {
+        if (!$ticket) {
             $_SESSION['flash_error'] = 'Ticket not found.';
             $redirectTo = ($_GET['from'] ?? '') === 'in_progress' ? '/it/tickets/in_progress' : '/it/tickets';
             $this->redirect($redirectTo);
@@ -260,8 +251,11 @@ class TicketController extends AuthController
         $activePage = 'tickets';
         $from = $_GET['from'] ?? '';
         $backUrl = match ($from) {
+            'open'        => '/it/tickets/open',
             'in_progress' => '/it/tickets/in_progress',
+            'pending'     => '/it/tickets/pending',
             'resolve'     => '/it/tickets/resolve',
+            'closed'      => '/it/tickets/closed',
             'cancelled'   => '/it/tickets/cancelled',
             default       => '/it/tickets',
         };
@@ -317,8 +311,9 @@ class TicketController extends AuthController
 
         $ticketModel = new ItTicketModel();
 
-        // Get tickets assigned to this IT staff member
-        $tickets = $ticketModel->getInProgressTickets($employeeId);
+        // All in-progress tickets (IT may act only on tickets assigned to them).
+        $tickets = $ticketModel->getInProgressTickets();
+        $summaryTicketStats = $ticketModel->getTicketStatusCounts();
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
         $loggedFirstname = $ctx['loggedFirstname'];
@@ -328,6 +323,86 @@ class TicketController extends AuthController
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
         $ticketMode = 'in_progress';
+
+        if (!empty($_GET['realtime_rows'])) {
+            header('Content-Type: text/html; charset=utf-8');
+            require __DIR__ . '/../../Views/partials/it/in_progress_ticket_rows.php';
+            exit;
+        }
+
+        require __DIR__ . '/../../Views/it/ticket/in_progress.php';
+    }
+
+    public function open()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $accountId = (int) $_SESSION['account_id'];
+        $itModel = new IT();
+
+        $employeeId = $itModel->getEmployeeIdByAccountId($accountId);
+        if (!$employeeId) {
+            die('Employee not found');
+        }
+
+        $ticketModel = new ItTicketModel();
+        $tickets = $ticketModel->getOpenTickets();
+        $summaryTicketStats = $ticketModel->getTicketStatusCounts();
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        $ticketMode = 'open';
+
+        if (!empty($_GET['realtime_rows'])) {
+            header('Content-Type: text/html; charset=utf-8');
+            require __DIR__ . '/../../Views/partials/it/in_progress_ticket_rows.php';
+            exit;
+        }
+
+        require __DIR__ . '/../../Views/it/ticket/in_progress.php';
+    }
+
+    public function closed()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['account_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $accountId = (int) $_SESSION['account_id'];
+        $itModel = new IT();
+
+        $employeeId = $itModel->getEmployeeIdByAccountId($accountId);
+        if (!$employeeId) {
+            die('Employee not found');
+        }
+
+        $ticketModel = new ItTicketModel();
+        $tickets = $ticketModel->getClosedTickets();
+        $summaryTicketStats = $ticketModel->getTicketStatusCounts();
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        $ticketMode = 'closed';
 
         if (!empty($_GET['realtime_rows'])) {
             header('Content-Type: text/html; charset=utf-8');
@@ -356,7 +431,8 @@ class TicketController extends AuthController
         }
 
         $ticketModel = new ItTicketModel();
-        $tickets = $ticketModel->getPendingTickets($employeeId);
+        $tickets = $ticketModel->getPendingTickets();
+        $summaryTicketStats = $ticketModel->getTicketStatusCounts();
 
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
@@ -424,9 +500,9 @@ class TicketController extends AuthController
         switch ($action) {
             case 'Resolve': $status = 'Resolved'; break;
             case 'In Progress': $status = 'In Progress'; break;
-            case 'On Hold':
-            case 'Open':
-            case 'Pending': $status = TicketStatus::OPEN; break;
+            case 'Pending':
+            case 'On Hold': $status = TicketStatus::PENDING; break;
+            case 'Open': $status = TicketStatus::OPEN; break;
             default:        $status = 'In Progress';
         }
         // 🔔 Notify ticket owner (employee) when resolved
@@ -574,6 +650,7 @@ class TicketController extends AuthController
 
         $cancelModel = new TicketCancelModel();
         $tickets = $cancelModel->getCancelledTicketsForIt($employeeId, $accountId);
+        $summaryTicketStats = (new ItTicketModel())->getTicketStatusCounts();
 
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
@@ -597,6 +674,7 @@ class TicketController extends AuthController
 
         $technicalModel = new ItTicketModel();
         $tickets = $technicalModel->getResolvedTechnicalTickets();
+        $summaryTicketStats = $technicalModel->getTicketStatusCounts();
 
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];

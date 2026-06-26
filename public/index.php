@@ -357,8 +357,12 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
         $ticket->fetchHistory();
     } elseif ($sub === 'tickets/in_progress') {
         $ticket->in_progress();
+    } elseif ($sub === 'tickets/open') {
+        $ticket->open();
     } elseif ($sub === 'tickets/pending') {
         $ticket->pending();
+    } elseif ($sub === 'tickets/closed') {
+        $ticket->closed();
     } elseif ($sub === 'tickets/update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $ticket->update();
     } elseif ($sub === 'tickets/resolve') {

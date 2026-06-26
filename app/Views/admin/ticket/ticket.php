@@ -2,13 +2,10 @@
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
 
-$totalTickets = count($tickets);
 $branches = [];
 $priorities = [];
 $statuses = [];
 $statusCounts = [];
-$thisMonth = 0;
-$now = time();
 
 foreach ($tickets as $t) {
     $bn = trim((string) ($t['branchName'] ?? ''));
@@ -23,10 +20,6 @@ foreach ($tickets as $t) {
     if ($st !== '') {
         $statuses[$st] = true;
         $statusCounts[$st] = ($statusCounts[$st] ?? 0) + 1;
-    }
-    $df = strtotime((string) ($t['date_filed'] ?? ''));
-    if ($df && (int) date('Y', $df) === (int) date('Y', $now) && (int) date('n', $df) === (int) date('n', $now)) {
-        $thisMonth++;
     }
 }
 
@@ -46,7 +39,7 @@ $adminTicketStatTone = static function (string $status): string {
     if ($status === 'In Progress') {
         return 'info';
     }
-    if ($status === 'On Hold') {
+    if ($status === 'Pending') {
         return 'secondary';
     }
     if ($status === 'Resolved') {
@@ -87,29 +80,13 @@ $adminTicketStatTone = static function (string $status): string {
 
             <div class="page-hero hero-all-tickets">
                 <div class="row align-items-center">
-                    <div class="col-lg-7">
+                    <div class="col-lg-12">
                         <h1><i class="fas fa-ticket-alt mr-2"></i>All Tickets</h1>
                         <p>Manage every ticket across branches — assign staff, track status, and review history.</p>
                         <div class="quick-nav mt-3">
                             <a href="<?= htmlspecialchars($base) ?>/admin/tickets/cancelled" class="btn btn-sm btn-outline-light">
                                 <i class="fas fa-ban mr-1"></i> Cancel History
                             </a>
-                        </div>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="row mt-3 mt-lg-0 justify-content-lg-end">
-                            <div class="col-6 col-md-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $totalTickets ?></div>
-                                    <div class="stat-label">Total</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $thisMonth ?></div>
-                                    <div class="stat-label">This Month</div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -168,7 +145,7 @@ $adminTicketStatTone = static function (string $status): string {
                         <i class="fas fa-list-ul mr-1"></i> Ticket Directory
                     </h6>
                     <div class="card-header-actions">
-                        <span class="badge badge-primary"><?= (int) $totalTickets ?> ticket<?= $totalTickets === 1 ? '' : 's' ?></span>
+                        <span class="badge badge-primary"><?= count($tickets) ?> ticket<?= count($tickets) === 1 ? '' : 's' ?></span>
                         <a href="<?= htmlspecialchars($base) ?>/admin/tickets/add" class="btn btn-sm btn-primary">
                             <i class="fas fa-plus mr-1"></i> Add Ticket
                         </a>

@@ -7,8 +7,6 @@ $branches = [];
 $priorities = [];
 $statuses = [];
 $statusCounts = [];
-$thisMonth = 0;
-$now = time();
 
 foreach ($tickets as $t) {
     $bn = trim((string) ($t['branchName'] ?? ''));
@@ -24,10 +22,6 @@ foreach ($tickets as $t) {
         $statuses[$st] = true;
         $statusCounts[$st] = ($statusCounts[$st] ?? 0) + 1;
     }
-    $df = strtotime((string) ($t['date_filed'] ?? ''));
-    if ($df && (int) date('Y', $df) === (int) date('Y', $now) && (int) date('n', $df) === (int) date('n', $now)) {
-        $thisMonth++;
-    }
 }
 
 ksort($branches);
@@ -35,35 +29,20 @@ ksort($statuses);
 $priorityOptions = it_ticket_priority_options(array_keys($priorities));
 
 $statusOrder = it_ticket_all_statuses();
-$summaryTicketStats = [];
-foreach ($statusOrder as $status) {
-    $summaryTicketStats[$status] = (int) ($statusCounts[$status] ?? 0);
+$summaryTicketStats = $summaryTicketStats ?? [];
+if ($summaryTicketStats === []) {
+    $summaryTicketStats = [];
+    foreach ($statusOrder as $status) {
+        $summaryTicketStats[$status] = (int) ($statusCounts[$status] ?? 0);
+    }
 }
-$itTicketStatTone = static function (string $status): string {
-    if ($status === 'Open') {
-        return 'warning';
-    }
-    if ($status === 'In Progress') {
-        return 'info';
-    }
-    if ($status === 'On Hold') {
-        return 'secondary';
-    }
-    if ($status === 'Resolved') {
-        return 'success';
-    }
-    if ($status === 'Cancelled') {
-        return 'danger';
-    }
-    return 'secondary';
-};
 ?>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | IT My Tickets</title>
+    <title>Storage Mart | IT All Filed Tickets</title>
 
     <link href="<?= htmlspecialchars($base)?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
@@ -87,49 +66,17 @@ $itTicketStatTone = static function (string $status): string {
 
             <div class="page-hero hero-my-tickets">
                 <div class="row align-items-center">
-                    <div class="col-lg-7">
-                        <h1><i class="fas fa-ticket-alt mr-2"></i>My Tickets</h1>
-                        <p>Tickets you filed — track status, view history, and follow up on open requests.</p>
-                        <div class="quick-nav mt-3">
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" class="btn btn-sm btn-outline-light mr-1">
-                                <i class="fas fa-spinner mr-1"></i> In Progress
-                            </a>
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" class="btn btn-sm btn-outline-light mr-1">
-                                <i class="fas fa-check-circle mr-1"></i> Resolved
-                            </a>
-                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/cancelled" class="btn btn-sm btn-outline-light">
-                                <i class="fas fa-ban mr-1"></i> Cancel History
-                            </a>
-                        </div>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="row mt-3 mt-lg-0 justify-content-lg-end">
-                            <div class="col-6 col-md-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $totalTickets ?></div>
-                                    <div class="stat-label">Total</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-4">
-                                <div class="hero-stat">
-                                    <div class="stat-value"><?= (int) $thisMonth ?></div>
-                                    <div class="stat-label">This Month</div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="col-lg-12">
+                        <h1><i class="fas fa-ticket-alt mr-2"></i>All Filed Tickets</h1>
+                        <p>Every ticket filed across branches — view status, history, and details.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="summary-stats">
-                <?php foreach ($summaryTicketStats as $status => $count): ?>
-                    <?php $tone = $itTicketStatTone($status); ?>
-                    <div class="summary-stat-card stat-<?= htmlspecialchars($tone) ?>">
-                        <div class="stat-label"><?= htmlspecialchars((string) $status) ?></div>
-                        <div class="stat-value"><?= (int) $count ?></div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+            <?php
+            $summaryActiveStatus = '';
+            require __DIR__ . '/../../partials/it/ticket_summary_stats.php';
+            ?>
 
             <div class="filter-toolbar">
                 <div class="row align-items-end">
@@ -171,7 +118,7 @@ $itTicketStatTone = static function (string $status): string {
             <div class="card ticket-list-card shadow mb-4">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-list-ul mr-1"></i> My Ticket History
+                        <i class="fas fa-list-ul mr-1"></i> All Filed Tickets
                     </h6>
                     <span class="badge badge-primary"><?= (int) $totalTickets ?> ticket<?= $totalTickets === 1 ? '' : 's' ?></span>
                 </div>
@@ -179,7 +126,7 @@ $itTicketStatTone = static function (string $status): string {
                     <?php if (empty($tickets)): ?>
                         <div class="empty-state">
                             <i class="fas fa-inbox d-block"></i>
-                            You haven't filed any tickets yet.
+                            No tickets have been filed yet.
                         </div>
                     <?php else: ?>
                     <div class="table-responsive">

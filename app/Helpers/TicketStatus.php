@@ -4,7 +4,7 @@ class TicketStatus
 {
     public const OPEN = 'Open';
     public const IN_PROGRESS = 'In Progress';
-    public const ON_HOLD = 'On Hold';
+    public const PENDING = 'Pending';
     public const RESOLVED = 'Resolved';
     public const CLOSED = 'Closed';
     public const CANCELLED = 'Cancelled';
@@ -29,7 +29,7 @@ class TicketStatus
         return [
             self::OPEN,
             self::IN_PROGRESS,
-            self::ON_HOLD,
+            self::PENDING,
             self::RESOLVED,
             self::CLOSED,
             self::CANCELLED,

@@ -1,8 +1,10 @@
 <?php
     require_once __DIR__ . '/../AuthController.php';
     require_once __DIR__ . '/../../Models/it/IT.php';
+    require_once __DIR__ . '/../../Models/it/ItTicketModel.php';
     require_once __DIR__ . '/../../Models/it/ItAssetModel.php';
     require_once __DIR__ . '/../../Helpers/Session.php';
+    require_once __DIR__ . '/../../Helpers/TicketStatus.php';
 require_once __DIR__ . '/../../Models/DashboardModel.php';
 class itController extends AuthController{
 
@@ -24,18 +26,21 @@ class itController extends AuthController{
 
     if ($employeeId === null) {
         $assignedCount  = 0;
-        $pendingTickets = 0;
+        $inProgressTickets = 0;
         $resolveTickets = 0;
         $myAssets = 0;
         $myTickets= 0;
         $myOngoingTickets= 0;
     } else {
+        $ticketModel = new ItTicketModel();
+        $statusCounts = $ticketModel->getTicketStatusCounts();
+
         $assignedCount  = $itModel->countTicketsAssignedToMe($employeeId);
-        $pendingTickets = $itModel->countTicketsAssignedToMe($employeeId, 'In Progress');
-        $resolveTickets = $itModel->countTicketsAssignedToMe($employeeId, 'Resolved');
+        $inProgressTickets = (int) ($statusCounts[TicketStatus::IN_PROGRESS] ?? 0);
+        $resolveTickets = (int) ($statusCounts[TicketStatus::RESOLVED] ?? 0);
         $myAssets  = $itModel->countAssetbyEmployeeId($employeeId);
         $myTickets = $itModel->countTicketByEmployeeId($employeeId);
-        $myOngoingTickets = $itModel->countTicketByEmployeeId($employeeId, 'In Progress');
+        $myOngoingTickets = $itModel->countTicketsAssignedToMe($employeeId, TicketStatus::IN_PROGRESS);
     }
 
 
