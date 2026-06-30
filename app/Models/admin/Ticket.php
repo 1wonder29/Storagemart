@@ -559,13 +559,10 @@ public function searchEmployee(string $q): ?array
     }
 
     /**
-     * Fetch all tickets filed within a given calendar month.
+     * Fetch all tickets filed within a date range (start inclusive, end exclusive).
      */
-    public function fetchTicketsByMonth(int $year, int $month): array
+    public function fetchTicketsByDateRange(string $start, string $end): array
     {
-        $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
-        $end = date('Y-m-d H:i:s', strtotime($start . ' +1 month'));
-
         $sql = "SELECT
             t.ticket_id,
             t.ticket_number,
@@ -600,6 +597,30 @@ public function searchEmployee(string $q): ?array
         ]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Fetch all tickets filed within a given calendar month.
+     */
+    public function fetchTicketsByMonth(int $year, int $month): array
+    {
+        $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $end = date('Y-m-d H:i:s', strtotime($start . ' +1 month'));
+
+        return $this->fetchTicketsByDateRange($start, $end);
+    }
+
+    /**
+     * Fetch all tickets filed within a given ISO week.
+     */
+    public function fetchTicketsByWeek(int $isoYear, int $isoWeek): array
+    {
+        $startDate = new \DateTimeImmutable();
+        $startDate = $startDate->setISODate($isoYear, $isoWeek, 1);
+        $start = $startDate->format('Y-m-d 00:00:00');
+        $end = $startDate->modify('+7 days')->format('Y-m-d H:i:s');
+
+        return $this->fetchTicketsByDateRange($start, $end);
     }
 
     public function countTicketsByMonth(int $year, int $month): int

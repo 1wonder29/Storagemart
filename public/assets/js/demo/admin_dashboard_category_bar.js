@@ -1,68 +1,85 @@
-// Admin dashboard ticket category bar chart (Chart.js v3+ via CDN)
+// Admin dashboard — tickets by category (doughnut chart)
 (function () {
   const el = document.getElementById('adminTicketCategoryChart');
   if (!el || !window.Chart || !window.ticketCategoryCounts) return;
 
+  const categoryColors = {
+    Hardware: '#4e73df',
+    Network: '#1cc88a',
+    Software: '#f6c23e',
+    Other: '#36b9cc'
+  };
+  const fallbackColors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'];
+
   const counts = window.ticketCategoryCounts;
-  const labels = ['Network', 'Software', 'Hardware'];
-  const values = [
-    Number(counts.network) || 0,
-    Number(counts.software) || 0,
-    Number(counts.hardware) || 0
-  ];
-  const total = values.reduce((a, b) => a + b, 0);
+  let labels = [];
+  let values = [];
+
+  if (Array.isArray(counts)) {
+    counts.forEach(function (item) {
+      if (!item || !item.label) return;
+      labels.push(String(item.label));
+      values.push(Number(item.count) || 0);
+    });
+  } else if (counts && typeof counts === 'object') {
+    labels = Object.keys(counts).filter(function (label) {
+      return Number(counts[label]) > 0;
+    });
+    values = labels.map(function (label) {
+      return Number(counts[label]) || 0;
+    });
+  }
+
+  const total = values.reduce(function (a, b) {
+    return a + b;
+  }, 0);
+  const hasData = total > 0;
+
+  const backgroundColor = labels.map(function (label, i) {
+    return categoryColors[label] || fallbackColors[i % fallbackColors.length];
+  });
 
   new Chart(el, {
-    type: 'bar',
+    type: 'doughnut',
     data: {
-      labels,
+      labels: hasData ? labels : ['No tickets'],
       datasets: [
         {
-          label: 'Filed Tickets',
-          data: values,
-          backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
-          borderColor: ['#2e59d9', '#17a673', '#2c9faf'],
-          borderWidth: 1,
-          borderRadius: 4,
-          maxBarThickness: 72
+          data: hasData ? values : [1],
+          backgroundColor: hasData ? backgroundColor : ['#eaecf4'],
+          hoverBackgroundColor: hasData ? backgroundColor : ['#dddfeb'],
+          borderColor: '#fff',
+          borderWidth: 2
         }
       ]
     },
     options: {
       maintainAspectRatio: false,
+      cutout: '62%',
       plugins: {
-        legend: { display: false },
+        legend: {
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            padding: 16,
+            font: { family: "'Nunito', sans-serif", size: 12 }
+          }
+        },
         tooltip: {
           backgroundColor: '#fff',
-          bodyColor: '#858796',
-          borderColor: '#dddfeb',
+          titleColor: '#0f172a',
+          bodyColor: '#64748b',
+          borderColor: 'rgba(1, 43, 144, 0.1)',
           borderWidth: 1,
           padding: 12,
           callbacks: {
             label: function (ctx) {
-              const v = Number(ctx.parsed.y) || 0;
+              if (!hasData) return 'No data yet';
+              const v = Number(ctx.parsed) || 0;
               const pct = total ? Math.round((v / total) * 100) : 0;
-              return `${v} ticket${v === 1 ? '' : 's'} (${pct}%)`;
+              return ctx.label + ': ' + v + ' (' + pct + '%)';
             }
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            precision: 0,
-            stepSize: 1
-          },
-          grid: {
-            color: 'rgb(234, 236, 244)'
-          },
-          title: {
-            display: true,
-            text: 'Number of Tickets'
           }
         }
       }

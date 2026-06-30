@@ -257,10 +257,18 @@ if (strpos($uri, '/admin') === 0) {
         $admin->ratings();
     } elseif ($sub === 'ratings/data') {
         $admin->ratingsData();
+    } elseif ($sub === 'reports/tickets') {
+        $admin->ticketReport();
+    } elseif ($sub === 'reports/tickets/export') {
+        $admin->ticketReportExport();
     } elseif ($sub === 'reports/monthly-tickets') {
         $admin->monthlyReport();
     } elseif ($sub === 'reports/monthly-tickets/export') {
         $admin->monthlyReportExport();
+    } elseif ($sub === 'reports/weekly-tickets') {
+        $admin->weeklyReport();
+    } elseif ($sub === 'reports/weekly-tickets/export') {
+        $admin->weeklyReportExport();
     } else {
         http_response_code(404);
         echo "Admin page not found.";

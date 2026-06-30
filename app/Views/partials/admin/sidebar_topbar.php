@@ -54,25 +54,10 @@ $assetSubPage = $assetSubPage ?? '';
             </li>
 			
             <li class="nav-item <?= ($activePage === 'tickets') ? 'active' : '' ?>">
-                <a class="nav-link <?= ($activePage === 'tickets') ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapseTickets"
-                    aria-expanded="<?= ($activePage === 'tickets') ? 'true' : 'false' ?>" aria-controls="collapseTickets">
-                    <i class="fas fa-ticket-alt"></i>
+                <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/tickets">
+                    <i class="fas fa-fw fa-ticket-alt"></i>
                     <span>Ticket</span>
                 </a>
-                <div id="collapseTickets" class="collapse <?= ($activePage === 'tickets') ? 'show' : '' ?>" aria-labelledby="headingTickets" data-parent="#accordionSidebar">
-                    <div class="sidebar-submenu">
-                        <a class="sidebar-submenu-item <?= ($ticketSubPage === 'all') ? 'active' : '' ?>"
-                           href="<?= htmlspecialchars($base) ?>/admin/tickets">
-                            <i class="fas fa-list-ul"></i>
-                            <span>All Tickets</span>
-                        </a>
-                        <a class="sidebar-submenu-item <?= ($ticketSubPage === 'cancelled') ? 'active' : '' ?>"
-                           href="<?= htmlspecialchars($base) ?>/admin/tickets/cancelled">
-                            <i class="fas fa-ban"></i>
-                            <span>Cancel History</span>
-                        </a>
-                    </div>
-                </div>
             </li>
             <li class="nav-item <?= in_array($activePage ?? '', ['assets', 'asset', 'branch', 'category']) ? 'active' : '' ?>">
                 <a class="nav-link <?= in_array($activePage ?? '', ['assets', 'asset', 'branch', 'category']) ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapseAssets"
@@ -118,18 +103,6 @@ $assetSubPage = $assetSubPage ?? '';
             <!-- Divider -->
             <hr class="sidebar-divider">
 
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Addons
-            </div>
-			
-            <!-- Nav Item - Tables -->
-            <li class="nav-item <?= ($activePage === 'pendings') ? 'active' : '' ?>">
-                <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/pendings">
-                    <i class="fas fa-fw fa-table"></i>
-                    <span>Pendings</span></a>
-            </li>
-
             <!-- Nav Item - Audit Trail -->
             <li class="nav-item <?= ($activePage === 'audit_trail') ? 'active' : '' ?>">
                 <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/audit-trail">
@@ -152,11 +125,11 @@ $assetSubPage = $assetSubPage ?? '';
                     <span>Ratings Report</span></a>
             </li>
 
-            <!-- Nav Item - Monthly Ticket Report -->
-            <li class="nav-item <?= ($activePage === 'monthly_report') ? 'active' : '' ?>">
-                <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/reports/monthly-tickets">
-                    <i class="fas fa-fw fa-file-excel"></i>
-                    <span>Monthly Ticket Report</span></a>
+            <!-- Nav Item - Ticket Report -->
+            <li class="nav-item <?= ($activePage === 'ticket_report') ? 'active' : '' ?>">
+                <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/reports/tickets">
+                    <i class="fas fa-fw fa-clipboard-list"></i>
+                    <span>Ticket Report</span></a>
             </li>
 
             <!-- Divider -->

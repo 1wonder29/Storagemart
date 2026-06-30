@@ -29,18 +29,19 @@ class itController extends AuthController{
         $inProgressTickets = 0;
         $resolveTickets = 0;
         $myAssets = 0;
-        $myTickets= 0;
+        $myOpenTickets = 0;
         $myOngoingTickets= 0;
+        $myResolvedTickets = 0;
     } else {
         $ticketModel = new ItTicketModel();
-        $statusCounts = $ticketModel->getTicketStatusCounts();
 
         $assignedCount  = $itModel->countTicketsAssignedToMe($employeeId);
-        $inProgressTickets = (int) ($statusCounts[TicketStatus::IN_PROGRESS] ?? 0);
-        $resolveTickets = (int) ($statusCounts[TicketStatus::RESOLVED] ?? 0);
+        $inProgressTickets = count($ticketModel->getInProgressTickets());
+        $resolveTickets = count($ticketModel->getResolvedTickets());
         $myAssets  = $itModel->countAssetbyEmployeeId($employeeId);
-        $myTickets = $itModel->countTicketByEmployeeId($employeeId);
-        $myOngoingTickets = $itModel->countTicketsAssignedToMe($employeeId, TicketStatus::IN_PROGRESS);
+        $myOpenTickets = count($ticketModel->getOpenTickets());
+        $myOngoingTickets = $inProgressTickets;
+        $myResolvedTickets = $resolveTickets;
     }
 
 

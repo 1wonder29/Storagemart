@@ -94,10 +94,25 @@ class Account extends BaseModel {
     }
 
     public function countOngoingTickets(){
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) as countOngoingTickets FROM {$this->tbltickets} WHERE status = 'Ongoing'");
-        $stmt->execute();
+        require_once __DIR__ . '/../../Helpers/TicketStatus.php';
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) as countOngoingTickets FROM {$this->tbltickets} WHERE status = :status");
+        $stmt->execute([':status' => TicketStatus::IN_PROGRESS]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ? (int)$result['countOngoingTickets'] : 0;
+    }
+
+    public function countInProgressTickets(): int
+    {
+        return $this->countOngoingTickets();
+    }
+
+    public function countOpenTickets(): int
+    {
+        require_once __DIR__ . '/../../Helpers/TicketStatus.php';
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) as countOpenTickets FROM {$this->tbltickets} WHERE status = :status");
+        $stmt->execute([':status' => TicketStatus::OPEN]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? (int) $result['countOpenTickets'] : 0;
     }
 
     public function fetchAll(): array {

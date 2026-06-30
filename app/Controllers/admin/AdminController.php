@@ -48,12 +48,19 @@ class AdminController extends AuthController
         $ticketCount = method_exists($accountModel, 'countTicket') ? $accountModel->countTicket() : 0;
         $userCount = method_exists($accountModel, 'countUser') ? $accountModel->countUser() : count($users);
         $assetCount = method_exists($accountModel, 'countAssets') ? $accountModel->countAssets() : 0;
-        $ticketOngoing = method_exists($accountModel, 'countOngoingTickets') ? $accountModel->countOngoingTickets() : 0;
+        $ticketInProgress = method_exists($accountModel, 'countInProgressTickets')
+            ? $accountModel->countInProgressTickets()
+            : (method_exists($accountModel, 'countOngoingTickets') ? $accountModel->countOngoingTickets() : 0);
+        $ticketOpen = method_exists($accountModel, 'countOpenTickets') ? $accountModel->countOpenTickets() : 0;
         
         // Get ticket resolution times for SLA chart
         $dashboardModel = new DashboardModel();
         $ticketCategoryCounts = $dashboardModel->getTicketCountsByCategory();
         $ticketStatusCounts = $dashboardModel->getTicketCountsByStatus();
+        $ticketBranchCounts = $dashboardModel->getTicketCountsByBranch();
+        $topReportedIssues = $dashboardModel->getTopReportedIssues(5);
+        $ticketPriorityCounts = $dashboardModel->getTicketCountsByPriority();
+        $itPersonnelWorkload = $dashboardModel->getItPersonnelWorkload(5);
         $resolutionRows = $dashboardModel->getItTicketResolutionTimes();
         $resolutionLabels = [];
         $resolutionData = [];
@@ -746,9 +753,9 @@ class AdminController extends AuthController
     }
 
     /* ------------------------------------------------------
-     * MONTHLY TICKET REPORT
+     * TICKET REPORT (MONTHLY / WEEKLY)
      * ------------------------------------------------------*/
-    public function monthlyReport()
+    public function ticketReport()
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -761,19 +768,76 @@ class AdminController extends AuthController
 
         require_once __DIR__ . '/../../Models/admin/Ticket.php';
 
-        $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
-        $month = isset($_GET['month']) ? (int) $_GET['month'] : (int) date('n');
-
-        if ($year < 2000 || $year > 2100) {
-            $year = (int) date('Y');
-        }
-        if ($month < 1 || $month > 12) {
-            $month = (int) date('n');
+        $reportType = strtolower(trim((string) ($_GET['type'] ?? 'monthly')));
+        if ($reportType !== 'weekly') {
+            $reportType = 'monthly';
         }
 
         $ticketModel = new Ticket();
-        $tickets = $ticketModel->fetchTicketsByMonth($year, $month);
+
+        if ($reportType === 'weekly') {
+            $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('o');
+            $week = isset($_GET['week']) ? (int) $_GET['week'] : (int) date('W');
+
+            if ($year < 2000 || $year > 2100) {
+                $year = (int) date('o');
+            }
+            if ($week < 1 || $week > 53) {
+                $week = (int) date('W');
+            }
+
+            $tickets = $ticketModel->fetchTicketsByWeek($year, $week);
+            $selectedYear = $year;
+            $selectedWeek = $week;
+            $selectedMonth = null;
+
+            $weekStart = (new \DateTimeImmutable())->setISODate($year, $week, 1);
+            $weekEnd = $weekStart->modify('+6 days');
+            $periodLabel = sprintf(
+                'Week %d, %d (%s – %s)',
+                $week,
+                $year,
+                $weekStart->format('M j'),
+                $weekEnd->format('M j, Y')
+            );
+        } else {
+            $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+            $month = isset($_GET['month']) ? (int) $_GET['month'] : (int) date('n');
+
+            if ($year < 2000 || $year > 2100) {
+                $year = (int) date('Y');
+            }
+            if ($month < 1 || $month > 12) {
+                $month = (int) date('n');
+            }
+
+            $tickets = $ticketModel->fetchTicketsByMonth($year, $month);
+            $selectedYear = $year;
+            $selectedMonth = $month;
+            $selectedWeek = null;
+            $periodLabel = date('F Y', mktime(0, 0, 0, $month, 1, $year));
+        }
+
         $ticketCount = count($tickets);
+
+        $weekOptions = [];
+        $weekYear = $reportType === 'weekly' ? $selectedYear : (int) date('o');
+        for ($w = 1; $w <= 53; $w++) {
+            $start = (new \DateTimeImmutable())->setISODate($weekYear, $w, 1);
+            if ((int) $start->format('o') !== $weekYear) {
+                if ($w > 1) {
+                    break;
+                }
+                continue;
+            }
+            $end = $start->modify('+6 days');
+            $weekOptions[$w] = sprintf(
+                'Week %d (%s – %s)',
+                $w,
+                $start->format('M j'),
+                $end->format('M j')
+            );
+        }
 
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
@@ -784,14 +848,10 @@ class AdminController extends AuthController
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
 
-        $selectedYear = $year;
-        $selectedMonth = $month;
-        $monthLabel = date('F Y', mktime(0, 0, 0, $month, 1, $year));
-
-        require __DIR__ . '/../../Views/admin/reports/monthly_tickets.php';
+        require __DIR__ . '/../../Views/admin/reports/ticket_report.php';
     }
 
-    public function monthlyReportExport()
+    public function ticketReportExport()
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -806,17 +866,38 @@ class AdminController extends AuthController
         require_once __DIR__ . '/../../Models/admin/Ticket.php';
         require_once __DIR__ . '/../../Services/ExcelExportService.php';
 
-        $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
-        $month = isset($_GET['month']) ? (int) $_GET['month'] : (int) date('n');
-
-        if ($year < 2000 || $year > 2100 || $month < 1 || $month > 12) {
-            http_response_code(400);
-            echo 'Invalid month or year.';
-            exit;
+        $reportType = strtolower(trim((string) ($_GET['type'] ?? 'monthly')));
+        if ($reportType !== 'weekly') {
+            $reportType = 'monthly';
         }
 
         $ticketModel = new Ticket();
-        $tickets = $ticketModel->fetchTicketsByMonth($year, $month);
+
+        if ($reportType === 'weekly') {
+            $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('o');
+            $week = isset($_GET['week']) ? (int) $_GET['week'] : (int) date('W');
+
+            if ($year < 2000 || $year > 2100 || $week < 1 || $week > 53) {
+                http_response_code(400);
+                echo 'Invalid week or year.';
+                exit;
+            }
+
+            $tickets = $ticketModel->fetchTicketsByWeek($year, $week);
+            $filename = sprintf('tickets_%04d_W%02d.xls', $year, $week);
+        } else {
+            $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+            $month = isset($_GET['month']) ? (int) $_GET['month'] : (int) date('n');
+
+            if ($year < 2000 || $year > 2100 || $month < 1 || $month > 12) {
+                http_response_code(400);
+                echo 'Invalid month or year.';
+                exit;
+            }
+
+            $tickets = $ticketModel->fetchTicketsByMonth($year, $month);
+            $filename = sprintf('tickets_%04d_%02d.xls', $year, $month);
+        }
 
         $headers = [
             'Ticket #',
@@ -859,16 +940,52 @@ class AdminController extends AuthController
             ];
         }
 
-        $filename = sprintf('tickets_%04d_%02d.xls', $year, $month);
-
         try {
             (new ExcelExportService())->download($headers, $rows, $filename);
         } catch (Throwable $e) {
-            error_log('Monthly ticket export failed: ' . $e->getMessage());
+            error_log('Ticket report export failed: ' . $e->getMessage());
             http_response_code(500);
             echo 'Failed to generate Excel file.';
             exit;
         }
+    }
+
+    public function monthlyReport()
+    {
+        $this->redirectLegacyTicketReport('monthly');
+    }
+
+    public function monthlyReportExport()
+    {
+        $_GET['type'] = 'monthly';
+        $this->ticketReportExport();
+    }
+
+    public function weeklyReport()
+    {
+        $this->redirectLegacyTicketReport('weekly');
+    }
+
+    public function weeklyReportExport()
+    {
+        $_GET['type'] = 'weekly';
+        $this->ticketReportExport();
+    }
+
+    private function redirectLegacyTicketReport(string $type): void
+    {
+        $params = ['type' => $type];
+        if (isset($_GET['year'])) {
+            $params['year'] = (int) $_GET['year'];
+        }
+        if ($type === 'weekly' && isset($_GET['week'])) {
+            $params['week'] = (int) $_GET['week'];
+        }
+        if ($type === 'monthly' && isset($_GET['month'])) {
+            $params['month'] = (int) $_GET['month'];
+        }
+
+        $this->redirect('/admin/reports/tickets?' . http_build_query($params));
     }
 }
 

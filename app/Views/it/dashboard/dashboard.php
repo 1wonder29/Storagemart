@@ -7,8 +7,9 @@ $assignedCount = (int)($assignedCount ?? 0);
 $inProgressTickets = (int)($inProgressTickets ?? 0);
 $resolveTickets = (int)($resolveTickets ?? 0);
 $myAssets = (int)($myAssets ?? 0);
-$myTickets = (int)($myTickets ?? 0);
+$myOpenTickets = (int)($myOpenTickets ?? 0);
 $myOngoingTickets = (int)($myOngoingTickets ?? 0);
+$myResolvedTickets = (int)($myResolvedTickets ?? 0);
 
 $hasTicketChart = ($assignedCount + $inProgressTickets + $resolveTickets) > 0;
 $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
@@ -74,29 +75,26 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
         </div>
 
         <!-- Personal Stats -->
-        <div class="section-label"><i class="fas fa-user-circle mr-1"></i> My Workspace</div>
-        <div class="personal-stat-grid">
-            <a href="<?= htmlspecialchars($base) ?>/it/assets" class="personal-stat-card">
-                <div class="stat-icon icon-assets"><i class="fas fa-archive"></i></div>
-                <div>
-                    <div class="stat-number"><?= $myAssets ?></div>
-                    <div class="stat-title">My Assets</div>
-                </div>
-            </a>
-            <a href="<?= htmlspecialchars($base) ?>/it/tickets" class="personal-stat-card">
-                <div class="stat-icon icon-tickets"><i class="fas fa-ticket-alt"></i></div>
-                <div>
-                    <div class="stat-number"><?= $myTickets ?></div>
-                    <div class="stat-title">My Tickets</div>
-                </div>
-            </a>
-            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" class="personal-stat-card">
-                <div class="stat-icon icon-ongoing"><i class="fas fa-spinner"></i></div>
-                <div>
-                    <div class="stat-number"><?= $myOngoingTickets ?></div>
-                    <div class="stat-title">My Ongoing</div>
-                </div>
-            </a>
+        <div class="workspace-minimal">
+            <p class="workspace-eyebrow">My workspace</p>
+            <div class="personal-stat-grid">
+                <a href="<?= htmlspecialchars($base) ?>/it/tickets/open" class="personal-stat-card tone-open">
+                    <span class="stat-number"><?= $myOpenTickets ?></span>
+                    <span class="stat-title"><i class="fas fa-ticket-alt" aria-hidden="true"></i> Open ticket</span>
+                </a>
+                <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" class="personal-stat-card tone-progress">
+                    <span class="stat-number"><?= $myOngoingTickets ?></span>
+                    <span class="stat-title"><i class="fas fa-spinner" aria-hidden="true"></i> In progress</span>
+                </a>
+                <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" class="personal-stat-card tone-resolved">
+                    <span class="stat-number"><?= $myResolvedTickets ?></span>
+                    <span class="stat-title"><i class="fas fa-check-circle" aria-hidden="true"></i> Resolved ticket</span>
+                </a>
+                <a href="<?= htmlspecialchars($base) ?>/it/assets" class="personal-stat-card tone-assets">
+                    <span class="stat-number"><?= $myAssets ?></span>
+                    <span class="stat-title"><i class="fas fa-archive" aria-hidden="true"></i> Assets</span>
+                </a>
+            </div>
         </div>
 
         <!-- Quick Actions -->

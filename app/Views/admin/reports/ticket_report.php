@@ -9,6 +9,19 @@ $months = [
 ];
 $yearOptions = range((int) date('Y'), (int) date('Y') - 5);
 $ticketCount = (int) ($ticketCount ?? 0);
+$reportType = ($reportType ?? 'monthly') === 'weekly' ? 'weekly' : 'monthly';
+$isWeekly = $reportType === 'weekly';
+
+$exportParams = [
+    'type' => $reportType,
+    'year' => (int) ($selectedYear ?? date('Y')),
+];
+if ($isWeekly) {
+    $exportParams['week'] = (int) ($selectedWeek ?? date('W'));
+} else {
+    $exportParams['month'] = (int) ($selectedMonth ?? date('n'));
+}
+$exportUrl = $base . '/admin/reports/tickets/export?' . http_build_query($exportParams);
 
 $branches = [];
 $categories = [];
@@ -46,7 +59,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Monthly Ticket Report - Storage Mart Admin</title>
+    <title>Ticket Report - Storage Mart Admin</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
@@ -59,24 +72,31 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
 <body id="page-top">
     <div id="wrapper">
         <?php
-        $activePage = 'monthly_report';
+        $activePage = 'ticket_report';
         require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';
         ?>
 
         <div class="container-fluid admin-ticket-page admin-monthly-report-page">
 
             <div class="page-hero">
-                <h1><i class="fas fa-clipboard-list mr-2"></i>Monthly Ticket Report</h1>
-                <p>Generate and export ticket activity by month — review filed tickets, statuses, and assignments for any period.</p>
+                <h1><i class="fas fa-clipboard-list mr-2"></i>Ticket Report</h1>
+                <p>Generate and export ticket activity by month or week — review filed tickets, statuses, and assignments for any period.</p>
             </div>
 
             <div class="filter-toolbar">
                 <div class="toolbar-title"><i class="fas fa-calendar-alt"></i>Select Report Period</div>
-                <form method="GET" action="<?= htmlspecialchars($base) ?>/admin/reports/monthly-tickets">
+                <form method="GET" action="<?= htmlspecialchars($base) ?>/admin/reports/tickets" id="ticketReportForm">
                     <div class="row align-items-end">
-                        <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                        <div class="col-md-2 col-sm-6 mb-3 mb-md-0">
+                            <label for="reportType">Report Type</label>
+                            <select name="type" id="reportType" class="form-control">
+                                <option value="monthly" <?= !$isWeekly ? 'selected' : '' ?>>Monthly</option>
+                                <option value="weekly" <?= $isWeekly ? 'selected' : '' ?>>Weekly</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3 mb-md-0 report-period-monthly" <?= $isWeekly ? 'style="display:none"' : '' ?>>
                             <label for="month">Month</label>
-                            <select name="month" id="month" class="form-control">
+                            <select name="month" id="month" class="form-control" <?= $isWeekly ? 'disabled' : '' ?>>
                                 <?php foreach ($months as $num => $name): ?>
                                     <option value="<?= $num ?>" <?= ($selectedMonth ?? (int) date('n')) === $num ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($name) ?>
@@ -84,7 +104,17 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                        <div class="col-md-3 col-sm-6 mb-3 mb-md-0 report-period-weekly" <?= !$isWeekly ? 'style="display:none"' : '' ?>>
+                            <label for="week">Week</label>
+                            <select name="week" id="week" class="form-control" <?= !$isWeekly ? 'disabled' : '' ?>>
+                                <?php foreach ($weekOptions ?? [] as $num => $label): ?>
+                                    <option value="<?= $num ?>" <?= ($selectedWeek ?? (int) date('W')) === $num ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($label) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3 mb-md-0">
                             <label for="year">Year</label>
                             <select name="year" id="year" class="form-control">
                                 <?php foreach ($yearOptions as $y): ?>
@@ -94,12 +124,11 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-6 col-sm-12 text-md-right">
+                        <div class="col-md-4 col-sm-12 text-md-right">
                             <button type="submit" class="btn btn-primary btn-view mr-2 mb-2 mb-md-0">
                                 <i class="fas fa-search mr-1"></i> View Report
                             </button>
-                            <a href="<?= htmlspecialchars($base) ?>/admin/reports/monthly-tickets/export?month=<?= (int) ($selectedMonth ?? date('n')) ?>&year=<?= (int) ($selectedYear ?? date('Y')) ?>"
-                               class="btn btn-export mb-2 mb-md-0">
+                            <a href="<?= htmlspecialchars($exportUrl) ?>" id="ticketReportExport" class="btn btn-export mb-2 mb-md-0">
                                 <i class="fas fa-file-excel mr-1"></i> Download Excel
                             </a>
                         </div>
@@ -113,7 +142,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                         <div class="summary-card-icon"><i class="fas fa-calendar-check"></i></div>
                         <div>
                             <span class="summary-card-label">Report Period</span>
-                            <span class="summary-card-value"><?= htmlspecialchars($monthLabel ?? '') ?></span>
+                            <span class="summary-card-value"><?= htmlspecialchars($periodLabel ?? '') ?></span>
                         </div>
                     </div>
                 </div>
@@ -133,8 +162,8 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                 <div class="toolbar-title"><i class="fas fa-filter"></i>Filter Tickets</div>
                 <div class="row align-items-end">
                     <div class="col-lg-2 col-md-4 col-sm-6 mb-2 mb-md-0">
-                        <label for="monthlyBranchFilter">Branch</label>
-                        <select id="monthlyBranchFilter" class="form-control form-control-sm">
+                        <label for="ticketBranchFilter">Branch</label>
+                        <select id="ticketBranchFilter" class="form-control form-control-sm">
                             <option value="">All Branches</option>
                             <?php foreach (array_keys($branches) as $branch): ?>
                                 <option value="<?= htmlspecialchars($branch) ?>"><?= htmlspecialchars($branch) ?></option>
@@ -142,8 +171,8 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 mb-2 mb-md-0">
-                        <label for="monthlyCategoryFilter">Category</label>
-                        <select id="monthlyCategoryFilter" class="form-control form-control-sm">
+                        <label for="ticketCategoryFilter">Category</label>
+                        <select id="ticketCategoryFilter" class="form-control form-control-sm">
                             <option value="">All Categories</option>
                             <?php foreach (array_keys($categories) as $category): ?>
                                 <option value="<?= htmlspecialchars($category) ?>"><?= htmlspecialchars($category) ?></option>
@@ -151,8 +180,8 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 mb-2 mb-md-0">
-                        <label for="monthlyPriorityFilter">Priority</label>
-                        <select id="monthlyPriorityFilter" class="form-control form-control-sm">
+                        <label for="ticketPriorityFilter">Priority</label>
+                        <select id="ticketPriorityFilter" class="form-control form-control-sm">
                             <option value="">All Priorities</option>
                             <?php foreach ($priorityOptions as $priority): ?>
                                 <option value="<?= htmlspecialchars($priority) ?>"><?= htmlspecialchars($priority) ?></option>
@@ -160,8 +189,8 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 mb-2 mb-md-0">
-                        <label for="monthlyStatusFilter">Status</label>
-                        <select id="monthlyStatusFilter" class="form-control form-control-sm">
+                        <label for="ticketStatusFilter">Status</label>
+                        <select id="ticketStatusFilter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
                             <?php foreach (it_ticket_status_filter_options(array_keys($statuses)) as $status): ?>
                                 <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
@@ -169,7 +198,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                         </select>
                     </div>
                     <div class="col-lg-4 col-md-8 col-sm-12 text-lg-right">
-                        <button type="button" id="monthlyClearFilters" class="btn btn-sm btn-outline-secondary">
+                        <button type="button" id="ticketClearFilters" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-undo mr-1"></i> Clear Filters
                         </button>
                     </div>
@@ -179,18 +208,18 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
 
             <div class="card report-list-card ticket-list-card shadow mb-4">
                 <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
-                    <h6><i class="fas fa-list-ul mr-1 text-primary"></i> Tickets for <?= htmlspecialchars($monthLabel ?? '') ?></h6>
+                    <h6><i class="fas fa-list-ul mr-1 text-primary"></i> Tickets for <?= htmlspecialchars($periodLabel ?? '') ?></h6>
                     <span class="ticket-count-badge"><?= $ticketCount ?> ticket<?= $ticketCount === 1 ? '' : 's' ?></span>
                 </div>
                 <div class="card-body p-0">
                     <?php if (empty($tickets)): ?>
                         <div class="empty-state">
                             <i class="fas fa-inbox d-block"></i>
-                            No tickets found for this month.
+                            No tickets found for this period.
                         </div>
                     <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="monthlyTicketsTable" width="100%" cellspacing="0">
+                        <table class="table table-hover mb-0" id="ticketReportTable" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th>Ticket</th>

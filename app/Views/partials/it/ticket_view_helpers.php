@@ -113,6 +113,9 @@ if (!function_exists('it_ticket_stat_tone')) {
         if ($status === 'Pending') {
             return 'secondary';
         }
+        if ($status === 'Closed') {
+            return 'primary';
+        }
         if ($status === 'Resolved') {
             return 'success';
         }
@@ -139,6 +142,55 @@ if (!function_exists('it_ticket_summary_links')) {
             TicketStatus::CLOSED       => $base . '/it/tickets/closed',
             TicketStatus::CANCELLED    => $base . '/it/tickets/cancelled',
         ];
+    }
+}
+
+if (!function_exists('admin_ticket_summary_links')) {
+  /**
+   * @return array<string, string>
+   */
+    function admin_ticket_summary_links(string $base): array
+    {
+        $base = rtrim($base, '/');
+
+        return [
+            TicketStatus::OPEN        => $base . '/admin/tickets?status=' . rawurlencode(TicketStatus::OPEN),
+            TicketStatus::IN_PROGRESS => $base . '/admin/tickets?status=' . rawurlencode(TicketStatus::IN_PROGRESS),
+            TicketStatus::PENDING     => $base . '/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING),
+            TicketStatus::RESOLVED    => $base . '/admin/tickets?status=' . rawurlencode(TicketStatus::RESOLVED),
+            TicketStatus::CLOSED      => $base . '/admin/tickets?status=' . rawurlencode(TicketStatus::CLOSED),
+            TicketStatus::CANCELLED   => $base . '/admin/tickets?status=' . rawurlencode(TicketStatus::CANCELLED),
+        ];
+    }
+}
+
+if (!function_exists('admin_ticket_workspace_tone')) {
+    function admin_ticket_workspace_tone(string $status): string
+    {
+        return match ($status) {
+            TicketStatus::OPEN        => 'tone-open',
+            TicketStatus::IN_PROGRESS => 'tone-progress',
+            TicketStatus::PENDING     => 'tone-pending',
+            TicketStatus::RESOLVED    => 'tone-resolved',
+            TicketStatus::CLOSED      => 'tone-closed',
+            TicketStatus::CANCELLED   => 'tone-cancelled',
+            default                   => 'tone-neutral',
+        };
+    }
+}
+
+if (!function_exists('admin_ticket_workspace_icon')) {
+    function admin_ticket_workspace_icon(string $status): string
+    {
+        return match ($status) {
+            TicketStatus::OPEN        => 'fa-folder-open',
+            TicketStatus::IN_PROGRESS => 'fa-spinner',
+            TicketStatus::PENDING     => 'fa-clock',
+            TicketStatus::RESOLVED    => 'fa-check-circle',
+            TicketStatus::CLOSED      => 'fa-archive',
+            TicketStatus::CANCELLED   => 'fa-ban',
+            default                   => 'fa-ticket-alt',
+        };
     }
 }
 

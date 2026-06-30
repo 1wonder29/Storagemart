@@ -1,6 +1,69 @@
-/* Admin ticket list pages — shared modern layout */
-.admin-ticket-page .page-hero {
-  border-radius: 0.75rem;
+/* Admin ticket list pages — IT dashboard-aligned layout */
+#content-wrapper:has(.admin-ticket-page.it-dashboard-page) {
+  background: linear-gradient(160deg, #eef4fc 0%, #f4f7fb 45%, #e8eef8 100%);
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-grid-6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-pending {
+  border-top-color: #94a3b8;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.1) 0%, #ffffff 72%);
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-pending .stat-number {
+  color: #475569;
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-pending .stat-title i {
+  color: #64748b;
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-closed {
+  border-top-color: #6366f1;
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, #ffffff 72%);
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-closed .stat-number {
+  color: #4338ca;
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-closed .stat-title i {
+  color: #6366f1;
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-cancelled {
+  border-top-color: #ef4444;
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, #ffffff 72%);
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-cancelled .stat-number {
+  color: #b91c1c;
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-cancelled .stat-title i {
+  color: #ef4444;
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.is-active {
+  border-color: rgba(1, 43, 144, 0.22);
+  box-shadow: 0 4px 14px rgba(1, 43, 144, 0.1);
+}
+
+@media (max-width: 1199px) {
+  .admin-ticket-page.it-dashboard-page .personal-stat-grid-6 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-ticket-page.it-dashboard-page .personal-stat-grid-6 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.admin-ticket-page .page-hero {  border-radius: 0.75rem;
   color: #fff;
   padding: 1.5rem 1.75rem;
   margin-bottom: 1.5rem;
@@ -107,6 +170,29 @@
 .admin-ticket-page .summary-stat-card.stat-success { color: #16a34a; }
 .admin-ticket-page .summary-stat-card.stat-danger { color: #dc2626; }
 .admin-ticket-page .summary-stat-card.stat-secondary { color: #64748b; }
+.admin-ticket-page .summary-stat-card.stat-primary { color: #4e73df; }
+
+.admin-ticket-page a.summary-stat-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
+}
+
+.admin-ticket-page a.summary-stat-card-link:hover,
+.admin-ticket-page a.summary-stat-card-link:focus {
+  text-decoration: none;
+  color: inherit;
+}
+
+.admin-ticket-page a.summary-stat-card-link.is-active {
+  border-color: rgba(78, 115, 223, 0.45);
+}
+
+.admin-ticket-page a.summary-stat-card-link:focus-visible {
+  outline: 2px solid rgba(78, 115, 223, 0.45);
+  outline-offset: 2px;
+}
 
 .admin-ticket-page .filter-toolbar {
   background: #f8f9fc;

@@ -99,6 +99,24 @@
       dt.search("");
       redraw();
     });
+
+    var params = new URLSearchParams(window.location.search);
+    var initialStatus = (params.get("status") || "").trim();
+    if (initialStatus !== "") {
+      var $statusSelect = $("#adminStatusFilter");
+      var matched = false;
+      $statusSelect.find("option").each(function () {
+        if (($(this).val() || "").trim().toLowerCase() === initialStatus.toLowerCase()) {
+          $statusSelect.val($(this).val());
+          matched = true;
+          return false;
+        }
+      });
+      if (matched) {
+        statusFilter = initialStatus.toLowerCase();
+        redraw();
+      }
+    }
   }
 
   $(document).ready(initAdminTicketsTable);

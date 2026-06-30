@@ -37,8 +37,8 @@ $todayLabel = date('l, F j, Y');
                     <a href="<?= htmlspecialchars($base) ?>/admin/tickets" class="btn btn-sm btn-outline-light">
                         <i class="fas fa-ticket-alt mr-1"></i> View Tickets
                     </a>
-                    <a href="<?= htmlspecialchars($base) ?>/admin/pendings" class="btn btn-sm btn-outline-light">
-                        <i class="fas fa-clock mr-1"></i> Pendings
+                    <a href="<?= htmlspecialchars($base) ?>/admin/tickets?status=<?= rawurlencode('Pending') ?>" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-clock mr-1"></i> Pending
                     </a>
                     <a href="<?= htmlspecialchars($base) ?>/admin/audit-trail" class="btn btn-sm btn-outline-light">
                         <i class="fas fa-history mr-1"></i> Audit Trail
@@ -46,121 +46,55 @@ $todayLabel = date('l, F j, Y');
                 </div>
             </div>
 
-            <div class="row dashboard-section">
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <a href="<?= htmlspecialchars($base) ?>/admin/account" class="stat-card stat-card-users">
-                        <div class="stat-card-icon"><i class="fas fa-users"></i></div>
-                        <div>
-                            <span class="stat-card-label">Users</span>
-                            <span class="stat-card-value"><?= (int) $userCount ?></span>
-                            <span class="stat-card-hint">Manage accounts</span>
-                        </div>
+            <div class="workspace-minimal dashboard-section">
+                <p class="workspace-eyebrow">Overview</p>
+                <div class="admin-stat-grid">
+                    <a href="<?= htmlspecialchars($base) ?>/admin/account" class="admin-stat-card tone-users">
+                        <span class="stat-number"><?= (int) $userCount ?></span>
+                        <span class="stat-title"><i class="fas fa-users" aria-hidden="true"></i> Users</span>
+                        <span class="stat-hint">Manage accounts</span>
                     </a>
-                </div>
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <a href="<?= htmlspecialchars($base) ?>/admin/tickets" class="stat-card stat-card-tickets">
-                        <div class="stat-card-icon"><i class="fas fa-ticket-alt"></i></div>
-                        <div>
-                            <span class="stat-card-label">Tickets</span>
-                            <span class="stat-card-value"><?= (int) $ticketCount ?></span>
-                            <span class="stat-card-hint">All filed tickets</span>
-                        </div>
+                    <a href="<?= htmlspecialchars($base) ?>/admin/tickets" class="admin-stat-card tone-tickets">
+                        <span class="stat-number"><?= (int) $ticketCount ?></span>
+                        <span class="stat-title"><i class="fas fa-ticket-alt" aria-hidden="true"></i> Tickets</span>
+                        <span class="stat-hint">All filed tickets</span>
                     </a>
-                </div>
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="stat-card stat-card-assets">
-                        <div class="stat-card-icon"><i class="fas fa-archive"></i></div>
-                        <div>
-                            <span class="stat-card-label">Assets</span>
-                            <span class="stat-card-value"><?= (int) $assetCount ?></span>
-                            <span class="stat-card-hint">Inventory directory</span>
-                        </div>
+                    <a href="<?= htmlspecialchars($base) ?>/admin/tickets?status=<?= rawurlencode('Open') ?>" class="admin-stat-card tone-open">
+                        <span class="stat-number"><?= (int) $ticketOpen ?></span>
+                        <span class="stat-title"><i class="fas fa-folder-open" aria-hidden="true"></i> Open ticket</span>
+                        <span class="stat-hint">Awaiting assignment</span>
                     </a>
-                </div>
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <a href="<?= htmlspecialchars($base) ?>/admin/pendings" class="stat-card stat-card-ongoing">
-                        <div class="stat-card-icon"><i class="fas fa-spinner"></i></div>
-                        <div>
-                            <span class="stat-card-label">On-going</span>
-                            <span class="stat-card-value"><?= (int) $ticketOngoing ?></span>
-                            <span class="stat-card-hint">Pending resolution</span>
-                        </div>
+                    <a href="<?= htmlspecialchars($base) ?>/admin/tickets?status=<?= rawurlencode('In Progress') ?>" class="admin-stat-card tone-progress">
+                        <span class="stat-number"><?= (int) $ticketInProgress ?></span>
+                        <span class="stat-title"><i class="fas fa-spinner" aria-hidden="true"></i> In progress</span>
+                        <span class="stat-hint">Active assignments</span>
+                    </a>
+                    <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="admin-stat-card tone-assets">
+                        <span class="stat-number"><?= (int) $assetCount ?></span>
+                        <span class="stat-title"><i class="fas fa-archive" aria-hidden="true"></i> Assets</span>
+                        <span class="stat-hint">Inventory directory</span>
                     </a>
                 </div>
             </div>
 
-            <div class="row dashboard-section">
-                <div class="col-xl-7 col-lg-7 mb-4">
-                    <div class="card dash-card shadow">
-                        <div class="card-header d-flex align-items-center">
-                            <span class="header-icon"><i class="fas fa-chart-pie"></i></span>
-                            <h6>System Overview</h6>
+            <div class="row dashboard-section dashboard-charts-row">
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card dash-card shadow h-100">
+                        <div class="card-header">
+                            <h6><i class="fas fa-chart-pie"></i>System Overview</h6>
                         </div>
                         <div class="card-body">
                             <div class="chart-wrap">
                                 <canvas id="adminOverviewChart"></canvas>
                             </div>
-                            <p class="chart-caption mb-0">Distribution based on current totals across users, tickets, assets, and on-going work.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-5 col-lg-5 mb-4">
-                    <div class="card dash-card shadow">
-                        <div class="card-header d-flex align-items-center">
-                            <span class="header-icon"><i class="fas fa-bolt"></i></span>
-                            <h6>Quick Actions</h6>
-                        </div>
-                        <div class="card-body">
-                            <a class="quick-action" href="<?= htmlspecialchars($base) ?>/admin/account">
-                                <span class="quick-action-icon"><i class="fas fa-user"></i></span>
-                                <span class="quick-action-text">Manage Accounts</span>
-                                <i class="fas fa-chevron-right quick-action-arrow"></i>
-                            </a>
-                            <a class="quick-action" href="<?= htmlspecialchars($base) ?>/admin/tickets">
-                                <span class="quick-action-icon"><i class="fas fa-ticket-alt"></i></span>
-                                <span class="quick-action-text">View Tickets</span>
-                                <i class="fas fa-chevron-right quick-action-arrow"></i>
-                            </a>
-                            <a class="quick-action" href="<?= htmlspecialchars($base) ?>/admin/pendings">
-                                <span class="quick-action-icon"><i class="fas fa-table"></i></span>
-                                <span class="quick-action-text">On-going Tickets</span>
-                                <i class="fas fa-chevron-right quick-action-arrow"></i>
-                            </a>
-                            <a class="quick-action" href="<?= htmlspecialchars($base) ?>/admin/assets">
-                                <span class="quick-action-icon"><i class="fas fa-archive"></i></span>
-                                <span class="quick-action-text">Assets Directory</span>
-                                <i class="fas fa-chevron-right quick-action-arrow"></i>
-                            </a>
-                            <a class="quick-action" href="<?= htmlspecialchars($base) ?>/admin/audit-trail">
-                                <span class="quick-action-icon"><i class="fas fa-history"></i></span>
-                                <span class="quick-action-text">Audit Trail</span>
-                                <i class="fas fa-chevron-right quick-action-arrow"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row dashboard-section">
-                <div class="col-xl-6 col-lg-6 mb-4">
-                    <div class="card dash-card shadow">
-                        <div class="card-header d-flex align-items-center">
-                            <span class="header-icon"><i class="fas fa-layer-group"></i></span>
-                            <h6>Filed Tickets by Category</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-wrap">
-                                <canvas id="adminTicketCategoryChart"></canvas>
-                            </div>
-                            <p class="chart-caption mb-0">Network, Software, and Hardware tickets filed in the system.</p>
+                            <p class="chart-caption mb-0">Distribution based on current totals across users, tickets, assets, and in-progress work.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-6 col-lg-6 mb-4">
-                    <div class="card dash-card shadow">
-                        <div class="card-header d-flex align-items-center">
-                            <span class="header-icon"><i class="fas fa-chart-pie"></i></span>
-                            <h6>Tickets by Status</h6>
+                    <div class="card dash-card shadow h-100">
+                        <div class="card-header">
+                            <h6><i class="fas fa-chart-pie"></i>Tickets by Status</h6>
                         </div>
                         <div class="card-body">
                             <div class="chart-wrap">
@@ -172,16 +106,154 @@ $todayLabel = date('l, F j, Y');
                 </div>
             </div>
 
-            <div class="row dashboard-section">
-                <div class="col-xl-12 mb-4">
-                    <div class="card dash-card shadow">
-                        <div class="card-header d-flex align-items-center">
-                            <span class="header-icon"><i class="fas fa-stopwatch"></i></span>
-                            <h6>Ticket Resolution Time (SLA)</h6>
+            <div class="row dashboard-section dashboard-charts-row">
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card dash-card shadow h-100">
+                        <div class="card-header">
+                            <h6><i class="fas fa-chart-pie"></i>Tickets by Category</h6>
                         </div>
                         <div class="card-body">
-                            <div class="chart-wrap chart-wrap-lg">
+                            <div class="chart-wrap">
+                                <canvas id="adminTicketCategoryChart"></canvas>
+                            </div>
+                            <p class="chart-caption mb-0">Current breakdown of filed tickets grouped by category.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card dash-card shadow h-100">
+                        <div class="card-header">
+                            <h6><i class="fas fa-chart-bar"></i>Tickets by Branch</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-wrap">
+                                <canvas id="adminTicketBranchChart"></canvas>
+                            </div>
+                            <p class="chart-caption mb-0">Vertical bar chart of filed tickets grouped by branch.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row dashboard-section dashboard-charts-row">
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card dash-card shadow h-100">
+                        <div class="card-header">
+                            <h6><i class="fas fa-list-ol"></i>Top 5 Reported Issues</h6>
+                        </div>
+                        <div class="card-body">
+                            <?php $topIssues = $topReportedIssues ?? []; ?>
+                            <div class="reported-issues-panel">
+                                <h3 class="reported-issues-title">Top 5 Reported Issues</h3>
+                                <?php if (empty($topIssues)): ?>
+                                    <div class="reported-issues-empty">
+                                        <i class="fas fa-inbox" aria-hidden="true"></i>
+                                        <p class="mb-0">No reported issues yet.</p>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="table-responsive reported-issues-table-wrap">
+                                        <table class="table reported-issues-table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col" class="col-rank">#</th>
+                                                    <th scope="col" class="col-issue">Issue</th>
+                                                    <th scope="col" class="col-total">Total Tickets</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php $rank = 1; foreach ($topIssues as $issue => $count): ?>
+                                                    <tr>
+                                                        <td class="col-rank"><?= $rank ?></td>
+                                                        <td class="col-issue"><?= htmlspecialchars((string) $issue) ?></td>
+                                                        <td class="col-total"><?= (int) $count ?></td>
+                                                    </tr>
+                                                <?php $rank++; endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card dash-card shadow h-100">
+                        <div class="card-header">
+                            <h6><i class="fas fa-stopwatch"></i>Ticket Resolution Time (SLA)</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-wrap">
                                 <canvas id="myAreaChart"></canvas>
+                            </div>
+                            <p class="chart-caption mb-0">Resolution hours for recently resolved tickets.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row dashboard-section dashboard-charts-row">
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card dash-card shadow h-100">
+                        <div class="card-header">
+                            <h6><i class="fas fa-users-cog"></i>IT Personnel Workload</h6>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="reported-issues-title workload-chart-title">IT Personnel Workload</h3>
+                            <?php if (empty($itPersonnelWorkload ?? [])): ?>
+                                <div class="reported-issues-empty">
+                                    <i class="fas fa-user-clock" aria-hidden="true"></i>
+                                    <p class="mb-0">No IT personnel workload data yet.</p>
+                                </div>
+                            <?php else: ?>
+                                <div class="chart-wrap chart-wrap-workload">
+                                    <canvas id="adminItWorkloadChart"></canvas>
+                                </div>
+                            <?php endif; ?>
+                            <p class="chart-caption mb-0">Stacked ticket workload per IT personnel — assigned, resolved, pending, and overdue.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card dash-card shadow h-100">
+                        <div class="card-header">
+                            <h6><i class="fas fa-chart-pie"></i>Tickets by Priority</h6>
+                        </div>
+                        <div class="card-body">
+                            <?php
+                            $priorityCounts = $ticketPriorityCounts ?? [];
+                            $priorityMeta = [
+                                'High (P2)' => '#fd7e14',
+                                'Medium (P3)' => '#f6c23e',
+                                'Low (P4)' => '#1cc88a',
+                            ];
+                            $priorityTotal = array_sum($priorityCounts);
+                            ?>
+                            <div class="priority-chart-panel">
+                                <h3 class="reported-issues-title">Tickets by Priority</h3>
+                                <?php if ($priorityTotal <= 0): ?>
+                                    <div class="reported-issues-empty">
+                                        <i class="fas fa-inbox" aria-hidden="true"></i>
+                                        <p class="mb-0">No ticket priority data yet.</p>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="priority-chart-layout">
+                                        <div class="priority-chart-canvas">
+                                            <canvas id="adminTicketPriorityChart"></canvas>
+                                        </div>
+                                        <ul class="priority-legend-list mb-0">
+                                            <?php foreach ($priorityMeta as $label => $color):
+                                                $count = (int) ($priorityCounts[$label] ?? 0);
+                                                $pct = $priorityTotal > 0 ? number_format(($count / $priorityTotal) * 100, 2) : '0.00';
+                                            ?>
+                                                <li>
+                                                    <span class="priority-swatch" style="background-color: <?= htmlspecialchars($color) ?>;"></span>
+                                                    <span class="priority-label"><?= htmlspecialchars($label) ?></span>
+                                                    <span class="priority-stats"><?= $count ?> (<?= $pct ?>%)</span>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -203,7 +275,7 @@ $todayLabel = date('l, F j, Y');
             users: <?= (int)($userCount ?? 0) ?>,
             tickets: <?= (int)($ticketCount ?? 0) ?>,
             assets: <?= (int)($assetCount ?? 0) ?>,
-            ongoing: <?= (int)($ticketOngoing ?? 0) ?>
+            inProgress: <?= (int)($ticketInProgress ?? 0) ?>
         };
 
         window.ticketResolution = {
@@ -211,7 +283,10 @@ $todayLabel = date('l, F j, Y');
             data: <?= json_encode($resolutionData ?? []) ?>
         };
 
-        window.ticketCategoryCounts = <?= json_encode($ticketCategoryCounts ?? ['network' => 0, 'software' => 0, 'hardware' => 0]) ?>;
+        window.ticketCategoryCounts = <?= json_encode($ticketCategoryCounts ?? []) ?>;
+        window.ticketBranchCounts = <?= json_encode($ticketBranchCounts ?? []) ?>;
+        window.itPersonnelWorkload = <?= json_encode($itPersonnelWorkload ?? []) ?>;
+        window.ticketPriorityCounts = <?= json_encode($ticketPriorityCounts ?? []) ?>;
         window.ticketStatusCounts = <?= json_encode($ticketStatusCounts ?? []) ?>;
     </script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
@@ -221,7 +296,10 @@ $todayLabel = date('l, F j, Y');
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_overview.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_category_bar.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_branch_bar.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_status_chart.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_it_workload.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_priority_chart.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/dashboard_areachart.js"></script>
 </body>
 

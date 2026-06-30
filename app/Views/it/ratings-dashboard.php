@@ -386,7 +386,7 @@ $hasChartData = array_sum($chartData) > 0;
             datasets: [{
                 label: 'Ratings',
                 data: <?= json_encode(array_values($chartData)) ?>,
-                backgroundColor: ['#27ae60', '#58d68d', '#f6c23e', '#f39c12', '#e74a3b'],
+                backgroundColor: ['#1cc88a', '#36b9cc', '#f6c23e', '#f39c12', '#e74a3b'],
                 borderRadius: 6,
                 borderSkipped: false
             }]

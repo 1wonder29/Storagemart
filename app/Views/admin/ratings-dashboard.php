@@ -504,7 +504,7 @@ $staffCount = count($itStaffPerformance);
                             <?= (int) ($stats['count_2star'] ?? 0) ?>,
                             <?= (int) ($stats['count_1star'] ?? 0) ?>
                         ],
-                        backgroundColor: ['#1cc88a', '#58d68d', '#f6c23e', '#f39c12', '#e74a3b'],
+                        backgroundColor: ['#1cc88a', '#36b9cc', '#f6c23e', '#f39c12', '#e74a3b'],
                         hoverBackgroundColor: ['#17a673', '#45b06a', '#dda20a', '#d68910', '#c0392b'],
                         borderColor: '#fff',
                         borderWidth: 2

@@ -59,20 +59,7 @@ class TicketController extends AuthController
             return;
         }
 
-        $cancelModel = new TicketCancelModel();
-        $tickets = $cancelModel->getAllCancelledTickets();
-
-        $ctx = $this->getLoggedUserContext();
-        $base = $ctx['base'];
-        $loggedFirstname = $ctx['loggedFirstname'];
-        $loggedPosition = $ctx['loggedPosition'];
-        $notificationData = $this->loadNotifications();
-
-        $count = $notificationData['count'];
-        $notifications = $notificationData['notifications'];
-        $activePage = 'tickets';
-
-        require __DIR__ . '/../../Views/admin/ticket/cancelled.php';
+        $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::CANCELLED));
     }
 
     public function view()
@@ -461,27 +448,16 @@ class TicketController extends AuthController
 
     public function pendings()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
-        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
-            $this->redirect('/login'); return;
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
 
-        $ticketModel = new Ticket();
-        $tickets = $ticketModel->fetchPendingTickets();
-        $itStaff = $ticketModel->fetchITStaff();
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
 
-        if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
-        $csrf_token = $_SESSION['csrf_token'];
-
-        $ctx = $this->getLoggedUserContext();
-        $base = $ctx['base'];
-        $loggedFirstname = $ctx['loggedFirstname'];
-        $loggedPosition  = $ctx['loggedPosition'];
-        $notificationData = $this->loadNotifications();
-
-        $count = $notificationData['count'];
-        $notifications = $notificationData['notifications'];
-        require_once __DIR__ . '/../../Views/admin/ticket/pending.php';
+        $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING));
     }
 
     // Approve & assign (POST)
@@ -498,7 +474,7 @@ class TicketController extends AuthController
         // basic CSRF
         $posted = $_POST['csrf_token'] ?? '';
         if (empty($posted) || $posted !== ($_SESSION['csrf_token'] ?? '')) {
-            $_SESSION['flash_error'] = 'Invalid CSRF token.'; $this->redirect('/admin/tickets/pending'); return;
+            $_SESSION['flash_error'] = 'Invalid CSRF token.'; $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING)); return;
         }
 
         $ticket_id = (int)($_POST['ticket_id'] ?? 0);
@@ -507,7 +483,7 @@ class TicketController extends AuthController
         $accountID = $_SESSION['account_id'];
 
         if ($ticket_id <= 0 || $assigned_to <= 0) {
-            $_SESSION['flash_error'] = 'Invalid input.'; $this->redirect('/admin/tickets/pending'); return;
+            $_SESSION['flash_error'] = 'Invalid input.'; $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING)); return;
         }
 
         $ticketModel = new Ticket();
@@ -558,7 +534,7 @@ class TicketController extends AuthController
             $_SESSION['flash_error'] = 'Failed to approve ticket.';
         }
 
-        $this->redirect('/admin/tickets/pending');
+        $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING));
     }
 
     // Decline (POST)
@@ -575,7 +551,7 @@ class TicketController extends AuthController
         // basic CSRF
         $posted = $_POST['csrf_token'] ?? '';
         if (empty($posted) || $posted !== ($_SESSION['csrf_token'] ?? '')) {
-            $_SESSION['flash_error'] = 'Invalid CSRF token.'; $this->redirect('/admin/tickets/pending'); return;
+            $_SESSION['flash_error'] = 'Invalid CSRF token.'; $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING)); return;
         }
 
         $ticket_id = (int)($_POST['ticket_id'] ?? 0);
@@ -584,7 +560,7 @@ class TicketController extends AuthController
         $accountID = $_SESSION['account_id'];
 
         if ($ticket_id <= 0) {
-            $_SESSION['flash_error'] = 'Invalid ticket id.'; $this->redirect('/admin/tickets/pending'); return;
+            $_SESSION['flash_error'] = 'Invalid ticket id.'; $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING)); return;
         }
 
         $ticketModel = new Ticket();
@@ -635,7 +611,7 @@ class TicketController extends AuthController
             $_SESSION['flash_error'] = 'Failed to decline ticket.';
         }
 
-        $this->redirect('/admin/tickets/pending');
+        $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING));
     }
 
     public function downloadTechnicalRecord()

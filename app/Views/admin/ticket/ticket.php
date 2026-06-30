@@ -32,24 +32,11 @@ $summaryTicketStats = [];
 foreach ($statusOrder as $status) {
     $summaryTicketStats[$status] = (int) ($statusCounts[$status] ?? 0);
 }
-$adminTicketStatTone = static function (string $status): string {
-    if ($status === 'Open') {
-        return 'warning';
-    }
-    if ($status === 'In Progress') {
-        return 'info';
-    }
-    if ($status === 'Pending') {
-        return 'secondary';
-    }
-    if ($status === 'Resolved') {
-        return 'success';
-    }
-    if ($status === 'Cancelled') {
-        return 'danger';
-    }
-    return 'secondary';
-};
+$summaryActiveStatus = trim((string) ($_GET['status'] ?? ''));
+$heroOpenCount = (int) ($summaryTicketStats[TicketStatus::OPEN] ?? 0);
+$heroInProgressCount = (int) ($summaryTicketStats[TicketStatus::IN_PROGRESS] ?? 0);
+$heroResolvedCount = (int) ($summaryTicketStats[TicketStatus::RESOLVED] ?? 0);
+$totalTickets = array_sum($summaryTicketStats);
 ?>
 <html lang="en">
 
@@ -61,6 +48,7 @@ $adminTicketStatTone = static function (string $status): string {
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/it-dashboard.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-ticket-list.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/ticket-history-modal.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
@@ -76,30 +64,48 @@ $adminTicketStatTone = static function (string $status): string {
         require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';
         ?>
 
-        <div class="container-fluid admin-ticket-page">
+        <div class="container-fluid admin-ticket-page it-dashboard-page">
 
-            <div class="page-hero hero-all-tickets">
+            <div class="page-hero">
                 <div class="row align-items-center">
-                    <div class="col-lg-12">
+                    <div class="col-lg-5">
                         <h1><i class="fas fa-ticket-alt mr-2"></i>All Tickets</h1>
                         <p>Manage every ticket across branches — assign staff, track status, and review history.</p>
-                        <div class="quick-nav mt-3">
-                            <a href="<?= htmlspecialchars($base) ?>/admin/tickets/cancelled" class="btn btn-sm btn-outline-light">
-                                <i class="fas fa-ban mr-1"></i> Cancel History
-                            </a>
+                    </div>
+                    <div class="col-lg-7 mt-3 mt-lg-0">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="hero-stat">
+                                    <div class="stat-value"><?= $heroOpenCount ?></div>
+                                    <div class="stat-label">Open</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="hero-stat">
+                                    <div class="stat-value"><?= $heroInProgressCount ?></div>
+                                    <div class="stat-label">In Progress</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="hero-stat">
+                                    <div class="stat-value"><?= $heroResolvedCount ?></div>
+                                    <div class="stat-label">Resolved</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="summary-stats">
-                <?php foreach ($summaryTicketStats as $status => $count): ?>
-                    <?php $tone = $adminTicketStatTone($status); ?>
-                    <div class="summary-stat-card stat-<?= htmlspecialchars($tone) ?>">
-                        <div class="stat-label"><?= htmlspecialchars((string) $status) ?></div>
-                        <div class="stat-value"><?= (int) $count ?></div>
-                    </div>
-                <?php endforeach; ?>
+            <?php require __DIR__ . '/../../partials/admin/ticket_summary_stats.php'; ?>
+
+            <div class="quick-actions">
+                <a href="<?= htmlspecialchars($base) ?>/admin/tickets/add" class="quick-action-btn qa-primary">
+                    <i class="fas fa-plus"></i> Add Ticket
+                </a>
+                <a href="<?= htmlspecialchars($base) ?>/admin/reports/tickets" class="quick-action-btn qa-info">
+                    <i class="fas fa-chart-bar"></i> Ticket Report
+                </a>
             </div>
 
             <div class="filter-toolbar">
@@ -144,12 +150,7 @@ $adminTicketStatTone = static function (string $status): string {
                     <h6 class="m-0 font-weight-bold text-primary">
                         <i class="fas fa-list-ul mr-1"></i> Ticket Directory
                     </h6>
-                    <div class="card-header-actions">
-                        <span class="badge badge-primary"><?= count($tickets) ?> ticket<?= count($tickets) === 1 ? '' : 's' ?></span>
-                        <a href="<?= htmlspecialchars($base) ?>/admin/tickets/add" class="btn btn-sm btn-primary">
-                            <i class="fas fa-plus mr-1"></i> Add Ticket
-                        </a>
-                    </div>
+                    <span class="badge badge-primary"><?= (int) $totalTickets ?> ticket<?= $totalTickets === 1 ? '' : 's' ?></span>
                 </div>
                 <div class="card-body p-0">
                     <?php if (empty($tickets)): ?>

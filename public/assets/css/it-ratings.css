@@ -376,8 +376,8 @@
   transition: width 0.4s ease;
 }
 
-.it-ratings-page .rating-bar-fill.bar-5 { background: linear-gradient(90deg, #27ae60, #2ecc71); }
-.it-ratings-page .rating-bar-fill.bar-4 { background: linear-gradient(90deg, #82e0aa, #a9dfbf); }
+.it-ratings-page .rating-bar-fill.bar-5 { background: linear-gradient(90deg, #1cc88a, #17a673); }
+.it-ratings-page .rating-bar-fill.bar-4 { background: linear-gradient(90deg, #36b9cc, #2c9faf); }
 .it-ratings-page .rating-bar-fill.bar-3 { background: linear-gradient(90deg, #f1c40f, #f6c23e); }
 .it-ratings-page .rating-bar-fill.bar-2 { background: linear-gradient(90deg, #f39c12, #e67e22); }
 .it-ratings-page .rating-bar-fill.bar-1 { background: linear-gradient(90deg, #e74c3c, #c0392b); }
@@ -491,14 +491,14 @@
 
 .it-ratings-page .rating-stars.rating-4,
 .it-rating-details-modal .rating-stars.rating-4 {
-  background: #f7fef9;
-  border-color: #bbf7d0;
+  background: #ecfeff;
+  border-color: #a5f3fc;
 }
 
 .it-ratings-page .rating-stars.rating-4 .rating-stars-count,
 .it-rating-details-modal .rating-stars.rating-4 .rating-stars-count {
-  color: #15803d;
-  border-left-color: #bbf7d0;
+  color: #0e7490;
+  border-left-color: #a5f3fc;
 }
 
 .it-ratings-page .rating-stars.rating-3,
