@@ -166,6 +166,39 @@ class ItTicketModel extends BaseModel
         return $val !== null ? (int)$val : null;
     }
 
+    public function fetchTicketById(int $ticketId)
+    {
+        $sql = "
+            SELECT
+                t.ticket_id,
+                t.employee_id,
+                t.ticket_number,
+                t.department,
+                t.category,
+                t.concern_details,
+                t.priority,
+                t.date_filed,
+                t.status,
+                t.remarks,
+                t.assigned_to,
+                e.firstname AS emp_firstname,
+                e.lastname AS emp_lastname,
+                b.branchName,
+                CONCAT(a2.firstname, ' ', a2.lastname) AS assigned_to_name
+            FROM {$this->tbltickets} t
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+            LEFT JOIN {$this->tblemployee} a2 ON t.assigned_to = a2.employee_id
+            WHERE t.ticket_id = :ticket_id
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ticket_id' => $ticketId]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: false;
+    }
+
     /**
      * @return array<string, int>
      */

@@ -2,29 +2,6 @@
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
 
-$branches = [];
-$purposes = [];
-$results = [];
-
-foreach ($tickets as $t) {
-    $bn = trim((string) ($t['branchName'] ?? ''));
-    if ($bn !== '') {
-        $branches[$bn] = true;
-    }
-    $tp = trim((string) ($t['technical_purpose'] ?? ''));
-    if ($tp !== '') {
-        $purposes[$tp] = true;
-    }
-    $res = trim((string) ($t['result'] ?? ''));
-    if ($res !== '') {
-        $results[$res] = true;
-    }
-}
-
-ksort($branches);
-ksort($purposes);
-ksort($results);
-
 $resultClass = static function (string $result): string {
     $r = strtolower(trim($result));
     if (in_array($r, ['working', 'fixed', 'resolved', 'ok', 'done'], true)) {
@@ -79,44 +56,6 @@ $resultClass = static function (string $result): string {
             $summaryActiveStatus = 'Resolved';
             require __DIR__ . '/../../partials/it/ticket_summary_stats.php';
             ?>
-
-            <!-- Quick filters -->
-            <div class="filter-toolbar">
-                <div class="row align-items-end">
-                    <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
-                        <label for="resolveBranchFilter">Branch</label>
-                        <select id="resolveBranchFilter" class="form-control form-control-sm">
-                            <option value="">All Branches</option>
-                            <?php foreach (array_keys($branches) as $branch): ?>
-                                <option value="<?= htmlspecialchars($branch) ?>"><?= htmlspecialchars($branch) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
-                        <label for="resolvePurposeFilter">Issue Type</label>
-                        <select id="resolvePurposeFilter" class="form-control form-control-sm">
-                            <option value="">All Issue Types</option>
-                            <?php foreach (array_keys($purposes) as $purpose): ?>
-                                <option value="<?= htmlspecialchars($purpose) ?>"><?= htmlspecialchars($purpose) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
-                        <label for="resolveResultFilter">Result</label>
-                        <select id="resolveResultFilter" class="form-control form-control-sm">
-                            <option value="">All Results</option>
-                            <?php foreach (array_keys($results) as $result): ?>
-                                <option value="<?= htmlspecialchars($result) ?>"><?= htmlspecialchars($result) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-3 col-sm-6 text-md-right">
-                        <button type="button" id="resolveClearFilters" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-undo mr-1"></i> Clear Filters
-                        </button>
-                    </div>
-                </div>
-            </div>
 
             <!-- Tickets table -->
             <div class="card ticket-list-card shadow mb-4">

@@ -333,7 +333,8 @@ class HrTicketController extends AuthController
 
         // Get employee ID from account
         $employeeModel = new Employee();
-        $employeeId = $employeeModel->getEmployeeIdByAccountId((int)$_SESSION['account_id']);
+        $accountId = (int) $_SESSION['account_id'];
+        $employeeId = $employeeModel->getEmployeeIdByAccountId($accountId);
 
         if (!$employeeId) {
             http_response_code(401);
@@ -341,12 +342,23 @@ class HrTicketController extends AuthController
             exit;
         }
 
+        $ticketModel = new EmployeeTicket();
+        $ticket = $ticketModel->fetchTicketById($ticketId);
+        $hrEmployee = $employeeModel->getEmployeeById($employeeId);
+        $department = $hrEmployee['department'] ?? null;
+
+        if (!$ticket || !$department || strcasecmp((string) ($ticket['department'] ?? ''), (string) $department) !== 0) {
+            http_response_code(403);
+            echo 'Access denied';
+            exit;
+        }
+
         // Load PDF generation service
         require_once __DIR__ . '/../../Services/PdfGeneratorService.php';
         $pdfService = new PdfGeneratorService();
 
-        // Generate technical record on-demand
-        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $employeeId);
+        // Generate technical record on-demand (HR may access department tickets)
+        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $employeeId, true);
 
         if (!$result || !$result['success']) {
             http_response_code(404);

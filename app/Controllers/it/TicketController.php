@@ -91,8 +91,6 @@ class TicketController extends AuthController
 
         // ✅ ticket operations use ItTicketModel
         $ticketModel = new ItTicketModel();
-        $ticketData = $ticketModel->fetchTicketById($ticketId);
-        $oldStatus = (string) ($ticketData['status'] ?? 'In Progress');
 
         // normalize priority
         $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
@@ -108,11 +106,6 @@ class TicketController extends AuthController
             'priority'        => $priority,
             'created_by'      => $accountId
         ]);
-        if (!$employeeId) {
-            $_SESSION['flash_error'] = "Unable to determine your employee record.";
-            $this->redirect('/employee/assets');
-            return;
-        }
 
         /* ✅ GET EMPLOYEE DEPARTMENT SAFELY */
         $employee = $itModel->getEmployeeById($employeeId);
@@ -496,6 +489,14 @@ class TicketController extends AuthController
             return;
         }
 
+        $existingTicket = $ticketModel->fetchTicketById($ticketId);
+        if (!$existingTicket) {
+            $_SESSION['flash_error'] = 'Ticket not found.';
+            $this->redirect('/it/tickets/in_progress');
+            return;
+        }
+        $oldStatus = (string) ($existingTicket['status'] ?? 'In Progress');
+
         // ✅ action → status
         switch ($action) {
             case 'Resolve': $status = 'Resolved'; break;
@@ -560,8 +561,32 @@ class TicketController extends AuthController
         ]);
 
         // =============================
-        // 4️⃣ Update history (no PDF generation)
+        // 4️⃣ Generate and store resolution document
         // =============================
+        if ($status === 'Resolved') {
+            try {
+                require_once __DIR__ . '/../../Services/PdfGeneratorService.php';
+                $pdfService = new PdfGeneratorService();
+                $pdfResult = $pdfService->generateResolutionPdf(
+                    $ticketId,
+                    (int) $_SESSION['account_id'],
+                    'IT'
+                );
+
+                if ($pdfResult && !empty($pdfResult['success'])) {
+                    $ticketModel->insertTicketPdf(
+                        $ticketId,
+                        $pdfResult['filename'],
+                        $pdfResult['path'],
+                        (int) $_SESSION['account_id'],
+                        'IT',
+                        $pdfResult['file_size'] ?? null
+                    );
+                }
+            } catch (\Exception $e) {
+                error_log('Resolution document generation failed for ticket ' . $ticketId . ': ' . $e->getMessage());
+            }
+        }
 
         // =============================
         // 5️⃣ Handle technical report upload if provided
@@ -581,8 +606,7 @@ class TicketController extends AuthController
                     // Validate file size
                     if ($uploadedFile['size'] <= $maxFileSize && $uploadedFile['size'] > 0) {
                         // Get ticket number
-                        $ticket = $ticketModel->fetchTicketById($ticketId);
-                        $ticketNumber = $ticket['ticket_number'] ?? "TICKET_{$ticketId}";
+                        $ticketNumber = (string) ($existingTicket['ticket_number'] ?? "TICKET_{$ticketId}");
                         
                         // Generate filename
                         $sanitizedTicketNumber = preg_replace('/[^A-Za-z0-9_-]/', '', $ticketNumber);
@@ -622,7 +646,7 @@ class TicketController extends AuthController
                         }
                     }
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 error_log("Error uploading technical report: " . $e->getMessage());
                 // Don't block ticket update if upload fails
             }
@@ -839,7 +863,7 @@ class TicketController extends AuthController
                     filesize($uploadPath),
                     $fileMime ?: 'application/octet-stream'
                 );
-            } catch (Exception $dbErr) {
+            } catch (\Exception $dbErr) {
                 error_log("Database error recording upload: " . $dbErr->getMessage());
                 @unlink($uploadPath);
                 echo json_encode(['success' => false, 'message' => 'Database error: ' . $dbErr->getMessage()]);
@@ -861,7 +885,7 @@ class TicketController extends AuthController
             ]);
             exit;
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log("Exception in uploadTechnicalReport: " . $e->getMessage());
             error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);

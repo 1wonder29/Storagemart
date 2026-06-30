@@ -12,9 +12,41 @@ foreach ($distribution ?? [] as $d) {
     $distributionMap[(int)$d['rating']] = (int)$d['count'];
 }
 
+function it_rating_stars_fa(float $rating): string
+{
+    $html = '';
+    $rating = max(0, min(5, $rating));
+    $full = (int) floor($rating);
+    $fraction = $rating - $full;
+    $hasHalf = $fraction >= 0.25 && $fraction < 0.75;
+    if ($fraction >= 0.75) {
+        $full++;
+        $hasHalf = false;
+    }
+
+    for ($i = 1; $i <= 5; $i++) {
+        if ($i <= $full) {
+            $html .= '<i class="fas fa-star"></i>';
+        } elseif ($hasHalf && $i === $full + 1) {
+            $html .= '<i class="fas fa-star-half-alt"></i>';
+        } else {
+            $html .= '<i class="far fa-star"></i>';
+        }
+    }
+
+    return $html;
+}
+
+function it_rating_stars_badge(int $rating): string
+{
+    $rating = max(0, min(5, $rating));
+    return it_rating_stars_fa((float) $rating)
+        . '<span class="rating-stars-count">' . $rating . '/5</span>';
+}
+
 function it_rating_stars_display(int $rating): string
 {
-    return str_repeat('★', $rating) . str_repeat('☆', max(0, 5 - $rating));
+    return it_rating_stars_badge($rating);
 }
 
 function it_rating_class(int $rating): string
@@ -30,6 +62,15 @@ function it_perf_label(float $avg): string
     if ($avg >= 3.0) return 'Good';
     if ($avg > 0) return 'Needs Improvement';
     return 'No Ratings Yet';
+}
+
+function it_perf_tone(float $avg): string
+{
+    if ($avg >= 4.5) return 'excellent';
+    if ($avg >= 4.0) return 'very-good';
+    if ($avg >= 3.0) return 'good';
+    if ($avg > 0) return 'needs-work';
+    return 'none';
 }
 
 $barColors = [1 => 'bar-1', 2 => 'bar-2', 3 => 'bar-3', 4 => 'bar-4', 5 => 'bar-5'];
@@ -66,42 +107,45 @@ $hasChartData = array_sum($chartData) > 0;
     <div class="container-fluid it-ratings-page">
 
         <!-- Hero -->
-        <div class="page-hero">
-            <div class="row align-items-center">
-                <div class="col-lg-4">
-                    <h1><i class="fas fa-star mr-2"></i>My Ratings</h1>
-                    <p>Feedback from colleagues on tickets you've resolved, <?= htmlspecialchars($displayName) ?>.</p>
-                    <span class="perf-badge">
-                        <i class="fas fa-award"></i>
-                        <?= htmlspecialchars(it_perf_label($avgRating)) ?>
-                    </span>
-                </div>
-                <div class="col-lg-3 mt-3 mt-lg-0">
-                    <div class="avg-rating-box">
-                        <div class="avg-rating-value"><?= number_format($avgRating, 2) ?></div>
-                        <div class="avg-rating-stars"><?= it_rating_stars_display((int) round($avgRating)) ?></div>
-                        <div class="avg-rating-of">out of 5.00</div>
+        <div class="page-hero ratings-hero-layout">
+            <div class="ratings-hero-grid">
+                <div class="ratings-hero-profile">
+                    <div class="ratings-hero-icon" aria-hidden="true">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="ratings-hero-copy">
+                        <span class="ratings-hero-eyebrow">Performance Feedback</span>
+                        <h1>My Ratings</h1>
+                        <p>Feedback from colleagues on tickets you've resolved, <strong><?= htmlspecialchars($displayName) ?></strong>.</p>
+                        <span class="perf-badge tone-<?= htmlspecialchars(it_perf_tone($avgRating)) ?>">
+                            <i class="fas fa-award"></i>
+                            <?= htmlspecialchars(it_perf_label($avgRating)) ?>
+                        </span>
                     </div>
                 </div>
-                <div class="col-lg-5 mt-3 mt-lg-0">
-                    <div class="row">
-                        <div class="col-4">
-                            <div class="hero-stat">
-                                <div class="stat-value"><?= $totalRatings ?></div>
-                                <div class="stat-label">Total</div>
-                            </div>
+
+                <div class="ratings-hero-analytics">
+                    <div class="ratings-hero-score-panel" aria-label="Average rating <?= number_format($avgRating, 2) ?> out of 5">
+                        <div class="ratings-score-main">
+                            <span class="ratings-score-value"><?= number_format($avgRating, 2) ?></span>
+                            <span class="ratings-score-max">/ 5</span>
                         </div>
-                        <div class="col-4">
-                            <div class="hero-stat">
-                                <div class="stat-value"><?= $maxRating ?>★</div>
-                                <div class="stat-label">Highest</div>
-                            </div>
+                        <div class="avg-rating-stars avg-rating-stars-fa"><?= it_rating_stars_fa($avgRating) ?></div>
+                        <span class="ratings-score-caption">Average rating</span>
+                    </div>
+
+                    <div class="ratings-hero-stats-panel">
+                        <div class="ratings-hero-metric">
+                            <span class="ratings-hero-metric-label">Total ratings</span>
+                            <span class="ratings-hero-metric-value"><?= $totalRatings ?></span>
                         </div>
-                        <div class="col-4">
-                            <div class="hero-stat">
-                                <div class="stat-value"><?= $minRating ?>★</div>
-                                <div class="stat-label">Lowest</div>
-                            </div>
+                        <div class="ratings-hero-metric">
+                            <span class="ratings-hero-metric-label">Highest</span>
+                            <span class="ratings-hero-metric-value"><?= $maxRating ?>/5</span>
+                        </div>
+                        <div class="ratings-hero-metric">
+                            <span class="ratings-hero-metric-label">Lowest</span>
+                            <span class="ratings-hero-metric-value"><?= $minRating ?>/5</span>
                         </div>
                     </div>
                 </div>
@@ -140,9 +184,9 @@ $hasChartData = array_sum($chartData) > 0;
                                 $count = $distributionMap[$i] ?? 0;
                                 $percent = $totalRatings > 0 ? round(($count / $totalRatings) * 100) : 0;
                             ?>
-                            <div class="rating-bar-row">
+                            <div class="rating-bar-row<?= $count === 0 ? ' is-empty' : '' ?>">
                                 <div class="rating-bar-label">
-                                    <span class="stars"><?= it_rating_stars_display($i) ?></span>
+                                    <span class="stars stars-fa"><?= it_rating_stars_fa((float) $i) ?></span>
                                     <span><?= $count ?> (<?= $percent ?>%)</span>
                                 </div>
                                 <div class="rating-bar-track">
@@ -377,7 +421,16 @@ $hasChartData = array_sum($chartData) > 0;
 <script>
 $(document).ready(function () {
     function ratingStars(rating) {
-        return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        rating = Math.max(0, Math.min(5, parseInt(rating, 10) || 0));
+        var html = '';
+        for (var i = 1; i <= 5; i++) {
+            if (i <= rating) {
+                html += '<i class="fas fa-star"></i>';
+            } else {
+                html += '<i class="far fa-star"></i>';
+            }
+        }
+        return html + '<span class="rating-stars-count">' + rating + '/5</span>';
     }
 
     $(document).on('click', '.btn-rating-details', function() {

@@ -1,23 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
-
-$branches = [];
-$priorities = [];
-
-foreach ($tickets as $t) {
-    $bn = trim((string) ($t['branchName'] ?? ''));
-    if ($bn !== '') {
-        $branches[$bn] = true;
-    }
-    $pr = trim((string) ($t['priority'] ?? ''));
-    if ($pr !== '') {
-        $priorities[$pr] = true;
-    }
-}
-
-ksort($branches);
-$priorityOptions = it_ticket_priority_options(array_keys($priorities));
 ?>
 <html lang="en">
 
@@ -59,34 +42,6 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
             $summaryActiveStatus = 'Cancelled';
             require __DIR__ . '/../../partials/it/ticket_summary_stats.php';
             ?>
-
-            <div class="filter-toolbar">
-                <div class="row align-items-end">
-                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
-                        <label for="cancelBranchFilter">Branch</label>
-                        <select id="cancelBranchFilter" class="form-control form-control-sm">
-                            <option value="">All Branches</option>
-                            <?php foreach (array_keys($branches) as $branch): ?>
-                                <option value="<?= htmlspecialchars($branch) ?>"><?= htmlspecialchars($branch) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
-                        <label for="cancelPriorityFilter">Priority</label>
-                        <select id="cancelPriorityFilter" class="form-control form-control-sm">
-                            <option value="">All Priorities</option>
-                            <?php foreach ($priorityOptions as $priority): ?>
-                                <option value="<?= htmlspecialchars($priority) ?>"><?= htmlspecialchars($priority) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-4 col-sm-6 text-md-right">
-                        <button type="button" id="cancelClearFilters" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-undo mr-1"></i> Clear Filters
-                        </button>
-                    </div>
-                </div>
-            </div>
 
             <div class="card ticket-list-card shadow mb-4">
                 <div class="card-header d-flex align-items-center justify-content-between">
