@@ -97,7 +97,7 @@ new DataTable("#asset-ticket", {
   },
 });
 // #employee-table is initialized by admin-employees.js on the modern employees page.
-// #pendings table is initialized by admin-pendings.js on the modern pending page.
+// Legacy demo tables — admin ticket lists use page-specific scripts (e.g. admin-tickets.js).
 new DataTable("#ticketTables", {
   fixedHeader: { header: true },
   order: [],

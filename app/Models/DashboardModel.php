@@ -143,7 +143,7 @@ class DashboardModel extends BaseModel
                 COALESCE(NULLIF(TRIM(b.branchName), ''), 'Unassigned') AS branch_name,
                 COUNT(*) AS ticket_count
             FROM {$this->tbltickets} t
-            JOIN tblemployee e ON t.employee_id = e.employee_id
+            LEFT JOIN tblemployee e ON t.employee_id = e.employee_id
             LEFT JOIN tblbranch b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             GROUP BY COALESCE(NULLIF(TRIM(b.branchName), ''), 'Unassigned')
             ORDER BY ticket_count DESC, branch_name ASC
@@ -309,6 +309,12 @@ class DashboardModel extends BaseModel
                 WHERE UPPER(TRIM(it.department)) = 'IT'
                 GROUP BY it.employee_id, it.firstname, it.lastname
             ) AS workload
+            WHERE (
+                workload.assigned_count
+                + workload.resolved_count
+                + workload.pending_count
+                + workload.overdue_count
+            ) > 0
             ORDER BY (
                 workload.assigned_count
                 + workload.resolved_count

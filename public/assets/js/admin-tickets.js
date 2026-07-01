@@ -119,5 +119,20 @@
     }
   }
 
-  $(document).ready(initAdminTicketsTable);
+  function initPendingTicketModals() {
+    $("#approveAssignModal").on("show.bs.modal", function (e) {
+      var ticketId = $(e.relatedTarget).data("ticket-id");
+      $("#approve_ticket_id").val(ticketId || "");
+    });
+
+    $("#declineModal").on("show.bs.modal", function (e) {
+      var ticketId = $(e.relatedTarget).data("ticket-id");
+      $("#decline_ticket_id").val(ticketId || "");
+    });
+  }
+
+  $(document).ready(function () {
+    initAdminTicketsTable();
+    initPendingTicketModals();
+  });
 })(jQuery);

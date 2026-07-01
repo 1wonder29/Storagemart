@@ -293,7 +293,7 @@ $todayLabel = date('l, F j, Y');
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_overview.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_category_bar.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_dashboard_branch_bar.js"></script>

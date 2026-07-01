@@ -8,6 +8,17 @@
     return row.name || 'Unknown';
   });
 
+  const sumRow = function (row) {
+    return (Number(row.assigned) || 0)
+      + (Number(row.resolved) || 0)
+      + (Number(row.pending) || 0)
+      + (Number(row.overdue) || 0);
+  };
+
+  const hasData = rows.length > 0 && rows.some(function (row) {
+    return sumRow(row) > 0;
+  });
+
   const assigned = rows.map(function (row) {
     return Number(row.assigned) || 0;
   });
@@ -19,13 +30,6 @@
   });
   const overdue = rows.map(function (row) {
     return Number(row.overdue) || 0;
-  });
-
-  const hasData = rows.length > 0 && rows.some(function (row) {
-    return (Number(row.assigned) || 0)
-      + (Number(row.resolved) || 0)
-      + (Number(row.pending) || 0)
-      + (Number(row.overdue) || 0) > 0;
   });
 
   const datasets = [
@@ -148,8 +152,7 @@
             color: '#858796'
           },
           grid: {
-            color: 'rgb(234, 236, 244)',
-            drawBorder: false
+            color: 'rgb(234, 236, 244)'
           },
           border: { display: false }
         },

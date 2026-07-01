@@ -1,6 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
+require_once __DIR__ . '/../../Helpers/TicketStatus.php';
 
 $branches = [];
 $priorities = [];
@@ -260,12 +261,27 @@ $totalTickets = array_sum($summaryTicketStats);
                                                     <i class="fas fa-file-word"></i>
                                                 </a>
                                                 <?php endif; ?>
+                                                <?php if (strcasecmp($status, TicketStatus::PENDING) === 0): ?>
+                                                <button type="button" class="btn btn-sm btn-outline-success"
+                                                    title="Approve &amp; assign"
+                                                    data-toggle="modal" data-target="#approveAssignModal"
+                                                    data-ticket-id="<?= $ticketId ?>">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <?php endif; ?>
                                                 <div class="dropdown">
                                                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="More actions">
                                                         <i class="fas fa-ellipsis-v"></i>
                                                     </button>
                                                     <div class="dropdown-menu dropdown-menu-right shadow">
+                                                        <?php if (strcasecmp($status, TicketStatus::PENDING) === 0): ?>
+                                                            <button type="button" class="dropdown-item text-danger"
+                                                                data-toggle="modal" data-target="#declineModal"
+                                                                data-ticket-id="<?= $ticketId ?>">
+                                                                <i class="fas fa-times mr-2"></i> Decline
+                                                            </button>
+                                                        <?php endif; ?>
                                                         <?php if (ticket_assignment_can_update($status)): ?>
                                                             <a href="#" class="dropdown-item openUpdateAssignBtn"
                                                             data-ticket-id="<?= $ticketId ?>"
@@ -401,6 +417,72 @@ $totalTickets = array_sum($summaryTicketStats);
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save Assignment</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="approveAssignModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/tickets/approve-assign">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                <input type="hidden" name="ticket_id" id="approve_ticket_id" value="">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title mb-0">Approve &amp; Assign</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Select IT Staff</label>
+                            <select class="form-control" name="assigned_to" required>
+                                <option value="">-- Select IT Staff --</option>
+                                <?php foreach ($itStaff as $it): ?>
+                                    <option value="<?= (int) $it['employee_id'] ?>">
+                                        <?= htmlspecialchars($it['firstname'] . ' ' . $it['lastname']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label>Remarks (optional)</label>
+                            <textarea name="remarks" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Approve &amp; Assign</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="declineModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/tickets/decline">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                <input type="hidden" name="ticket_id" id="decline_ticket_id" value="">
+                <input type="hidden" name="action" value="Decline">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title mb-0">Decline Ticket</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Reason for Decline</label>
+                            <textarea name="decline_reason" class="form-control" rows="4" required></textarea>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label>Remarks (optional)</label>
+                            <textarea name="remarks" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Confirm Decline</button>
                     </div>
                 </div>
             </form>

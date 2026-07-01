@@ -94,8 +94,7 @@
             color: '#858796'
           },
           grid: {
-            color: 'rgb(234, 236, 244)',
-            drawBorder: false
+            color: 'rgb(234, 236, 244)'
           },
           border: { display: false },
           title: {

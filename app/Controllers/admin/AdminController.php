@@ -40,7 +40,7 @@ class AdminController extends AuthController
         if (method_exists($accountModel, 'fetchUserDetails') && !empty($_SESSION['account_id'])) {
             $details = $accountModel->fetchUserDetails((int)$_SESSION['account_id']);
             if (!empty($details['firstname'])) $loggedFirstname = $details['firstname'];
-            if (!empty($details['position']))  $loggedUsertype  = $details['position'];
+            if (!empty($details['position']))  $loggedPosition  = $details['position'];
         }
 
         // Dashboard stats
