@@ -69,6 +69,11 @@ $todayLabel = date('l, F j, Y');
                         <span class="stat-title"><i class="fas fa-spinner" aria-hidden="true"></i> In progress</span>
                         <span class="stat-hint">Active assignments</span>
                     </a>
+                    <a href="<?= htmlspecialchars($base) ?>/admin/tickets?filter=sla-breach" class="admin-stat-card tone-sla">
+                        <span class="stat-number"><?= htmlspecialchars(number_format((float) ($slaCompliance ?? 0), 1)) ?>%</span>
+                        <span class="stat-title"><i class="fas fa-check-circle" aria-hidden="true"></i> SLA Compliance</span>
+                        <span class="stat-hint">Resolved within 24h</span>
+                    </a>
                     <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="admin-stat-card tone-assets">
                         <span class="stat-number"><?= (int) $assetCount ?></span>
                         <span class="stat-title"><i class="fas fa-archive" aria-hidden="true"></i> Assets</span>
@@ -176,7 +181,7 @@ $todayLabel = date('l, F j, Y');
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-6 col-lg-6 mb-4">
+                <div class="col-xl-6 col-lg-6 mb-4" id="admin-sla-chart">
                     <div class="card dash-card shadow h-100">
                         <div class="card-header">
                             <h6><i class="fas fa-stopwatch"></i>Ticket Resolution Time (SLA)</h6>

@@ -255,19 +255,10 @@ class DashboardModel extends BaseModel
 
     public function getItPersonnelWorkload(int $limit = 5): array
     {
+        require_once __DIR__ . '/../Helpers/TicketSla.php';
         $limit = max(1, min(10, $limit));
 
-        $overdueCondition = "
-            t.status IN ('Open', 'In Progress', 'Pending')
-            AND t.date_filed < DATE_SUB(
-                NOW(),
-                INTERVAL CASE UPPER(TRIM(t.priority))
-                    WHEN 'HIGH' THEN 2
-                    WHEN 'MEDIUM' THEN 5
-                    ELSE 7
-                END DAY
-            )
-        ";
+        $overdueCondition = TicketSla::overdueCondition('t');
 
         $sql = "
             SELECT
@@ -346,6 +337,58 @@ class DashboardModel extends BaseModel
         }
 
         return $result;
+    }
+
+    public function getOverdueTicketCount(): int
+    {
+        require_once __DIR__ . '/../Helpers/TicketSla.php';
+        $overdueCondition = TicketSla::overdueCondition('t');
+        $sql = "
+            SELECT COUNT(*) AS overdue_count
+            FROM {$this->tbltickets} t
+            WHERE ({$overdueCondition})
+        ";
+
+        $stmt = $this->pdo->query($sql);
+        if (!$stmt) {
+            return 0;
+        }
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int) ($row['overdue_count'] ?? 0);
+    }
+
+    public function getSlaCompliancePercent(int $slaHours = 24): float
+    {
+        require_once __DIR__ . '/../Helpers/TicketSla.php';
+        $slaHours = max(1, $slaHours);
+
+        $sql = "
+            SELECT
+                COUNT(*) AS total_resolved,
+                SUM(
+                    CASE
+                        WHEN TIMESTAMPDIFF(MINUTE, date_filed, last_updated) / 60 <= :sla_hours
+                        THEN 1 ELSE 0
+                    END
+                ) AS compliant_count
+            FROM {$this->tbltickets}
+            WHERE status IN ('Resolved', 'Closed')
+              AND last_updated IS NOT NULL
+              AND date_filed IS NOT NULL
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['sla_hours' => $slaHours]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $total = (int) ($row['total_resolved'] ?? 0);
+        if ($total <= 0) {
+            return 0.0;
+        }
+
+        $compliant = (int) ($row['compliant_count'] ?? 0);
+        return round(($compliant / $total) * 100, 1);
     }
 
 }

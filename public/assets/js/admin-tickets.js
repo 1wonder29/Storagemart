@@ -94,6 +94,12 @@
       redraw();
     });
     $("#adminClearFilters").on("click", function () {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get("filter")) {
+        window.location.href = window.location.pathname;
+        return;
+      }
+
       branchFilter = priorityFilter = statusFilter = "";
       $("#adminBranchFilter, #adminPriorityFilter, #adminStatusFilter").val("");
       dt.search("");

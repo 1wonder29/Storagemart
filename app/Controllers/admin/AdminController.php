@@ -61,6 +61,7 @@ class AdminController extends AuthController
         $topReportedIssues = $dashboardModel->getTopReportedIssues(5);
         $ticketPriorityCounts = $dashboardModel->getTicketCountsByPriority();
         $itPersonnelWorkload = $dashboardModel->getItPersonnelWorkload(5);
+        $slaCompliance = $dashboardModel->getSlaCompliancePercent();
         $resolutionRows = $dashboardModel->getItTicketResolutionTimes();
         $resolutionLabels = [];
         $resolutionData = [];

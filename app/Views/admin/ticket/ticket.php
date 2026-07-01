@@ -1,7 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
-require_once __DIR__ . '/../../Helpers/TicketStatus.php';
+require_once __DIR__ . '/../../../Helpers/TicketStatus.php';
 
 $branches = [];
 $priorities = [];
@@ -34,6 +34,19 @@ foreach ($statusOrder as $status) {
     $summaryTicketStats[$status] = (int) ($statusCounts[$status] ?? 0);
 }
 $summaryActiveStatus = trim((string) ($_GET['status'] ?? ''));
+$activeTicketFilter = trim((string) ($_GET['filter'] ?? ''));
+if (!in_array($activeTicketFilter, ['overdue', 'sla-breach'], true)) {
+    $activeTicketFilter = '';
+}
+
+$filterLabels = [
+    'overdue' => 'Overdue tickets',
+    'sla-breach' => 'SLA breach (not resolved within 24h)',
+];
+$filterDescriptions = [
+    'overdue' => 'Open, in progress, or pending tickets past their priority deadline (High 2d, Medium 5d, Low 7d).',
+    'sla-breach' => 'Tickets resolved after 24 hours, or still open and filed more than 24 hours ago.',
+];
 $heroOpenCount = (int) ($summaryTicketStats[TicketStatus::OPEN] ?? 0);
 $heroInProgressCount = (int) ($summaryTicketStats[TicketStatus::IN_PROGRESS] ?? 0);
 $heroResolvedCount = (int) ($summaryTicketStats[TicketStatus::RESOLVED] ?? 0);
@@ -45,7 +58,7 @@ $totalTickets = array_sum($summaryTicketStats);
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | All Tickets</title>
+    <title>Storage Mart | <?= $activeTicketFilter !== '' ? htmlspecialchars($filterLabels[$activeTicketFilter]) : 'All Tickets' ?></title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
@@ -70,8 +83,17 @@ $totalTickets = array_sum($summaryTicketStats);
             <div class="page-hero">
                 <div class="row align-items-center">
                     <div class="col-lg-5">
-                        <h1><i class="fas fa-ticket-alt mr-2"></i>All Tickets</h1>
-                        <p>Manage every ticket across branches — assign staff, track status, and review history.</p>
+                        <h1>
+                            <i class="fas fa-ticket-alt mr-2"></i>
+                            <?= $activeTicketFilter !== '' ? htmlspecialchars($filterLabels[$activeTicketFilter]) : 'All Tickets' ?>
+                        </h1>
+                        <p>
+                            <?php if ($activeTicketFilter !== ''): ?>
+                                <?= htmlspecialchars($filterDescriptions[$activeTicketFilter]) ?>
+                            <?php else: ?>
+                                Manage every ticket across branches — assign staff, track status, and review history.
+                            <?php endif; ?>
+                        </p>
                     </div>
                     <div class="col-lg-7 mt-3 mt-lg-0">
                         <div class="row">
@@ -97,6 +119,19 @@ $totalTickets = array_sum($summaryTicketStats);
                     </div>
                 </div>
             </div>
+
+            <?php if ($activeTicketFilter !== ''): ?>
+            <div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap mb-3" role="status">
+                <div class="mb-2 mb-md-0">
+                    <i class="fas fa-filter mr-2"></i>
+                    Showing <strong><?= (int) $totalTickets ?></strong> ticket<?= $totalTickets === 1 ? '' : 's' ?> —
+                    <?= htmlspecialchars($filterLabels[$activeTicketFilter]) ?>.
+                </div>
+                <a href="<?= htmlspecialchars($base) ?>/admin/tickets" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-times mr-1"></i> Clear filter
+                </a>
+            </div>
+            <?php endif; ?>
 
             <?php require __DIR__ . '/../../partials/admin/ticket_summary_stats.php'; ?>
 
@@ -157,7 +192,13 @@ $totalTickets = array_sum($summaryTicketStats);
                     <?php if (empty($tickets)): ?>
                         <div class="empty-state">
                             <i class="fas fa-inbox d-block"></i>
-                            No tickets found.
+                            <?php if ($activeTicketFilter === 'overdue'): ?>
+                                No overdue tickets right now.
+                            <?php elseif ($activeTicketFilter === 'sla-breach'): ?>
+                                No tickets outside the 24-hour resolution SLA.
+                            <?php else: ?>
+                                No tickets found.
+                            <?php endif; ?>
                         </div>
                     <?php else: ?>
                     <div class="table-responsive">

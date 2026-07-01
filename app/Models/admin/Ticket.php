@@ -14,9 +14,26 @@ class Ticket extends BaseModel {
     protected $tblgroup = 'tblassets_group';
     protected $tbllogs = 'tbllogs'; 
 
-    //fetch all tickets
-    public function fetchTicket(): array{
-        $stmt = $this->pdo->prepare("SELECT t.ticket_id, t.ticket_number, CONCAT(e.lastname, ', ', e.firstname) AS employee_name, t.category, t.priority, t.status, t.date_filed, b.branchName,  t.assigned_to AS assigned_to_id, CONCAT(a2.firstname, ' ', a2.lastname) AS assigned_to_name FROM {$this->table} t JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id) LEFT JOIN {$this->tblemployee} a2 ON t.assigned_to = a2.employee_id ORDER BY t.date_filed DESC");
+    //fetch all tickets (optional filter: overdue | sla-breach)
+    public function fetchTicket(?string $filter = null): array
+    {
+        require_once __DIR__ . '/../../Helpers/TicketSla.php';
+
+        $sql = "SELECT t.ticket_id, t.ticket_number, CONCAT(e.lastname, ', ', e.firstname) AS employee_name, t.category, t.priority, t.status, t.date_filed, b.branchName, t.assigned_to AS assigned_to_id, CONCAT(a2.firstname, ' ', a2.lastname) AS assigned_to_name
+            FROM {$this->table} t
+            JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+            LEFT JOIN {$this->tblemployee} a2 ON t.assigned_to = a2.employee_id";
+
+        if ($filter === 'overdue') {
+            $sql .= ' WHERE (' . TicketSla::overdueCondition('t') . ')';
+        } elseif ($filter === 'sla-breach') {
+            $sql .= ' WHERE (' . TicketSla::resolutionBreachCondition('t') . ')';
+        }
+
+        $sql .= ' ORDER BY t.date_filed DESC';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }

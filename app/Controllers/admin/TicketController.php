@@ -25,7 +25,12 @@ class TicketController extends AuthController
         // --- USE TICKET MODEL HERE ---
         $ticketModel = new Ticket();
 
-        $tickets = $ticketModel->fetchTicket();
+        $ticketFilter = trim((string) ($_GET['filter'] ?? ''));
+        if (!in_array($ticketFilter, ['overdue', 'sla-breach'], true)) {
+            $ticketFilter = '';
+        }
+
+        $tickets = $ticketModel->fetchTicket($ticketFilter !== '' ? $ticketFilter : null);
         $itStaff = $ticketModel->fetchEmployeesByDepartment('IT');
 
         // CSRF token (for future forms)
