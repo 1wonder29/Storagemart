@@ -4,6 +4,26 @@ $fullName = trim(($profile['lastname'] ?? '') . ', ' . ($profile['firstname'] ??
 $displayName = $fullName !== ',' ? trim($fullName) : '-';
 $dateCreated = $profile['account_datecreated'] ?? $profile['datecreated'] ?? null;
 $dateCreatedLabel = $dateCreated ? date('M d, Y', strtotime($dateCreated)) : '-';
+$positionLabel = trim((string) ($profile['position'] ?? ''));
+if ($positionLabel === '') {
+    $positionLabel = trim((string) ($profile['usertype'] ?? ''));
+}
+$profileValue = static function ($value): string {
+    $text = trim((string) $value);
+    return $text !== '' ? $text : '—';
+};
+$profileFields = [
+    ['label' => 'Full Name', 'value' => $displayName, 'icon' => 'fa-user', 'tone' => 'tone-user'],
+    ['label' => 'Username', 'value' => $profile['username'] ?? '', 'icon' => 'fa-at', 'tone' => 'tone-account'],
+    ['label' => 'Employee ID', 'value' => $profile['employee_id'] ?? '', 'icon' => 'fa-fingerprint', 'tone' => 'tone-id'],
+    ['label' => 'User Type', 'value' => $profile['usertype'] ?? '', 'icon' => 'fa-user-tag', 'tone' => 'tone-type'],
+    ['label' => 'Department', 'value' => $profile['department'] ?? '', 'icon' => 'fa-building', 'tone' => 'tone-dept'],
+    ['label' => 'Position', 'value' => $positionLabel, 'icon' => 'fa-briefcase', 'tone' => 'tone-role'],
+    ['label' => 'Email', 'value' => $profile['email'] ?? '', 'icon' => 'fa-envelope', 'tone' => 'tone-email'],
+    ['label' => 'Branch', 'value' => $profile['branchName'] ?? '', 'icon' => 'fa-map-marker-alt', 'tone' => 'tone-branch'],
+    ['label' => 'Status', 'value' => $profile['status'] ?? '', 'icon' => 'fa-shield-alt', 'tone' => 'tone-status', 'badge' => true],
+    ['label' => 'Date Created', 'value' => $dateCreatedLabel, 'icon' => 'fa-calendar-alt', 'tone' => 'tone-date'],
+];
 ?>
 <html lang="en">
 <head>
@@ -15,7 +35,7 @@ $dateCreatedLabel = $dateCreated ? date('M d, Y', strtotime($dateCreated)) : '-'
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/profile-page.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/profile-page.css?v=2" rel="stylesheet">
 </head>
 <body id="page-top">
 <div id="wrapper">
@@ -33,80 +53,42 @@ $dateCreatedLabel = $dateCreated ? date('M d, Y', strtotime($dateCreated)) : '-'
                 </div>
                 <div>
                     <h1><?= htmlspecialchars($displayName) ?></h1>
-                    <div class="profile-role"><?= htmlspecialchars($profile['position'] ?? '-') ?></div>
+                    <div class="profile-role"><?= htmlspecialchars($profileValue($positionLabel)) ?></div>
                     <?php if (!empty($profile['status'])): ?>
-                        <span class="profile-badge"><?= htmlspecialchars($profile['status']) ?></span>
+                        <span class="profile-badge profile-badge-hero"><?= htmlspecialchars($profile['status']) ?></span>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
 
-        <div class="card profile-card shadow mb-4">
+        <div class="card profile-card profile-card-modern shadow mb-4">
             <div class="card-header">
-                <h6><i class="fas fa-id-card"></i>Account Information</h6>
+                <div>
+                    <h6><i class="fas fa-id-card"></i>Account Information</h6>
+                    <p class="profile-card-subtitle mb-0">Your account and employee details at a glance.</p>
+                </div>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="profile-field">
-                            <div class="profile-field-label">Full Name</div>
-                            <div class="profile-field-value"><?= htmlspecialchars($displayName) ?></div>
+                <div class="profile-info-grid">
+                    <?php foreach ($profileFields as $field):
+                        $value = $profileValue($field['value'] ?? '');
+                        $isStatus = !empty($field['badge']);
+                        $statusClass = $isStatus ? 'profile-status-pill ' . (strcasecmp($value, 'ACTIVE') === 0 ? 'is-active' : 'is-default') : '';
+                    ?>
+                        <div class="profile-info-item">
+                            <div class="profile-info-icon <?= htmlspecialchars($field['tone']) ?>">
+                                <i class="fas <?= htmlspecialchars($field['icon']) ?>" aria-hidden="true"></i>
+                            </div>
+                            <div class="profile-info-content">
+                                <span class="profile-info-label"><?= htmlspecialchars($field['label']) ?></span>
+                                <?php if ($isStatus && $value !== '—'): ?>
+                                    <span class="<?= htmlspecialchars($statusClass) ?>"><?= htmlspecialchars($value) ?></span>
+                                <?php else: ?>
+                                    <span class="profile-info-value<?= $value === '—' ? ' is-empty' : '' ?>"><?= htmlspecialchars($value) ?></span>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="profile-field">
-                            <div class="profile-field-label">Username</div>
-                            <div class="profile-field-value"><?= htmlspecialchars($profile['username'] ?? '-') ?></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="profile-field">
-                            <div class="profile-field-label">Employee ID</div>
-                            <div class="profile-field-value"><?= htmlspecialchars((string)($profile['employee_id'] ?? '-')) ?></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="profile-field">
-                            <div class="profile-field-label">User Type</div>
-                            <div class="profile-field-value"><?= htmlspecialchars($profile['usertype'] ?? '-') ?></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="profile-field">
-                            <div class="profile-field-label">Department</div>
-                            <div class="profile-field-value"><?= htmlspecialchars($profile['department'] ?? '-') ?></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="profile-field">
-                            <div class="profile-field-label">Position</div>
-                            <div class="profile-field-value"><?= htmlspecialchars($profile['position'] ?? '-') ?></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="profile-field">
-                            <div class="profile-field-label">Email</div>
-                            <div class="profile-field-value"><?= htmlspecialchars($profile['email'] ?? '-') ?></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="profile-field">
-                            <div class="profile-field-label">Branch</div>
-                            <div class="profile-field-value"><?= htmlspecialchars($profile['branchName'] ?? '-') ?></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="profile-field">
-                            <div class="profile-field-label">Status</div>
-                            <div class="profile-field-value"><?= htmlspecialchars($profile['status'] ?? '-') ?></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="profile-field">
-                            <div class="profile-field-label">Date Created</div>
-                            <div class="profile-field-value"><?= htmlspecialchars($dateCreatedLabel) ?></div>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </div>

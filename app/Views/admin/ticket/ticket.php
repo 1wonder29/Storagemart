@@ -2,6 +2,7 @@
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
 require_once __DIR__ . '/../../../Helpers/TicketStatus.php';
+require_once __DIR__ . '/../../../Helpers/TicketSla.php';
 
 $branches = [];
 $priorities = [];
@@ -35,22 +36,21 @@ foreach ($statusOrder as $status) {
 }
 $summaryActiveStatus = trim((string) ($_GET['status'] ?? ''));
 $activeTicketFilter = trim((string) ($_GET['filter'] ?? ''));
-if (!in_array($activeTicketFilter, ['overdue', 'sla-breach'], true)) {
+if (!in_array($activeTicketFilter, ['sla-breach'], true)) {
     $activeTicketFilter = '';
 }
 
 $filterLabels = [
-    'overdue' => 'Overdue tickets',
-    'sla-breach' => 'SLA breach (not resolved within 24h)',
+    'sla-breach' => 'SLA breach (not resolved within ' . TicketSla::RESOLUTION_SLA_HOURS . 'h)',
 ];
 $filterDescriptions = [
-    'overdue' => 'Open, in progress, or pending tickets past their priority deadline (High 2d, Medium 5d, Low 7d).',
-    'sla-breach' => 'Tickets resolved after 24 hours, or still open and filed more than 24 hours ago.',
+    'sla-breach' => 'Tickets resolved after ' . TicketSla::RESOLUTION_SLA_HOURS . ' hours, or still open and filed more than ' . TicketSla::RESOLUTION_SLA_HOURS . ' hours ago.',
 ];
 $heroOpenCount = (int) ($summaryTicketStats[TicketStatus::OPEN] ?? 0);
 $heroInProgressCount = (int) ($summaryTicketStats[TicketStatus::IN_PROGRESS] ?? 0);
 $heroResolvedCount = (int) ($summaryTicketStats[TicketStatus::RESOLVED] ?? 0);
 $totalTickets = array_sum($summaryTicketStats);
+$summaryActiveFilter = $activeTicketFilter;
 ?>
 <html lang="en">
 
@@ -192,10 +192,8 @@ $totalTickets = array_sum($summaryTicketStats);
                     <?php if (empty($tickets)): ?>
                         <div class="empty-state">
                             <i class="fas fa-inbox d-block"></i>
-                            <?php if ($activeTicketFilter === 'overdue'): ?>
-                                No overdue tickets right now.
-                            <?php elseif ($activeTicketFilter === 'sla-breach'): ?>
-                                No tickets outside the 24-hour resolution SLA.
+                            <?php if ($activeTicketFilter === 'sla-breach'): ?>
+                                No tickets outside the <?= (int) TicketSla::RESOLUTION_SLA_HOURS ?>-hour resolution SLA.
                             <?php else: ?>
                                 No tickets found.
                             <?php endif; ?>

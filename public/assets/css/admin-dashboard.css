@@ -24,6 +24,7 @@
 /* Hero banner */
 .admin-dashboard-page .page-hero {
   position: relative;
+  z-index: 0;
   overflow: hidden;
   background: linear-gradient(135deg, var(--dash-navy) 0%, var(--dash-blue) 55%, var(--dash-blue-bright) 100%);
   background-size: 200% 200%;
@@ -251,6 +252,10 @@
 
 .admin-dashboard-page .admin-stat-card.tone-sla .stat-number { color: #15803d; }
 .admin-dashboard-page .admin-stat-card.tone-sla .stat-title i { color: #22c55e; }
+
+.admin-dashboard-page #admin-sla-chart {
+  scroll-margin-top: 5.5rem;
+}
 
 /* Chart & panel cards */
 .admin-dashboard-page .dash-card {

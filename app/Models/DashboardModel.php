@@ -1,5 +1,6 @@
 <?php 
     require_once __DIR__ . '/admin/BaseModel.php';
+    require_once __DIR__ . '/../Helpers/TicketSla.php';
 class DashboardModel extends BaseModel
 {
     protected $tbltickets = 'tbltickets';
@@ -255,7 +256,6 @@ class DashboardModel extends BaseModel
 
     public function getItPersonnelWorkload(int $limit = 5): array
     {
-        require_once __DIR__ . '/../Helpers/TicketSla.php';
         $limit = max(1, min(10, $limit));
 
         $overdueCondition = TicketSla::overdueCondition('t');
@@ -339,29 +339,9 @@ class DashboardModel extends BaseModel
         return $result;
     }
 
-    public function getOverdueTicketCount(): int
+    public function getSlaCompliancePercent(?int $slaHours = null): float
     {
-        require_once __DIR__ . '/../Helpers/TicketSla.php';
-        $overdueCondition = TicketSla::overdueCondition('t');
-        $sql = "
-            SELECT COUNT(*) AS overdue_count
-            FROM {$this->tbltickets} t
-            WHERE ({$overdueCondition})
-        ";
-
-        $stmt = $this->pdo->query($sql);
-        if (!$stmt) {
-            return 0;
-        }
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return (int) ($row['overdue_count'] ?? 0);
-    }
-
-    public function getSlaCompliancePercent(int $slaHours = 24): float
-    {
-        require_once __DIR__ . '/../Helpers/TicketSla.php';
-        $slaHours = max(1, $slaHours);
+        $slaHours = max(1, $slaHours ?? TicketSla::RESOLUTION_SLA_HOURS);
 
         $sql = "
             SELECT

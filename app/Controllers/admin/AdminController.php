@@ -820,6 +820,7 @@ class AdminController extends AuthController
         }
 
         $ticketCount = count($tickets);
+        $monthlyTicketTrend = $ticketModel->fetchMonthlyTicketTrend((int) ($selectedYear ?? date('Y')));
 
         $weekOptions = [];
         $weekYear = $reportType === 'weekly' ? $selectedYear : (int) date('o');

@@ -299,6 +299,10 @@ class AuthController {
             }
         }
 
+        if ($position === '' && !empty($_SESSION['usertype'])) {
+            $position = (string) $_SESSION['usertype'];
+        }
+
         return [
             'base' => $base,
             // names below match how you later read them: loggedFirstname, loggedPosition

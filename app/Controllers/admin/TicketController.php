@@ -26,7 +26,7 @@ class TicketController extends AuthController
         $ticketModel = new Ticket();
 
         $ticketFilter = trim((string) ($_GET['filter'] ?? ''));
-        if (!in_array($ticketFilter, ['overdue', 'sla-breach'], true)) {
+        if (!in_array($ticketFilter, ['sla-breach'], true)) {
             $ticketFilter = '';
         }
 

@@ -212,6 +212,48 @@
   color: #4e73df;
 }
 
+.admin-monthly-report-page .report-trend-card {
+  border: 1px solid var(--report-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: var(--report-shadow) !important;
+}
+
+.admin-monthly-report-page .report-trend-card .card-header {
+  background: linear-gradient(180deg, #fafbff 0%, #fff 100%);
+  border-bottom: 1px solid var(--report-border);
+  padding: 1rem 1.25rem;
+}
+
+.admin-monthly-report-page .report-trend-card .card-header h6 {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1e3a8a;
+}
+
+.admin-monthly-report-page .report-trend-year {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+}
+
+.admin-monthly-report-page .report-trend-chart-wrap {
+  position: relative;
+  height: 320px;
+}
+
+.admin-monthly-report-page .report-trend-empty {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--report-muted);
+  text-align: center;
+}
+
 @media (max-width: 767.98px) {
   .admin-monthly-report-page .page-hero {
     padding: 1.25rem 1.35rem;

@@ -14,20 +14,17 @@ class Ticket extends BaseModel {
     protected $tblgroup = 'tblassets_group';
     protected $tbllogs = 'tbllogs'; 
 
-    //fetch all tickets (optional filter: overdue | sla-breach)
+    //fetch all tickets (optional filter: sla-breach)
     public function fetchTicket(?string $filter = null): array
     {
-        require_once __DIR__ . '/../../Helpers/TicketSla.php';
-
         $sql = "SELECT t.ticket_id, t.ticket_number, CONCAT(e.lastname, ', ', e.firstname) AS employee_name, t.category, t.priority, t.status, t.date_filed, b.branchName, t.assigned_to AS assigned_to_id, CONCAT(a2.firstname, ' ', a2.lastname) AS assigned_to_name
             FROM {$this->table} t
             JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
             LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             LEFT JOIN {$this->tblemployee} a2 ON t.assigned_to = a2.employee_id";
 
-        if ($filter === 'overdue') {
-            $sql .= ' WHERE (' . TicketSla::overdueCondition('t') . ')';
-        } elseif ($filter === 'sla-breach') {
+        if ($filter === 'sla-breach') {
+            require_once __DIR__ . '/../../Helpers/TicketSla.php';
             $sql .= ' WHERE (' . TicketSla::resolutionBreachCondition('t') . ')';
         }
 
@@ -638,6 +635,43 @@ public function searchEmployee(string $q): ?array
         $end = $startDate->modify('+7 days')->format('Y-m-d H:i:s');
 
         return $this->fetchTicketsByDateRange($start, $end);
+    }
+
+    /**
+     * Ticket counts filed per calendar month for a given year (Jan–Dec).
+     *
+     * @return array{labels: string[], data: int[], year: int}
+     */
+    public function fetchMonthlyTicketTrend(int $year): array
+    {
+        $year = max(2000, min(2100, $year));
+        $labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $counts = array_fill(0, 12, 0);
+
+        $sql = "
+            SELECT MONTH(date_filed) AS month_num, COUNT(*) AS ticket_count
+            FROM {$this->tbltickets}
+            WHERE date_filed IS NOT NULL
+              AND YEAR(date_filed) = :year
+            GROUP BY MONTH(date_filed)
+            ORDER BY month_num ASC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':year' => $year]);
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $monthNum = (int) ($row['month_num'] ?? 0);
+            if ($monthNum >= 1 && $monthNum <= 12) {
+                $counts[$monthNum - 1] = (int) ($row['ticket_count'] ?? 0);
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $counts,
+            'year' => $year,
+        ];
     }
 
     public function countTicketsByMonth(int $year, int $month): int
