@@ -57,7 +57,9 @@ $base = rtrim(BASE_URL, '/');
         <?php endif; ?>
 
     </div>
-</div>
+
+            </div>
+        </div>
 </div>
 
 <div class="modal fade" id="updateAssignModal" tabindex="-1" role="dialog" aria-labelledby="updateAssignLabel" aria-hidden="true">

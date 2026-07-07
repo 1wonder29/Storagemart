@@ -124,6 +124,9 @@ $backUrl = $groupId > 0
                 </div>
 
             </div>
+
+            </div>
+        </div>
 </div>
 
 <!-- Scroll to Top -->

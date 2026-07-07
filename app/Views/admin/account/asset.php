@@ -96,6 +96,9 @@ $assetCount = is_array($assets ?? null) ? count($assets) : 0;
             </div>
         </div>
     </div>
+
+            </div>
+        </div>
 </div>
 
 <div class="modal fade" id="returnAssetModal" tabindex="-1" role="dialog" aria-labelledby="returnAssetModalLabel" aria-hidden="true">
@@ -135,8 +138,6 @@ $assetCount = is_array($assets ?? null) ? count($assets) : 0;
 <a class="scroll-to-top rounded" href="#page-top">
     <i class="fas fa-angle-up"></i>
 </a>
-
-</div>
 
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

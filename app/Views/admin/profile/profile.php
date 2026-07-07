@@ -25,6 +25,7 @@ $profileFields = [
     ['label' => 'Date Created', 'value' => $dateCreatedLabel, 'icon' => 'fa-calendar-alt', 'tone' => 'tone-date'],
 ];
 ?>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -93,8 +94,9 @@ $profileFields = [
             </div>
         </div>
     </div>
-</div>
 
+            </div>
+        </div>
 </div>
 
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>

@@ -198,7 +198,6 @@ $base = rtrim(BASE_URL, '/');
     </a>
 
     <!-- Logout Modal-->
-</div>
     <script>
     (function(){
         var btn = document.getElementById('closeModalBtn');
