@@ -94,6 +94,8 @@ $base = rtrim(BASE_URL, '/');
             <?php endif; ?>
         </div>
     </div>
+            </div>
+        </div>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script>
     (function () {

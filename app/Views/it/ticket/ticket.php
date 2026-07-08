@@ -179,12 +179,14 @@ if ($summaryTicketStats === []) {
             </div>
 
         </div>
+
+            </div>
+        </div>
     </div>
 
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
-</div>
 
     <div class="modal fade ticket-history-modal theme-it" id="viewTicketModal" tabindex="-1" aria-labelledby="viewTicketLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
