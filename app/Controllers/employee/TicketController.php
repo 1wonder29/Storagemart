@@ -290,6 +290,14 @@ class EmployeeTicketController extends AuthController
 
         $ticketId = (int)$_GET['ticket_id'];
 
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicketId($pdo, $ticketId, (int) $_SESSION['account_id'], (string) ($_SESSION['usertype'] ?? ''))) {
+            http_response_code(403);
+            echo json_encode([]);
+            return;
+        }
+
         $model = new EmployeeTicket();
         $history = $model->getTicketHistory($ticketId);
 
@@ -300,6 +308,11 @@ class EmployeeTicketController extends AuthController
  public function rate()
 {
     if (session_status() === PHP_SESSION_NONE) session_start();
+
+    if (empty($_SESSION['account_id'])) {
+        $this->redirect('/login');
+        return;
+    }
 
     $ticketId = (int) ($_GET['id'] ?? 0);
     if (!$ticketId) {
@@ -336,6 +349,18 @@ public function storeRating()
 
     if (!$ticketId) {
         echo json_encode(['success' => false, 'message' => 'Invalid ticket.']);
+        exit;
+    }
+
+    if (empty($_SESSION['account_id'])) {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
+        exit;
+    }
+
+    global $pdo;
+    require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+    if (!TicketAccess::canViewTicketId($pdo, $ticketId, (int) $_SESSION['account_id'], (string) ($_SESSION['usertype'] ?? ''))) {
+        echo json_encode(['success' => false, 'message' => 'You are not allowed to rate this ticket.']);
         exit;
     }
 

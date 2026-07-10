@@ -136,7 +136,7 @@ class AOMTicketModel extends BaseModel
                 b.branchCode
             FROM {$this->tbltickets} t
             LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             WHERE t.ticket_id = :ticket_id
             AND (
                 (
@@ -351,8 +351,8 @@ class AOMTicketModel extends BaseModel
                 COUNT(t.ticket_id) AS ticket_count
             FROM {$this->tbltickets} t
             LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            INNER JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
-            WHERE t.branch_id = :branch_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+            WHERE COALESCE(NULLIF(t.branch_id, 0), e.branch_id) = :branch_id
               AND t.employee_id IS NOT NULL
               AND t.employee_id > 0
               AND COALESCE(e.department, t.department) = :operations_dept
@@ -398,8 +398,8 @@ class AOMTicketModel extends BaseModel
                 b.branchName
             FROM {$this->tbltickets} t
             LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
-            WHERE t.branch_id = :branch_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
+            WHERE COALESCE(NULLIF(t.branch_id, 0), e.branch_id) = :branch_id
               AND COALESCE(e.department, t.department) = :operations_dept
         ";
         

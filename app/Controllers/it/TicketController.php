@@ -278,6 +278,14 @@ class TicketController extends AuthController
 
         $ticketId = (int)$_GET['ticket_id'];
 
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicketId($pdo, $ticketId, (int) $_SESSION['account_id'], (string) ($_SESSION['usertype'] ?? ''))) {
+            http_response_code(403);
+            echo json_encode([]);
+            return;
+        }
+
         $model = new ItTicketModel();
         $history = $model->getTicketHistory($ticketId);
 
@@ -556,7 +564,7 @@ class TicketController extends AuthController
             'action_details'  => "Ticket {$status} by IT Staff (Account ID: {$_SESSION['account_id']})",
             'old_status'      => $oldStatus,
             'new_status'      => $status,
-            'performed_by'    => $_SESSION['account_id'],
+            'performed_by'    => $employeeId,
             'performed_role'  => 'IT Staff'
         ]);
 

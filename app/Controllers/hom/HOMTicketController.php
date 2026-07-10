@@ -968,6 +968,13 @@ class HOMTicketController extends AuthController
             exit;
         }
 
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicket($pdo, $ticket, $accountId, (string) ($_SESSION['usertype'] ?? ''))) {
+            echo json_encode(['success' => false, 'message' => 'You are not allowed to rate this ticket.']);
+            exit;
+        }
+
         // Get the assigned IT person
         $itId = $ticketModel->getAssignedTo($ticketId);
         if (!$itId) {

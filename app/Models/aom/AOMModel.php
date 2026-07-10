@@ -341,7 +341,7 @@ class AOMModel extends BaseModel
                 t.category
             FROM {$this->tbltickets} t
             LEFT JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             WHERE t.branch_id IN (
                 SELECT branch_id FROM {$this->tblbranch_assignments}
                 WHERE aom_employee_id = :aom_employee_id AND is_active = 1
@@ -367,7 +367,7 @@ class AOMModel extends BaseModel
                 t.category
             FROM {$this->tbltickets} t
             JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
-            JOIN {$this->tblbranch} b ON t.branch_id = b.branch_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             WHERE t.employee_id IN (
                 SELECT oea.employee_id
                 FROM tblhom_employee_assignments oea
