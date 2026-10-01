@@ -17,47 +17,72 @@ class NotificationController extends AuthController
 
     public function markRead()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        header('Content-Type: application/json; charset=utf-8');
 
-        if (empty($_SESSION['account_id']) || empty($_POST['id'])) {
-            http_response_code(400);
+        $notificationId = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
+        if (empty($_SESSION['account_id']) || $notificationId === false || $notificationId <= 0) {
+            http_response_code(empty($_SESSION['account_id']) ? 401 : 400);
+            echo json_encode(['success' => false, 'error' => 'Invalid notification request.']);
             exit;
         }
 
-        $notificationId = (int) $_POST['id'];
         $userId = (int) $_SESSION['account_id'];
 
-        $model = new NotificationModel();
-        $model->markAsRead($notificationId, $userId);
+        try {
+            $model = new NotificationModel();
+            $updated = $model->markAsRead($notificationId, $userId);
+            if (!$updated) {
+                throw new RuntimeException('Notification could not be marked as read.');
+            }
 
-        echo json_encode(['success' => true]);
+            echo json_encode(['success' => true]);
+        } catch (Throwable $e) {
+            error_log('NotificationController::markRead failed: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Could not mark notification as read.']);
+        }
     }
 
     public function markAllRead()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-        header('Content-Type: application/json');
+        header('Content-Type: application/json; charset=utf-8');
 
         if (empty($_SESSION['account_id'])) {
-            http_response_code(400);
+            http_response_code(401);
             echo json_encode(['success' => false, 'error' => 'Unauthorized']);
             exit;
         }
 
         $userId = (int) $_SESSION['account_id'];
-        $model = new NotificationModel();
-        $model->markAllAsRead($userId);
+        try {
+            $model = new NotificationModel();
+            if (!$model->markAllAsRead($userId)) {
+                throw new RuntimeException('Notifications could not be marked as read.');
+            }
 
-        echo json_encode([
-            'success' => true,
-            'count' => $model->getUnreadCount($userId),
-        ]);
+            echo json_encode([
+                'success' => true,
+                'count' => $model->getUnreadCount($userId),
+            ]);
+        } catch (Throwable $e) {
+            error_log('NotificationController::markAllRead failed: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Could not mark notifications as read.']);
+        }
     }
 
     public function index()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
         if (empty($_SESSION['account_id'])) {
             $_SESSION['loginMessage'] = 'Please log in to view notifications.';

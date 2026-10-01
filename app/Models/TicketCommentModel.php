@@ -16,7 +16,7 @@ class TicketCommentModel extends BaseModel
                 c.ticket_id,
                 c.account_id,
                 c.author_role,
-                c.author_name,
+                CASE WHEN UPPER(c.author_role) = 'ADMIN' THEN 'Admin' ELSE c.author_name END AS author_name,
                 c.comment_text,
                 c.created_at
             FROM {$this->tblComments} c
@@ -42,7 +42,7 @@ class TicketCommentModel extends BaseModel
                 c.ticket_id,
                 c.account_id,
                 c.author_role,
-                c.author_name,
+                CASE WHEN UPPER(c.author_role) = 'ADMIN' THEN 'Admin' ELSE c.author_name END AS author_name,
                 c.comment_text,
                 c.created_at
             FROM {$this->tblComments} c
@@ -122,6 +122,10 @@ class TicketCommentModel extends BaseModel
         }
 
         $role = strtoupper((string) ($row['usertype'] ?? 'User'));
+        if ($role === 'ADMIN') {
+            return ['role' => $role, 'name' => 'Admin'];
+        }
+
         $first = trim((string) ($row['firstname'] ?? ''));
         $last = trim((string) ($row['lastname'] ?? ''));
         $name = trim($first . ' ' . $last);

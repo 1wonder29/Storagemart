@@ -7,9 +7,11 @@
  *           plus flags passed through to ticket_detail_actions.php
  */
 require_once __DIR__ . '/../it/ticket_view_helpers.php';
+require_once __DIR__ . '/../../../Helpers/TicketFormFields.php';
 $status = (string) ($ticket['status'] ?? 'Open');
 $historyEntries = $history ?? $ticketHistory ?? [];
 $ticketId = (int) ($ticket['ticket_id'] ?? 0);
+$ticketSubject = trim(TicketFormFields::subjectFor($ticketId));
 $employeeName = trim(
     (string) (($ticket['emp_firstname'] ?? $ticket['employee_firstname'] ?? '') . ' ' . ($ticket['emp_lastname'] ?? $ticket['employee_lastname'] ?? ''))
 ) ?: 'Unassigned';
@@ -17,14 +19,24 @@ $employeeName = trim(
 $actionTaken = trim((string) ($ticket['action_taken'] ?? ''));
 $resolutionDetails = trim((string) ($ticket['resolution_details'] ?? $ticket['result'] ?? ''));
 
-if ($actionTaken === '' && $resolutionDetails === '' && $ticketId > 0) {
+$technical = null;
+if ($ticketId > 0) {
     require_once __DIR__ . '/../../../Models/TicketTechnicalModel.php';
     $technical = (new TicketTechnicalModel())->getLatestByTicketId($ticketId);
-    if ($technical) {
+    if ($technical && $actionTaken === '' && $resolutionDetails === '') {
         $actionTaken = trim((string) ($technical['action_taken'] ?? ''));
         $resolutionDetails = trim((string) ($technical['result'] ?? ''));
     }
 }
+
+// Only the IT staff this ticket is assigned to may edit Action Taken / Resolution,
+// and only while the ticket hasn't already been finalized.
+$viewerEmployeeId = isset($employeeId) ? (int) $employeeId : 0;
+$canEditResolution = ($routePrefix ?? '') === 'it'
+    && strtoupper((string) ($_SESSION['usertype'] ?? '')) === 'IT'
+    && $viewerEmployeeId > 0
+    && (int) ($ticket['assigned_to'] ?? 0) === $viewerEmployeeId
+    && ticket_assignment_can_update($status);
 
 $displayValue = static function (string $value): string {
     return $value !== '' ? $value : '-';
@@ -60,6 +72,13 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                 </div>
             </div>
             <div class="card-body">
+                <?php if ($ticketSubject !== ''): ?>
+                <div class="mb-3">
+                    <div class="small text-gray-500 text-uppercase font-weight-bold">Subject</div>
+                    <div class="h5 mb-0 font-weight-bold"><?= htmlspecialchars($ticketSubject) ?></div>
+                </div>
+                <?php endif; ?>
+
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <div class="small text-gray-500 text-uppercase font-weight-bold">Ticket ID</div>
@@ -93,11 +112,11 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                 </div>
 
                 <div class="row mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="small text-gray-500 text-uppercase font-weight-bold">Department</div>
                         <div class="h6 mb-0"><?= htmlspecialchars((string) ($ticket['department'] ?? '-')) ?></div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="small text-gray-500 text-uppercase font-weight-bold">Category</div>
                         <div class="h6 mb-0"><?= htmlspecialchars((string) ($ticket['category'] ?? '-')) ?></div>
                     </div>
@@ -112,19 +131,53 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <div class="small text-gray-500 text-uppercase font-weight-bold">Action Taken</div>
-                    <div class="p-3 bg-light rounded border">
-                        <?= $actionTaken !== '' ? nl2br(htmlspecialchars($actionTaken)) : '-' ?>
-                    </div>
-                </div>
+                <?php if ($canEditResolution): ?>
+                    <form method="POST" action="<?= htmlspecialchars($detailBase) ?>/it/tickets/update" class="resolution-edit-form">
+                        <input type="hidden" name="ticket_id" value="<?= $ticketId ?>">
+                        <input type="hidden" name="action" value="<?= htmlspecialchars($status) ?>">
+                        <input type="hidden" name="technical_purpose" value="<?= htmlspecialchars((string) ($technical['technical_purpose'] ?? '')) ?>">
+                        <input type="hidden" name="remarks" value="<?= htmlspecialchars((string) ($technical['remarks'] ?? '')) ?>">
+                        <input type="hidden" name="return_to" value="/it/tickets/view?id=<?= $ticketId ?>">
 
-                <div class="mb-0">
-                    <div class="small text-gray-500 text-uppercase font-weight-bold">Resolution Details</div>
-                    <div class="p-3 bg-light rounded border">
-                        <?= $resolutionDetails !== '' ? nl2br(htmlspecialchars($resolutionDetails)) : '-' ?>
+                        <div class="mb-3">
+                            <label class="small text-gray-500 text-uppercase font-weight-bold" for="priority_field">Priority</label>
+                            <select class="form-control" id="priority_field" name="priority">
+                                <?php foreach (TicketFormFields::PRIORITIES as $priorityOption): ?>
+                                    <option value="<?= $priorityOption ?>"<?= strcasecmp((string) ($ticket['priority'] ?? ''), $priorityOption) === 0 ? ' selected' : '' ?>><?= $priorityOption ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="form-text text-muted">Only IT personnel can change a ticket's priority.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="small text-gray-500 text-uppercase font-weight-bold" for="action_taken_field">Action Taken</label>
+                            <textarea class="form-control" id="action_taken_field" name="action_taken" rows="3" placeholder="Describe what was done to address the issue"><?= htmlspecialchars($actionTaken) ?></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="small text-gray-500 text-uppercase font-weight-bold" for="result_field">Resolution Details</label>
+                            <textarea class="form-control" id="result_field" name="result" rows="3" placeholder="Outcome or follow-up notes for the requester"><?= htmlspecialchars($resolutionDetails) ?></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <div class="mb-3">
+                        <div class="small text-gray-500 text-uppercase font-weight-bold">Action Taken</div>
+                        <div class="p-3 bg-light rounded border">
+                            <?= $actionTaken !== '' ? nl2br(htmlspecialchars($actionTaken)) : '-' ?>
+                        </div>
                     </div>
-                </div>
+
+                    <div class="mb-0">
+                        <div class="small text-gray-500 text-uppercase font-weight-bold">Resolution Details</div>
+                        <div class="p-3 bg-light rounded border">
+                            <?= $resolutionDetails !== '' ? nl2br(htmlspecialchars($resolutionDetails)) : '-' ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
 

@@ -94,35 +94,6 @@
   });
 })();
 // ==============================
-// Notification click → load modal
-// ==============================
-document.querySelectorAll(".notification-item").forEach((item) => {
-  item.addEventListener("click", function (e) {
-    e.preventDefault();
-
-    const url = this.href;
-    const notifId = this.dataset.id;
-
-    // 1️⃣ Mark notification as read
-    fetch("/StoragemartTMS/notifications/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "id=" + notifId,
-    }).then(() => {
-      // 2️⃣ Update UI instantly
-      this.classList.remove("notification-unread");
-      this.classList.add("notification-read");
-
-      // 3️⃣ Resolved ticket notifications → ticket detail page
-      const targetUrl = url.includes("/tickets/rate")
-        ? url.replace("/tickets/rate", "/tickets/view")
-        : url;
-      window.location.href = targetUrl;
-    });
-  });
-});
-
-// ==============================
 // AJAX submit for rating form
 // ==============================
 $(document).on("submit", "#rateTicketForm", function (e) {

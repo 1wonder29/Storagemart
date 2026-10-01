@@ -80,6 +80,20 @@
     badge.textContent = label;
   }
 
+  function showNotificationError(message) {
+    var header = document.querySelector('.notification-dropdown-header, .alerts-feed-header');
+    if (!header) return;
+
+    var status = header.querySelector('.notification-action-error');
+    if (!status) {
+      status = document.createElement('span');
+      status.className = 'notification-action-error text-danger small';
+      status.setAttribute('role', 'alert');
+      header.appendChild(status);
+    }
+    status.textContent = message;
+  }
+
   function syncNotificationHeaderState(dropdown, count) {
     if (!dropdown) return;
 
@@ -179,10 +193,12 @@
           applyAllNotificationsRead();
         } else {
           btn.disabled = false;
+          showNotificationError((res && res.error) || 'Could not mark notifications as read. Please try again.');
         }
       })
       .catch(function () {
         btn.disabled = false;
+        showNotificationError('Could not mark notifications as read. Please try again.');
       });
   }
 
@@ -238,43 +254,53 @@
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'id=' + encodeURIComponent(notifId),
-    }).then(function () {
-      var wasUnread = item.classList.contains('notification-unread');
-      item.classList.remove('notification-unread');
-      item.classList.add('notification-read');
-      var badge = document.querySelector('#alertsDropdown .badge-counter');
-      if (badge) {
-        var n = parseInt(badge.textContent, 10);
-        if (Number.isFinite(n)) {
-          var next = Math.max(0, n - 1);
-          if (next <= 0) badge.remove();
-          else badge.textContent = String(next);
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (res) {
+        if (!res || !res.success) {
+          throw new Error((res && res.error) || 'Could not mark notification as read.');
         }
-      }
-      if (wasUnread) {
-        var pageUnread = document.getElementById('alertsUnreadStat');
-        if (pageUnread) {
-          var unreadN = parseInt(pageUnread.textContent, 10);
-          if (Number.isFinite(unreadN)) {
-            var unreadNext = Math.max(0, unreadN - 1);
-            pageUnread.textContent = String(unreadNext);
-            var pageRead = document.getElementById('alertsReadStat');
-            if (pageRead) {
-              var readN = parseInt(pageRead.textContent, 10);
-              if (Number.isFinite(readN)) pageRead.textContent = String(readN + 1);
-            }
-            var pagePill = document.getElementById('alertsUnreadPill');
-            if (pagePill) {
-              if (unreadNext <= 0) pagePill.classList.add('d-none');
-              else pagePill.textContent = (unreadNext > 9 ? '9+' : String(unreadNext)) + ' unread';
+
+        var wasUnread = item.classList.contains('notification-unread');
+        item.classList.remove('notification-unread');
+        item.classList.add('notification-read');
+        var badge = document.querySelector('#alertsDropdown .badge-counter');
+        if (badge) {
+          var n = parseInt(badge.textContent, 10);
+          if (Number.isFinite(n)) {
+            var next = Math.max(0, n - 1);
+            if (next <= 0) badge.remove();
+            else badge.textContent = String(next);
+          }
+        }
+        if (wasUnread) {
+          var pageUnread = document.getElementById('alertsUnreadStat');
+          if (pageUnread) {
+            var unreadN = parseInt(pageUnread.textContent, 10);
+            if (Number.isFinite(unreadN)) {
+              var unreadNext = Math.max(0, unreadN - 1);
+              pageUnread.textContent = String(unreadNext);
+              var pageRead = document.getElementById('alertsReadStat');
+              if (pageRead) {
+                var readN = parseInt(pageRead.textContent, 10);
+                if (Number.isFinite(readN)) pageRead.textContent = String(readN + 1);
+              }
+              var pagePill = document.getElementById('alertsUnreadPill');
+              if (pagePill) {
+                if (unreadNext <= 0) pagePill.classList.add('d-none');
+                else pagePill.textContent = (unreadNext > 9 ? '9+' : String(unreadNext)) + ' unread';
+              }
             }
           }
         }
-      }
-      navigateAfterNotificationRead(url);
-    }).catch(function () {
-      navigateAfterNotificationRead(url);
-    });
+        navigateAfterNotificationRead(url);
+      })
+      .catch(function () {
+        showNotificationError('Could not mark notification as read. Please try again.');
+      });
   }
 
   function resolveNotificationUrl(url) {
@@ -350,9 +376,7 @@
 
   function priorityClass(priority) {
     var p = String(priority || '').toLowerCase();
-    if (p === 'high') return 'priority-high';
-    if (p === 'medium') return 'priority-medium';
-    if (p === 'low') return 'priority-low';
+    if (p === 'critical' || p === 'high' || p === 'medium' || p === 'low') return p;
     return '';
   }
 
