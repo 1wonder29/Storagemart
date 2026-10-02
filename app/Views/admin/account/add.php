@@ -81,7 +81,7 @@ $base = rtrim(BASE_URL, '/');
                                             <option value="HR">HR</option>
                                             <option value="IT">Information Technology</option>
                                             <option value="AOM">Area Operation Manager</option>
-                                            <option value="HOM">Head Of Operation</option>
+                                            <option value="HOM">Operations Manager</option>
                                             <option value="EMPLOYEE">Employee</option>
                                         </select>
                                     </div>
