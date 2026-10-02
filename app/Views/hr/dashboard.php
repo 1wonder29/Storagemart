@@ -1,20 +1,16 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 require_once dirname(__DIR__) . '/partials/admin/account_view_helpers.php';
-require_once dirname(__DIR__, 2) . '/Helpers/AppShell.php';
 
-$displayName = AppShell::currentUser()['fullname'] ?: ($_SESSION['username'] ?? 'HR User');
+$displayName = $_SESSION['username'] ?? 'HR User';
 $totalEmployees = (int)($totalEmployees ?? 0);
 $totalEmployeesWithUniforms = (int)($totalEmployeesWithUniforms ?? 0);
 $uniformsNeedingReorder = (int)($uniformsNeedingReorder ?? 0);
-$outOfStockCount = (int)($uniformStats['out_of_stock'] ?? 0);
-$lowStockCount = (int)($uniformStats['low_stock'] ?? 0);
-$pendingReturnTotal = (int)($uniformStats['pending_return_total'] ?? 0);
 $employeesWithoutUniforms = max(0, $totalEmployees - $totalEmployeesWithUniforms);
 
 $chartUniformStats = [
-    'With Items'    => $totalEmployeesWithUniforms,
-    'Without Items' => $employeesWithoutUniforms,
+    'With Uniforms'    => $totalEmployeesWithUniforms,
+    'Without Uniforms' => $employeesWithoutUniforms,
 ];
 $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
 ?>
@@ -72,20 +68,8 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                         </div>
                         <div class="col-6 col-md mb-2 mb-md-0">
                             <div class="hero-stat">
-                                <div class="stat-value"><?= $lowStockCount ?></div>
-                                <div class="stat-label">Low Stock</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md mb-2 mb-md-0">
-                            <div class="hero-stat">
-                                <div class="stat-value"><?= $outOfStockCount ?></div>
-                                <div class="stat-label">Out of Stock</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md mb-2 mb-md-0">
-                            <div class="hero-stat">
-                                <div class="stat-value"><?= $pendingReturnTotal ?></div>
-                                <div class="stat-label">Pending Return</div>
+                                <div class="stat-value"><?= $uniformsNeedingReorder ?></div>
+                                <div class="stat-label">Needs Reorder</div>
                             </div>
                         </div>
                         <div class="col-6 col-md">
@@ -141,7 +125,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
             <div class="col-xl-4 mb-4 mb-xl-0">
                 <div class="card dash-card shadow">
                     <div class="card-header">
-                        <h6><i class="fas fa-chart-pie"></i>Inventory Coverage</h6>
+                        <h6><i class="fas fa-chart-pie"></i>Item Coverage</h6>
                     </div>
                     <div class="card-body">
                         <?php if ($hasChartData): ?>
@@ -195,7 +179,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
             </div>
         </div>
 
-        <!-- Employees with Assigned Items -->
+        <!-- Employees with Assigned Uniforms -->
         <div class="card dash-card shadow mb-4">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
                 <h6><i class="fas fa-user-check"></i>Employees with Assigned Items</h6>
@@ -259,7 +243,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                                     </td>
                                     <td>
                                         <span class="uniform-count">
-                                            <i class="fas fa-tshirt mr-1"></i>
+                                            <i class="fas fa-archive mr-1"></i>
                                             <?= (int)($employee['uniform_count'] ?? 0) ?>
                                         </span>
                                     </td>
@@ -274,12 +258,14 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                         </tbody>
                     </table>
                 </div>
-                <div class="text-center py-3 border-top">
-                    <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments"
-                       class="btn btn-sm btn-view-all">
-                        View All Assignments
-                    </a>
-                </div>
+                <?php if ($totalEmployeesWithUniforms > 10): ?>
+                    <div class="text-center py-3 border-top">
+                        <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assign"
+                           class="btn btn-sm btn-view-all">
+                            View All Assignments
+                        </a>
+                    </div>
+                <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>

@@ -48,9 +48,6 @@ $base = rtrim(BASE_URL, '/');
                                         <div class="input-group mb-3">
                                             <input type="text" id="employee_search" class="form-control" placeholder="Type employee name or ID">
                                             <button type="button" class="btn btn-primary" id="btnSearchEmployee">Search</button>
-                                            <button type="button" class="btn btn-outline-primary" id="btnEmployeeList" title="Browse all employees">
-                                                <i class="fas fa-users"></i> Employee List
-                                            </button>
                                         </div>
                                         <input type="hidden" id="employee_id" name="employee_id">
                                     </div>
@@ -114,47 +111,6 @@ $base = rtrim(BASE_URL, '/');
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
-</div>
-
-    <div class="modal fade" id="employeeListModal" tabindex="-1" role="dialog" aria-labelledby="employeeListModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="employeeListModalLabel"><i class="fas fa-users mr-1"></i> Employee List</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-row mb-3">
-                        <div class="col-md-5 mb-2 mb-md-0">
-                            <label for="employeeListBranch" class="small font-weight-bold text-gray-600">Branch (optional)</label>
-                            <select id="employeeListBranch" class="form-control">
-                                <option value="">All Branches</option>
-                            </select>
-                        </div>
-                        <div class="col-md-7">
-                            <label for="employeeListFilter" class="small font-weight-bold text-gray-600">Search</label>
-                            <input type="text" id="employeeListFilter" class="form-control" placeholder="Filter by name or employee ID" autocomplete="off">
-                        </div>
-                    </div>
-                    <table class="table table-hover table-sm mb-2" id="employeeListTable">
-                        <thead>
-                            <tr>
-                                <th>Employee</th>
-                                <th>Position</th>
-                                <th>Department</th>
-                                <th>Branch</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="employeeListBody"></tbody>
-                    </table>
-                    <div class="small text-muted" id="employeeListCount"></div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -167,6 +123,5 @@ $base = rtrim(BASE_URL, '/');
         window.BASE_URL = "<?= htmlspecialchars($base) ?>";
     </script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/search_employee.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/employee_list_modal.js"></script>
 </body>
 </html>

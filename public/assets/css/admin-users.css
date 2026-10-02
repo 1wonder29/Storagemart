@@ -229,12 +229,7 @@
 .admin-users-page .role-badge.role-aom { background: #f3e5f5; color: #6a1b9a; }
 .admin-users-page .role-badge.role-employee { background: #e0f2f1; color: #00695c; }
 .admin-users-page .role-badge.role-default { background: #e2e3e5; color: #383d41; }
-
-.admin-users-page .role-badge-secondary {
-  margin-left: 0.35rem;
-  opacity: 0.85;
-  font-size: 0.62rem;
-}
+.admin-users-page .role-badge-secondary { margin-left: 0.35rem; opacity: 0.85; font-size: 0.62rem; }
 
 .admin-users-page .date-cell .date-main {
   font-weight: 600;

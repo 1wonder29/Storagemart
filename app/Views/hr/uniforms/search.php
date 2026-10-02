@@ -26,7 +26,7 @@ $resultCount = count($uniforms ?? []);
             <div class="page-hero">
                 <div class="row align-items-center">
                     <div class="col-lg-8">
-                        <h1><i class="fas fa-search mr-2"></i>Inventory Search Results</h1>
+                        <h1><i class="fas fa-search mr-2"></i>Item Search Results</h1>
                         <p>Matching inventory items from your search.</p>
                     </div>
                     <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
@@ -40,7 +40,7 @@ $resultCount = count($uniforms ?? []);
 
             <div class="card uniform-card data-card shadow">
                 <div class="card-header">
-                    <h6><i class="fas fa-tshirt mr-1"></i>Search Results</h6>
+                    <h6><i class="fas fa-archive mr-1"></i>Search Results</h6>
                 </div>
                 <div class="card-body p-0">
                     <?php if (empty($uniforms)): ?>
@@ -104,6 +104,8 @@ $resultCount = count($uniforms ?? []);
         </div>
     </div>
 
+            </div>
+        </div>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/storagemart.min.js"></script>

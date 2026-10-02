@@ -153,13 +153,13 @@ $groupCount = count($groups ?? []);
         </div>
     </div>
 
+            </div>
+        </div>
 </div>
 
 <a class="scroll-to-top rounded" href="#page-top">
     <i class="fas fa-angle-up"></i>
 </a>
-
-</div>
 
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

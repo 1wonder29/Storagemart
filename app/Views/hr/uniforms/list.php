@@ -29,7 +29,7 @@ $totalPages = (int) ($totalPages ?? 1);
             <div class="page-hero">
                 <div class="row align-items-center">
                     <div class="col-lg-7">
-                        <h1><i class="fas fa-archive mr-2"></i>Inventory</h1>
+                        <h1><i class="fas fa-archive mr-2"></i>Item Inventory</h1>
                         <p>Track stock levels, reorder thresholds, and item status across all types and sizes.</p>
                     </div>
                     <div class="col-lg-5 mt-3 mt-lg-0">
@@ -105,14 +105,14 @@ $totalPages = (int) ($totalPages ?? 1);
                             <table class="table table-hover mb-0 uniforms-table">
                                 <thead>
                                     <tr>
-                                        <th>Item</th>
-                                        <th title="Units on hand, ready to issue">In Stock</th>
-                                        <th title="Restock when In Stock falls to this number">Reorder At</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th>In Stock</th>
+                                        <th>Reorder Level</th>
                                         <th>Stock Status</th>
-                                        <th title="Issued to employees and not yet returned">Pending Return</th>
+                                        <th>Status</th>
                                         <th>Damaged</th>
                                         <th>Lost</th>
-                                        <th title="Whether this item is still in use or discontinued">Item Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -120,30 +120,16 @@ $totalPages = (int) ($totalPages ?? 1);
                                     <?php foreach ($uniforms as $uniform): ?>
                                         <?php
                                         $itemStatus = strtoupper($uniform['status'] ?? 'ACTIVE');
-                                        $inStock = (int) ($uniform['quantity_in_stock'] ?? 0);
-                                        if ($inStock <= 0) {
-                                            $stockBadgeClass = 'danger';
-                                            $stockLabel = 'Out of Stock';
-                                        } elseif (($uniform['stock_status'] ?? 'OK') === 'NEEDS_REORDER') {
-                                            $stockBadgeClass = 'warning';
-                                            $stockLabel = 'Low Stock';
-                                        } else {
-                                            $stockBadgeClass = 'success';
-                                            $stockLabel = 'In Stock';
-                                        }
-                                        $pendingReturnCount = (int) ($uniform['quantity_pending_return'] ?? 0);
+                                        $stockStatus = $uniform['stock_status'] ?? 'OK';
+                                        $stockBadgeClass = $stockStatus === 'NEEDS_REORDER' ? 'warning' : 'success';
+                                        $stockLabel = $stockStatus === 'NEEDS_REORDER' ? 'Needs Reorder' : 'OK';
                                         $damagedCount = (int) ($uniform['quantity_damaged'] ?? 0);
                                         $lostCount = (int) ($uniform['quantity_lost'] ?? 0);
-                                        $uniformDetail = trim(($uniform['size'] ?? '') . (!empty($uniform['color']) ? ' · ' . $uniform['color'] : ''));
                                         ?>
                                         <tr>
-                                            <td>
-                                                <strong><?= htmlspecialchars($uniform['uniform_type'] ?? '') ?></strong>
-                                                <?php if ($uniformDetail !== ''): ?>
-                                                    <div class="small text-muted"><?= htmlspecialchars($uniformDetail) ?></div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td><?= $inStock ?></td>
+                                            <td><strong><?= htmlspecialchars($uniform['uniform_type'] ?? '') ?></strong></td>
+                                            <td><?= htmlspecialchars($uniform['size'] ?? '') ?></td>
+                                            <td><?= (int) $uniform['quantity_in_stock'] ?></td>
                                             <td><?= (int) $uniform['reorder_level'] ?></td>
                                             <td>
                                                 <span class="badge badge-<?= $stockBadgeClass ?> status-pill">
@@ -151,11 +137,9 @@ $totalPages = (int) ($totalPages ?? 1);
                                                 </span>
                                             </td>
                                             <td>
-                                                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments/<?= (int) $uniform['uniform_id'] ?>?condition=PENDING"
-                                                   class="count-badge badge badge-<?= $pendingReturnCount > 0 ? 'info' : 'light' ?>"
-                                                   title="View items issued and not yet returned">
-                                                    <?= $pendingReturnCount ?>
-                                                </a>
+                                                <span class="badge badge-<?= $itemStatus === 'ACTIVE' ? 'success' : 'secondary' ?> status-pill">
+                                                    <?= htmlspecialchars($itemStatus) ?>
+                                                </span>
                                             </td>
                                             <td>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments/<?= (int) $uniform['uniform_id'] ?>?condition=DAMAGED"
@@ -170,11 +154,6 @@ $totalPages = (int) ($totalPages ?? 1);
                                                    title="View lost items">
                                                     <?= $lostCount ?>
                                                 </a>
-                                            </td>
-                                            <td>
-                                                <span class="badge badge-<?= $itemStatus === 'ACTIVE' ? 'success' : 'secondary' ?> status-pill">
-                                                    <?= htmlspecialchars($itemStatus) ?>
-                                                </span>
                                             </td>
                                             <td class="actions-cell">
                                                 <div class="action-btn-group">
@@ -230,6 +209,8 @@ $totalPages = (int) ($totalPages ?? 1);
         </div>
     </div>
 
+            </div>
+        </div>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/storagemart.min.js"></script>

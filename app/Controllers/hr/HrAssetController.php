@@ -25,8 +25,7 @@ class HrAssetController extends AuthController
             $this->redirect('/login');
         }
 
-        require_once __DIR__ . '/../../Helpers/HrDepartmentAccess.php';
-        if (!HrDepartmentAccess::canAccessHr()) {
+        if (strtoupper($_SESSION['usertype'] ?? '') !== 'HR') {
             $_SESSION['loginMessage'] = 'Access denied. HR only.';
             $this->redirect('/login');
         }
@@ -156,8 +155,7 @@ class HrAssetController extends AuthController
         }
 
         try {
-            require_once __DIR__ . '/../../Helpers/HrDepartmentAccess.php';
-            if (empty($_SESSION['account_id']) || !HrDepartmentAccess::canAccessHr()) {
+            if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'HR') {
                 http_response_code(401);
                 echo json_encode(['success' => false, 'message' => 'Not authenticated']);
                 return;

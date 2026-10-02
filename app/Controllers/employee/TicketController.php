@@ -7,7 +7,6 @@ require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Models/employee/TicketRatingModel.php';
-require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 
 
 class EmployeeTicketController extends AuthController
@@ -22,8 +21,8 @@ class EmployeeTicketController extends AuthController
 
         $empModel = new Employee();
         $employeeId = $empModel->getEmployeeIdByAccountId((int) $_SESSION['account_id']);
-        if (!$employeeId) {
-            $_SESSION['flash_error'] = 'Unable to determine your employee record.';
+        if (!$employeeId || $empModel->countAssetsByEmployee((int) $employeeId) === 0) {
+            $_SESSION['flash_error'] = 'You need at least one assigned asset before creating a ticket.';
             $this->redirect('/employee/tickets');
             return;
         }
@@ -38,14 +37,12 @@ class EmployeeTicketController extends AuthController
             if ($employeeId) {
                 $empData = $empModel->getEmployeeById($employeeId);
                 if ($empData) {
-                    $branch = $empModel->getBranchById((int) ($empData['branch_id'] ?? 0));
                     $inventory = [
                         'employee_id' => $empData['employee_id'] ?? '',
                         'fullname' => ($empData['lastname'] ?? '') . ', ' . ($empData['firstname'] ?? '') . ' ' . ($empData['middlename'] ?? ''),
                         'department' => $empData['department'] ?? '',
                         'branch_id' => $empData['branch_id'] ?? '',
-                        'branchName' => $branch['branchName'] ?? '',
-                        'branchCode' => $branch['branchCode'] ?? '',
+                        'branchName' => '',
                         'inventory_id' => '',
                         'assetNumber' => '',
                         'groupName' => ''
@@ -97,6 +94,12 @@ class EmployeeTicketController extends AuthController
             return;
         }
 
+        if ($employeeModel->countAssetsByEmployee((int) $employeeId) === 0) {
+            $_SESSION['flash_error'] = 'You need at least one assigned asset before creating a ticket.';
+            $this->redirect('/employee/tickets');
+            return;
+        }
+
         /* ✅ GET EMPLOYEE DETAILS FIRST */
         $employee = $employeeModel->getEmployeeById($employeeId);
         $department = $employee['department'] ?? null;
@@ -112,7 +115,7 @@ class EmployeeTicketController extends AuthController
 
         // normalize priority
         $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
-        if (!in_array($priority, ['Low','Medium','High','Critical'], true)) $priority = 'Low';
+        if (!in_array($priority, ['Low','Medium','High'], true)) $priority = 'Low';
 
         // Use employee's branch if not provided in POST
         $branchId = (int)($_POST['branch_id'] ?? 0);
@@ -130,7 +133,6 @@ class EmployeeTicketController extends AuthController
             'priority'        => $priority,
             'created_by'      => $accountId
         ]);
-        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         require_once __DIR__ . '/../../Models/NotificationModel.php';
 
@@ -288,6 +290,14 @@ class EmployeeTicketController extends AuthController
 
         $ticketId = (int)$_GET['ticket_id'];
 
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicketId($pdo, $ticketId, (int) $_SESSION['account_id'], (string) ($_SESSION['usertype'] ?? ''))) {
+            http_response_code(403);
+            echo json_encode([]);
+            return;
+        }
+
         $model = new EmployeeTicket();
         $history = $model->getTicketHistory($ticketId);
 
@@ -298,6 +308,11 @@ class EmployeeTicketController extends AuthController
  public function rate()
 {
     if (session_status() === PHP_SESSION_NONE) session_start();
+
+    if (empty($_SESSION['account_id'])) {
+        $this->redirect('/login');
+        return;
+    }
 
     $ticketId = (int) ($_GET['id'] ?? 0);
     if (!$ticketId) {
@@ -334,6 +349,18 @@ public function storeRating()
 
     if (!$ticketId) {
         echo json_encode(['success' => false, 'message' => 'Invalid ticket.']);
+        exit;
+    }
+
+    if (empty($_SESSION['account_id'])) {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
+        exit;
+    }
+
+    global $pdo;
+    require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+    if (!TicketAccess::canViewTicketId($pdo, $ticketId, (int) $_SESSION['account_id'], (string) ($_SESSION['usertype'] ?? ''))) {
+        echo json_encode(['success' => false, 'message' => 'You are not allowed to rate this ticket.']);
         exit;
     }
 

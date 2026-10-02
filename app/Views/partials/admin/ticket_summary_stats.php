@@ -7,8 +7,11 @@ require_once __DIR__ . '/../it/ticket_view_helpers.php';
 
 $summaryTicketStats = $summaryTicketStats ?? [];
 $summaryActiveStatus = $summaryActiveStatus ?? '';
+$summaryActiveFilter = $summaryActiveFilter ?? trim((string) ($_GET['filter'] ?? ''));
+$totalTickets = (int) ($totalTickets ?? array_sum($summaryTicketStats));
 $base = rtrim((string) ($base ?? (defined('BASE_URL') ? BASE_URL : '')), '/');
 $summaryLinks = admin_ticket_summary_links($base);
+$isTotalActive = $summaryActiveStatus === '' && $summaryActiveFilter === '';
 
 if ($summaryTicketStats === []) {
     return;
@@ -16,7 +19,13 @@ if ($summaryTicketStats === []) {
 ?>
 <div class="workspace-minimal">
     <p class="workspace-eyebrow">Ticket overview</p>
-    <div class="personal-stat-grid personal-stat-grid-6">
+    <div class="personal-stat-grid personal-stat-grid-7">
+        <a href="<?= htmlspecialchars($base) ?>/admin/tickets"
+           class="personal-stat-card tone-tickets<?= $isTotalActive ? ' is-active' : '' ?>"
+           aria-label="Total ticket, <?= $totalTickets ?>">
+            <span class="stat-number"><?= $totalTickets ?></span>
+            <span class="stat-title"><i class="fas fa-ticket-alt" aria-hidden="true"></i> Total ticket</span>
+        </a>
         <?php foreach ($summaryTicketStats as $status => $count): ?>
             <?php
             $statusLabel = (string) $status;

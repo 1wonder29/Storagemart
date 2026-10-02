@@ -12,7 +12,6 @@ class Session {
     public static function regenerate() {
         self::start();
         session_regenerate_id(true);
-        $_SESSION = [];
     }
     public static function destroy() {
         self::start();

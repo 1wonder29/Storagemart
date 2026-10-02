@@ -1,0 +1,246 @@
+/* Storage Mart — modern app topbar */
+.topbar.topbar-modern {
+  --tb-bg: rgba(255, 255, 255, 0.82);
+  --tb-border: rgba(15, 23, 42, 0.08);
+  --tb-text: #0f172a;
+  --tb-muted: #64748b;
+  --tb-accent: #4e73df;
+  --tb-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+
+  position: sticky;
+  top: 0;
+  z-index: 1035;
+  min-height: 4.25rem;
+  padding: 0.65rem 1.25rem;
+  background: var(--tb-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--tb-border);
+  box-shadow: var(--tb-shadow);
+}
+
+.topbar.topbar-modern .topbar-mobile-toggle {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tb-border);
+  border-radius: 0.75rem;
+  background: #fff;
+  color: var(--tb-muted);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.topbar.topbar-modern .topbar-mobile-toggle:hover {
+  color: var(--tb-accent);
+  border-color: rgba(78, 115, 223, 0.25);
+  background: #f8faff;
+}
+
+.topbar.topbar-modern .topbar-context {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.topbar.topbar-modern .topbar-context-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.topbar.topbar-modern .topbar-context-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--tb-text);
+  letter-spacing: -0.02em;
+}
+
+.topbar.topbar-modern .topbar-actions {
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+  z-index: 2;
+}
+
+.topbar.topbar-modern .topbar-actions .nav-item.dropdown {
+  position: relative;
+}
+
+.topbar.topbar-modern .dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  z-index: 1050;
+  margin-top: 0.65rem;
+  border: 1px solid var(--tb-border);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+}
+
+.topbar.topbar-modern .dropdown-menu.notification-dropdown {
+  width: 23.5rem !important;
+  min-width: 23.5rem !important;
+  max-width: min(23.5rem, calc(100vw - 2rem)) !important;
+  padding: 0;
+  border-radius: 0.85rem;
+  overflow: hidden;
+}
+
+.topbar.topbar-modern .topbar-divider {
+  width: 1px;
+  height: 2rem;
+  margin: 0 0.5rem;
+  border-right: none;
+  background: linear-gradient(180deg, transparent, #dbe3f0, transparent);
+}
+
+.topbar.topbar-modern .topbar-icon-btn.nav-link {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 0.75rem;
+  border: 1px solid var(--tb-border);
+  background: #fff;
+  color: #64748b;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.topbar.topbar-modern .topbar-icon-btn.nav-link:hover,
+.topbar.topbar-modern .topbar-icon-btn.nav-link:focus,
+.topbar.topbar-modern .show > .topbar-icon-btn.nav-link {
+  color: var(--tb-accent);
+  border-color: rgba(78, 115, 223, 0.25);
+  background: #f8faff;
+}
+
+.topbar.topbar-modern .topbar-icon-btn .fa-bell {
+  font-size: 0.95rem;
+}
+
+.topbar.topbar-modern .topbar-icon-btn .badge-counter {
+  top: 0.2rem;
+  right: 0.15rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border: 2px solid #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 0.85rem;
+}
+
+.topbar.topbar-modern .topbar-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0.45rem 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--tb-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.topbar.topbar-modern .topbar-user-chip:hover,
+.topbar.topbar-modern .topbar-user-chip:focus,
+.topbar.topbar-modern .show > .topbar-user-chip {
+  text-decoration: none;
+  border-color: rgba(78, 115, 223, 0.28);
+  box-shadow: 0 4px 14px rgba(78, 115, 223, 0.1);
+  background: #fff;
+}
+
+.topbar.topbar-modern .topbar-user-chip.dropdown-toggle::after {
+  display: none;
+}
+
+.topbar.topbar-modern .topbar-user-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+  min-width: 0;
+  max-width: 11rem;
+}
+
+.topbar.topbar-modern .topbar-user-meta--single {
+  justify-content: center;
+}
+
+.topbar.topbar-modern .topbar-user-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--tb-text);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.topbar.topbar-modern .topbar-user-role {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--tb-accent);
+  letter-spacing: 0.03em;
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.topbar.topbar-modern .topbar-avatar {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid rgba(78, 115, 223, 0.18);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.topbar.topbar-modern .topbar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.topbar.topbar-modern .topbar-user-dropdown {
+  margin-top: 0;
+  padding: 0.45rem;
+  border: 1px solid var(--tb-border);
+  border-radius: 0.85rem;
+  min-width: 12rem;
+}
+
+.topbar.topbar-modern .topbar-user-dropdown .dropdown-item {
+  border-radius: 0.55rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #334155;
+  padding: 0.55rem 0.75rem;
+}
+
+.topbar.topbar-modern .topbar-user-dropdown .dropdown-item:hover,
+.topbar.topbar-modern .topbar-user-dropdown .dropdown-item:focus {
+  background: #f1f5ff;
+  color: #1e3a8a;
+}
+
+.topbar.topbar-modern .topbar-user-dropdown .dropdown-item i {
+  color: #94a3b8;
+}
+
+@media (max-width: 991.98px) {
+  .topbar.topbar-modern {
+    padding: 0.55rem 0.85rem;
+  }
+}

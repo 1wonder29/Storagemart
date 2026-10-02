@@ -168,7 +168,6 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
     <i class="fas fa-angle-up"></i>
 </a>
 
-</div>
 
 <script>
     window.ticketData = [

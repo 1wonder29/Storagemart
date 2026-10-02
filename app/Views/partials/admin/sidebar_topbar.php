@@ -8,7 +8,12 @@ $assetSubPage = $assetSubPage ?? '';
         <!-- Sidebar -->
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion sidebar-modern" id="accordionSidebar">
 
-<?php require __DIR__ . '/../sidebar_user.php'; ?>
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?= htmlspecialchars($base) ?>/admin">
+                <img src="<?= htmlspecialchars($base) ?>/assets/img/storagemart-logo.png" alt="storagemart Logo" style="width:100px; height:auto;">
+            </a>
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
 
             <!-- Nav Item - Dashboard -->
             <li class="nav-item <?= ($activePage === 'dashboard') ? 'active' : '' ?>">
@@ -133,7 +138,14 @@ $assetSubPage = $assetSubPage ?? '';
             </li>
 
             <!-- Divider -->
-</ul>
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+
+        </ul>
         <!-- End of Sidebar -->
 
         <!-- Content Wrapper -->
@@ -141,11 +153,10 @@ $assetSubPage = $assetSubPage ?? '';
 
             <!-- Main Content -->
             <div id="content">
-<?php
-$shellHomeUrl = $base . '/admin';
-$shellProfileUrl = $base . '/admin/profile';
-require __DIR__ . '/../app_topbar.php';
-?>
+                <?php
+                $topbarProfileUrl = $base . '/admin/profile';
+                require_once __DIR__ . '/../topbar_user_nav.php';
+                ?>
 
 <?php require_once __DIR__ . '/../realtime_scripts.php'; ?>
 <?php require_once __DIR__ . '/../logout_modal.php'; ?>

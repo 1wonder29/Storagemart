@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/../AuthController.php';
-require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Models/employee/Employee.php';
 require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
@@ -183,17 +182,25 @@ class HOMTicketController extends AuthController
             return;
         }
 
-        // The asset is optional: a ticket can be about a general issue.
-        $ticketModel = new EmployeeTicket();
+        if ($this->employeeModel->countAssetsByEmployee($employeeId) === 0) {
+            $_SESSION['flash_error'] = 'You need at least one assigned asset before creating a ticket.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/my');
+            return;
+        }
+
         $inventoryId = (int) ($_POST['inventory_id'] ?? 0);
-        $inventory = null;
-        if ($inventoryId > 0) {
-            $inventory = $ticketModel->getInventoryDetailsByInventoryId($inventoryId);
-            if (!$inventory || (int) ($inventory['employee_id'] ?? 0) !== $employeeId) {
-                $_SESSION['flash_error'] = 'Invalid asset selected.';
-                $this->redirect('/' . $routePrefix . '/tickets/create/my');
-                return;
-            }
+        if ($inventoryId <= 0) {
+            $_SESSION['flash_error'] = 'Please select an asset.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/my');
+            return;
+        }
+
+        $ticketModel = new EmployeeTicket();
+        $inventory = $ticketModel->getInventoryDetailsByInventoryId($inventoryId);
+        if (!$inventory || (int) ($inventory['employee_id'] ?? 0) !== $employeeId) {
+            $_SESSION['flash_error'] = 'Invalid asset selected.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/my');
+            return;
         }
 
         $employee = $this->employeeModel->getEmployeeById($employeeId);
@@ -206,14 +213,14 @@ class HOMTicketController extends AuthController
         }
 
         $priority = ucfirst(strtolower(trim((string) ($_POST['priority'] ?? 'Low'))));
-        if (!in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true)) {
+        if (!in_array($priority, ['Low', 'Medium', 'High'], true)) {
             $priority = 'Low';
         }
 
         $branchId = (int) ($inventory['branch_id'] ?? $employee['branch_id'] ?? 0);
         $ticketId = $ticketModel->createTicket([
             'employee_id' => $employeeId,
-            'inventory_id' => $inventoryId > 0 ? $inventoryId : null,
+            'inventory_id' => $inventoryId,
             'branch_id' => $branchId,
             'department' => $department,
             'category' => trim((string) ($_POST['category'] ?? '')),
@@ -221,7 +228,6 @@ class HOMTicketController extends AuthController
             'priority' => $priority,
             'created_by' => $accountId,
         ]);
-        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         $this->sendTicketNotifications((int) $ticketId, $department, $accountId);
 
@@ -325,6 +331,12 @@ class HOMTicketController extends AuthController
             return;
         }
 
+        if ((int) $employeeModel->countAssetsByEmployee($targetEmployeeId) <= 0) {
+            $_SESSION['flash_error'] = 'Cannot create a ticket: selected employee has no assigned asset.';
+            $this->redirect('/' . $routePrefix . '/tickets/create/employee');
+            return;
+        }
+
         $branchId = (int) ($empRow['branch_id'] ?? 0);
         if ($branchId <= 0) {
             $_SESSION['flash_error'] = 'Selected employee has no branch assigned.';
@@ -342,7 +354,7 @@ class HOMTicketController extends AuthController
         }
 
         $priority = ucfirst(strtolower(trim((string) ($_POST['priority'] ?? 'Low'))));
-        if (!in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true)) {
+        if (!in_array($priority, ['Low', 'Medium', 'High'], true)) {
             $priority = 'Low';
         }
 
@@ -357,7 +369,6 @@ class HOMTicketController extends AuthController
             'priority' => $priority,
             'created_by' => $accountId,
         ]);
-        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         $this->sendTicketNotifications((int) $ticketId, $department, $accountId);
 
@@ -954,6 +965,13 @@ class HOMTicketController extends AuthController
 
         if (!$ticket) {
             echo json_encode(['success' => false, 'message' => 'Ticket not found.']);
+            exit;
+        }
+
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicket($pdo, $ticket, $accountId, (string) ($_SESSION['usertype'] ?? ''))) {
+            echo json_encode(['success' => false, 'message' => 'You are not allowed to rate this ticket.']);
             exit;
         }
 

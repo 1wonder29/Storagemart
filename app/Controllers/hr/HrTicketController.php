@@ -2,7 +2,6 @@
 // app/Controllers/hr/HrTicketController.php
 
 require_once __DIR__ . '/../AuthController.php';
-require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Models/employee/Employee.php';
 require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
@@ -19,14 +18,13 @@ class HrTicketController extends AuthController
             return;
         }
 
-        require_once __DIR__ . '/../../Helpers/HrDepartmentAccess.php';
-        if (!HrDepartmentAccess::canAccessHr()) {
+        $employeeModel = new Employee();
+        $user = $employeeModel->fetchUserDetails((int)$_SESSION['account_id']);
+
+        if (!$user || strtoupper($user['usertype']) !== 'HR') {
             http_response_code(403);
             exit('Unauthorized');
         }
-
-        $employeeModel = new Employee();
-        $user = $employeeModel->fetchUserDetails((int)$_SESSION['account_id']);
 
         $employee = $employeeModel->getEmployeeById((int)$user['employee_id']);
         $department = $employee['department'] ?? null;
@@ -150,7 +148,7 @@ class HrTicketController extends AuthController
 
         // normalize priority
         $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
-        if (!in_array($priority, ['Low','Medium','High','Critical'], true)) $priority = 'Low';
+        if (!in_array($priority, ['Low','Medium','High'], true)) $priority = 'Low';
 
         // Use employee's branch if not provided in POST
         $branchId = (int)($_POST['branch_id'] ?? 0);
@@ -168,7 +166,6 @@ class HrTicketController extends AuthController
             'priority'        => $priority,
             'created_by'      => $accountId
         ]);
-        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         require_once __DIR__ . '/../../Models/NotificationModel.php';
 
@@ -240,6 +237,14 @@ class HrTicketController extends AuthController
         }
 
         $ticketId = (int)$_GET['ticket_id'];
+
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicketId($pdo, $ticketId, (int) $_SESSION['account_id'], (string) ($_SESSION['usertype'] ?? ''))) {
+            http_response_code(403);
+            echo json_encode([]);
+            return;
+        }
 
         $model = new EmployeeTicket();
         $history = $model->getTicketHistory($ticketId);
@@ -577,6 +582,18 @@ class HrTicketController extends AuthController
 
         if (!$ticketId) {
             echo json_encode(['success' => false, 'message' => 'Invalid ticket.']);
+            exit;
+        }
+
+        if (empty($_SESSION['account_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
+            exit;
+        }
+
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicketId($pdo, $ticketId, (int) $_SESSION['account_id'], (string) ($_SESSION['usertype'] ?? ''))) {
+            echo json_encode(['success' => false, 'message' => 'You are not allowed to rate this ticket.']);
             exit;
         }
 

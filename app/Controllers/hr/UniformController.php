@@ -36,7 +36,7 @@ class UniformController extends AuthController {
 
         require_once __DIR__ . '/../../Helpers/HrDepartmentAccess.php';
 
-        if (!HrDepartmentAccess::canAccessHr()) {
+        if (!HrDepartmentAccess::canManageUniforms()) {
             $_SESSION['loginMessage'] = 'Access denied. HR only.';
             $this->redirect('/login');
         }
@@ -86,12 +86,11 @@ class UniformController extends AuthController {
                 'Size',
                 'Color',
                 'In Stock',
-                'Reorder At',
+                'Reorder Level',
                 'Stock Status',
-                'Pending Return',
+                'Status',
                 'Damaged',
                 'Lost',
-                'Item Status',
                 'Supplier',
                 'Cost Per Unit',
                 'Date Added',
@@ -100,29 +99,18 @@ class UniformController extends AuthController {
             $rows = [];
             $totals = [
                 'in_stock' => 0,
-                'pending' => 0,
                 'damaged' => 0,
                 'lost' => 0,
             ];
 
             foreach ($uniforms as $uniform) {
                 $inStock = (int) ($uniform['quantity_in_stock'] ?? 0);
-                $pending = (int) ($uniform['quantity_pending_return'] ?? 0);
                 $damaged = (int) ($uniform['quantity_damaged'] ?? 0);
                 $lost = (int) ($uniform['quantity_lost'] ?? 0);
 
                 $totals['in_stock'] += $inStock;
-                $totals['pending'] += $pending;
                 $totals['damaged'] += $damaged;
                 $totals['lost'] += $lost;
-
-                if ($inStock <= 0) {
-                    $stockLabel = 'Out of Stock';
-                } elseif (($uniform['stock_status'] ?? 'OK') === 'NEEDS_REORDER') {
-                    $stockLabel = 'Low Stock';
-                } else {
-                    $stockLabel = 'In Stock';
-                }
 
                 $rows[] = [
                     $uniform['uniform_type'] ?? '',
@@ -130,11 +118,10 @@ class UniformController extends AuthController {
                     $uniform['color'] ?? '',
                     $inStock,
                     (int) ($uniform['reorder_level'] ?? 0),
-                    $stockLabel,
-                    $pending,
+                    $uniform['stock_status'] ?? '',
+                    strtoupper($uniform['status'] ?? 'ACTIVE'),
                     $damaged,
                     $lost,
-                    strtoupper($uniform['status'] ?? 'ACTIVE'),
                     $uniform['supplier'] ?? '',
                     $uniform['cost_per_unit'] ?? '',
                     $uniform['datecreated'] ?? '',
@@ -142,8 +129,7 @@ class UniformController extends AuthController {
             }
 
             if (!empty($rows)) {
-                $blank = array_fill(0, count($headers), '');
-                $rows[] = $blank;
+                $rows[] = array_fill(0, count($headers), '');
                 $rows[] = [
                     'TOTALS',
                     '',
@@ -151,41 +137,13 @@ class UniformController extends AuthController {
                     $totals['in_stock'],
                     '',
                     '',
-                    $totals['pending'],
+                    '',
                     $totals['damaged'],
                     $totals['lost'],
                     '',
                     '',
                     '',
-                    '',
                 ];
-
-                // Pending return details: which uniform (by name) is out with which employee.
-                $outstanding = $this->uniformModel->getOutstandingIssuances();
-                if (!empty($outstanding)) {
-                    $rows[] = $blank;
-                    $rows[] = array_replace($blank, [0 => 'PENDING RETURN DETAILS']);
-                    $rows[] = array_replace($blank, [
-                        0 => 'Uniform',
-                        1 => 'Size',
-                        2 => 'Color',
-                        3 => 'Qty',
-                        4 => 'Employee',
-                        5 => 'Department',
-                        6 => 'Date Issued',
-                    ]);
-                    foreach ($outstanding as $issued) {
-                        $rows[] = array_replace($blank, [
-                            0 => $issued['uniform_type'] ?? '',
-                            1 => $issued['size'] ?? '',
-                            2 => $issued['color'] ?? '',
-                            3 => (int) ($issued['quantity_issued'] ?? 0),
-                            4 => $issued['employee_name'] ?? '',
-                            5 => $issued['department'] ?? '',
-                            6 => !empty($issued['date_issued']) ? date('Y-m-d', strtotime((string) $issued['date_issued'])) : '',
-                        ]);
-                    }
-                }
             }
 
             $filename = 'uniform_inventory_summary_' . date('Ymd_His') . '.xls';
@@ -688,30 +646,6 @@ class UniformController extends AuthController {
     /**
      * Show all assignments for a specific uniform
      */
-    /**
-     * All uniform assignments across every employee, newest first (the "View All
-     * Assignments" destination — previously this button pointed at the Assign form).
-     */
-    public function allAssignments() {
-        $this->requireHR();
-
-        try {
-            $conditionFilter = strtoupper(trim((string) ($_GET['condition'] ?? '')));
-            if (!in_array($conditionFilter, ['DAMAGED', 'LOST', 'PENDING'], true)) {
-                $conditionFilter = '';
-            }
-
-            $uniform = null;
-            $assignments = $this->uniformModel->getAllAssignments($conditionFilter !== '' ? $conditionFilter : null);
-            $notifications = $this->notificationModel->getLatest($_SESSION['account_id'] ?? 0, 10);
-            require __DIR__ . '/../../Views/hr/uniforms/assignments.php';
-        } catch (\Throwable $e) {
-            error_log('UniformController::allAssignments error: ' . $e->getMessage());
-            $_SESSION['errorMessage'] = 'Error loading assignments: ' . $e->getMessage();
-            $this->redirect('/hr/uniforms');
-        }
-    }
-
     public function assignments($uniformId) {
         $this->requireHR();
 
@@ -725,7 +659,7 @@ class UniformController extends AuthController {
             }
 
             $conditionFilter = strtoupper(trim((string) ($_GET['condition'] ?? '')));
-            if (!in_array($conditionFilter, ['DAMAGED', 'LOST', 'PENDING'], true)) {
+            if (!in_array($conditionFilter, ['DAMAGED', 'LOST'], true)) {
                 $conditionFilter = '';
             }
 

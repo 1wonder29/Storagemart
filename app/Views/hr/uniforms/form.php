@@ -49,9 +49,9 @@ $pageTitle = $isEditing ? 'Edit Item' : 'Add Item';
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="uniform_type" class="form-label">Item Type <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="uniform_type" name="uniform_type"
-                                       value="<?= $uniform ? htmlspecialchars($uniform['uniform_type']) : '' ?>"
-                                       placeholder="e.g., Polo Shirt, ID Badge, ID Lace, Radio, Laptop" required>
+                                <input type="text" class="form-control" id="uniform_type" name="uniform_type" 
+                                       value="<?= $uniform ? htmlspecialchars($uniform['uniform_type']) : '' ?>" 
+                                       placeholder="e.g., Polo Shirt, Cap, ID Badge" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="size" class="form-label">Size <span class="text-danger">*</span></label>
@@ -88,6 +88,7 @@ $pageTitle = $isEditing ? 'Edit Item' : 'Add Item';
     </div>
     </div>
 
+            </div>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/storagemart.min.js"></script>

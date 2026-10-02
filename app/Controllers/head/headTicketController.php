@@ -2,7 +2,6 @@
 // app/Controllers/head/HeadTicketController.php
 
 require_once __DIR__ . '/../AuthController.php';
-require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Models/employee/Employee.php';
 require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
@@ -203,7 +202,7 @@ class headTicketController extends AuthController
 
         // normalize priority
         $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
-        if (!in_array($priority, ['Low','Medium','High','Critical'], true)) $priority = 'Low';
+        if (!in_array($priority, ['Low','Medium','High'], true)) $priority = 'Low';
 
         // Use employee's branch if not provided in POST
         $branchId = (int)($_POST['branch_id'] ?? 0);
@@ -221,7 +220,6 @@ class headTicketController extends AuthController
             'priority'        => $priority,
             'created_by'      => $accountId
         ]);
-        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         require_once __DIR__ . '/../../Models/NotificationModel.php';
 
@@ -275,6 +273,11 @@ class headTicketController extends AuthController
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
+        if (empty($_SESSION['account_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
         $ticketId = (int)($_GET['id'] ?? 0);
         if (!$ticketId) {
             http_response_code(400);
@@ -318,6 +321,18 @@ class headTicketController extends AuthController
 
         if (!$ticketId) {
             echo json_encode(['success' => false, 'message' => 'Invalid ticket.']);
+            exit;
+        }
+
+        if (empty($_SESSION['account_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
+            exit;
+        }
+
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicketId($pdo, $ticketId, (int) $_SESSION['account_id'], (string) ($_SESSION['usertype'] ?? ''))) {
+            echo json_encode(['success' => false, 'message' => 'You are not allowed to rate this ticket.']);
             exit;
         }
 
@@ -380,6 +395,14 @@ class headTicketController extends AuthController
         }
 
         $ticketId = (int)$_GET['ticket_id'];
+
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicketId($pdo, $ticketId, (int) $_SESSION['account_id'], (string) ($_SESSION['usertype'] ?? ''))) {
+            http_response_code(403);
+            echo json_encode([]);
+            return;
+        }
 
         $model = new EmployeeTicket();
         $history = $model->getTicketHistory($ticketId);

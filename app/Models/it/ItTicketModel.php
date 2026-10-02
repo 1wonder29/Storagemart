@@ -277,16 +277,6 @@ class ItTicketModel extends BaseModel
         $stmt->execute([$status, $remarks, $ticketId]);
     }
 
-    public function updatePriority(int $ticketId, string $priority): void
-    {
-        $stmt = $this->pdo->prepare(
-            "UPDATE {$this->tbltickets}
-             SET priority = ?, last_updated = NOW()
-             WHERE ticket_id = ?"
-        );
-        $stmt->execute([$priority, $ticketId]);
-    }
-
     public function getResolvedTechnicalTickets(): array
     {
         $this->autoCloseResolvedTickets();
@@ -526,8 +516,9 @@ class ItTicketModel extends BaseModel
                 th.new_status,
                 th.date_logged
             FROM {$this->tblticket_history} th
-            LEFT JOIN {$this->tblemployee} e 
-                ON th.performed_by = e.employee_id
+            LEFT JOIN {$this->tblemployee} e
+                ON e.employee_id = th.performed_by
+                OR e.account_id = th.performed_by
             WHERE th.ticket_id = :ticket_id
             ORDER BY th.date_logged DESC
         ";

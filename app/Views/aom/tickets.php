@@ -165,7 +165,6 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
                         <option value="High">High</option>
-                        <option value="Critical">Critical</option>
                     </select>
                 </div>
             </div>
@@ -204,7 +203,7 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
                                     $fb = strtolower(trim((string)($ticket['branchName'] ?? '')));
                                     $fs = strtolower(trim((string)($ticket['status'] ?? '')));
                                     $fp = strtolower(trim((string)($ticket['priority'] ?? '')));
-                                    $priorityClass = in_array($ticket['priority'], ['High', 'Critical'], true) ? 'danger' :
+                                    $priorityClass = $ticket['priority'] === 'High' ? 'danger' :
                                                     ($ticket['priority'] === 'Medium' ? 'warning' : 'info');
                                     $statusClass = $ticket['status'] === 'Pending' ? 'warning' :
                                                   ($ticket['status'] === 'In Progress' ? 'info' :
@@ -267,6 +266,8 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
     </div>
 </div>
 
+            </div>
+        </div>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>

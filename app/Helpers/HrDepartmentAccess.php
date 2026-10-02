@@ -1,17 +1,55 @@
 <?php
 
-/**
- * Gate for the whole HR module (dashboard, employees, uniforms, HR tickets/assets).
- *
- * Access is by role only: an account must have usertype = 'HR'. There is no
- * department-based bypass — a Department Head, including the Head of HRMD, does not
- * get HR access just by being in that department. Give someone HR access by setting
- * their account's usertype to HR (Admin -> Users -> Accounts -> Edit).
- */
+require_once __DIR__ . '/../Models/employee/Employee.php';
+
 class HrDepartmentAccess
 {
-    public static function canAccessHr(): bool
+    private static ?bool $hrHeadResult = null;
+
+    public static function isHrDepartmentHead(?int $accountId = null): bool
     {
-        return strtoupper($_SESSION['usertype'] ?? '') === 'HR';
+        $accountId = $accountId ?? (int) ($_SESSION['account_id'] ?? 0);
+        if ($accountId <= 0) {
+            return false;
+        }
+
+        if ($accountId === (int) ($_SESSION['account_id'] ?? 0) && self::$hrHeadResult !== null) {
+            return self::$hrHeadResult;
+        }
+
+        if (strtoupper($_SESSION['usertype'] ?? '') !== 'HEAD') {
+            if ($accountId === (int) ($_SESSION['account_id'] ?? 0)) {
+                self::$hrHeadResult = false;
+            }
+            return false;
+        }
+
+        $employeeModel = new Employee();
+        $user = $employeeModel->fetchUserDetails($accountId);
+        if (!$user) {
+            if ($accountId === (int) ($_SESSION['account_id'] ?? 0)) {
+                self::$hrHeadResult = false;
+            }
+            return false;
+        }
+
+        $headEmployee = $employeeModel->getEmployeeById((int) ($user['employee_id'] ?? 0));
+        $department = strtoupper(trim((string) ($headEmployee['department'] ?? '')));
+        $isHrHead = ($department === 'HRMD');
+
+        if ($accountId === (int) ($_SESSION['account_id'] ?? 0)) {
+            self::$hrHeadResult = $isHrHead;
+        }
+
+        return $isHrHead;
+    }
+
+    public static function canManageUniforms(): bool
+    {
+        if (strtoupper($_SESSION['usertype'] ?? '') === 'HR') {
+            return true;
+        }
+
+        return self::isHrDepartmentHead();
     }
 }

@@ -407,17 +407,6 @@
 }
 
 /* Dark mode */
-html.it-dark .it-dashboard-page {
-  /* .it-dashboard-page redeclares these as light-mode colors above, which shadows
-     the dark values html.it-dark sets on <html> — re-point them here so every rule
-     using var(--it-surface)/var(--it-text)/var(--it-muted)/var(--it-border) below
-     actually renders dark instead of resolving to the light fallback. */
-  --it-surface: #252932;
-  --it-text: #e2e5ea;
-  --it-muted: #a8aeb8;
-  --it-border: #383e48;
-}
-
 html.it-dark #content-wrapper:has(.it-dashboard-page) {
   background: var(--it-bg, #1a1d24);
 }

@@ -256,6 +256,9 @@ function admin_can_transfer_asset(string $status): bool
             </div>
 
         </div>
+
+            </div>
+        </div>
     </div>
 
     <div class="modal fade" id="markDefectiveModal" tabindex="-1" role="dialog" aria-labelledby="markDefectiveModalLabel" aria-hidden="true">

@@ -183,9 +183,7 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                                 actionTaken.focus();
                                 return;
                             }
-                            if (!window.confirm('Mark this ticket as resolved? The requester will be notified.')) {
-                                return;
-                            }
+                            if (!window.confirm('Mark this ticket as resolved? The requester will be notified.')) { return; }
                             actionField.value = 'Resolve';
                             form.submit();
                         });

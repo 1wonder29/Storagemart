@@ -3,16 +3,22 @@
   background: linear-gradient(160deg, #eef4fc 0%, #f4f7fb 45%, #e8eef8 100%);
 }
 
-/* Keep the horizontal scrollbar reachable near the table instead of at the
-   bottom of a very tall page — constrain the table to a scrollable box that
-   scrolls both directions instead of letting it grow the whole page. */
-.admin-ticket-page .table-responsive {
-  max-height: 65vh;
-  overflow-y: auto;
+.admin-ticket-page.it-dashboard-page .personal-stat-grid-6,
+.admin-ticket-page.it-dashboard-page .personal-stat-grid-7 {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
-.admin-ticket-page.it-dashboard-page .personal-stat-grid-6 {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-tickets {
+  border-top-color: #22c55e;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.08) 0%, #ffffff 72%);
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-tickets .stat-number {
+  color: #15803d;
+}
+
+.admin-ticket-page.it-dashboard-page .personal-stat-card.tone-tickets .stat-title i {
+  color: #22c55e;
 }
 
 .admin-ticket-page.it-dashboard-page .personal-stat-card.tone-pending {
@@ -60,13 +66,15 @@
 }
 
 @media (max-width: 1199px) {
-  .admin-ticket-page.it-dashboard-page .personal-stat-grid-6 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .admin-ticket-page.it-dashboard-page .personal-stat-grid-6,
+  .admin-ticket-page.it-dashboard-page .personal-stat-grid-7 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 767px) {
-  .admin-ticket-page.it-dashboard-page .personal-stat-grid-6 {
+  .admin-ticket-page.it-dashboard-page .personal-stat-grid-6,
+  .admin-ticket-page.it-dashboard-page .personal-stat-grid-7 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -321,7 +329,6 @@
 }
 
 .admin-ticket-page .priority-pill.high { background: #f8d7da; color: #721c24; }
-.admin-ticket-page .priority-pill.critical { background: #dc3545; color: #fff; font-weight: 700; }
 .admin-ticket-page .priority-pill.medium { background: #fff3cd; color: #856404; }
 .admin-ticket-page .priority-pill.low { background: #d1ecf1; color: #0c5460; }
 .admin-ticket-page .priority-pill.default { background: #e2e3e5; color: #383d41; }

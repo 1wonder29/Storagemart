@@ -14,20 +14,17 @@ class Ticket extends BaseModel {
     protected $tblgroup = 'tblassets_group';
     protected $tbllogs = 'tbllogs'; 
 
-    //fetch all tickets (optional filter: overdue | sla-breach)
+    //fetch all tickets (optional filter: sla-breach)
     public function fetchTicket(?string $filter = null): array
     {
-        require_once __DIR__ . '/../../Helpers/TicketSla.php';
-
         $sql = "SELECT t.ticket_id, t.ticket_number, CONCAT(e.lastname, ', ', e.firstname) AS employee_name, t.category, t.priority, t.status, t.date_filed, b.branchName, t.assigned_to AS assigned_to_id, CONCAT(a2.firstname, ' ', a2.lastname) AS assigned_to_name
             FROM {$this->table} t
             JOIN {$this->tblemployee} e ON t.employee_id = e.employee_id
             LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
             LEFT JOIN {$this->tblemployee} a2 ON t.assigned_to = a2.employee_id";
 
-        if ($filter === 'overdue') {
-            $sql .= ' WHERE (' . TicketSla::overdueCondition('t') . ')';
-        } elseif ($filter === 'sla-breach') {
+        if ($filter === 'sla-breach') {
+            require_once __DIR__ . '/../../Helpers/TicketSla.php';
             $sql .= ' WHERE (' . TicketSla::resolutionBreachCondition('t') . ')';
         }
 
@@ -84,7 +81,9 @@ class Ticket extends BaseModel {
                 th.date_logged,
                 th.action_type
             FROM tblticket_history th
-            LEFT JOIN tblemployee e ON th.performed_by = e.employee_id
+            LEFT JOIN tblemployee e
+                ON e.employee_id = th.performed_by
+                OR e.account_id = th.performed_by
             WHERE th.ticket_id = :ticket_id
             ORDER BY th.date_logged DESC
         ";
@@ -275,96 +274,43 @@ class Ticket extends BaseModel {
         }
     }
 
-public function searchEmployee(string $q): ?array
-{
-    $q = trim($q);
-    if ($q === '') {
-        return null;
-    }
-
-    $sql = "
-        SELECT 
-            e.employee_id,
-            CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) AS full_name,
-            b.branchName,
-            e.department
-        FROM {$this->tblemployee} e
-        LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
-        WHERE e.firstname   LIKE :first
-            OR e.lastname   LIKE :last
-            OR e.employee_id LIKE :empid
-            OR CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) LIKE :full_with_comma
-            OR CONCAT(e.firstname, ' ', IFNULL(e.middlename, ''), ' ', e.lastname) LIKE :full_plain
-        LIMIT 1
-    ";
-
-    $stmt = $this->pdo->prepare($sql);
-    $like = "%{$q}%";
-
-    $stmt->bindValue(':first', $like, PDO::PARAM_STR);
-    $stmt->bindValue(':last',  $like, PDO::PARAM_STR);
-    $stmt->bindValue(':empid', $like, PDO::PARAM_STR);
-    $stmt->bindValue(':full_with_comma', $like, PDO::PARAM_STR);
-    $stmt->bindValue(':full_plain', $like, PDO::PARAM_STR);
-
-    $stmt->execute();
-
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    return $row ?: null;
-}
-
-    /**
-     * Employees for the "Employee List" picker, optionally narrowed by branch and a text filter.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public function listEmployees(?int $branchId, string $q, int $limit = 300): array
+    public function searchEmployee(string $q): ?array
     {
-        $where = [];
-        $params = [];
-
-        if ($branchId) {
-            $where[] = 'e.branch_id = :branch_id';
-            $params[':branch_id'] = $branchId;
-        }
-
         $q = trim($q);
-        if ($q !== '') {
-            $where[] = "(e.firstname LIKE :q1 OR e.lastname LIKE :q2 OR e.employee_id LIKE :q3
-                OR CONCAT(e.lastname, ', ', e.firstname) LIKE :q4
-                OR CONCAT(e.firstname, ' ', e.lastname) LIKE :q5)";
-            $like = '%' . $q . '%';
-            foreach ([':q1', ':q2', ':q3', ':q4', ':q5'] as $key) {
-                $params[$key] = $like;
-            }
+        if ($q === '') {
+            return null;
         }
 
         $sql = "
-            SELECT
+            SELECT 
                 e.employee_id,
-                e.branch_id,
                 CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) AS full_name,
-                e.department,
-                e.position,
-                b.branchName
+                b.branchName,
+                e.department
             FROM {$this->tblemployee} e
             LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
-            " . ($where ? 'WHERE ' . implode(' AND ', $where) : '') . "
-            ORDER BY e.lastname, e.firstname
-            LIMIT " . (int) $limit;
+            WHERE e.firstname   LIKE :first
+                OR e.lastname   LIKE :last
+                OR e.employee_id LIKE :empid
+                OR CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) LIKE :full_with_comma
+                OR CONCAT(e.firstname, ' ', IFNULL(e.middlename, ''), ' ', e.lastname) LIKE :full_plain
+            LIMIT 1
+        ";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        $like = "%{$q}%";
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    }
+        $stmt->bindValue(':first', $like, PDO::PARAM_STR);
+        $stmt->bindValue(':last',  $like, PDO::PARAM_STR);
+        $stmt->bindValue(':empid', $like, PDO::PARAM_STR);
+        $stmt->bindValue(':full_with_comma', $like, PDO::PARAM_STR);
+        $stmt->bindValue(':full_plain', $like, PDO::PARAM_STR);
 
-    /** @return array<int, array{branch_id: int, branchName: string}> */
-    public function listBranches(): array
-    {
-        $stmt = $this->pdo->query("SELECT branch_id, branchName FROM {$this->tblbranch} ORDER BY branchName");
-        return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ?: null;
     }
 
     public function fetchAssetsByEmployee(int $employeeId): array
@@ -454,7 +400,7 @@ public function searchEmployee(string $q): ?array
             'department'      => null,
             'category'        => null,
             'concern_details' => null,
-            'priority'        => 'Low',       // enum('Low','Medium','High','Critical')
+            'priority'        => 'Low',       // enum('Low','Medium','High')
             'status'          => TicketStatus::initial(),
             'remarks'         => null,
             'assigned_to'     => null,
@@ -613,10 +559,10 @@ public function searchEmployee(string $q): ?array
         LEFT JOIN {$this->tblbranch} b ON b.branch_id = COALESCE(NULLIF(t.branch_id, 0), e.branch_id)
         LEFT JOIN {$this->tblassets} i ON t.inventory_id = i.inventory_id
         LEFT JOIN {$this->tblgroup} g ON i.group_id = g.group_id
-        WHERE t.status = :open_status
+        WHERE t.status = :pending_status
         ORDER BY t.date_filed ASC";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':open_status' => TicketStatus::OPEN]);
+        $stmt->execute([':pending_status' => TicketStatus::PENDING]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
@@ -693,6 +639,43 @@ public function searchEmployee(string $q): ?array
         return $this->fetchTicketsByDateRange($start, $end);
     }
 
+    /**
+     * Ticket counts filed per calendar month for a given year (Jan–Dec).
+     *
+     * @return array{labels: string[], data: int[], year: int}
+     */
+    public function fetchMonthlyTicketTrend(int $year): array
+    {
+        $year = max(2000, min(2100, $year));
+        $labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $counts = array_fill(0, 12, 0);
+
+        $sql = "
+            SELECT MONTH(date_filed) AS month_num, COUNT(*) AS ticket_count
+            FROM {$this->tbltickets}
+            WHERE date_filed IS NOT NULL
+              AND YEAR(date_filed) = :year
+            GROUP BY MONTH(date_filed)
+            ORDER BY month_num ASC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':year' => $year]);
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $monthNum = (int) ($row['month_num'] ?? 0);
+            if ($monthNum >= 1 && $monthNum <= 12) {
+                $counts[$monthNum - 1] = (int) ($row['ticket_count'] ?? 0);
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $counts,
+            'year' => $year,
+        ];
+    }
+
     public function countTicketsByMonth(int $year, int $month): int
     {
         $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
@@ -713,6 +696,8 @@ public function searchEmployee(string $q): ?array
     public function approveAndAssign(int $ticketId, int $assignedToEmployeeId, int $approvedByAccountId, string $remarks = ''): bool
     {
         try {
+            $performedByEmployeeId = $this->getEmployeeIdByAccountId($approvedByAccountId) ?? 0;
+
             $this->pdo->beginTransaction();
 
             // update ticket
@@ -736,9 +721,9 @@ public function searchEmployee(string $q): ?array
             $stmt->execute([
                 ':ticket_id'    => $ticketId,
                 ':details'      => $details,
-                ':old_status'   => TicketStatus::OPEN,
+                ':old_status'   => TicketStatus::PENDING,
                 ':new_status'   => TicketStatus::IN_PROGRESS,
-                ':performed_by' => $approvedByAccountId
+                ':performed_by' => $performedByEmployeeId,
             ]);
 
             // log to tbllogs (non-fatal)
@@ -766,13 +751,16 @@ public function searchEmployee(string $q): ?array
     public function declineTicket(int $ticketId, string $declineReason, string $remarks, int $declinedByAccountId): bool
     {
         try {
+            $performedByEmployeeId = $this->getEmployeeIdByAccountId($declinedByAccountId) ?? 0;
+
             $this->pdo->beginTransaction();
 
             $sql = "UPDATE {$this->tbltickets}
-                    SET status = 'Closed', decline_reason = :decline_reason, remarks = :remarks, declined_by = :declined_by, date_declined = NOW(), last_updated = NOW()
+                    SET status = :closed_status, decline_reason = :decline_reason, remarks = :remarks, declined_by = :declined_by, date_declined = NOW(), last_updated = NOW()
                     WHERE ticket_id = :ticket_id";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([
+                ':closed_status'  => TicketStatus::CLOSED,
                 ':decline_reason' => $declineReason,
                 ':remarks'        => $remarks,
                 ':declined_by'    => $declinedByAccountId,
@@ -782,12 +770,13 @@ public function searchEmployee(string $q): ?array
             // only log if update affected a row
             if ($stmt->rowCount() > 0) {
                 $sqlHist = "INSERT INTO {$this->tblhistory} (ticket_id, action_type, action_details, old_status, new_status, performed_by, performed_role, date_logged)
-                            VALUES (:ticket_id, 'Closed', 'Ticket Declined by Admin', :old_status, 'Closed', :performed_by, 'Admin', NOW())";
+                            VALUES (:ticket_id, 'Closed', 'Ticket Declined by Admin', :old_status, :new_status, :performed_by, 'Admin', NOW())";
                 $stmt2 = $this->pdo->prepare($sqlHist);
                 $stmt2->execute([
                     ':ticket_id'   => $ticketId,
-                    ':old_status'  => TicketStatus::OPEN,
-                    ':performed_by'=> $declinedByAccountId
+                    ':old_status'  => TicketStatus::PENDING,
+                    ':new_status'  => TicketStatus::CLOSED,
+                    ':performed_by'=> $performedByEmployeeId
                 ]);
 
                 $sqlLog = "INSERT INTO {$this->tbllogs} (datelog, timelog, action, module, ID, performedby)

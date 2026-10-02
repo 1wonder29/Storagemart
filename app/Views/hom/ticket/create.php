@@ -168,6 +168,10 @@ $roleLabel = ($user_role ?? '') === 'OM' ? 'OM' : 'HOM';
 
                                 </div>
 
+                                <div id="employee-asset-warning" class="alert alert-warning mt-3 mb-0 d-none" role="alert">
+                                    Selected employee has no assigned asset. Ticket creation is disabled.
+                                </div>
+
                             </div>
 
 
@@ -202,6 +206,7 @@ $roleLabel = ($user_role ?? '') === 'OM' ? 'OM' : 'HOM';
 
 
 
+            </div>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -217,6 +222,8 @@ $roleLabel = ($user_role ?? '') === 'OM' ? 'OM' : 'HOM';
     var employeeSelect = document.getElementById('employee_id');
 
     var branchSelect = document.getElementById('branch_id');
+    var submitButton = document.querySelector('button[type="submit"]');
+    var assetWarning = document.getElementById('employee-asset-warning');
 
     if (!employeeSelect || !branchSelect) return;
 
@@ -238,6 +245,7 @@ $roleLabel = ($user_role ?? '') === 'OM' ? 'OM' : 'HOM';
         var option = employeeSelect.options[employeeSelect.selectedIndex];
         var branchId = option ? option.getAttribute('data-branch-id') : '';
         var hasEmployee = !!employeeSelect.value;
+        var hasAssets = option ? option.getAttribute('data-has-assets') === '1' : true;
 
         if (hasEmployee && branchId) {
             branchSelect.value = branchId;
@@ -252,7 +260,15 @@ $roleLabel = ($user_role ?? '') === 'OM' ? 'OM' : 'HOM';
         }
 
         branchSelect.disabled = true;
-        document.dispatchEvent(new Event('tms:branch-changed'));
+
+        if (submitButton) {
+            submitButton.disabled = !hasAssets && hasEmployee;
+        }
+
+        if (assetWarning) {
+            var shouldShowWarning = !hasAssets && hasEmployee;
+            assetWarning.classList.toggle('d-none', !shouldShowWarning);
+        }
     }
 
 

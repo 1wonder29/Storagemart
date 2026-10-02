@@ -228,6 +228,9 @@ ksort($positions);
             </div>
 
         </div>
+
+            </div>
+        </div>
     </div>
 
     <a class="scroll-to-top rounded" href="#page-top">
@@ -444,8 +447,8 @@ ksort($positions);
                     render: function (row) {
                         return '<button class="btn btn-sm btn-view-asset-tickets viewAssetTicketsBtn"' +
                             ' data-inventory-id="' + row.inventory_id + '"' +
-                            ' data-iteminfo="' + $('<div>').text(row.itemInfo || '').html() + '"' +
-                            ' data-assetnumber="' + $('<div>').text(row.assetNumber || '').html() + '">' +
+                            ' data-iteminfo="' + $('<span>').text(row.itemInfo || '').html() + '"' +
+                            ' data-assetnumber="' + $('<span>').text(row.assetNumber || '').html() + '">' +
                             '<i class="fas fa-ticket-alt mr-1"></i> View Tickets</button>';
                     }
                 }

@@ -144,8 +144,9 @@ class EmployeeTicket extends BaseModel
                 th.new_status,
                 th.date_logged
             FROM {$this->tblticket_history} th
-            LEFT JOIN {$this->tblemployee} e 
-                ON th.performed_by = e.employee_id
+            LEFT JOIN {$this->tblemployee} e
+                ON e.employee_id = th.performed_by
+                OR e.account_id = th.performed_by
             WHERE th.ticket_id = :ticket_id
             ORDER BY th.date_logged DESC
         ";
@@ -187,7 +188,6 @@ class EmployeeTicket extends BaseModel
                 t.date_filed,
                 t.status,
                 t.remarks,
-                t.assigned_to,
                 e.firstname AS employee_firstname,
                 e.lastname AS employee_lastname,
                 e.firstname AS emp_firstname,

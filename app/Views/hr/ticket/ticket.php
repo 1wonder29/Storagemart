@@ -116,7 +116,6 @@ $hrTicketStatTone = static function (string $status): string {
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
                         <option value="High">High</option>
-                        <option value="Critical">Critical</option>
                     </select>
                 </div>
                 <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
@@ -158,7 +157,7 @@ $hrTicketStatTone = static function (string $status): string {
                                 $ticketId = (int) ($ticket['ticket_id'] ?? 0);
                                 $priority = (string) ($ticket['priority'] ?? 'Low');
                                 $status = (string) ($ticket['status'] ?? 'Pending');
-                                $priorityClass = in_array($priority, ['High', 'Critical'], true) ? 'danger' : ($priority === 'Medium' ? 'warning' : 'success');
+                                $priorityClass = $priority === 'High' ? 'danger' : ($priority === 'Medium' ? 'warning' : 'success');
                                 $statusClass = $status === 'Pending' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
                                 ?>
                                 <tr data-ticket-id="<?= $ticketId ?>"
@@ -212,6 +211,7 @@ $hrTicketStatTone = static function (string $status): string {
 </div>
 </div>
 
+            </div>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>

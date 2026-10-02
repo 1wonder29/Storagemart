@@ -12,6 +12,7 @@ public/assets/generatePDF/*.pdf
 public/assets/generatePDF/*.jpg
 public/assets/generatePDF/*.png
 public/assets/tickets/
+public.zip
 *.swp
 *.swo
 *~

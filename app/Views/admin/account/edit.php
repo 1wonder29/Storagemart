@@ -87,8 +87,10 @@ $base = rtrim(BASE_URL, '/');
                                             <option value="HEAD" <?= (($account['usertype'] ?? '') === 'HEAD') ? 'selected' : '' ?>>Head</option>
                                             <option value="HR" <?= (($account['usertype'] ?? '') === 'HR') ? 'selected' : '' ?>>HR</option>
                                             <option value="AOM" <?= (($account['usertype'] ?? '') === 'AOM') ? 'selected' : '' ?>>Area Operation Manager</option>
-                                            <option value="OM" <?= (($account['usertype'] ?? '') === 'OM') ? 'selected' : '' ?>>Operations Manager</option>
-                                            <option value="HOM" <?= (($account['usertype'] ?? '') === 'HOM') ? 'selected' : '' ?>>Operations Head</option>
+                                            <option value="HOM" <?= (($account['usertype'] ?? '') === 'HOM') ? 'selected' : '' ?>>Head Of Operation</option>
+                                            <?php if (($account['usertype'] ?? '') === 'OM'): ?>
+                                            <option value="OM" selected>Operation Manager (Legacy)</option>
+                                            <?php endif; ?>
                                             <option value="EMPLOYEE" <?= (($account['usertype'] ?? '') === 'EMPLOYEE') ? 'selected' : '' ?>>Employee</option>
                                         </select>
                                     </div>
@@ -144,9 +146,15 @@ $base = rtrim(BASE_URL, '/');
                                         <label for="department" class="form-label">Department</label>
                                         <select id="department" name="department" class="form-control" required>
                                         <option value="">-- Select Department --</option>
-                                        <?php foreach (($departments ?? []) as $dept): ?>
-                                            <option value="<?= htmlspecialchars((string) ($dept['code'] ?? '')) ?>"<?= (($employee['department'] ?? '') === ($dept['code'] ?? '')) ? ' selected' : '' ?>><?= htmlspecialchars((string) ($dept['label'] ?? '')) ?></option>
-                                        <?php endforeach; ?>
+                                        <option value="IT"<?= (($employee['department'] ?? '') === 'IT') ? 'selected' : '' ?>>Information Technology</option>
+                                        <option value="Sales" <?= (($employee['department'] ?? '') === 'Sales') ? 'selected' : '' ?>>Sales</option>
+                                        <option value="Purchasing"<?= (($employee['department'] ?? '') === 'Purchasing') ? 'selected' : '' ?>>Purchasing</option>
+                                        <option value="Accounting"<?= (($employee['department'] ?? '') === 'Accounting') ? 'selected' : '' ?>>Accounting</option>
+                                        <option value="HRMD"<?= (($employee['department'] ?? '') === 'HRMD') ? 'selected' : '' ?>>Human Resource Management and Development</option>
+                                        <option value="Marketing"<?= (($employee['department'] ?? '') === 'Marketing') ? 'selected' : '' ?>>Marketing</option>
+                                        <option value="Compliance"<?= (($employee['department'] ?? '') === 'Compliance') ? 'selected' : '' ?>>Corporate Compliance</option>
+                                        <option value="Operations"<?= (($employee['department'] ?? '') === 'Operations') ? 'selected' : '' ?>>Operations</option>
+                                        <option value="Digital Marketing"<?= (($employee['department'] ?? '') === 'Digital Marketing') ? 'selected' : '' ?>>Digital Marketing</option>
                                         </select>
                                     </div>
                                     </div>
@@ -190,7 +198,6 @@ $base = rtrim(BASE_URL, '/');
     </a>
 
     <!-- Logout Modal-->
-</div>
     <script>
     (function(){
         var btn = document.getElementById('closeModalBtn');

@@ -136,7 +136,6 @@ $headTicketStatTone = static function (string $status): string {
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
                         <option value="High">High</option>
-                        <option value="Critical">Critical</option>
                     </select>
                 </div>
                 <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
@@ -242,6 +241,8 @@ $headTicketStatTone = static function (string $status): string {
     </div>
 </div>
 
+            </div>
+        </div>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>

@@ -71,7 +71,7 @@ $resultCount = count($employees ?? []);
                                 <tbody>
                                     <?php foreach ($employees as $emp): ?>
                                         <tr>
-                                            <td><strong><?= htmlspecialchars($emp['lastname'] . ', ' . $emp['firstname']) ?></strong></td>
+                                            <td><strong><?= htmlspecialchars($emp['firstname'] . ' ' . $emp['lastname']) ?></strong></td>
                                             <td><?= htmlspecialchars($emp['position']) ?></td>
                                             <td><?= htmlspecialchars($emp['department']) ?></td>
                                             <td><?= htmlspecialchars($emp['email']) ?></td>
@@ -94,6 +94,7 @@ $resultCount = count($employees ?? []);
     </div>
     </div>
 
+            </div>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/storagemart.min.js"></script>

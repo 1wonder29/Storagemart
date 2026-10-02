@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/../AuthController.php';
-require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Models/employee/Employee.php';
 require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
@@ -150,7 +149,7 @@ class OMTicketController extends AuthController
         }
 
         $priority = ucfirst(strtolower(trim((string) ($_POST['priority'] ?? 'Low'))));
-        if (!in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true)) {
+        if (!in_array($priority, ['Low', 'Medium', 'High'], true)) {
             $priority = 'Low';
         }
 
@@ -165,7 +164,6 @@ class OMTicketController extends AuthController
             'priority' => $priority,
             'created_by' => $accountId,
         ]);
-        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         $notificationModel = new NotificationModel();
         $recipients = $notificationModel->getTicketRecipientsWithType($department);
@@ -477,6 +475,13 @@ class OMTicketController extends AuthController
 
         if (!$ticket) {
             echo json_encode(['success' => false, 'message' => 'Ticket not found.']);
+            exit;
+        }
+
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicket($pdo, $ticket, $accountId, (string) ($_SESSION['usertype'] ?? ''))) {
+            echo json_encode(['success' => false, 'message' => 'You are not allowed to rate this ticket.']);
             exit;
         }
 

@@ -1,7 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
-require_once __DIR__ . '/../../Helpers/AppShell.php';
-$adminName = htmlspecialchars(AppShell::currentUser()['firstname'] ?: 'Admin');
+require_once __DIR__ . '/../../Helpers/TicketSla.php';
+$adminName = htmlspecialchars($loggedFirstname ?? 'Admin');
 $todayLabel = date('l, F j, Y');
 ?>
 <!DOCTYPE html>
@@ -70,10 +70,10 @@ $todayLabel = date('l, F j, Y');
                         <span class="stat-title"><i class="fas fa-spinner" aria-hidden="true"></i> In progress</span>
                         <span class="stat-hint">Active assignments</span>
                     </a>
-                    <a href="<?= htmlspecialchars($base) ?>/admin/tickets?filter=sla-breach" class="admin-stat-card tone-sla">
+                    <a href="#admin-sla-chart" class="admin-stat-card tone-sla">
                         <span class="stat-number"><?= htmlspecialchars(number_format((float) ($slaCompliance ?? 0), 1)) ?>%</span>
                         <span class="stat-title"><i class="fas fa-check-circle" aria-hidden="true"></i> SLA Compliance</span>
-                        <span class="stat-hint">Resolved within 24h</span>
+                        <span class="stat-hint">View resolution chart</span>
                     </a>
                     <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="admin-stat-card tone-assets">
                         <span class="stat-number"><?= (int) $assetCount ?></span>
@@ -228,7 +228,6 @@ $todayLabel = date('l, F j, Y');
                             <?php
                             $priorityCounts = $ticketPriorityCounts ?? [];
                             $priorityMeta = [
-                                'Critical (P1)' => '#dc3545',
                                 'High (P2)' => '#fd7e14',
                                 'Medium (P3)' => '#f6c23e',
                                 'Low (P4)' => '#1cc88a',
@@ -295,6 +294,7 @@ $todayLabel = date('l, F j, Y');
         window.itPersonnelWorkload = <?= json_encode($itPersonnelWorkload ?? []) ?>;
         window.ticketPriorityCounts = <?= json_encode($ticketPriorityCounts ?? []) ?>;
         window.ticketStatusCounts = <?= json_encode($ticketStatusCounts ?? []) ?>;
+        window.slaResolutionHours = <?= (int) TicketSla::RESOLUTION_SLA_HOURS ?>;
     </script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../AuthController.php';
-require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Models/admin/Account.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
@@ -27,7 +26,7 @@ class TicketController extends AuthController
         $ticketModel = new Ticket();
 
         $ticketFilter = trim((string) ($_GET['filter'] ?? ''));
-        if (!in_array($ticketFilter, ['overdue', 'sla-breach'], true)) {
+        if (!in_array($ticketFilter, ['sla-breach'], true)) {
             $ticketFilter = '';
         }
 
@@ -194,8 +193,6 @@ class TicketController extends AuthController
 
             if ($ok) {
                 $_SESSION['success'] = $message;
-                require_once __DIR__ . '/../../Services/TicketMailer.php';
-                TicketMailer::ticketAssigned($ticketId, $assignedTo, $username);
             } else {
                 $_SESSION['error'] = $message;
             }
@@ -271,31 +268,6 @@ class TicketController extends AuthController
         }
     }
 
-
-    public function employeeList(): void
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        header('Content-Type: application/json');
-
-        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-            return;
-        }
-
-        $branchId = (int) ($_GET['branch_id'] ?? 0);
-        $q = trim((string) ($_GET['q'] ?? ''));
-
-        $ticketModel = new Ticket();
-        echo json_encode([
-            'success'   => true,
-            'branches'  => $ticketModel->listBranches(),
-            'employees' => $ticketModel->listEmployees($branchId > 0 ? $branchId : null, $q),
-        ]);
-    }
 
     public function getAssets(): void
     {
@@ -413,9 +385,9 @@ class TicketController extends AuthController
         $remarks          = trim($_POST['remarks'] ?? '');
         $created_by       = (int)($_SESSION['account_id'] ?? 0);
 
-        // normalize priority to match enum ('Low','Medium','High','Critical')
+        // normalize priority to match enum ('Low','Medium','High')
         $priority = ucfirst(strtolower($priorityInput));
-        if (!in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true)) {
+        if (!in_array($priority, ['Low', 'Medium', 'High'], true)) {
             $priority = 'Low';
         }
 
@@ -437,11 +409,6 @@ class TicketController extends AuthController
                 'assigned_to'     => $assigned_to,
                 'created_by'      => $created_by,
             ]);
-            TicketFormFields::ticketCreated((int) $ticketId, $_POST);
-            if ($assigned_to) {
-                require_once __DIR__ . '/../../Services/TicketMailer.php';
-                TicketMailer::ticketAssigned((int) $ticketId, (int) $assigned_to, (string) ($_SESSION['username'] ?? ''));
-            }
 
             // who "performed" the technical action?
             // If you want it to be the IT staff you assigned to:
@@ -528,9 +495,6 @@ class TicketController extends AuthController
         $ok = $ticketModel->approveAndAssign($ticket_id, $assigned_to, $accountID, $remarks);
 
     if ($ok) {
-        require_once __DIR__ . '/../../Services/TicketMailer.php';
-        TicketMailer::ticketAssigned($ticket_id, $assigned_to, (string) ($_SESSION['username'] ?? ''));
-
         // Log ticket approval
         ActivityLogger::action('APPROVE', 'Admin - Tickets', (string)$ticket_id,
             "Ticket #{$ticket_id} approved and assigned to employee #{$assigned_to}",

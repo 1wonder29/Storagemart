@@ -98,7 +98,6 @@ $base = rtrim(BASE_URL, '/');
                                         <li><strong>Low</strong> — Non-urgent; can wait for regular maintenance.</li>
                                         <li><strong>Medium</strong> — Should be addressed within a reasonable timeframe.</li>
                                         <li><strong>High</strong> — Urgent; requires immediate attention.</li>
-                                        <li><strong>Critical</strong> — Major outage affecting critical operations or multiple departments; needs an immediate response.</li>
                                     </ul>
                                 </div>
 
@@ -134,7 +133,6 @@ $base = rtrim(BASE_URL, '/');
                                             <option value="low">Low</option>
                                             <option value="medium">Medium</option>
                                             <option value="high">High</option>
-                                            <option value="critical">Critical</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6 mb-3">
@@ -187,7 +185,9 @@ $base = rtrim(BASE_URL, '/');
             </div>
         </div>
     </div>
-</div>
+
+            </div>
+        </div>
 </div>
 
 <a class="scroll-to-top rounded" href="#page-top"><i class="fas fa-angle-up"></i></a>

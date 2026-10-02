@@ -81,8 +81,7 @@ $base = rtrim(BASE_URL, '/');
                                             <option value="HR">HR</option>
                                             <option value="IT">Information Technology</option>
                                             <option value="AOM">Area Operation Manager</option>
-                                            <option value="OM">Operations Manager</option>
-                                            <option value="HOM">Operations Head</option>
+                                            <option value="HOM">Head Of Operation</option>
                                             <option value="EMPLOYEE">Employee</option>
                                         </select>
                                     </div>
@@ -130,9 +129,15 @@ $base = rtrim(BASE_URL, '/');
                                         <label for="department" class="form-label">Department</label>
                                         <select id="department" name="department" class="form-control" required>
                                             <option value="">-- Select Department --</option>
-                                            <?php foreach (($departments ?? []) as $dept): ?>
-                                                <option value="<?= htmlspecialchars((string) ($dept['code'] ?? '')) ?>"><?= htmlspecialchars((string) ($dept['label'] ?? '')) ?></option>
-                                            <?php endforeach; ?>
+                                            <option value="IT">Information Technology</option>
+                                            <option value="Sales">Sales</option>
+                                            <option value="Purchasing">Purchasing</option>
+                                            <option value="Accounting">Accounting</option>
+                                            <option value="HRMD">Human Resource Management and Development</option>
+                                            <option value="Marketing">Marketing</option>
+                                            <option value="Compliance">Corporate Compliance</option>
+                                            <option value="Operations">Operations</option>
+                                            <option value="Digital Marketing">Digital Marketing</option>
                                         </select>
                                     </div>
                                 </div>
@@ -169,7 +174,6 @@ $base = rtrim(BASE_URL, '/');
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
-</div>
 
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

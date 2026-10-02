@@ -17,6 +17,8 @@ foreach ($users as $row) {
 }
 
 ksort($usertypes);
+
+$deptSuffixRoles = ['HEAD', 'HOM', 'OM'];
 ?>
 <html lang="en">
 
@@ -80,7 +82,7 @@ ksort($usertypes);
                         <label for="accountRoleFilter">Role / Usertype</label>
                         <select id="accountRoleFilter" class="form-control form-control-sm">
                             <option value="">All Roles</option>
-                            <?php foreach (admin_account_role_options(array_keys($usertypes)) as $type): ?>
+                            <?php foreach (array_keys($usertypes) as $type): ?>
                                 <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
                             <?php endforeach; ?>
                         </select>
@@ -124,18 +126,15 @@ ksort($usertypes);
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php $deptSuffixRoles = ['HEAD', 'HOM', 'OM']; ?>
                                 <?php foreach ($users as $row):
                                     $usertype = (string) ($row['usertype'] ?? '');
-                                    $secondaryType = trim((string) ($row['secondary_usertype'] ?? ''));
-                                    // Janette: top-level General Manager, not an HRMD-department staffer - show her
-                                    // position instead of department on the HEAD badge.
+                                    $secondaryType = (string) ($row['secondary_usertype'] ?? '');
+                                    $date = admin_account_format_date((string) ($row['datecreated'] ?? ''));
                                     $isGeneralManagerAccount = (int) ($row['account_id'] ?? 0) === 2200616;
                                     $department = $isGeneralManagerAccount
                                         ? trim((string) ($row['position'] ?? ''))
                                         : trim((string) ($row['department'] ?? ''));
-                                    $date = admin_account_format_date((string) ($row['datecreated'] ?? ''));
-                                    $roleTokens = array_filter([strtolower(trim($usertype)), strtolower($secondaryType)]);
+                                    $roleTokens = array_filter([strtolower(trim($usertype)), strtolower(trim($secondaryType))]);
                                 ?>
                                     <tr data-role="<?= htmlspecialchars(implode(' ', $roleTokens)) ?>">
                                         <td>
@@ -148,15 +147,21 @@ ksort($usertypes);
                                             <?php if ($usertype !== ''): ?>
                                                 <span class="role-badge <?= admin_account_usertype_class($usertype) ?>">
                                                     <i class="fas fa-shield-alt"></i>
-                                                    <?= htmlspecialchars($usertype) ?><?= (in_array($usertype, $deptSuffixRoles, true) && $department !== '') ? ' — ' . htmlspecialchars($department) : '' ?>
+                                                    <?= htmlspecialchars($usertype) ?>
+                                                    <?php if (in_array(strtoupper($usertype), $deptSuffixRoles, true) && $department !== ''): ?>
+                                                        — <?= htmlspecialchars($department) ?>
+                                                    <?php endif; ?>
                                                 </span>
                                             <?php else: ?>
                                                 <span class="text-muted">—</span>
                                             <?php endif; ?>
                                             <?php if ($secondaryType !== ''): ?>
-                                                <span class="role-badge role-badge-secondary <?= admin_account_usertype_class($secondaryType) ?>" title="Also appears under <?= htmlspecialchars($secondaryType) ?>">
+                                                <span class="role-badge role-badge-secondary <?= admin_account_usertype_class($secondaryType) ?>">
                                                     <i class="fas fa-shield-alt"></i>
-                                                    <?= htmlspecialchars($secondaryType) ?><?= (in_array($secondaryType, $deptSuffixRoles, true) && $department !== '') ? ' — ' . htmlspecialchars($department) : '' ?>
+                                                    <?= htmlspecialchars($secondaryType) ?>
+                                                    <?php if (in_array(strtoupper($secondaryType), $deptSuffixRoles, true) && $department !== ''): ?>
+                                                        — <?= htmlspecialchars($department) ?>
+                                                    <?php endif; ?>
                                                 </span>
                                             <?php endif; ?>
                                         </td>
@@ -192,6 +197,9 @@ ksort($usertypes);
                 </div>
             </div>
 
+        </div>
+
+            </div>
         </div>
     </div>
 

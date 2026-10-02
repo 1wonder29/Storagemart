@@ -38,12 +38,6 @@ class UniformModel extends HRModel {
                             WHERE ur.uniform_id = i.uniform_id
                               AND ur.return_status = 'PENDING'
                         ), 0) AS quantity_returned,
-                        COALESCE((
-                            SELECT SUM(ua.quantity_issued)
-                            FROM {$this->tbluniform_assignment} ua
-                            WHERE ua.uniform_id = i.uniform_id
-                              AND ua.date_returned IS NULL
-                        ), 0) AS quantity_pending_return,
                         COALESCE(quantity_damaged, 0) AS quantity_damaged,
                         COALESCE(quantity_lost, 0) AS quantity_lost,
                         CASE WHEN quantity_in_stock <= reorder_level THEN 'NEEDS_REORDER' ELSE 'OK' END as stock_status
@@ -102,12 +96,6 @@ class UniformModel extends HRModel {
                             WHERE ur.uniform_id = i.uniform_id
                               AND ur.return_status = 'PENDING'
                         ), 0) AS quantity_returned,
-                        COALESCE((
-                            SELECT SUM(ua.quantity_issued)
-                            FROM {$this->tbluniform_assignment} ua
-                            WHERE ua.uniform_id = i.uniform_id
-                              AND ua.date_returned IS NULL
-                        ), 0) AS quantity_pending_return,
                         COALESCE(quantity_damaged, 0) AS quantity_damaged,
                         COALESCE(quantity_lost, 0) AS quantity_lost,
                         CASE WHEN quantity_in_stock <= reorder_level THEN 'NEEDS_REORDER' ELSE 'OK' END AS stock_status
@@ -118,37 +106,6 @@ class UniformModel extends HRModel {
             return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         } catch (\Throwable $e) {
             error_log('UniformModel::getUniformInventorySummary error: ' . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
-     * Uniforms currently issued to employees and not yet returned (one row per issuance),
-     * with the uniform name spelled out — used by the downloadable summary.
-     * @return array
-     */
-    public function getOutstandingIssuances(): array
-    {
-        try {
-            $sql = "SELECT
-                        ui.uniform_type,
-                        ui.size,
-                        ui.color,
-                        CONCAT(e.lastname, ', ', e.firstname) AS employee_name,
-                        e.department,
-                        ua.quantity_issued,
-                        ua.date_issued
-                    FROM {$this->tbluniform_assignment} ua
-                    INNER JOIN {$this->tbluniform_inventory} ui ON ua.uniform_id = ui.uniform_id
-                    LEFT JOIN {$this->tblemployee} e ON ua.employee_id = e.employee_id
-                    WHERE ua.date_returned IS NULL
-                      AND ua.quantity_issued > 0
-                    ORDER BY ui.uniform_type, ui.size, ui.color, e.lastname, e.firstname";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        } catch (\Throwable $e) {
-            error_log('UniformModel::getOutstandingIssuances error: ' . $e->getMessage());
             return [];
         }
     }
@@ -357,15 +314,10 @@ class UniformModel extends HRModel {
      */
     public function getAssignmentStats(): array {
         try {
-            $sql = "SELECT
+            $sql = "SELECT 
                         COUNT(DISTINCT uniform_id) as total_uniform_types,
                         SUM(quantity_in_stock) as total_stock,
-                        COUNT(DISTINCT CASE WHEN quantity_in_stock <= 0 THEN uniform_id END) as out_of_stock,
-                        COUNT(DISTINCT CASE WHEN quantity_in_stock > 0 AND quantity_in_stock <= reorder_level THEN uniform_id END) as low_stock,
-                        COUNT(DISTINCT CASE WHEN quantity_in_stock <= reorder_level THEN uniform_id END) as needs_reorder,
-                        (SELECT COALESCE(SUM(ua.quantity_issued), 0)
-                         FROM {$this->tbluniform_assignment} ua
-                         WHERE ua.date_returned IS NULL) as pending_return_total
+                        COUNT(DISTINCT CASE WHEN quantity_in_stock <= reorder_level THEN uniform_id END) as needs_reorder
                     FROM {$this->tbluniform_inventory}
                     WHERE status = 'ACTIVE'";
             
@@ -852,77 +804,6 @@ class UniformModel extends HRModel {
     }
 
     /**
-     * All uniform assignments across every employee/uniform (used by the "View All
-     * Assignments" dashboard link), optionally narrowed to DAMAGED / LOST / PENDING.
-     * @return array
-     */
-    public function getAllAssignments(?string $condition = null, int $limit = 200): array
-    {
-        try {
-            $condition = strtoupper(trim((string) $condition));
-
-            if (in_array($condition, ['DAMAGED', 'LOST'], true)) {
-                $sql = "SELECT
-                            ur.assignment_id,
-                            ur.employee_id,
-                            ur.uniform_id,
-                            ur.quantity_returned AS quantity_issued,
-                            ua.date_issued,
-                            ur.date_returned AS date_returned,
-                            ua.condition_upon_issue,
-                            ur.condition_upon_return,
-                            ur.remarks,
-                            ui.uniform_type,
-                            ui.size,
-                            ui.color,
-                            CONCAT(e.firstname, ' ', e.lastname) AS employee_name
-                        FROM tbluniform_returns ur
-                        LEFT JOIN {$this->tbluniform_assignment} ua ON ur.assignment_id = ua.assignment_id
-                        LEFT JOIN {$this->tbluniform_inventory} ui ON ur.uniform_id = ui.uniform_id
-                        LEFT JOIN {$this->tblemployee} e ON ur.employee_id = e.employee_id
-                        WHERE UPPER(ur.condition_upon_return) = ?
-                        ORDER BY ur.date_returned DESC, ur.return_id DESC
-                        LIMIT ?";
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->bindValue(1, $condition, PDO::PARAM_STR);
-                $stmt->bindValue(2, $limit, PDO::PARAM_INT);
-                $stmt->execute();
-                return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-            }
-
-            $sql = "SELECT
-                        ua.assignment_id,
-                        ua.employee_id,
-                        ua.uniform_id,
-                        ua.quantity_issued,
-                        ua.date_issued,
-                        ua.date_returned,
-                        ua.condition_upon_issue,
-                        ua.condition_upon_return,
-                        ua.remarks,
-                        ui.uniform_type,
-                        ui.size,
-                        ui.color,
-                        CONCAT(e.firstname, ' ', e.lastname) AS employee_name
-                    FROM {$this->tbluniform_assignment} ua
-                    LEFT JOIN {$this->tbluniform_inventory} ui ON ua.uniform_id = ui.uniform_id
-                    LEFT JOIN {$this->tblemployee} e ON ua.employee_id = e.employee_id";
-            if ($condition === 'PENDING') {
-                $sql .= " WHERE ua.date_returned IS NULL";
-            }
-            $sql .= " ORDER BY ua.date_issued DESC, ua.assignment_id DESC LIMIT ?";
-
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(1, $limit, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        } catch (\Throwable $e) {
-            error_log('UniformModel::getAllAssignments error: ' . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
      * Get all assignments for a specific uniform (both active and returned)
      * @param int $uniformId
      * @return array
@@ -958,7 +839,7 @@ class UniformModel extends HRModel {
                 return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
             }
 
-            $sql = "SELECT
+            $sql = "SELECT 
                         ua.assignment_id,
                         ua.employee_id,
                         ua.uniform_id,
@@ -975,11 +856,6 @@ class UniformModel extends HRModel {
                     LEFT JOIN {$this->tblemployee} e ON ua.employee_id = e.employee_id
                     WHERE ua.uniform_id = ?";
             $params = [$uniformId];
-
-            // PENDING = issued to an employee and not yet returned.
-            if ($condition === 'PENDING') {
-                $sql .= " AND ua.date_returned IS NULL";
-            }
 
             $sql .= " ORDER BY ua.date_issued DESC, ua.assignment_id DESC";
             

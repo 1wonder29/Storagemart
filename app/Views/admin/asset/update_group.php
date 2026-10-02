@@ -105,7 +105,6 @@ $base = rtrim(BASE_URL, '/');
     </a>
 
     <!-- Logout Modal-->
-</div>
 
     <!-- Bootstrap core JavaScript-->
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>

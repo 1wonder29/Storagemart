@@ -4,6 +4,8 @@ require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
 require_once __DIR__ . '/../../../Helpers/TicketStatus.php';
 
 $loggedFirstname = $loggedFirstname ?? 'Employee';
+$hasAssets = (int) ($assetsCount ?? 0) > 0;
+$noAssetsTitle = 'You need at least one assigned asset to create a ticket.';
 
 $rawTicketStats = $ticketStats ?? [];
 $statusOrder = TicketStatus::all();
@@ -78,9 +80,18 @@ $openCount = (int) ($summaryTicketStats['Open'] ?? 0) + (int) ($summaryTicketSta
                                 <i class="fas fa-archive mr-1"></i> My Assets
                             </a>
                         </div>
-                        <a href="<?= htmlspecialchars($base) ?>/employee/tickets/create" class="btn btn-sm btn-create-ticket">
+                        <?php if ($hasAssets): ?>
+                        <a href="<?= htmlspecialchars($base) ?>/employee/assets/file_ticket" class="btn btn-sm btn-create-ticket">
                             <i class="fas fa-plus mr-1"></i> Create New Ticket
                         </a>
+                        <?php else: ?>
+                        <span class="btn btn-sm btn-create-ticket is-disabled"
+                              title="<?= htmlspecialchars($noAssetsTitle) ?>"
+                              data-toggle="tooltip"
+                              data-placement="bottom">
+                            <i class="fas fa-plus mr-1"></i> Create New Ticket
+                        </span>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="col-lg-5">
@@ -151,7 +162,6 @@ $openCount = (int) ($summaryTicketStats['Open'] ?? 0) + (int) ($summaryTicketSta
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
                         <option value="High">High</option>
-                        <option value="Critical">Critical</option>
                     </select>
                 </div>
                 <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
@@ -254,6 +264,8 @@ $openCount = (int) ($summaryTicketStats['Open'] ?? 0) + (int) ($summaryTicketSta
     </div>
 </div>
 
+            </div>
+        </div>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>

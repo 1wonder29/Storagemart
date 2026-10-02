@@ -25,7 +25,7 @@ $base = rtrim(BASE_URL, '/');
                 <div class="row align-items-center">
                     <div class="col-lg-8">
                         <h1><i class="fas fa-id-badge mr-2"></i><?= htmlspecialchars(($employee['firstname'] ?? '') . ' ' . ($employee['lastname'] ?? '')) ?></h1>
-                        <p>Employee profile, assets, and uniform accountability overview.</p>
+                        <p>Employee profile, assets, and item accountability overview.</p>
                     </div>
                     <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
                         <a href="<?= htmlspecialchars($base) ?>/hr/employees" class="btn btn-light btn-sm">
@@ -167,7 +167,7 @@ $base = rtrim(BASE_URL, '/');
                                     <?php foreach (($accountabilityUniforms ?? []) as $row): ?>
                                         <?php
                                         $isReturned = strtoupper((string) ($row['accountability_status'] ?? '')) === 'RETURNED';
-                                        $itemLabel = trim((string) (($row['uniform_type'] ?? 'Uniform') . ' ' . ($row['size'] ?? '') . ' ' . ($row['color'] ?? '')));
+                                        $itemLabel = trim((string) (($row['uniform_type'] ?? 'Item') . ' ' . ($row['size'] ?? '') . ' ' . ($row['color'] ?? '')));
                                         ?>
                                         <tr>
                                             <td>
@@ -333,6 +333,7 @@ $base = rtrim(BASE_URL, '/');
     </div>
     </div>
 
+            </div>
     <div class="modal fade" id="returnAssetModal" tabindex="-1" role="dialog" aria-labelledby="returnAssetModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

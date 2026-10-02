@@ -49,7 +49,7 @@ function shortenTicketLabel(label) {
 const areaCtx = document.getElementById('myAreaChart');
 
 if (areaCtx && window.Chart && window.ticketResolution) {
-  const SLA_HOURS = 24;
+  const SLA_HOURS = Number(window.slaResolutionHours) > 0 ? Number(window.slaResolutionHours) : 24;
   const rawLabels = Array.isArray(window.ticketResolution.labels) ? window.ticketResolution.labels : [];
   const rawSeries = Array.isArray(window.ticketResolution.data) ? window.ticketResolution.data : [];
 

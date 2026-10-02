@@ -157,6 +157,21 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                 </div>
             </div>
 
+            <div class="card report-trend-card shadow mb-4">
+                <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                    <h6 class="mb-0"><i class="fas fa-chart-line mr-1 text-primary"></i> Monthly Ticket Trend</h6>
+                    <span class="report-trend-year"><?= (int) ($monthlyTicketTrend['year'] ?? ($selectedYear ?? date('Y'))) ?></span>
+                </div>
+                <div class="card-body">
+                    <div class="report-trend-chart-wrap">
+                        <canvas id="monthlyTicketTrendChart" aria-label="Monthly ticket trend chart"></canvas>
+                    </div>
+                    <?php if (empty(array_filter($monthlyTicketTrend['data'] ?? []))): ?>
+                        <p class="report-trend-empty mb-0">No tickets filed for this year yet.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <?php if (!empty($tickets)): ?>
             <div class="filter-toolbar">
                 <div class="toolbar-title"><i class="fas fa-filter"></i>Filter Tickets</div>
@@ -319,7 +334,12 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        window.monthlyTicketTrend = <?= json_encode($monthlyTicketTrend ?? ['labels' => [], 'data' => [], 'year' => (int) date('Y')]) ?>;
+    </script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket-status-filter.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_ticket_trend_chart.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-monthly-report.js"></script>
 
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>

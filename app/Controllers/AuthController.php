@@ -244,7 +244,7 @@ class AuthController {
                 $this->redirect('/hom/dashboard');
                 break;
             case 'OM':
-                $this->redirect('/om/dashboard');
+                $this->redirect('/hom/dashboard');
                 break;
             default:
                 // Unknown user type - redirect back to login
@@ -299,6 +299,10 @@ class AuthController {
             }
         }
 
+        if ($position === '' && !empty($_SESSION['usertype'])) {
+            $position = (string) $_SESSION['usertype'];
+        }
+
         return [
             'base' => $base,
             // names below match how you later read them: loggedFirstname, loggedPosition
@@ -327,8 +331,7 @@ class AuthController {
             $this->redirect('/login');
         }
 
-        require_once __DIR__ . '/../Helpers/HrDepartmentAccess.php';
-        if (!HrDepartmentAccess::canAccessHr()) {
+        if (strtoupper($_SESSION['usertype'] ?? '') !== 'HR') {
             $_SESSION['loginMessage'] = 'Access denied. HR only.';
             $this->redirect('/login');
         }

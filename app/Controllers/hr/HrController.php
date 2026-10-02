@@ -33,8 +33,7 @@ class HrController extends AuthController {
             $this->redirect('/login');
         }
 
-        require_once __DIR__ . '/../../Helpers/HrDepartmentAccess.php';
-        if (!HrDepartmentAccess::canAccessHr()) {
+        if (strtoupper($_SESSION['usertype'] ?? '') !== 'HR') {
             $_SESSION['loginMessage'] = 'Access denied. HR only.';
             $this->redirect('/login');
         }
@@ -87,6 +86,8 @@ class HrController extends AuthController {
             $allowedSorts = [
                 'lastname_asc',
                 'lastname_desc',
+                'firstname_asc',
+                'firstname_desc',
                 'department_asc',
                 'position_asc'
             ];
@@ -94,6 +95,11 @@ class HrController extends AuthController {
             $sort = trim($_GET['sort'] ?? 'lastname_asc');
             if (!in_array($sort, $allowedSorts, true)) {
                 $sort = 'lastname_asc';
+            }
+
+            $startsWith = strtoupper(trim($_GET['starts_with'] ?? ''));
+            if (strlen($startsWith) !== 1 || !ctype_alpha($startsWith)) {
+                $startsWith = '';
             }
 
             $status = strtoupper(trim($_GET['status'] ?? ''));
@@ -105,6 +111,7 @@ class HrController extends AuthController {
                 'department' => trim($_GET['department'] ?? ''),
                 'branch' => trim($_GET['branch'] ?? ''),
                 'status' => $status,
+                'starts_with' => $startsWith,
                 'sort' => $sort
             ];
 

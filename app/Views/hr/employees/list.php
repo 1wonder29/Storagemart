@@ -8,6 +8,7 @@ $sort = $filters['sort'] ?? 'lastname_asc';
 $department = $filters['department'] ?? '';
 $branch = $filters['branch'] ?? '';
 $status = $filters['status'] ?? '';
+$startsWith = $filters['starts_with'] ?? '';
 $limit = strtolower(trim((string) ($_GET['limit'] ?? '20')));
 if (!in_array($limit, ['10', '20', '50', '100', 'all'], true)) {
     $limit = '20';
@@ -70,10 +71,22 @@ if (!empty($queryParams)) {
                         <div class="col-md-3 mb-2">
                             <label class="form-label">Sort By</label>
                             <select name="sort" class="form-control form-control-sm">
-                                <option value="lastname_asc" <?= $sort === 'lastname_asc' ? 'selected' : '' ?>>Name A-Z</option>
-                                <option value="lastname_desc" <?= $sort === 'lastname_desc' ? 'selected' : '' ?>>Name Z-A</option>
+                                <option value="lastname_asc" <?= $sort === 'lastname_asc' ? 'selected' : '' ?>>Last Name A-Z</option>
+                                <option value="lastname_desc" <?= $sort === 'lastname_desc' ? 'selected' : '' ?>>Last Name Z-A</option>
+                                <option value="firstname_asc" <?= $sort === 'firstname_asc' ? 'selected' : '' ?>>First Name A-Z</option>
+                                <option value="firstname_desc" <?= $sort === 'firstname_desc' ? 'selected' : '' ?>>First Name Z-A</option>
                                 <option value="department_asc" <?= $sort === 'department_asc' ? 'selected' : '' ?>>Department A-Z</option>
                                 <option value="position_asc" <?= $sort === 'position_asc' ? 'selected' : '' ?>>Position A-Z</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-2 mb-2">
+                            <label class="form-label">Starts With (First/Last Name)</label>
+                            <select name="starts_with" class="form-control form-control-sm">
+                                <option value="">All</option>
+                                <?php foreach (range('A', 'Z') as $letter): ?>
+                                    <option value="<?= $letter ?>" <?= $startsWith === $letter ? 'selected' : '' ?>><?= $letter ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
 
@@ -89,7 +102,7 @@ if (!empty($queryParams)) {
                             </select>
                         </div>
 
-                        <div class="col-md-3 mb-2">
+                        <div class="col-md-2 mb-2">
                             <label class="form-label">Branch</label>
                             <select name="branch" class="form-control form-control-sm">
                                 <option value="">All Branches</option>
@@ -101,7 +114,7 @@ if (!empty($queryParams)) {
                             </select>
                         </div>
 
-                        <div class="col-md-2 mb-2">
+                        <div class="col-md-1 mb-2">
                             <label class="form-label">Status</label>
                             <select name="status" class="form-control form-control-sm">
                                 <option value="">All</option>
@@ -157,7 +170,7 @@ if (!empty($queryParams)) {
                                 <tbody>
                                     <?php foreach ($employees as $emp): ?>
                                         <tr>
-                                            <td><strong><?= htmlspecialchars($emp['lastname'] . ', ' . $emp['firstname']) ?></strong></td>
+                                            <td><strong><?= htmlspecialchars($emp['firstname'] . ' ' . $emp['lastname']) ?></strong></td>
                                             <td><?= htmlspecialchars($emp['position']) ?></td>
                                             <td><?= htmlspecialchars($emp['department']) ?></td>
                                             <td><?= htmlspecialchars($emp['email']) ?></td>
@@ -205,6 +218,7 @@ if (!empty($queryParams)) {
     </div>
     </div>
 
+            </div>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/storagemart.min.js"></script>

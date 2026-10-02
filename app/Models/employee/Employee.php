@@ -201,19 +201,6 @@ class Employee extends BaseModel{
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function getBranchById(int $branchId): ?array
-    {
-        $stmt = $this->pdo->prepare("
-            SELECT branch_id, branchCode, branchName
-            FROM tblbranch
-            WHERE branch_id = ?
-            LIMIT 1
-        ");
-        $stmt->execute([$branchId]);
-
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-    }
-
     public function formatDisplayName(?array $employee): string
     {
         if (!$employee) {

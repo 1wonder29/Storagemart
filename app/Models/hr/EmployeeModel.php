@@ -524,6 +524,12 @@ class EmployeeModel extends HRModel {
             $params[] = $filters['status'];
         }
 
+        if (!empty($filters['starts_with'])) {
+            $conditions[] = '(e.lastname LIKE ? OR e.firstname LIKE ?)';
+            $params[] = $filters['starts_with'] . '%';
+            $params[] = $filters['starts_with'] . '%';
+        }
+
         $whereSql = empty($conditions) ? '' : 'WHERE ' . implode(' AND ', $conditions);
         return [$whereSql, $params];
     }
@@ -537,6 +543,8 @@ class EmployeeModel extends HRModel {
         $sortMap = [
             'lastname_asc' => 'e.lastname ASC, e.firstname ASC',
             'lastname_desc' => 'e.lastname DESC, e.firstname DESC',
+            'firstname_asc' => 'e.firstname ASC, e.lastname ASC',
+            'firstname_desc' => 'e.firstname DESC, e.lastname DESC',
             'department_asc' => 'e.department ASC, e.lastname ASC',
             'position_asc' => 'e.position ASC, e.lastname ASC'
         ];

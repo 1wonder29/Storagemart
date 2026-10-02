@@ -77,8 +77,8 @@ $base = rtrim(BASE_URL, '/');
 
                 </div>
 
+            </div>
         </div>
-
     </div>
 
     <a class="scroll-to-top rounded" href="#page-top">

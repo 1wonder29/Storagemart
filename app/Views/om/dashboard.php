@@ -332,7 +332,7 @@ $chartColors = ['#f59e0b', '#0891b2', '#dc2626', '#16a34a', '#64748b', '#7c3aed'
     }
 
     function priorityBadgeClass(priority) {
-        if (priority === 'High' || priority === 'Critical') return 'badge-danger';
+        if (priority === 'High') return 'badge-danger';
         if (priority === 'Medium') return 'badge-warning';
         return 'badge-success';
     }

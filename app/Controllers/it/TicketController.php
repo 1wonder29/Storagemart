@@ -2,7 +2,6 @@
 // app/Controllers/employee/TicketController.php
 
 require_once __DIR__ . '/../AuthController.php';
-require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Models/it/IT.php';
 require_once __DIR__ . '/../../Models/it/ItTicketModel.php';
 require_once __DIR__ . '/../../Models/TicketCancelModel.php';
@@ -95,7 +94,7 @@ class TicketController extends AuthController
 
         // normalize priority
         $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
-        if (!in_array($priority, ['Low','Medium','High','Critical'], true)) $priority = 'Low';
+        if (!in_array($priority, ['Low','Medium','High'], true)) $priority = 'Low';
 
         $ticketId = $ticketModel->createTicket([
             'employee_id'     => (int)$employeeId,
@@ -107,7 +106,6 @@ class TicketController extends AuthController
             'priority'        => $priority,
             'created_by'      => $accountId
         ]);
-        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         /* ✅ GET EMPLOYEE DEPARTMENT SAFELY */
         $employee = $itModel->getEmployeeById($employeeId);
@@ -279,6 +277,14 @@ class TicketController extends AuthController
         }
 
         $ticketId = (int)$_GET['ticket_id'];
+
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketAccess.php';
+        if (!TicketAccess::canViewTicketId($pdo, $ticketId, (int) $_SESSION['account_id'], (string) ($_SESSION['usertype'] ?? ''))) {
+            http_response_code(403);
+            echo json_encode([]);
+            return;
+        }
 
         $model = new ItTicketModel();
         $history = $model->getTicketHistory($ticketId);
@@ -499,11 +505,6 @@ class TicketController extends AuthController
         }
         $oldStatus = (string) ($existingTicket['status'] ?? 'In Progress');
 
-        // Only the assigned IT staff reaches this point, so they are the only role that can re-prioritize.
-        $newPriority = ucfirst(strtolower(trim((string) ($_POST['priority'] ?? ''))));
-        $oldPriority = (string) ($existingTicket['priority'] ?? '');
-        $priorityChanged = in_array($newPriority, TicketFormFields::PRIORITIES, true) && $newPriority !== $oldPriority;
-
         // ✅ action → status
         switch ($action) {
             case 'Resolve': $status = 'Resolved'; break;
@@ -559,26 +560,13 @@ class TicketController extends AuthController
         // =============================
         $ticketModel->insertHistory([
             'ticket_id'       => $ticketId,
-            'action_type'     => $status === TicketStatus::RESOLVED ? $status : 'Updated',
+            'action_type'     => $status,
             'action_details'  => "Ticket {$status} by IT Staff (Account ID: {$_SESSION['account_id']})",
             'old_status'      => $oldStatus,
             'new_status'      => $status,
-            'performed_by'    => $_SESSION['account_id'],
+            'performed_by'    => $employeeId,
             'performed_role'  => 'IT Staff'
         ]);
-
-        if ($priorityChanged) {
-            $ticketModel->updatePriority($ticketId, $newPriority);
-            $ticketModel->insertHistory([
-                'ticket_id'       => $ticketId,
-                'action_type'     => 'Updated',
-                'action_details'  => "Priority changed from {$oldPriority} to {$newPriority} by IT Staff (Account ID: {$_SESSION['account_id']})",
-                'old_status'      => $status,
-                'new_status'      => $status,
-                'performed_by'    => $_SESSION['account_id'],
-                'performed_role'  => 'IT Staff'
-            ]);
-        }
 
         // =============================
         // 4️⃣ Generate and store resolution document
@@ -673,13 +661,6 @@ class TicketController extends AuthController
         }
 
         $_SESSION['flash_success'] = "Ticket marked as {$status}.";
-
-        $returnTo = trim($_POST['return_to'] ?? '');
-        if ($returnTo !== '' && preg_match('#^/it/tickets/view\?id=\d+$#', $returnTo)) {
-            $this->redirect($returnTo);
-            return;
-        }
-
         $this->redirect('/it/tickets/in_progress');
     }
 

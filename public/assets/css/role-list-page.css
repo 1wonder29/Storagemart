@@ -190,7 +190,6 @@
 }
 
 .role-list-page .priority-pill.high { background: #fee2e2; color: #991b1b; }
-.role-list-page .priority-pill.critical { background: #dc3545; color: #fff; font-weight: 700; }
 .role-list-page .priority-pill.medium { background: #fef3c7; color: #92400e; }
 .role-list-page .priority-pill.low { background: #dcfce7; color: #166534; }
 
