@@ -105,7 +105,7 @@ $totalPages = (int) ($totalPages ?? 1);
                             <table class="table table-hover mb-0 uniforms-table">
                                 <thead>
                                     <tr>
-                                        <th>Uniform</th>
+                                        <th>Item</th>
                                         <th title="Units on hand, ready to issue">In Stock</th>
                                         <th title="Restock when In Stock falls to this number">Reorder At</th>
                                         <th>Stock Status</th>

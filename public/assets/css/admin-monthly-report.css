@@ -263,3 +263,9 @@
     min-width: 100%;
   }
 }
+
+.admin-monthly-report-page .report-file-name {
+  min-width: 260px;
+  word-break: break-all;
+  font-size: 0.8rem;
+}

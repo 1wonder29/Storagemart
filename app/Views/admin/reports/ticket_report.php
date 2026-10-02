@@ -64,7 +64,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-ticket-list.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-monthly-report.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-monthly-report.css?v=20261002c" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
@@ -161,7 +161,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                                                 <div class="employee-name"><?= htmlspecialchars((string) ($file['employee_name'] ?? '')) ?></div>
                                                 <div class="small text-muted"><?= htmlspecialchars((string) ($file['department'] ?? '')) ?></div>
                                             </td>
-                                            <td class="text-break"><?= htmlspecialchars((string) ($file['filename'] ?? '')) ?></td>
+                                            <td class="report-file-name"><?= htmlspecialchars((string) ($file['filename'] ?? '')) ?></td>
                                             <td>
                                                 <?php if ($isGenerated): ?>
                                                     <span class="badge badge-info">Technical record</span>

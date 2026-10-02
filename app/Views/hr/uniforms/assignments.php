@@ -108,7 +108,7 @@ if ($conditionFilter === 'DAMAGED') {
                                     <tr>
                                         <th>Employee</th>
                                         <?php if ($showUniformColumn): ?>
-                                            <th>Uniform</th>
+                                            <th>Item</th>
                                         <?php endif; ?>
                                         <th>Date Issued</th>
                                         <th>Quantity</th>
