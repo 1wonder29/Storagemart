@@ -1,0 +1,174 @@
+<?php
+$base = rtrim(BASE_URL, '/');
+$groupId = (int) ($inventory['group_id'] ?? 0);
+$backUrl = $groupId > 0
+    ? $base . '/admin/assets/item?group_id=' . $groupId
+    : $base . '/admin/assets';
+?>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Storage Mart Accounts - Tables</title>
+
+    <!-- Custom fonts for this template -->
+    <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+        rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
+</head>
+
+<body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+            <?php 
+            $activePage = 'assets';
+            $assetSubPage = 'directory';
+            require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
+
+                    <div class="container-fluid admin-assets-page">
+
+                        <div class="page-hero hero-inventory">
+                            <h1><i class="fas fa-history mr-2"></i>Transfer History</h1>
+                            <p>Past assignments and returns recorded for this asset item.</p>
+                            <div class="quick-nav mt-3">
+                                <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-sm btn-outline-light">
+                                    <i class="fas fa-arrow-left mr-1"></i> Back to Inventory
+                                </a>
+                            </div>
+                        </div>
+
+                        <?php if (!empty($_SESSION['flash_success'])): ?>
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <?= htmlspecialchars($_SESSION['flash_success']) ?>
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <?php unset($_SESSION['flash_success']); ?>
+                        <?php endif; ?>
+
+                        <?php if (!empty($_SESSION['flash_error'])): ?>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <?= htmlspecialchars($_SESSION['flash_error']) ?>
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <?php unset($_SESSION['flash_error']); ?>
+                        <?php endif; ?>
+
+                        <div class="card asset-list-card shadow mb-4">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-primary">Assignment History</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                        <?php if (empty($assignments)): ?>
+                                            <div class="alert alert-info">No transfer history found for this asset.</div>
+                                        <?php else: ?>
+                                    <table class="table table-hover mb-0" id="asst-history" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Employee ID</th>
+                                                <th>Name</th>
+                                                <th>Transfer Details</th>
+                                                <th>Date Issued</th>
+                                                <th>Date Returned</th>
+                                                <th>Created By</th>
+                                                <th class="text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($assignments as $row): ?>
+                                            <?php
+                                            $hasReturn = !empty($row['dateReturned']);
+                                            $assignmentId = (int) ($row['assignment_id'] ?? 0);
+                                            ?>
+                                            <tr>
+                                                <td><?= htmlspecialchars((string) ($row['employee_id'] ?? '')); ?> </td>
+                                                <td><?= htmlspecialchars((string) ($row['assignedTo'] ?? '')); ?> </td>
+                                                <td><?= htmlspecialchars((string) ($row['transferDetails'] ?? '—')); ?> </td>
+                                                <td><?= htmlspecialchars((string) ($row['dateIssued'] ?? '')); ?></td>
+                                                <td><?= htmlspecialchars((string) ($row['dateReturned'] ?? '')); ?> </td>
+                                                <td><?= htmlspecialchars((string) ($row['createdByName'] ?? $row['createdby'] ?? '')); ?></td>
+                                                <td class="text-right">
+                                                    <?php if ($hasReturn && $assignmentId > 0): ?>
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-primary btn-edit-accountability-remarks"
+                                                                data-assignment-id="<?= $assignmentId ?>"
+                                                                data-remarks="<?= htmlspecialchars((string) ($row['transferDetails'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                                            <i class="fas fa-edit"></i> Edit Remarks
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <span class="text-muted">—</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                     <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            </div>
+            
+                    </div>
+                    <!-- /.container-fluid -->
+
+                </div>
+                <!-- End of Main Content -->
+
+                <!-- Footer -->
+                <!-- End of Footer -->
+
+            </div>
+            <!-- End of Content Wrapper -->
+
+        </div>
+        <!-- End of Page Wrapper -->
+
+        <!-- Scroll to Top Button-->
+        <a class="scroll-to-top rounded" href="#page-top">
+            <i class="fas fa-angle-up"></i>
+        </a>
+
+        <!-- Logout Modal-->
+</div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <!-- Custom scripts for all pages-->
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+
+    <!-- Page level plugins -->
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
+
+    <!-- Page level custom scripts -->
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/transfer_history.js"></script>
+    <?php require __DIR__ . '/../../partials/asset/accountability_remarks_modal.php'; ?>
+    </body>
+
+    </html>

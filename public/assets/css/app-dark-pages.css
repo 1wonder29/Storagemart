@@ -1,0 +1,397 @@
+/*
+ * Dark mode for every role's pages.
+ * Each page stylesheet declares its own light-colored surface/text/muted/border variables on
+ * the page container, which shadows the dark palette from it-dark-mode.css. Re-point them here.
+ * (The "it-dark" class name is historical; it applies to all roles.)
+ */
+html.it-dark [class*="-page"] {
+  --dash-surface: #252932;
+  --dash-text: #e2e5ea;
+  --dash-muted: #a8aeb8;
+  --dash-border: #383e48;
+
+  --aom-surface: #252932;
+  --aom-text: #e2e5ea;
+  --aom-muted: #a8aeb8;
+  --aom-border: #383e48;
+
+  --emp-surface: #252932;
+  --emp-text: #e2e5ea;
+  --emp-muted: #a8aeb8;
+  --emp-border: #383e48;
+
+  --hr-surface: #252932;
+  --hr-text: #e2e5ea;
+  --hr-muted: #a8aeb8;
+  --hr-border: #383e48;
+
+  --om-surface: #252932;
+  --om-text: #e2e5ea;
+  --om-muted: #a8aeb8;
+  --om-border: #383e48;
+
+  --pf-surface: #252932;
+  --pf-text: #e2e5ea;
+  --pf-muted: #a8aeb8;
+  --pf-border: #383e48;
+
+  --td-surface: #252932;
+  --td-text: #e2e5ea;
+  --td-muted: #a8aeb8;
+  --td-border: #383e48;
+
+  --audit-muted: #a8aeb8;
+  --audit-border: #383e48;
+  --report-muted: #a8aeb8;
+  --report-border: #383e48;
+  --ratings-muted: #a8aeb8;
+  --ratings-border: #383e48;
+
+  --tc-border: #383e48;
+  --tc-muted: #a8aeb8;
+  --tc-heading: #e2e5ea;
+}
+
+/* ---------- Shared components that hardcode light colors ---------- */
+
+/* Some pages paint a light gradient over the page background */
+html.it-dark #content-wrapper,
+html.it-dark #content-wrapper:has([class*="-page"]) {
+  background-image: none !important;
+  background-color: var(--it-bg) !important;
+}
+
+html.it-dark .reported-issues-table,
+html.it-dark .reported-issues-table td,
+html.it-dark .reported-issues-table th {
+  background-color: transparent !important;
+  color: var(--it-text);
+  border-color: var(--it-border) !important;
+}
+
+/* Dashboard cards (admin / head / aom / hr / employee / om) */
+html.it-dark .dash-card {
+  background: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .dash-card .card-header {
+  background: var(--it-surface-2) !important;
+  border-bottom-color: var(--it-border) !important;
+}
+
+html.it-dark .dash-card .card-header h6 {
+  color: var(--it-text) !important;
+}
+
+html.it-dark .dash-card .card-body,
+html.it-dark .dash-card .chart-caption {
+  color: var(--it-text-muted);
+}
+
+/* Summary / status tiles on list pages */
+html.it-dark .summary-stat-card {
+  background: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .summary-stat-card .stat-value {
+  color: var(--it-text) !important;
+}
+
+/* Generic stat tiles that use a tinted gradient into white */
+html.it-dark .admin-stat-card,
+html.it-dark .personal-stat-card,
+html.it-dark .employee-stat-card,
+html.it-dark .hr-stat-card,
+html.it-dark .aom-stat-card,
+html.it-dark .om-stat-card {
+  border-color: var(--it-border);
+}
+
+html.it-dark [class*="stat-card"] .stat-title {
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark [class*="stat-card"] .stat-hint {
+  color: var(--it-text-dim) !important;
+}
+
+html.it-dark [class*="stat-card"] .stat-number { color: var(--it-text); }
+html.it-dark [class*="stat-card"].tone-users .stat-number { color: #a5b4fc; }
+html.it-dark [class*="stat-card"].tone-tickets .stat-number,
+html.it-dark [class*="stat-card"].tone-resolved .stat-number,
+html.it-dark [class*="stat-card"].tone-sla .stat-number,
+html.it-dark [class*="stat-card"].tone-success .stat-number { color: #86efac; }
+html.it-dark [class*="stat-card"].tone-open .stat-number { color: #93c5fd; }
+html.it-dark [class*="stat-card"].tone-progress .stat-number,
+html.it-dark [class*="stat-card"].tone-pending .stat-number,
+html.it-dark [class*="stat-card"].tone-warning .stat-number { color: #fcd34d; }
+html.it-dark [class*="stat-card"].tone-assets .stat-number,
+html.it-dark [class*="stat-card"].tone-info .stat-number { color: #67e8f9; }
+html.it-dark [class*="stat-card"].tone-cancelled .stat-number,
+html.it-dark [class*="stat-card"].tone-danger .stat-number { color: #fca5a5; }
+
+html.it-dark .personal-stat-card.tone-pending,
+html.it-dark .personal-stat-card.tone-closed,
+html.it-dark .personal-stat-card.tone-cancelled {
+  background: var(--it-surface) !important;
+}
+
+html.it-dark [class*="stat-card"].tone-closed .stat-number { color: #a5b4fc; }
+
+/* Report / audit / ratings summary tiles */
+html.it-dark .stat-card,
+html.it-dark .summary-card {
+  background: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text);
+}
+
+html.it-dark .stat-card *:not(i):not(.fas):not(.far),
+html.it-dark .summary-card *:not(i):not(.fas):not(.far) {
+  color: var(--it-text);
+}
+
+html.it-dark .stat-card small,
+html.it-dark .stat-card [class*="label"],
+html.it-dark .summary-card small,
+html.it-dark .summary-card [class*="label"] {
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .btn-export {
+  background: var(--it-surface-2) !important;
+  border-color: var(--it-border-light) !important;
+  color: var(--it-text) !important;
+}
+
+/* Ticket comments (shared by every role's ticket detail page) */
+html.it-dark .ticket-comments-section,
+html.it-dark .ticket-comments-list,
+html.it-dark .ticket-comments-form-wrap {
+  background: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text);
+}
+
+html.it-dark .ticket-comments-section [class*="comment-text"],
+html.it-dark .ticket-comments-section [class*="comment-body"],
+html.it-dark .ticket-comments-section [class*="comment-author"],
+html.it-dark .ticket-comments-section strong {
+  color: var(--it-text);
+}
+
+html.it-dark .ticket-comments-section [class*="comment-meta"],
+html.it-dark .ticket-comments-section [class*="comment-time"],
+html.it-dark .ticket-comments-section .text-muted {
+  color: var(--it-text-dim) !important;
+}
+
+html.it-dark .ticket-comment,
+html.it-dark .ticket-comment-item {
+  background: var(--it-surface-2) !important;
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .module-pill {
+  background: rgba(148, 163, 184, 0.16) !important;
+  color: var(--it-text) !important;
+}
+
+/* Tab / pill navigation used on report pages */
+html.it-dark .nav-tabs .nav-link,
+html.it-dark .nav-pills .nav-link {
+  color: var(--it-text-muted);
+}
+
+html.it-dark .nav-tabs .nav-link.active,
+html.it-dark .nav-pills .nav-link.active {
+  background-color: var(--it-surface-2) !important;
+  color: var(--it-text) !important;
+  border-color: var(--it-border) !important;
+}
+
+/* Cell / list text that hardcodes a dark grey meant for white rows */
+html.it-dark .employee-name,
+html.it-dark .date-main,
+html.it-dark .username-text,
+html.it-dark .performer-name,
+html.it-dark .action-text,
+html.it-dark .model-name,
+html.it-dark .toolbar-title,
+html.it-dark .reported-issues-title {
+  color: var(--it-text) !important;
+}
+
+html.it-dark .desc-text,
+html.it-dark .priority-stats,
+html.it-dark .date-time {
+  color: var(--it-text-muted) !important;
+}
+
+/* Count badges next to list headings */
+html.it-dark [class*="count-badge"] {
+  background: rgba(108, 142, 245, 0.18) !important;
+  color: #a8bdf8 !important;
+}
+
+/* Filter toolbar reset buttons */
+html.it-dark .filter-toolbar .btn,
+html.it-dark .btn-reset {
+  color: var(--it-text-muted);
+  border-color: var(--it-border-light);
+  background-color: transparent;
+}
+
+/* Bootstrap alerts */
+html.it-dark .alert-danger {
+  background-color: rgba(237, 107, 95, 0.14);
+  border-color: rgba(237, 107, 95, 0.35);
+  color: #f5b0a8;
+}
+
+html.it-dark .alert-success {
+  background-color: rgba(61, 208, 154, 0.14);
+  border-color: rgba(61, 208, 154, 0.35);
+  color: #9be8c8;
+}
+
+html.it-dark .alert-warning {
+  background-color: rgba(247, 201, 72, 0.14);
+  border-color: rgba(247, 201, 72, 0.35);
+  color: #f7dc8b;
+}
+
+html.it-dark .alert-info {
+  background-color: rgba(76, 196, 216, 0.14);
+  border-color: rgba(76, 196, 216, 0.35);
+  color: #a3e3ee;
+}
+
+/* Create-ticket page pieces (all roles) */
+html.it-dark .ticket-create-page .priority-legend {
+  background: rgba(108, 142, 245, 0.1);
+  border-color: rgba(108, 142, 245, 0.28);
+}
+
+html.it-dark .ticket-create-page .priority-legend strong,
+html.it-dark .ticket-create-page .priority-legend li {
+  color: var(--it-text-muted);
+}
+
+html.it-dark .ticket-create-page .live-preview-heading {
+  color: var(--it-primary);
+}
+
+html.it-dark .ticket-create-page .live-preview-badge {
+  background: rgba(108, 142, 245, 0.18);
+  color: #a8bdf8;
+}
+
+html.it-dark .ticket-create-page .live-preview-card {
+  background: var(--it-surface);
+  border-color: var(--it-border);
+  border-top-color: var(--it-primary);
+}
+
+/* Notifications page */
+html.it-dark .alerts-feed-card,
+html.it-dark .alerts-feed-header,
+html.it-dark [class*="alerts-feed"] {
+  background-color: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text);
+}
+
+/* Card / section titles that use a dark navy meant for light backgrounds */
+html.it-dark .card-header h6,
+html.it-dark .card-header .card-title,
+html.it-dark .section-title,
+html.it-dark [class*="section-title"],
+html.it-dark [class*="card-title"] {
+  color: var(--it-primary) !important;
+}
+
+/* Form cards and section cards on create / edit pages */
+html.it-dark .form-card,
+html.it-dark .ticket-form-card,
+html.it-dark .profile-card,
+html.it-dark .info-card {
+  background: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .form-card .card-header,
+html.it-dark .profile-card .card-header {
+  background: var(--it-surface-2) !important;
+  color: var(--it-text) !important;
+  border-bottom-color: var(--it-border) !important;
+}
+
+html.it-dark .form-control[readonly],
+html.it-dark .form-control:disabled,
+html.it-dark .ticket-create-page .form-control[readonly] {
+  background-color: var(--it-surface-2) !important;
+  color: var(--it-text-muted) !important;
+}
+
+html.it-dark .form-section-title,
+html.it-dark .form-label,
+html.it-dark .h5, html.it-dark .h6,
+html.it-dark h5, html.it-dark h6 {
+  color: var(--it-text);
+}
+
+/* Light helper surfaces used across pages */
+html.it-dark .bg-light,
+html.it-dark .bg-white {
+  background-color: var(--it-surface-2) !important;
+  color: var(--it-text);
+}
+
+html.it-dark .border,
+html.it-dark .border-bottom,
+html.it-dark .border-top {
+  border-color: var(--it-border) !important;
+}
+
+/* Notifications dropdown + list page */
+html.it-dark .notification-dropdown,
+html.it-dark .notification-item {
+  background-color: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .notification-dropdown-header,
+html.it-dark .notification-dropdown-footer {
+  background-color: var(--it-surface-2) !important;
+  border-color: var(--it-border) !important;
+}
+
+html.it-dark .notification-message,
+html.it-dark .notification-dropdown-title {
+  color: var(--it-text) !important;
+}
+
+html.it-dark .notification-time,
+html.it-dark .notification-empty {
+  color: var(--it-text-dim) !important;
+}
+
+html.it-dark .notification-item:hover {
+  background-color: var(--it-hover) !important;
+}
+
+/* Logout confirmation modal */
+html.it-dark .logout-modal .modal-content {
+  background-color: var(--it-surface) !important;
+}
+
+html.it-dark .logout-modal-title {
+  color: var(--it-text) !important;
+}
+
+html.it-dark .logout-modal-text {
+  color: var(--it-text-muted) !important;
+}

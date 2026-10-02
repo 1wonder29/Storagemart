@@ -1,0 +1,722 @@
+<?php
+require_once __DIR__ . '/../AuthController.php';
+require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
+require_once __DIR__ . '/../../Models/admin/Account.php';
+require_once __DIR__ . '/../../Models/admin/Logger.php';
+require_once __DIR__ . '/../../Helpers/Session.php';
+require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
+require_once __DIR__ . '/../../Models/admin/Ticket.php';
+require_once __DIR__ . '/../../Models/TicketCancelModel.php';
+require_once __DIR__ . '/../../Helpers/TicketStatus.php';
+
+class TicketController extends AuthController
+{
+    public function ticket()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // Auth check – only ADMIN allowed
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        // --- USE TICKET MODEL HERE ---
+        $ticketModel = new Ticket();
+
+        $ticketFilter = trim((string) ($_GET['filter'] ?? ''));
+        if (!in_array($ticketFilter, ['overdue', 'sla-breach'], true)) {
+            $ticketFilter = '';
+        }
+
+        $tickets = $ticketModel->fetchTicket($ticketFilter !== '' ? $ticketFilter : null);
+        $itStaff = $ticketModel->fetchEmployeesByDepartment('IT');
+
+        // CSRF token (for future forms)
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+
+        // layout/context helpers (from AuthController/AdminController)
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition  = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        // render view
+        require __DIR__ . '/../../Views/admin/ticket/ticket.php';
+
+    }
+
+    public function cancelled()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::CANCELLED));
+    }
+
+    public function view()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        $ticketId = (int) ($_GET['id'] ?? 0);
+        if ($ticketId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid ticket ID.';
+            $this->redirect('/admin/tickets');
+            return;
+        }
+
+        $ticketModel = new Ticket();
+        $ticket = $ticketModel->fetchTicketById($ticketId);
+
+        if (!$ticket) {
+            $_SESSION['flash_error'] = 'Ticket not found.';
+            $this->redirect('/admin/tickets');
+            return;
+        }
+
+        $history = $ticketModel->fetchTicketHistory($ticketId);
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        $activePage = 'tickets';
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+        $itStaff = $ticketModel->fetchEmployeesByDepartment('IT');
+
+        require __DIR__ . '/../../Views/admin/ticket/ticket-detail.php';
+    }
+
+    // fetch ticket history
+    public function history()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        // Auth check – only ADMIN allowed (same rule as ticket())
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+
+        $ticketId = isset($_GET['ticket_id']) ? (int) $_GET['ticket_id'] : 0;
+
+        if ($ticketId <= 0) {
+            http_response_code(400);
+            echo json_encode([]);
+            exit;
+        }
+
+        try {
+            $ticketModel = new Ticket();
+            $history = $ticketModel->fetchTicketHistory($ticketId);
+            echo json_encode($history ?: []);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to fetch ticket history']);
+        }
+        exit;
+    }
+
+    public function updateAssignment()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // Only ADMIN (or adjust as needed)
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+
+        // CSRF
+        if (empty($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['error'] = 'Invalid form token.';
+            $this->redirect('/admin/tickets');
+            return;
+        }
+
+        $ticketId    = isset($_POST['ticket_id']) ? (int)$_POST['ticket_id'] : 0;
+        $assignedTo  = isset($_POST['assigned_to']) && $_POST['assigned_to'] !== '' ? (int)$_POST['assigned_to'] : 0;
+        $remarks     = trim($_POST['remarks'] ?? '');
+        $accountId   = (int)($_SESSION['account_id'] ?? 0);
+        $username    = $_SESSION['username'] ?? 'Unknown';
+
+        $ticketModel = new Ticket();
+
+        try {
+            [$ok, $message] = $ticketModel->reassignTicket(
+                $ticketId,
+                $assignedTo,
+                $remarks,
+                $accountId,
+                $username
+            );
+
+            if ($ok) {
+                $_SESSION['success'] = $message;
+                require_once __DIR__ . '/../../Services/TicketMailer.php';
+                TicketMailer::ticketAssigned($ticketId, $assignedTo, $username);
+            } else {
+                $_SESSION['error'] = $message;
+            }
+        } catch (\Throwable $e) {
+            $_SESSION['error'] = 'Failed to update ticket: ' . $e->getMessage();
+        }
+
+        $this->redirect('/admin/tickets');
+    }
+
+    public function add(){
+        if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition  = $ctx['loggedPosition'];
+                $notificationData = $this->loadNotifications();
+
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        require __DIR__ . '/../../Views/admin/ticket/add.php'; 
+    }
+    public function searchEmployee(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // Optional: same auth limitation
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
+
+        header('Content-Type: application/json');
+
+        $q = isset($_GET['q']) ? trim($_GET['q']) : '';
+
+        if ($q === '') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Empty search query',
+            ]);
+            return;
+        }
+
+        $ticketModel = new Ticket();
+        $employee = $ticketModel->searchEmployee($q);
+
+        if ($employee) {
+            echo json_encode([
+                'success'     => true,
+                'employee_id' => $employee['employee_id'],
+                'full_name'   => $employee['full_name'],
+                'branchName'  => $employee['branchName'],
+                'department'  => $employee['department'],
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No employee found',
+            ]);
+        }
+    }
+
+
+    public function employeeList(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        header('Content-Type: application/json');
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
+
+        $branchId = (int) ($_GET['branch_id'] ?? 0);
+        $q = trim((string) ($_GET['q'] ?? ''));
+
+        $ticketModel = new Ticket();
+        echo json_encode([
+            'success'   => true,
+            'branches'  => $ticketModel->listBranches(),
+            'employees' => $ticketModel->listEmployees($branchId > 0 ? $branchId : null, $q),
+        ]);
+    }
+
+    public function getAssets(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // Optional: same auth rule (ADMIN only)
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
+
+        header('Content-Type: application/json');
+
+        $employeeId = isset($_GET['employee_id']) ? (int)$_GET['employee_id'] : 0;
+
+        if ($employeeId <= 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid employee ID',
+            ]);
+            return;
+        }
+
+        $ticketModel = new Ticket();
+        $assets = $ticketModel->fetchAssetsByEmployee($employeeId);
+
+        echo json_encode([
+            'success' => true,
+            'data'    => $assets,
+        ]);
+
+    }
+
+    public function fileTicket()
+    {
+    if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        $inventoryId = isset($_GET['inventory_id']) ? (int)$_GET['inventory_id'] : 0;
+        if ($inventoryId <= 0) {
+            // you can redirect back or show error
+            $this->redirect('/admin/tickets');
+            return;
+        }
+
+        $ticketModel = new Ticket();
+        $inventory   = $ticketModel->getInventoryDetailsByInventoryId($inventoryId);
+
+        if (!$inventory) {
+            // no matching record
+            $this->redirect('/admin/tickets');
+            return;
+        }
+
+        // IT staff list for "Assign to" dropdown
+        $itStaff = $ticketModel->fetchEmployeesByDepartment('IT');
+
+        // layout context
+        $ctx = $this->getLoggedUserContext();
+        $base = $ctx['base'];
+        $loggedFirstname = $ctx['loggedFirstname'];
+        $loggedPosition  = $ctx['loggedPosition'];
+        $notificationData = $this->loadNotifications();
+
+        $count = $notificationData['count'];
+        $notifications = $notificationData['notifications'];
+        // you can pass notification via session if needed
+        $notificationMessage = $_SESSION['notification'] ?? '';
+        unset($_SESSION['notification']);
+
+        require __DIR__ . '/../../Views/admin/ticket/file_ticket.php'; // new view file
+    }
+
+    public function storeFile()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+
+        $ticketModel = new Ticket();
+
+        // from POST
+        $employee_id      = (int)($_POST['employee_id'] ?? 0);
+        $inventory_id     = !empty($_POST['inventory_id']) ? (int)$_POST['inventory_id'] : null;
+        $branch_id        = (int)($_POST['branch_id'] ?? 0);
+        $department       = trim($_POST['department'] ?? '');
+        $category         = trim($_POST['category'] ?? '');
+        $concern_details  = trim($_POST['concern_details'] ?? '');
+        $ticket_assign    = trim($_POST['ticket_assign'] ?? '');   // employee_id of IT staff
+        $technical_purpose= trim($_POST['technical_purpose'] ?? '');
+        $actionTaken      = trim($_POST['action'] ?? '');
+        $resultDetails    = trim($_POST['result'] ?? '');
+        $priorityInput    = trim($_POST['priority'] ?? 'Low');
+        $remarks          = trim($_POST['remarks'] ?? '');
+        $created_by       = (int)($_SESSION['account_id'] ?? 0);
+
+        // normalize priority to match enum ('Low','Medium','High','Critical')
+        $priority = ucfirst(strtolower($priorityInput));
+        if (!in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true)) {
+            $priority = 'Low';
+        }
+
+        $assigned_to = $ticket_assign !== '' ? (int)$ticket_assign : null;
+        $status = $assigned_to ? TicketStatus::assigned() : TicketStatus::initial();
+
+        try {
+            // 1) Insert main ticket
+            $ticketId = $ticketModel->createTicket([
+                'employee_id'     => $employee_id,
+                'inventory_id'    => $inventory_id,
+                'branch_id'       => $branch_id ?: null,
+                'department'      => $department ?: null,
+                'category'        => $category ?: null,
+                'concern_details' => $concern_details ?: null,
+                'priority'        => $priority,
+                'status'          => $status,
+                'remarks'         => $remarks ?: null,
+                'assigned_to'     => $assigned_to,
+                'created_by'      => $created_by,
+            ]);
+            TicketFormFields::ticketCreated((int) $ticketId, $_POST);
+            if ($assigned_to) {
+                require_once __DIR__ . '/../../Services/TicketMailer.php';
+                TicketMailer::ticketAssigned((int) $ticketId, (int) $assigned_to, (string) ($_SESSION['username'] ?? ''));
+            }
+
+            // who "performed" the technical action?
+            // If you want it to be the IT staff you assigned to:
+            $performedByEmployeeId = $assigned_to;
+
+            // If you prefer the current user’s employee_id, use:
+            // $performedByEmployeeId = $ticketModel->getEmployeeIdByAccountId($created_by);
+
+            if ($performedByEmployeeId) {
+                // 2) Insert technical details
+                $ticketModel->addTechnicalDetails([
+                    'ticket_id'        => $ticketId,
+                    'performed_by'     => $performedByEmployeeId,
+                    'technical_purpose'=> $technical_purpose,
+                    'action_taken'     => $actionTaken,
+                    'result'           => $resultDetails,
+                    'remarks'          => $remarks,
+                ]);
+            }
+
+            // 3) Log with ActivityLogger
+            ActivityLogger::create('Admin - Tickets', (string)$ticketId,
+                "New ticket created for employee #{$employee_id}: {$concern_details}",
+                $_SESSION['username'] ?? 'Unknown', [
+                    'employee_id' => $employee_id,
+                    'inventory_id' => $inventory_id,
+                    'category' => $category,
+                    'priority' => $priority,
+                    'assigned_to' => $assigned_to,
+                    'concern_details' => substr($concern_details, 0, 100)
+                ]);
+
+            // 4) Flash + redirect
+            $_SESSION['flash_success'] = 'New Ticket successfully created!';
+            $this->redirect('/admin/tickets');
+
+        } catch (\Throwable $e) {
+            $_SESSION['flash_error'] = 'Error creating ticket: ' . $e->getMessage();
+            $this->redirect('/admin/tickets');
+        }
+    }
+
+    public function pendings()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login');
+            return;
+        }
+
+        $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING));
+    }
+
+    // Approve & assign (POST)
+    public function approveAssign()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login'); return;
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405); echo 'Method Not Allowed'; return;
+        }
+
+        // basic CSRF
+        $posted = $_POST['csrf_token'] ?? '';
+        if (empty($posted) || $posted !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token.'; $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING)); return;
+        }
+
+        $ticket_id = (int)($_POST['ticket_id'] ?? 0);
+        $assigned_to = (int)($_POST['assigned_to'] ?? 0);
+        $remarks = trim($_POST['remarks'] ?? '');
+        $accountID = $_SESSION['account_id'];
+
+        if ($ticket_id <= 0 || $assigned_to <= 0) {
+            $_SESSION['flash_error'] = 'Invalid input.'; $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING)); return;
+        }
+
+        $ticketModel = new Ticket();
+        $ok = $ticketModel->approveAndAssign($ticket_id, $assigned_to, $accountID, $remarks);
+
+    if ($ok) {
+        require_once __DIR__ . '/../../Services/TicketMailer.php';
+        TicketMailer::ticketAssigned($ticket_id, $assigned_to, (string) ($_SESSION['username'] ?? ''));
+
+        // Log ticket approval
+        ActivityLogger::action('APPROVE', 'Admin - Tickets', (string)$ticket_id,
+            "Ticket #{$ticket_id} approved and assigned to employee #{$assigned_to}",
+            $_SESSION['username'] ?? 'Unknown', [
+                'ticket_id' => $ticket_id,
+                'assigned_to' => $assigned_to,
+                'remarks' => $remarks
+            ]);
+
+        require_once __DIR__ . '/../../Models/NotificationModel.php';
+
+        $targets = $ticketModel->getApprovalNotificationTargets($ticket_id);
+        $notificationModel = new NotificationModel();
+        $base = $this->getLoggedUserContext()['base'];
+
+        // 👤 Notify ticket owner
+        if (!empty($targets['employee_account_id'])) {
+            $notificationModel->create(
+                (int)$targets['employee_account_id'],
+                "Your ticket {$targets['ticket_number']} has been APPROVED.",
+                'fa-check-circle',
+                'success',
+                $base . '/employee/tickets',
+                $ticket_id
+            );
+        }
+
+        // 👔 Notify department head
+        if (!empty($targets['head_account_id'])) {
+            $notificationModel->create(
+                (int)$targets['head_account_id'],
+                "Ticket {$targets['ticket_number']} has been APPROVED.",
+                'fa-check-circle',
+                'success',
+                $base . '/head/dashboard',
+                $ticket_id
+            );
+        }
+
+        $_SESSION['flash_success'] = 'Ticket approved and assigned.';
+    } else {
+            $_SESSION['flash_error'] = 'Failed to approve ticket.';
+        }
+
+        $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING));
+    }
+
+    // Decline (POST)
+    public function decline()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            $this->redirect('/login'); return;
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405); echo 'Method Not Allowed'; return;
+        }
+
+        // basic CSRF
+        $posted = $_POST['csrf_token'] ?? '';
+        if (empty($posted) || $posted !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token.'; $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING)); return;
+        }
+
+        $ticket_id = (int)($_POST['ticket_id'] ?? 0);
+        $decline_reason = trim($_POST['decline_reason'] ?? '');
+        $remarks = trim($_POST['remarks'] ?? '');
+        $accountID = $_SESSION['account_id'];
+
+        if ($ticket_id <= 0) {
+            $_SESSION['flash_error'] = 'Invalid ticket id.'; $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING)); return;
+        }
+
+        $ticketModel = new Ticket();
+        $ok = $ticketModel->declineTicket($ticket_id, $decline_reason, $remarks, $accountID);
+
+    if ($ok) {
+        // Log ticket decline
+        ActivityLogger::action('REJECT', 'Admin - Tickets', (string)$ticket_id,
+            "Ticket #{$ticket_id} declined: {$decline_reason}",
+            $_SESSION['username'] ?? 'Unknown', [
+                'ticket_id' => $ticket_id,
+                'decline_reason' => $decline_reason,
+                'remarks' => $remarks
+            ]);
+
+        require_once __DIR__ . '/../../Models/NotificationModel.php';
+
+        $targets = $ticketModel->getApprovalNotificationTargets($ticket_id);
+        $notificationModel = new NotificationModel();
+        $base = $this->getLoggedUserContext()['base'];
+
+        // 👤 Notify ticket owner
+        if (!empty($targets['employee_account_id'])) {
+            $notificationModel->create(
+                (int)$targets['employee_account_id'],
+                "Your ticket {$targets['ticket_number']} has been DECLINED.",
+                'fa-times-circle',
+                'danger',
+                $base . '/employee/tickets',
+                $ticket_id
+            );
+        }
+
+        // 👔 Notify department head
+        if (!empty($targets['head_account_id'])) {
+            $notificationModel->create(
+                (int)$targets['head_account_id'],
+                "Ticket {$targets['ticket_number']} has been DECLINED.",
+                'fa-times-circle',
+                'danger',
+                $base . '/head/dashboard',
+                $ticket_id
+            );
+        }
+
+        $_SESSION['flash_success'] = 'Ticket declined and closed.';
+    } else {
+            $_SESSION['flash_error'] = 'Failed to decline ticket.';
+        }
+
+        $this->redirect('/admin/tickets?status=' . rawurlencode(TicketStatus::PENDING));
+    }
+
+    public function downloadTechnicalRecord()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+            http_response_code(403);
+            echo 'Unauthorized';
+            exit;
+        }
+
+        $ticketId = (int) ($_GET['id'] ?? 0);
+        if ($ticketId <= 0) {
+            http_response_code(400);
+            echo 'Invalid ticket ID';
+            exit;
+        }
+
+        $ticketModel = new Ticket();
+        $ticket = $ticketModel->fetchTicketById($ticketId);
+        if (!$ticket) {
+            http_response_code(404);
+            echo 'Ticket not found';
+            exit;
+        }
+
+        require_once __DIR__ . '/../../Models/employee/Employee.php';
+        require_once __DIR__ . '/../../Services/PdfGeneratorService.php';
+
+        $employeeModel = new Employee();
+        $requesterId = (int) ($employeeModel->getEmployeeIdByAccountId((int) $_SESSION['account_id']) ?? 0);
+        if ($requesterId <= 0) {
+            $requesterId = (int) ($ticket['employee_id'] ?? 0);
+        }
+
+        $pdfService = new PdfGeneratorService();
+        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $requesterId, true);
+
+        if (!$result || empty($result['success'])) {
+            http_response_code(404);
+            echo 'Unable to generate technical record. Please ensure the ticket is resolved.';
+            exit;
+        }
+
+        $filepath = $result['filepath'] ?? '';
+        $filename = $result['filename'] ?? 'technical_record.docx';
+
+        if ($filepath === '' || !file_exists($filepath)) {
+            http_response_code(404);
+            echo 'File not found';
+            exit;
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
+        header('Content-Length: ' . filesize($filepath));
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        readfile($filepath);
+        exit;
+    }
+}

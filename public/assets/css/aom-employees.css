@@ -1,0 +1,86 @@
+.aom-employees-page .page-hero {
+  background: linear-gradient(135deg, #1a237e 0%, #3949ab 55%, #5c6bc0 100%);
+  border-radius: 0.85rem;
+  color: #fff;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0.35rem 1.25rem rgba(26, 35, 126, 0.22);
+}
+
+.aom-employees-page .page-hero h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #fff;
+}
+
+.aom-employees-page .page-hero p {
+  margin: 0;
+  opacity: 0.82;
+  font-size: 0.9rem;
+}
+
+.aom-employees-page .hero-stat {
+  text-align: center;
+  padding: 0.65rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.aom-employees-page .hero-stat .stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.aom-employees-page .hero-stat .stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.aom-employees-page .status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.aom-employees-page .status-pill.status-active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.aom-employees-page .status-pill.status-inactive {
+  background: #fce4ec;
+  color: #c62828;
+}
+
+.aom-employees-page .status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.aom-employees-page .btn-view {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 991px) {
+  .aom-employees-page .hero-stat {
+    margin-top: 0.75rem;
+  }
+}

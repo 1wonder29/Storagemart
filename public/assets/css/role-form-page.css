@@ -1,0 +1,44 @@
+/* Standalone form pages (signature upload, etc.) */
+
+.signature-upload-page {
+  min-height: 100vh;
+}
+
+.signature-upload-logo {
+  width: 140px;
+  height: auto;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.25));
+}
+
+.signature-upload-card {
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(8px);
+}
+
+.signature-preview-box {
+  min-height: 150px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signature-preview-img {
+  max-width: 100%;
+  max-height: 150px;
+  display: none;
+}
+
+.signature-upload-btn {
+  border-radius: 999px;
+  font-weight: 600;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(135deg, #012b90, #006ad4);
+  border: none;
+}
+
+.signature-upload-btn:hover {
+  background: linear-gradient(135deg, #0046ad, #006ad4);
+}

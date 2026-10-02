@@ -1,0 +1,228 @@
+/* Storage Mart — shared header + sidebar user card (all roles) */
+
+/* ---------- Header ---------- */
+.topbar.app-topbar {
+  height: 4.25rem;
+  padding: 0 1.1rem;
+}
+
+.app-topbar .app-topbar-hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  margin-right: 0.85rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: #4a56a6;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app-topbar .app-topbar-hamburger:hover,
+.app-topbar .app-topbar-hamburger:focus {
+  background: rgba(57, 73, 171, 0.1);
+  outline: none;
+}
+
+.app-topbar .app-topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.app-topbar .app-topbar-brand img {
+  display: block;
+  height: 2.3rem;
+  width: auto;
+  border-radius: 0.35rem;
+}
+
+.app-topbar .app-topbar-clock {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  line-height: 1.15;
+  margin-right: 0.35rem;
+  white-space: nowrap;
+}
+
+.app-topbar .app-clock-time {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #3a3b45;
+}
+
+.app-topbar .app-clock-date {
+  font-size: 0.72rem;
+  color: #858796;
+}
+
+.app-topbar .app-profile-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.app-topbar .app-profile-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #5a5c69;
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Sidebar user card ---------- */
+#accordionSidebar.sidebar-modern .sidebar-user {
+  list-style: none;
+  margin: 0.75rem 0.5rem 0.25rem;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-user-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 1rem 0.75rem 0.85rem;
+  text-align: center;
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#accordionSidebar.sidebar-modern .sidebar-user-avatar {
+  width: 3.25rem;
+  height: 3.25rem;
+  margin-bottom: 0.4rem;
+  padding: 0.15rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  object-fit: cover;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-user-info {
+  width: 100%;
+  min-width: 0;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-user-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-user-email {
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.68);
+  overflow-wrap: anywhere;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-user-position {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+#accordionSidebar.sidebar-modern .sidebar-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  margin-top: 0.7rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-logout:hover,
+#accordionSidebar.sidebar-modern .sidebar-logout:focus {
+  background: rgba(255, 99, 99, 0.28);
+  border-color: rgba(255, 130, 130, 0.55);
+  outline: none;
+}
+
+/* Collapsed sidebar: avatar + logout icon only */
+@media (min-width: 768px) {
+  #accordionSidebar.sidebar-modern.toggled .sidebar-user {
+    margin: 0.75rem 0.4rem 0.25rem;
+  }
+
+  #accordionSidebar.sidebar-modern.toggled .sidebar-user-card {
+    padding: 0.6rem 0.25rem;
+  }
+
+  #accordionSidebar.sidebar-modern.toggled .sidebar-user-avatar {
+    width: 2.4rem;
+    height: 2.4rem;
+    margin-bottom: 0;
+  }
+
+  #accordionSidebar.sidebar-modern.toggled .sidebar-user-info,
+  #accordionSidebar.sidebar-modern.toggled .sidebar-logout span {
+    display: none;
+  }
+
+  #accordionSidebar.sidebar-modern.toggled .sidebar-logout {
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Small screens: keep the header compact */
+@media (max-width: 575.98px) {
+  .app-topbar .app-topbar-brand img {
+    height: 1.9rem;
+  }
+
+  .topbar.app-topbar {
+    padding: 0 0.6rem;
+  }
+
+  .app-topbar .app-topbar-hamburger {
+    margin-right: 0.4rem;
+  }
+}
+
+/* ---------- Dark mode ---------- */
+html.it-dark .app-topbar .app-topbar-hamburger {
+  color: var(--it-text-muted);
+}
+
+html.it-dark .app-topbar .app-topbar-hamburger:hover,
+html.it-dark .app-topbar .app-topbar-hamburger:focus {
+  background: var(--it-hover);
+  color: var(--it-text);
+}
+
+html.it-dark .app-topbar .app-clock-time,
+html.it-dark .app-topbar .app-profile-name {
+  color: var(--it-text);
+}
+
+html.it-dark .app-topbar .app-clock-date {
+  color: var(--it-text-dim);
+}

@@ -1,0 +1,58 @@
+/* Bulk transfer modal — AOM & HOM */
+#bulkTransferModal .modal-body {
+    overflow: visible;
+}
+
+#bulkTransferModal .bulk-transfer-intro {
+    margin-bottom: 1.25rem;
+}
+
+#bulkTransferModal .bulk-transfer-field {
+    margin-bottom: 1.35rem;
+}
+
+#bulkTransferModal .bulk-transfer-field label {
+    margin-bottom: 0.45rem;
+}
+
+#bulkTransferModal .bulk-transfer-field .form-text {
+    display: block;
+    margin-top: 0.4rem;
+    margin-bottom: 0;
+    line-height: 1.4;
+}
+
+#bulkTransferModal .bulk-transfer-count {
+    margin-bottom: 1.25rem;
+}
+
+#bulkTransferModal .searchable-select {
+    display: block;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+#bulkTransferModal .searchable-select-input {
+    display: block;
+    width: 100%;
+    min-height: calc(1.5em + 0.75rem + 2px);
+}
+
+#bulkTransferModal .searchable-select-dropdown {
+    z-index: 2000;
+}
+
+#bulkTransferModal .modal-footer {
+    border-top: 1px solid #e3e6f0;
+    padding: 0.85rem 1.25rem;
+}
+
+.bulk-transfer-modal.modal-dialog {
+    max-width: 520px;
+}
+
+@media (max-width: 575.98px) {
+    .bulk-transfer-modal.modal-dialog {
+        margin: 0.75rem;
+    }
+}

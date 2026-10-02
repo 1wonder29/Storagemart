@@ -1,0 +1,109 @@
+// Chart.js v3+ defaults (SB Admin look)
+if (window.Chart) {
+  Chart.defaults.font.family =
+    'Nunito, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+  Chart.defaults.color = document.documentElement.classList.contains('it-dark') ? '#a8aeb8' : '#858796';
+}
+
+function itChartTheme() {
+  const dark = document.documentElement.classList.contains('it-dark');
+  return {
+    text: dark ? '#a8aeb8' : '#858796',
+    textStrong: dark ? '#e2e5ea' : '#5a5c69',
+    doughnutBorder: dark ? '#252932' : 'rgba(234, 236, 244, 1)',
+    tooltipBg: dark ? '#2d323c' : '#fff',
+    tooltipBorder: dark ? '#383e48' : '#dddfeb',
+  };
+}
+
+// Center text plugin
+const centerText = {
+  id: 'centerText',
+  afterDraw(chart) {
+    if (chart.config.type !== 'doughnut') return;
+
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    if (!meta?.data?.length) return;
+
+    const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+    const { x, y } = meta.data[0];
+    const theme = itChartTheme();
+
+    ctx.save();
+    ctx.font = 'bold 22px Nunito';
+    ctx.fillStyle = theme.textStrong;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(total, x, y - 8);
+    ctx.font = '600 12px Nunito';
+    ctx.fillStyle = theme.text;
+    ctx.fillText('tickets', x, y + 12);
+    ctx.restore();
+  }
+};
+
+// Chart
+var ctx = document.getElementById("ticketChart");
+
+if (ctx && window.ticketData) {
+  // Register plugin once (Chart.js v3+)
+  if (window.Chart && typeof Chart.register === 'function' && !Chart.registry.plugins.get('centerText')) {
+    Chart.register(centerText);
+  }
+
+  const raw = Array.isArray(window.ticketData) ? window.ticketData.map(n => Number(n) || 0) : [];
+  const total = raw.reduce((a, b) => a + b, 0);
+  const chartData = total > 0 ? raw : [1, 1, 1]; // empty-state placeholder
+
+  const theme = itChartTheme();
+
+  window.__itTicketChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ["Assigned", "In Progress", "Resolved"],
+      datasets: [{
+        data: chartData,
+        backgroundColor: ['#0891b2', '#16a34a', '#f37021'],
+        hoverBackgroundColor: ['#0e7490', '#15803d', '#de6126'],
+        borderColor: theme.doughnutBorder,
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      cutout: '80%',
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            padding: 20,
+            color: theme.text
+          }
+        },
+        tooltip: {
+          backgroundColor: theme.tooltipBg,
+          titleColor: theme.textStrong,
+          bodyColor: theme.text,
+          borderColor: theme.tooltipBorder,
+          borderWidth: 1,
+          padding: 15,
+          displayColors: true,
+          caretPadding: 10,
+          callbacks: {
+            label: function(context) {
+              if (total <= 0) return 'No data yet';
+              const value = Number(context.parsed) || 0;
+              const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+              return `${context.label}: ${value} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+
+  });
+
+  document.dispatchEvent(new CustomEvent('it-charts-ready'));
+}

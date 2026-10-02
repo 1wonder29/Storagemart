@@ -1,0 +1,177 @@
+/* Shared ticket detail page shell */
+
+#content-wrapper:has(.ticket-detail-page) {
+  background: linear-gradient(160deg, #eef4fc 0%, #f4f7fb 45%, #e8eef8 100%);
+}
+
+.ticket-detail-page {
+  --td-surface: #ffffff;
+  --td-text: #0f172a;
+  --td-muted: #64748b;
+  --td-border: rgba(1, 43, 144, 0.08);
+  --td-shadow: 0 4px 20px rgba(1, 43, 144, 0.08);
+  --td-radius: 18px;
+  --td-radius-sm: 12px;
+  --td-hero-dark: #012b90;
+  --td-hero-mid: #0046ad;
+  --td-hero-bright: #006ad4;
+  padding-bottom: 1.5rem;
+}
+
+.ticket-detail-page.theme-head,
+.ticket-detail-page.theme-admin,
+.ticket-detail-page.theme-it,
+.ticket-detail-page.theme-aom {
+  --td-hero-dark: #012b90;
+  --td-hero-mid: #0046ad;
+  --td-hero-bright: #006ad4;
+}
+
+.ticket-detail-page.theme-it {
+  --td-hero-dark: #1a2332;
+  --td-hero-mid: #2d3a4f;
+  --td-hero-bright: #3d8ea6;
+}
+
+.ticket-detail-page.theme-aom {
+  --td-hero-dark: #1a237e;
+  --td-hero-mid: #3949ab;
+  --td-hero-bright: #5c6bc0;
+}
+
+.ticket-detail-page.theme-employee,
+.ticket-detail-page.theme-hr {
+  --td-hero-dark: #004d40;
+  --td-hero-mid: #00695c;
+  --td-hero-bright: #00897b;
+  --td-border: rgba(0, 105, 92, 0.08);
+  --td-shadow: 0 4px 20px rgba(0, 77, 64, 0.08);
+}
+
+#content-wrapper:has(.ticket-detail-page.theme-employee),
+#content-wrapper:has(.ticket-detail-page.theme-hr) {
+  background: linear-gradient(160deg, #eef8f5 0%, #f4f7fb 45%, #e8eef8 100%);
+}
+
+.ticket-detail-page.theme-om,
+.ticket-detail-page.theme-hom {
+  --td-hero-dark: #1b5e20;
+  --td-hero-mid: #2e7d32;
+  --td-hero-bright: #43a047;
+  --td-border: rgba(27, 94, 32, 0.08);
+  --td-shadow: 0 4px 20px rgba(27, 94, 32, 0.08);
+}
+
+#content-wrapper:has(.ticket-detail-page.theme-om),
+#content-wrapper:has(.ticket-detail-page.theme-hom) {
+  background: linear-gradient(160deg, #eef8f0 0%, #f4f7fb 45%, #e8eef8 100%);
+}
+
+.ticket-detail-page.theme-it {
+  --td-hero-dark: #1a2332;
+  --td-hero-mid: #2d3a4f;
+  --td-hero-bright: #3d8ea6;
+}
+
+.ticket-detail-page.theme-aom {
+  --td-hero-dark: #1a237e;
+  --td-hero-mid: #3949ab;
+  --td-hero-bright: #5c6bc0;
+}
+
+.ticket-detail-page .page-hero.ticket-detail-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--td-hero-dark) 0%, var(--td-hero-mid) 50%, var(--td-hero-bright) 100%);
+  background-size: 200% 200%;
+  animation: tdHeroShift 12s ease infinite;
+  border-radius: var(--td-radius);
+  color: #fff;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.75rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+.ticket-detail-page .page-hero.ticket-detail-hero::before {
+  content: "";
+  position: absolute;
+  top: -45%;
+  right: -8%;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+@keyframes tdHeroShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.ticket-detail-page .ticket-detail-hero h1 {
+  position: relative;
+  z-index: 1;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  color: #fff;
+}
+
+.ticket-detail-page .ticket-detail-hero p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.92rem;
+}
+
+.ticket-detail-page .ticket-detail-ref {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ticket-detail-page .ticket-detail-hero-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.ticket-detail-page .btn-back-ticket {
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.ticket-detail-page .btn-back-ticket:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.ticket-detail-page .alert-modern {
+  border: none;
+  border-radius: var(--td-radius-sm);
+  box-shadow: var(--td-shadow);
+}
+
+.ticket-detail-page .ticket-detail-layout .card {
+  border: 1px solid var(--td-border);
+  border-radius: var(--td-radius-sm);
+  box-shadow: var(--td-shadow) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket-detail-page .page-hero.ticket-detail-hero { animation: none; }
+  .ticket-detail-page .btn-back-ticket:hover { transform: none; }
+}
