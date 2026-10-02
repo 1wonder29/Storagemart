@@ -18,7 +18,8 @@ class IT extends BaseModel{
                     WHERE a.account_id = ? LIMIT 1";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([$accountID]);
-            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            require_once __DIR__ . '/../../Helpers/SuperUser.php';
+            return SuperUser::withActingRole($stmt->fetch(PDO::FETCH_ASSOC) ?: null, $accountID);
         } catch (\Throwable $e) {
             error_log('Employee::fetchUserDetails error: ' . $e->getMessage());
             return null;

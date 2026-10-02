@@ -37,6 +37,13 @@ if ($scriptDir !== '' && strpos($uri, $scriptDir) === 0) {
 }
 $uri = '/' . trim($uri, '/');
 
+require_once __DIR__ . '/../app/Helpers/SuperUser.php';
+SuperUser::restoreRealRole();
+$superuserArea = SuperUser::roleForPath($uri);
+if ($superuserArea !== null && SuperUser::isCurrent()) {
+    SuperUser::actAs($superuserArea);
+}
+
 // ROUTES
 // HOME ROUTE
 if ($uri === '/' || $uri === '') {

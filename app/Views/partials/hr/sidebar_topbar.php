@@ -1,4 +1,11 @@
 <?php
+require_once __DIR__ . '/../../../Helpers/SuperUser.php';
+if (SuperUser::isActingInRoleArea()) {
+    require __DIR__ . '/../admin/sidebar_topbar.php';
+    return;
+}
+?>
+<?php
 $base = rtrim(BASE_URL, '/');
 ?>
 

@@ -67,7 +67,8 @@ class Account extends BaseModel {
                 WHERE a.account_id = ? LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([(int)$accountID]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        require_once __DIR__ . '/../../Helpers/SuperUser.php';
+        return SuperUser::withActingRole($stmt->fetch(PDO::FETCH_ASSOC) ?: null, (int) $accountID);
     }
 
     // -----------------------
