@@ -216,15 +216,122 @@ class TicketController extends AuthController
             return;
         }
 
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+
+        $ticketModel = new Ticket();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->storeNewTicket($ticketModel);
+            return;
+        }
+
+        $branches = $ticketModel->listBranches();
+        $itStaff = $ticketModel->fetchEmployeesByDepartment('IT');
+        $csrf_token = $_SESSION['csrf_token'];
+
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
         $loggedFirstname = $ctx['loggedFirstname'];
         $loggedPosition  = $ctx['loggedPosition'];
-                $notificationData = $this->loadNotifications();
+        $notificationData = $this->loadNotifications();
 
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
-        require __DIR__ . '/../../Views/admin/ticket/add.php'; 
+        require __DIR__ . '/../../Views/admin/ticket/add.php';
+    }
+
+    /**
+     * Files a ticket on behalf of an employee using the same fields every other
+     * role's ticket form uses, plus an optional direct assignment to IT staff.
+     */
+    private function storeNewTicket(Ticket $ticketModel): void
+    {
+        if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', (string) $_POST['csrf_token'])) {
+            $_SESSION['flash_error'] = 'Invalid form token. Please try again.';
+            $this->redirect('/admin/tickets/add');
+            return;
+        }
+
+        $pdo = $ticketModel->getPDO();
+        $employeeId = (int) ($_POST['employee_id'] ?? 0);
+        $stmt = $pdo->prepare('SELECT employee_id, branch_id, department FROM tblemployee WHERE employee_id = ? LIMIT 1');
+        $stmt->execute([$employeeId]);
+        $employee = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$employee) {
+            $_SESSION['flash_error'] = 'Please choose the employee this ticket is for.';
+            $this->redirect('/admin/tickets/add');
+            return;
+        }
+
+        $inventoryId = (int) ($_POST['inventory_id'] ?? 0);
+        if ($inventoryId > 0) {
+            $inventory = $ticketModel->getInventoryDetailsByInventoryId($inventoryId);
+            if (!$inventory || (int) ($inventory['employee_id'] ?? 0) !== $employeeId) {
+                $_SESSION['flash_error'] = 'The selected asset does not belong to that employee.';
+                $this->redirect('/admin/tickets/add');
+                return;
+            }
+        }
+
+        $assignedTo = (int) ($_POST['ticket_assign'] ?? 0);
+        if ($assignedTo > 0) {
+            $itIds = array_map('intval', array_column($ticketModel->fetchEmployeesByDepartment('IT'), 'employee_id'));
+            if (!in_array($assignedTo, $itIds, true)) {
+                $_SESSION['flash_error'] = 'Please choose an active IT staff member to assign.';
+                $this->redirect('/admin/tickets/add');
+                return;
+            }
+        }
+
+        $priority = ucfirst(strtolower(trim((string) ($_POST['priority'] ?? 'Medium'))));
+        if (!in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true)) {
+            $priority = 'Medium';
+        }
+        $concern = trim((string) ($_POST['concern_details'] ?? ''));
+        $branchId = (int) ($_POST['branch_id'] ?? 0) ?: (int) ($employee['branch_id'] ?? 0);
+        $department = trim((string) ($_POST['department'] ?? '')) ?: (string) ($employee['department'] ?? '');
+
+        try {
+            $ticketId = $ticketModel->createTicket([
+                'employee_id'     => $employeeId,
+                'inventory_id'    => $inventoryId > 0 ? $inventoryId : null,
+                'branch_id'       => $branchId ?: null,
+                'department'      => $department !== '' ? $department : null,
+                'category'        => trim((string) ($_POST['category'] ?? '')) ?: null,
+                'concern_details' => $concern !== '' ? $concern : null,
+                'priority'        => $priority,
+                'status'          => $assignedTo > 0 ? TicketStatus::assigned() : TicketStatus::initial(),
+                'assigned_to'     => $assignedTo > 0 ? $assignedTo : null,
+                'created_by'      => (int) $_SESSION['account_id'],
+            ]);
+            TicketFormFields::ticketCreated((int) $ticketId, $_POST);
+            if ($assignedTo > 0) {
+                require_once __DIR__ . '/../../Services/TicketMailer.php';
+                TicketMailer::ticketAssigned((int) $ticketId, $assignedTo, (string) ($_SESSION['username'] ?? ''));
+            }
+
+            $numberStmt = $pdo->prepare('SELECT ticket_number FROM tbltickets WHERE ticket_id = ?');
+            $numberStmt->execute([$ticketId]);
+            $ticketNumber = (string) ($numberStmt->fetchColumn() ?: "#{$ticketId}");
+
+            ActivityLogger::create('Admin - Tickets', (string) $ticketId,
+                "New ticket {$ticketNumber} filed for employee #{$employeeId}",
+                $_SESSION['username'] ?? 'Unknown', [
+                    'employee_id' => $employeeId,
+                    'inventory_id' => $inventoryId ?: null,
+                    'priority' => $priority,
+                    'assigned_to' => $assignedTo ?: null,
+                ]);
+
+            $_SESSION['flash_success'] = "Ticket {$ticketNumber} created.";
+            $this->redirect('/admin/tickets/view?id=' . (int) $ticketId);
+        } catch (\Throwable $e) {
+            error_log('Admin storeNewTicket error: ' . $e->getMessage());
+            $_SESSION['flash_error'] = 'Error creating ticket: ' . $e->getMessage();
+            $this->redirect('/admin/tickets/add');
+        }
     }
     public function searchEmployee(): void
     {

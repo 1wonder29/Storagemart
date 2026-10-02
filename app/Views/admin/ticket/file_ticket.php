@@ -23,9 +23,14 @@ $base = rtrim(BASE_URL, '/');
     require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';
     ?>
     <div class="container-fluid ticket-create-page">
-        <div class="page-hero">
-            <h1><i class="fas fa-ticket-alt mr-2"></i>File Ticket</h1>
-            <p>Create an administrative ticket record with assignment, technical details, and resolution notes.</p>
+        <div class="page-hero d-flex align-items-start justify-content-between flex-wrap">
+            <div class="mr-3">
+                <h1><i class="fas fa-ticket-alt mr-2"></i>File Ticket</h1>
+                <p>Create an administrative ticket record with assignment, technical details, and resolution notes.</p>
+            </div>
+            <a href="<?= htmlspecialchars($base) ?>/admin/tickets" class="btn btn-light btn-sm mt-2">
+                <i class="fas fa-arrow-left mr-1"></i> Back to Tickets
+            </a>
         </div>
 
         <?php require __DIR__ . '/../../partials/ticket/flash_messages.php'; ?>

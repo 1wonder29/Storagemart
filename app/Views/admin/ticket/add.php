@@ -1,171 +1,189 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+$branches = $branches ?? [];
+$itStaff = $itStaff ?? [];
 ?>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart - Add Ticket</title>
-
-    <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-ticket-list.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
+    <title>Storage Mart | Add Ticket</title>
+    <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
-    <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/ticket-create.css" rel="stylesheet">
 </head>
-
 <body id="page-top">
 
-    <div id="wrapper">
-            <?php 
-            $activePage = 'tickets';
-            require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';?>
+<div id="wrapper">
+    <?php
+    $activePage = 'tickets';
+    require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';
+    ?>
+    <div class="container-fluid ticket-create-page">
+        <div class="page-hero d-flex align-items-start justify-content-between flex-wrap">
+            <div class="mr-3">
+                <h1><i class="fas fa-ticket-alt mr-2"></i>Add Ticket</h1>
+                <p>File a ticket for any employee. Pick their branch and name, describe the issue, and optionally assign IT staff right away.</p>
+            </div>
+            <a href="<?= htmlspecialchars($base) ?>/admin/tickets" class="btn btn-light btn-sm mt-2">
+                <i class="fas fa-arrow-left mr-1"></i> Back to Tickets
+            </a>
+        </div>
 
-                <div class="container-fluid admin-ticket-page role-form-page">
+        <?php require __DIR__ . '/../../partials/ticket/flash_messages.php'; ?>
 
-                    <div class="page-hero">
-                        <div class="row align-items-center">
-                            <div class="col-12">
-                                <h1><i class="fas fa-ticket-alt mr-2"></i>Add Ticket</h1>
-                                <p>Search for an employee and select assets to file a new support ticket.</p>
+        <div class="row">
+            <div class="col-lg-9 col-xl-8">
+                <div class="card shadow mb-4 ticket-form-card">
+                    <div class="card-header ticket-header-employee text-white">
+                        <h6 class="font-weight-bold text-white"><i class="fas fa-clipboard-list mr-1"></i> Ticket Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/tickets/add" id="adminAddTicketForm">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '', ENT_QUOTES, 'UTF-8') ?>">
+
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="fas fa-user"></i> Filed For
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="branch_id" class="form-label">
+                                            <i class="fas fa-building"></i> Branch <span class="text-danger">*</span>
+                                        </label>
+                                        <select id="branch_id" name="branch_id" class="form-control form-control-lg" required>
+                                            <option value="">-- Select a Branch --</option>
+                                            <?php foreach ($branches as $branch): ?>
+                                                <option value="<?= (int) $branch['branch_id'] ?>"><?= htmlspecialchars((string) $branch['branchName']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="employee_id" class="form-label">
+                                            <i class="fas fa-user"></i> Employee <span class="text-danger">*</span>
+                                        </label>
+                                        <select id="employee_id" name="employee_id" class="form-control form-control-lg" required disabled>
+                                            <option value="">-- Select a branch first --</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="department" class="form-label">
+                                            <i class="fas fa-sitemap"></i> Department <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" id="department" name="department" class="form-control form-control-lg" required
+                                               placeholder="Filled in from the employee">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="inventory_id" class="form-label">
+                                            <i class="fas fa-archive"></i> Asset (optional)
+                                        </label>
+                                        <select id="inventory_id" name="inventory_id" class="form-control form-control-lg" disabled>
+                                            <option value="">-- No specific asset --</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-0">
+                                    <label for="ticket_assign" class="form-label">
+                                        <i class="fas fa-user-cog"></i> Assign to IT Staff (optional)
+                                    </label>
+                                    <select id="ticket_assign" name="ticket_assign" class="form-control form-control-lg">
+                                        <option value="">-- Assign later --</option>
+                                        <?php foreach ($itStaff as $staff): ?>
+                                            <option value="<?= (int) $staff['employee_id'] ?>">
+                                                <?= htmlspecialchars(trim($staff['firstname'] . ' ' . $staff['lastname'])) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <small class="form-text text-muted">Leave blank to review and assign it from the ticket list.</small>
+                                </div>
                             </div>
-                        </div>
+
+                            <?php
+                            $submitLabel = 'Create Ticket';
+                            $cancelUrl = $base . '/admin/tickets';
+                            $extendedCategories = true;
+                            require __DIR__ . '/../../partials/ticket/form_fields_ticket_details.php';
+                            ?>
+                        </form>
                     </div>
-
-                    <div class="card form-card shadow mb-4">
-                        <div class="card-header">
-                            <h6><i class="fas fa-user mr-1"></i>Employee Details</h6>
-                        </div>
-                        <div class="card-body">
-                            <form action="<?= htmlspecialchars($base) ?>/admin/tickets/add" method="POST">
-                                <div class="row form-row-gap">
-                                    <div class="col-md-6">
-                                        <label for="employee_search" class="form-label">Search Employee</label>
-                                        <div class="input-group mb-3">
-                                            <input type="text" id="employee_search" class="form-control" placeholder="Type employee name or ID">
-                                            <button type="button" class="btn btn-primary" id="btnSearchEmployee">Search</button>
-                                            <button type="button" class="btn btn-outline-primary" id="btnEmployeeList" title="Browse all employees">
-                                                <i class="fas fa-users"></i> Employee List
-                                            </button>
-                                        </div>
-                                        <input type="hidden" id="employee_id" name="employee_id">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="fullname" class="form-label">Fullname</label>
-                                        <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" required>
-                                    </div>
-                                </div>
-                                <div class="row form-row-gap">
-                                    <div class="col-md-6">
-                                        <label for="department" class="form-label">Department</label>
-                                        <input type="text" class="form-control" id="department" name="department" placeholder="Department" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="branch" class="form-label">Branch</label>
-                                        <input type="text" class="form-control" id="branch" name="branch" placeholder="Branch" required>
-                                    </div>
-                                </div>
-
-                                <h5 class="form-section-title mt-4">Employee Assets</h5>
-                                <div class="table-responsive">
-                                    <table class="table table-bordered" id="asset-ticket" width="100%" cellspacing="0">
-                                        <thead>
-                                            <tr>
-                                                <th>Asset Number</th>
-                                                <th>Name</th>
-                                                <th>IC CODE</th>
-                                                <th>Description</th>
-                                                <th>Serial Number</th>
-                                                <th>Year Purchased</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tfoot>
-                                            <tr>
-                                                <th>Asset Number</th>
-                                                <th>Name</th>
-                                                <th>IC CODE</th>
-                                                <th>Description</th>
-                                                <th>Serial Number</th>
-                                                <th>Year Purchased</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </tfoot>
-                                        <tbody id="assetsTable">
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <a class="scroll-to-top rounded" href="#page-top">
-        <i class="fas fa-angle-up"></i>
-    </a>
-
-    <div class="modal fade" id="employeeListModal" tabindex="-1" role="dialog" aria-labelledby="employeeListModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="employeeListModalLabel"><i class="fas fa-users mr-1"></i> Employee List</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-row mb-3">
-                        <div class="col-md-5 mb-2 mb-md-0">
-                            <label for="employeeListBranch" class="small font-weight-bold text-gray-600">Branch (optional)</label>
-                            <select id="employeeListBranch" class="form-control">
-                                <option value="">All Branches</option>
-                            </select>
-                        </div>
-                        <div class="col-md-7">
-                            <label for="employeeListFilter" class="small font-weight-bold text-gray-600">Search</label>
-                            <input type="text" id="employeeListFilter" class="form-control" placeholder="Filter by name or employee ID" autocomplete="off">
-                        </div>
-                    </div>
-                    <table class="table table-hover table-sm mb-2" id="employeeListTable">
-                        <thead>
-                            <tr>
-                                <th>Employee</th>
-                                <th>Position</th>
-                                <th>Department</th>
-                                <th>Branch</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="employeeListBody"></tbody>
-                    </table>
-                    <div class="small text-muted" id="employeeListCount"></div>
                 </div>
             </div>
         </div>
     </div>
+</div>
+</div>
 
-    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
-    <script>
-        window.BASE_URL = "<?= htmlspecialchars($base) ?>";
-    </script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/search_employee.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/employee_list_modal.js"></script>
+            </div>
+<script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+<script>
+$(function () {
+    var base = <?= json_encode($base) ?>;
+    var $branch = $('#branch_id');
+    var $employee = $('#employee_id');
+    var $department = $('#department');
+    var $asset = $('#inventory_id');
+    var employees = {};
+
+    function resetAssets(message) {
+        $asset.html('<option value="">' + message + '</option>').prop('disabled', true);
+    }
+
+    $branch.on('change', function () {
+        var branchId = $branch.val();
+        employees = {};
+        $department.val('');
+        resetAssets('-- No specific asset --');
+        if (!branchId) {
+            $employee.html('<option value="">-- Select a branch first --</option>').prop('disabled', true);
+            return;
+        }
+        $employee.html('<option value="">Loading employees…</option>').prop('disabled', true);
+        $.getJSON(base + '/admin/tickets/employee-list', { branch_id: branchId })
+            .done(function (res) {
+                var list = (res && res.employees) || [];
+                var html = '<option value="">-- Select an employee --</option>';
+                list.forEach(function (emp) {
+                    employees[emp.employee_id] = emp;
+                    var label = $.trim(emp.full_name) + (emp.position ? ' — ' + emp.position : '');
+                    html += '<option value="' + emp.employee_id + '">' + $('<div>').text(label).html() + '</option>';
+                });
+                if (!list.length) html = '<option value="">No employees in this branch</option>';
+                $employee.html(html).prop('disabled', !list.length);
+            })
+            .fail(function () {
+                $employee.html('<option value="">Could not load employees</option>').prop('disabled', true);
+            });
+    });
+
+    $employee.on('change', function () {
+        var emp = employees[$employee.val()];
+        $department.val(emp ? (emp.department || '') : '');
+        if (!emp) { resetAssets('-- No specific asset --'); return; }
+        resetAssets('Loading assets…');
+        $.getJSON(base + '/admin/tickets/get-assets', { employee_id: emp.employee_id })
+            .done(function (res) {
+                var assets = (res && res.data) || [];
+                var html = '<option value="">-- No specific asset --</option>';
+                assets.forEach(function (a) {
+                    var label = (a.assetNumber || '') + (a.groupName ? ' — ' + a.groupName : '');
+                    html += '<option value="' + a.inventory_id + '">' + $('<div>').text(label).html() + '</option>';
+                });
+                $asset.html(html).prop('disabled', !assets.length);
+            })
+            .fail(function () { resetAssets('-- No specific asset --'); });
+    });
+});
+</script>
 </body>
 </html>
