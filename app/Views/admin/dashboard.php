@@ -52,7 +52,7 @@ $todayLabel = date('l, F j, Y');
                 <div class="admin-stat-grid">
                     <a href="<?= htmlspecialchars($base) ?>/admin/account" class="admin-stat-card tone-users">
                         <span class="stat-number"><?= (int) $userCount ?></span>
-                        <span class="stat-title"><i class="fas fa-users" aria-hidden="true"></i> Active Users</span>
+                        <span class="stat-title"><i class="fas fa-users" aria-hidden="true"></i> Total Users</span>
                         <span class="stat-hint">Manage accounts</span>
                     </a>
                     <a href="<?= htmlspecialchars($base) ?>/admin/tickets" class="admin-stat-card tone-tickets">

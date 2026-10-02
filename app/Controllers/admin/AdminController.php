@@ -47,7 +47,7 @@ class AdminController extends AuthController
         // Dashboard stats
         $users = method_exists($accountModel, 'fetchAll') ? $accountModel->fetchAll() : [];
         $ticketCount = method_exists($accountModel, 'countTicket') ? $accountModel->countTicket() : 0;
-        $userCount = method_exists($accountModel, 'countUser') ? $accountModel->countUser() : count($users);
+        $userCount = count($users);
         $assetCount = method_exists($accountModel, 'countAssets') ? $accountModel->countAssets() : 0;
         $ticketInProgress = method_exists($accountModel, 'countInProgressTickets')
             ? $accountModel->countInProgressTickets()
