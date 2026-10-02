@@ -39,15 +39,10 @@ $assetSubPage = $assetSubPage ?? '';
                 </a>
                 <div id="collapseUsers" class="collapse <?= ($activePage === 'users') ? 'show' : '' ?>" aria-labelledby="headingUsers" data-parent="#accordionSidebar">
                     <div class="sidebar-submenu">
-                        <a class="sidebar-submenu-item <?= ($userSubPage === 'accounts') ? 'active' : '' ?>"
+                        <a class="sidebar-submenu-item <?= in_array($userSubPage, ['accounts', 'employee'], true) ? 'active' : '' ?>"
                            href="<?= htmlspecialchars($base) ?>/admin/account">
                             <i class="fas fa-id-card"></i>
-                            <span>Accounts</span>
-                        </a>
-                        <a class="sidebar-submenu-item <?= ($userSubPage === 'employee') ? 'active' : '' ?>"
-                           href="<?= htmlspecialchars($base) ?>/admin/employee">
-                            <i class="fas fa-user-tie"></i>
-                            <span>Employee</span>
+                            <span>Users &amp; Employees</span>
                         </a>
                         <a class="sidebar-submenu-item <?= ($userSubPage === 'department') ? 'active' : '' ?>"
                            href="<?= htmlspecialchars($base) ?>/admin/department">

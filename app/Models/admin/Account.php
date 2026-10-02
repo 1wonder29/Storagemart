@@ -9,6 +9,7 @@ class Account extends BaseModel {
     protected $tblassets = 'tblassets_inventory';
     protected $tblbranch = 'tblbranch';
     protected $tblgroup = 'tblassets_group';
+    protected $tblassign = 'tblassets_assignment';
 
     // -----------------------
     // Simple lookups
@@ -122,6 +123,134 @@ class Account extends BaseModel {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * One row per person: every account (with its employee record, if any) plus
+     * any employee record whose account no longer exists.
+     */
+    public function fetchUsersDirectory(): array {
+        $sql = "SELECT a.account_id, a.username, a.usertype, a.secondary_usertype, a.status,
+                       e.employee_id, e.firstname, e.middlename, e.lastname, e.department, e.position,
+                       e.email, e.createdby, COALESCE(e.datecreated, a.datecreated) AS datecreated,
+                       b.branchName
+                FROM {$this->table} a
+                LEFT JOIN {$this->tblemployee} e ON e.account_id = a.account_id
+                LEFT JOIN {$this->tblbranch} b ON b.branch_id = e.branch_id
+                UNION ALL
+                SELECT NULL, NULL, NULL, NULL, NULL,
+                       e.employee_id, e.firstname, e.middlename, e.lastname, e.department, e.position,
+                       e.email, e.createdby, e.datecreated,
+                       b.branchName
+                FROM {$this->tblemployee} e
+                LEFT JOIN {$this->table} a ON a.account_id = e.account_id
+                LEFT JOIN {$this->tblbranch} b ON b.branch_id = e.branch_id
+                WHERE a.account_id IS NULL";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public static function isSystemAccount(array $row): bool {
+        return strtolower(trim((string) ($row['username'] ?? ''))) === 'admin';
+    }
+
+    /**
+     * Ticket / inventory history per employee. A person with any history is
+     * deactivated rather than deleted, so company records stay intact.
+     *
+     * @return array<int, array{tickets: int, items: int, assets: int}>
+     */
+    public function fetchHistoryCounts(): array {
+        $queries = [
+            'tickets' => "SELECT employee_id AS id, COUNT(*) AS n FROM {$this->tbltickets} GROUP BY employee_id
+                          UNION ALL SELECT assigned_to, COUNT(*) FROM {$this->tbltickets} WHERE assigned_to IS NOT NULL GROUP BY assigned_to
+                          UNION ALL SELECT performed_by, COUNT(*) FROM tblticket_technical GROUP BY performed_by
+                          UNION ALL SELECT uploaded_by, COUNT(*) FROM tblticket_uploads GROUP BY uploaded_by",
+            'items'   => "SELECT employee_id AS id, COUNT(*) AS n FROM tbluniform_assignment GROUP BY employee_id
+                          UNION ALL SELECT employee_id, COUNT(*) FROM tbluniform_returns GROUP BY employee_id",
+            'assets'  => "SELECT employee_id AS id, COUNT(*) AS n FROM {$this->tblassets} WHERE employee_id IS NOT NULL GROUP BY employee_id",
+        ];
+
+        $counts = [];
+        foreach ($queries as $key => $sql) {
+            foreach ($this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $id = (int) $row['id'];
+                $counts[$id] ??= ['tickets' => 0, 'items' => 0, 'assets' => 0];
+                $counts[$id][$key] += (int) $row['n'];
+            }
+        }
+        return $counts;
+    }
+
+    public function setAccountStatus(int $accountId, string $status): bool {
+        $stmt = $this->pdo->prepare("UPDATE {$this->table} SET status = ? WHERE account_id = ? LIMIT 1");
+        return $stmt->execute([$status, $accountId]);
+    }
+
+    /**
+     * Removes a person's login and employee record in one step. Refuses when they
+     * have ticket or inventory history. Assets still assigned to them are returned
+     * to inventory first (the inventory FK cascades, which would otherwise delete them).
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function deleteUser(int $accountId, int $employeeId): array {
+        if ($accountId > 0 && $employeeId <= 0) {
+            $stmt = $this->pdo->prepare("SELECT employee_id FROM {$this->tblemployee} WHERE account_id = ? LIMIT 1");
+            $stmt->execute([$accountId]);
+            $employeeId = (int) ($stmt->fetchColumn() ?: 0);
+        }
+        if ($employeeId > 0 && $accountId <= 0) {
+            $stmt = $this->pdo->prepare("SELECT account_id FROM {$this->tblemployee} WHERE employee_id = ? LIMIT 1");
+            $stmt->execute([$employeeId]);
+            $accountId = (int) ($stmt->fetchColumn() ?: 0);
+        }
+        if ($accountId <= 0 && $employeeId <= 0) {
+            return ['ok' => false, 'message' => 'User not found.'];
+        }
+
+        if ($employeeId > 0) {
+            $history = $this->fetchHistoryCounts()[$employeeId] ?? ['tickets' => 0, 'items' => 0];
+            if ($history['tickets'] > 0 || $history['items'] > 0) {
+                return ['ok' => false, 'message' => 'This person has ticket or inventory history, so they can only be deactivated.'];
+            }
+        }
+
+        try {
+            $this->pdo->beginTransaction();
+
+            if ($employeeId > 0) {
+                $today = date('Y-m-d');
+                $this->pdo->prepare(
+                    "UPDATE {$this->tblassign} a
+                     JOIN {$this->tblassets} i ON i.assignment_id = a.assignment_id
+                     SET a.dateReturned = ?, a.transferDetails = 'Returned to inventory - employee record deleted'
+                     WHERE i.employee_id = ? AND a.dateReturned IS NULL"
+                )->execute([$today, $employeeId]);
+                $this->pdo->prepare(
+                    "UPDATE {$this->tblassets} SET employee_id = NULL, status = 'RETURNED' WHERE employee_id = ?"
+                )->execute([$employeeId]);
+                $this->pdo->prepare("UPDATE {$this->tblassign} SET employee_id = NULL WHERE employee_id = ?")
+                    ->execute([$employeeId]);
+                $this->pdo->prepare("DELETE FROM {$this->tblemployee} WHERE employee_id = ? LIMIT 1")
+                    ->execute([$employeeId]);
+            }
+
+            if ($accountId > 0) {
+                $this->pdo->prepare("DELETE FROM notifications WHERE user_id = ?")->execute([$accountId]);
+                $this->pdo->prepare("DELETE FROM {$this->table} WHERE account_id = ? LIMIT 1")->execute([$accountId]);
+            }
+
+            $this->pdo->commit();
+            return ['ok' => true, 'message' => 'User deleted.'];
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('Account::deleteUser error: ' . $e->getMessage());
+            return ['ok' => false, 'message' => 'Could not delete this user: ' . $e->getMessage()];
+        }
     }
 
     public function deleteById(int $id): bool {

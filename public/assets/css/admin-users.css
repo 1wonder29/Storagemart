@@ -231,6 +231,15 @@
 .admin-users-page .role-badge.role-default { background: #e2e3e5; color: #383d41; }
 .admin-users-page .role-badge-secondary { margin-left: 0.35rem; opacity: 0.85; font-size: 0.62rem; }
 
+.department-page .department-form-actions,
+.admin-users-page .department-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
 .admin-users-page .date-cell .date-main {
   font-weight: 600;
   color: #3a3b45;

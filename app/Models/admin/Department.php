@@ -12,6 +12,29 @@ class Department extends BaseModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function fetchAllWithCounts(): array {
+        $sql = "SELECT d.department_id, d.code, d.label, COUNT(e.employee_id) AS employee_count
+                FROM {$this->table} d
+                LEFT JOIN {$this->tblemployee} e ON e.department = d.code
+                GROUP BY d.department_id, d.code, d.label
+                ORDER BY d.label ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function fetchByCode(string $code): ?array {
+        $stmt = $this->pdo->prepare("SELECT department_id, code, label FROM {$this->table} WHERE code = ? LIMIT 1");
+        $stmt->execute([$code]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function moveEmployees(string $fromCode, string $toCode): int {
+        $stmt = $this->pdo->prepare("UPDATE {$this->tblemployee} SET department = ? WHERE department = ?");
+        $stmt->execute([$toCode, $fromCode]);
+        return $stmt->rowCount();
+    }
+
     public function fetchById(int $departmentId): ?array {
         $stmt = $this->pdo->prepare("SELECT department_id, code, label FROM {$this->table} WHERE department_id = ? LIMIT 1");
         $stmt->execute([$departmentId]);

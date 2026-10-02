@@ -12,7 +12,7 @@ $department = $department ?? [];
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-users.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-users.css?v=20261002c" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
 </head>
 
@@ -44,17 +44,18 @@ $department = $department ?? [];
                     <form action="<?= htmlspecialchars($base) ?>/admin/department/update" method="POST">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
                         <input type="hidden" name="department_id" value="<?= htmlspecialchars((string) ($department['department_id'] ?? '')) ?>">
-                        <div class="row form-row-gap">
-                            <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label for="code" class="form-label">Code <span class="text-danger">*</span></label>
                                 <input type="text" name="code" class="form-control" id="code" value="<?= htmlspecialchars((string) ($department['code'] ?? '')) ?>" required>
+                                <small class="form-text text-muted">Changing this moves every employee in this department to the new code.</small>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 mb-3">
                                 <label for="label" class="form-label">Display Label <span class="text-danger">*</span></label>
                                 <input type="text" name="label" class="form-control" id="label" value="<?= htmlspecialchars((string) ($department['label'] ?? '')) ?>" required>
                             </div>
                         </div>
-                        <div class="form-actions">
+                        <div class="department-form-actions">
                             <button type="submit" class="btn btn-primary" name="btnSubmit">
                                 <i class="fas fa-save mr-1"></i> Save Changes
                             </button>

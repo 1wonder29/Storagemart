@@ -45,9 +45,11 @@ class AdminController extends AuthController
         }
 
         // Dashboard stats
-        $users = method_exists($accountModel, 'fetchAll') ? $accountModel->fetchAll() : [];
         $ticketCount = method_exists($accountModel, 'countTicket') ? $accountModel->countTicket() : 0;
-        $userCount = count($users);
+        $userCount = count(array_filter(
+            $accountModel->fetchUsersDirectory(),
+            static fn(array $row): bool => !Account::isSystemAccount($row)
+        ));
         $assetCount = method_exists($accountModel, 'countAssets') ? $accountModel->countAssets() : 0;
         $ticketInProgress = method_exists($accountModel, 'countInProgressTickets')
             ? $accountModel->countInProgressTickets()
@@ -92,42 +94,23 @@ class AdminController extends AuthController
 
         $accountModel = $this->model ?? new Account();
 
-        // Handle deletion
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (($_POST['action'] ?? '') === 'delete') {
-                $id = (int)($_POST['id'] ?? 0);
-
-                if ($id > 0) {
-                    // Fetch account details before deletion for audit trail
-                    $accountDetails = $accountModel->fetchAccountById($id);
-                    
-                    $ok = $accountModel->deleteById($id);
-
-                    if ($ok) {
-                        // Log deletion via ActivityLogger
-                        $username = $accountDetails['username'] ?? 'Unknown';
-                        ActivityLogger::delete('Admin - Accounts', (string)$id,
-                            "Account deleted: {$username} ({$accountDetails['usertype']})",
-                            $_SESSION['username'] ?? 'Unknown', [
-                                'account_id' => $id,
-                                'username' => $username,
-                                'usertype' => $accountDetails['usertype'] ?? 'Unknown',
-                                'status' => $accountDetails['status'] ?? 'Unknown',
-                                'deleted_at' => date('Y-m-d H:i:s'),
-                                'deleted_by' => $_SESSION['username'] ?? 'Unknown'
-                            ]);
-                        
-                        $_SESSION['flash'] = "Account #{$id} has been permanently deleted and logged in audit trail.";
-                    } else {
-                        $_SESSION['flash'] = "Failed to delete account #{$id}.";
-                    }
-                }
-
-                $this->redirect('/admin/account');
-            }
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
         }
 
-        $users = method_exists($accountModel, 'fetchAll') ? $accountModel->fetchAll() : [];
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->handleUserAction($accountModel);
+            $this->redirect('/admin/account');
+            return;
+        }
+
+        $users = $accountModel->fetchUsersDirectory();
+        $historyCounts = $accountModel->fetchHistoryCounts();
+        $departmentLabels = [];
+        foreach ((new Department())->fetchAll() as $dept) {
+            $departmentLabels[$dept['code']] = $dept['label'];
+        }
+        $csrf_token = $_SESSION['csrf_token'];
 
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
@@ -138,6 +121,61 @@ class AdminController extends AuthController
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
         require __DIR__ . '/../../Views/admin/account/account.php';
+    }
+
+    private function handleUserAction(Account $accountModel): void
+    {
+        if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', (string) $_POST['csrf_token'])) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token. Please try again.';
+            return;
+        }
+
+        $action = (string) ($_POST['action'] ?? '');
+        $accountId = (int) ($_POST['account_id'] ?? 0);
+        $employeeId = (int) ($_POST['employee_id'] ?? 0);
+        $account = $accountId > 0 ? $accountModel->getById($accountId) : null;
+        $label = trim((string) ($_POST['display_name'] ?? '')) ?: ($account['username'] ?? "#{$employeeId}");
+
+        if ($account && Account::isSystemAccount($account)) {
+            $_SESSION['flash_error'] = 'The built-in system admin account cannot be changed here.';
+            return;
+        }
+        if ($accountId > 0 && $accountId === (int) ($_SESSION['account_id'] ?? 0)) {
+            $_SESSION['flash_error'] = 'You cannot delete or deactivate your own account.';
+            return;
+        }
+
+        if ($action === 'deactivate' || $action === 'activate') {
+            if (!$account) {
+                $_SESSION['flash_error'] = 'This person has no login account to ' . $action . '.';
+                return;
+            }
+            $status = $action === 'deactivate' ? 'INACTIVE' : 'ACTIVE';
+            if ($accountModel->setAccountStatus($accountId, $status)) {
+                ActivityLogger::update('Admin - Users', (string) $accountId,
+                    "User {$action}d: {$label}", $_SESSION['username'] ?? 'Unknown',
+                    ['account_id' => $accountId, 'employee_id' => $employeeId, 'status' => $status]);
+                $_SESSION['flash_success'] = "{$label} has been {$action}d.";
+            } else {
+                $_SESSION['flash_error'] = "Could not {$action} {$label}.";
+            }
+            return;
+        }
+
+        if ($action === 'delete') {
+            $result = $accountModel->deleteUser($accountId, $employeeId);
+            if ($result['ok']) {
+                ActivityLogger::delete('Admin - Users', (string) ($accountId ?: $employeeId),
+                    "User deleted (login + employee record): {$label}", $_SESSION['username'] ?? 'Unknown',
+                    ['account_id' => $accountId, 'employee_id' => $employeeId, 'username' => $account['username'] ?? null]);
+                $_SESSION['flash_success'] = "{$label} has been permanently deleted.";
+            } else {
+                $_SESSION['flash_error'] = $result['message'];
+            }
+            return;
+        }
+
+        $_SESSION['flash_error'] = 'Unknown action.';
     }
 
     /* ------------------------------------------------------
@@ -470,67 +508,8 @@ class AdminController extends AuthController
             $this->redirect('/login');
         }
 
-        $accountModel = $this->model ?? new Account();
-
-        // Handle deletion
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (($_POST['action'] ?? '') === 'delete') {
-                $employeeId = (int)($_POST['employee_id'] ?? 0);
-
-                if ($employeeId > 0) {
-                    // Fetch employee details before deletion for audit trail
-                    $employees = $accountModel->fetchEmployee();
-                    $employeeDetails = null;
-                    foreach ($employees as $emp) {
-                        if ($emp['employee_id'] == $employeeId) {
-                            $employeeDetails = $emp;
-                            break;
-                        }
-                    }
-                    
-                    $ok = $accountModel->deleteEmployeeByEmployeeId($employeeId);
-
-                    if ($ok) {
-                        // Log deletion via ActivityLogger
-                        $empName = ($employeeDetails['firstname'] ?? 'Unknown') . ' ' . ($employeeDetails['lastname'] ?? '');
-                        ActivityLogger::delete('Admin - Employees', (string)$employeeId,
-                            "Employee deleted: {$empName}",
-                            $_SESSION['username'] ?? 'Unknown', [
-                                'employee_id' => $employeeId,
-                                'firstname' => $employeeDetails['firstname'] ?? 'Unknown',
-                                'lastname' => $employeeDetails['lastname'] ?? 'Unknown',
-                                'email' => $employeeDetails['email'] ?? 'Unknown',
-                                'department' => $employeeDetails['department'] ?? 'Unknown',
-                                'deleted_at' => date('Y-m-d H:i:s'),
-                                'deleted_by' => $_SESSION['username'] ?? 'Unknown'
-                            ]);
-                        
-                        $_SESSION['flash_success'] = "Employee #{$employeeId} has been permanently deleted and logged in audit trail.";
-                    } else {
-                        $_SESSION['flash_error'] = "Failed to delete employee #{$employeeId}. They may have related tickets or records that must be removed first.";
-                    }
-                }
-
-                $this->redirect('/admin/employee');
-            }
-        }
-
-        // Use the tailored fetchEmployee() that returns branchName etc.
-        $employees = method_exists($accountModel, 'fetchEmployee')
-            ? $accountModel->fetchEmployee()
-            : [];
-
-        // Build the usual layout context
-        $ctx = $this->getLoggedUserContext();
-        $base = $ctx['base'];
-        $loggedFirstname = $ctx['loggedFirstname'];
-        $loggedPosition  = $ctx['loggedPosition'];
-        $notificationData = $this->loadNotifications();
-
-        $count = $notificationData['count'];
-        $notifications = $notificationData['notifications'];
-        // Pass $employees (plural) to the view — your view expects $employees
-        require __DIR__ . '/../../Views/admin/account/employee.php';
+        // Accounts and employees are managed together on the Users page now.
+        $this->redirect('/admin/account');
     }
 
     public function view_asset(){
@@ -547,7 +526,7 @@ class AdminController extends AuthController
         if ($employee_id <= 0) {
             // no employee specified — show message or redirect back
             $_SESSION['flash'] = 'No employee specified.';
-            $this->redirect('/admin/employee'); // change target as appropriate
+            $this->redirect('/admin/account');
             return;
         }
 

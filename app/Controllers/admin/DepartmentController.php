@@ -23,7 +23,7 @@ class DepartmentController extends AuthController {
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
             }
             $csrf_token = $_SESSION['csrf_token'];
-            $departments = $departmentModel->fetchAll();
+            $departments = $departmentModel->fetchAllWithCounts();
             $ctx = $this->getLoggedUserContext();
             $base = $ctx['base'];
             $loggedFirstname = $ctx['loggedFirstname'];
@@ -201,7 +201,20 @@ class DepartmentController extends AuthController {
             return;
         }
 
-        $departmentId = isset($_GET['department_id']) ? (int) $_GET['department_id'] : 0;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+
+        if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token.';
+            $this->redirect('/admin/department');
+            return;
+        }
+
+        $departmentId = isset($_POST['department_id']) ? (int) $_POST['department_id'] : 0;
+        $moveTo = trim((string) ($_POST['move_to'] ?? ''));
         if ($departmentId <= 0) {
             $_SESSION['flash_error'] = 'Invalid department ID.';
             $this->redirect('/admin/department');
@@ -217,31 +230,44 @@ class DepartmentController extends AuthController {
         }
 
         $inUse = $departmentModel->countEmployeesUsingCode($department['code']);
+        $target = null;
         if ($inUse > 0) {
-            $_SESSION['flash_error'] = "Cannot delete this department because {$inUse} employee(s) are still assigned to it.";
-            $this->redirect('/admin/department');
-            return;
-        }
-
-        try {
-            $ok = $departmentModel->deleteDepartment($departmentId);
-            if ($ok) {
-                ActivityLogger::delete('Admin - Departments', (string) $departmentId,
-                    "Department deleted: {$department['label']} ({$department['code']})",
-                    $_SESSION['username'] ?? 'Unknown', [
-                        'department_id' => $departmentId,
-                        'code' => $department['code'],
-                        'label' => $department['label'],
-                    ]);
-                $_SESSION['flash_success'] = 'Department deleted successfully.';
+            $target = $moveTo !== '' ? $departmentModel->fetchByCode($moveTo) : null;
+            if (!$target || $target['code'] === $department['code']) {
+                $_SESSION['flash_error'] = "{$inUse} employee(s) are still in {$department['label']}. Choose another department to move them to before deleting.";
                 $this->redirect('/admin/department');
                 return;
             }
-            throw new \Exception('Failed to delete department.');
-        } catch (\Throwable $e) {
-            $_SESSION['flash_error'] = 'Error deleting department: ' . $e->getMessage();
-            $this->redirect('/admin/department');
-            return;
         }
+
+        $pdo = $departmentModel->getPDO();
+        try {
+            $pdo->beginTransaction();
+            $moved = $target ? $departmentModel->moveEmployees($department['code'], $target['code']) : 0;
+            if (!$departmentModel->deleteDepartment($departmentId)) {
+                throw new \Exception('Failed to delete department.');
+            }
+            $pdo->commit();
+
+            ActivityLogger::delete('Admin - Departments', (string) $departmentId,
+                "Department deleted: {$department['label']} ({$department['code']})"
+                    . ($target ? " — {$moved} employee(s) moved to {$target['label']}" : ''),
+                $_SESSION['username'] ?? 'Unknown', [
+                    'department_id' => $departmentId,
+                    'code' => $department['code'],
+                    'label' => $department['label'],
+                    'employees_moved' => $moved,
+                    'moved_to' => $target['code'] ?? null,
+                ]);
+            $_SESSION['flash_success'] = $target
+                ? "Department deleted. {$moved} employee(s) moved to {$target['label']}."
+                : 'Department deleted successfully.';
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $_SESSION['flash_error'] = 'Error deleting department: ' . $e->getMessage();
+        }
+        $this->redirect('/admin/department');
     }
 }

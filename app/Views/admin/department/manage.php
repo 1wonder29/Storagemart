@@ -13,7 +13,7 @@ $totalDepartments = count($departments);
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-users.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-users.css?v=20261002c" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
 </head>
 
@@ -26,7 +26,7 @@ $totalDepartments = count($departments);
         require_once __DIR__ . '/../../partials/admin/sidebar_topbar.php';
         ?>
 
-        <div class="container-fluid admin-users-page">
+        <div class="container-fluid admin-users-page department-page">
 
             <div class="page-hero hero-accounts">
                 <div class="row align-items-center">
@@ -50,21 +50,22 @@ $totalDepartments = count($departments);
                 <div class="card-body">
                     <form action="<?= htmlspecialchars($base) ?>/admin/department" method="POST">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
-                        <div class="row form-row-gap">
-                            <div class="col-md-5">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label for="code" class="form-label">Code <span class="text-danger">*</span></label>
                                 <input type="text" name="code" class="form-control" id="code" placeholder="e.g. Construction" required>
-                                <small class="form-text text-muted">Stored value. Avoid changing this later for a department already in use without checking existing employees first.</small>
+                                <small class="form-text text-muted">The value saved on each employee. Renaming it later moves those employees automatically.</small>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-md-6 mb-3">
                                 <label for="label" class="form-label">Display Label <span class="text-danger">*</span></label>
-                                <input type="text" name="label" class="form-control" id="label" placeholder="e.g. Construction" required>
+                                <input type="text" name="label" class="form-control" id="label" placeholder="e.g. Construction Department" required>
+                                <small class="form-text text-muted">What people see in dropdowns and lists.</small>
                             </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary w-100" name="btnSubmit">
-                                    <i class="fas fa-save mr-1"></i> Add
-                                </button>
-                            </div>
+                        </div>
+                        <div class="department-form-actions">
+                            <button type="submit" class="btn btn-primary" name="btnSubmit">
+                                <i class="fas fa-plus mr-1"></i> Add Department
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -90,25 +91,33 @@ $totalDepartments = count($departments);
                                 <tr>
                                     <th>Code</th>
                                     <th>Display Label</th>
+                                    <th>Employees</th>
                                     <th class="text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($departments as $dept): ?>
+                                <?php foreach ($departments as $dept):
+                                    $empCount = (int) ($dept['employee_count'] ?? 0);
+                                ?>
                                     <tr>
                                         <td><span class="asset-number"><?= htmlspecialchars((string) ($dept['code'] ?? '')) ?></span></td>
                                         <td><?= htmlspecialchars((string) ($dept['label'] ?? '')) ?></td>
+                                        <td>
+                                            <span class="badge <?= $empCount > 0 ? 'badge-primary' : 'badge-light' ?>"><?= $empCount ?></span>
+                                        </td>
                                         <td class="text-right">
                                             <div class="action-btn-group">
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/department/update?department_id=<?= (int) ($dept['department_id'] ?? 0) ?>"
                                                    class="btn btn-sm btn-outline-primary" title="Edit department">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <a href="<?= htmlspecialchars($base) ?>/admin/department/delete?department_id=<?= (int) ($dept['department_id'] ?? 0) ?>"
-                                                   class="btn btn-sm btn-outline-danger" title="Delete department"
-                                                   onclick="return confirm('Delete this department? This only works if no employee is currently assigned to it.');">
+                                                <button type="button" class="btn btn-sm btn-outline-danger js-delete-department" title="Delete department"
+                                                        data-id="<?= (int) ($dept['department_id'] ?? 0) ?>"
+                                                        data-code="<?= htmlspecialchars((string) ($dept['code'] ?? '')) ?>"
+                                                        data-label="<?= htmlspecialchars((string) ($dept['label'] ?? '')) ?>"
+                                                        data-count="<?= $empCount ?>">
                                                     <i class="fas fa-trash"></i>
-                                                </a>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -123,6 +132,42 @@ $totalDepartments = count($departments);
         </div>
     </div>
 
+    <div class="modal fade" id="deleteDepartmentModal" tabindex="-1" role="dialog" aria-labelledby="deleteDepartmentTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <form class="modal-content" method="POST" action="<?= htmlspecialchars($base) ?>/admin/department/delete" id="deleteDepartmentForm">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
+                <input type="hidden" name="department_id" id="deleteDepartmentId" value="">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteDepartmentTitle"><i class="fas fa-exclamation-triangle mr-1"></i> Delete Department</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">You are about to delete <strong id="deleteDepartmentName"></strong>.</p>
+                    <div id="deleteDepartmentEmpty" class="alert alert-light border mb-0">
+                        No employees are assigned to this department. It can be deleted safely.
+                    </div>
+                    <div id="deleteDepartmentHasEmployees" class="d-none">
+                        <div class="alert alert-warning">
+                            <strong id="deleteDepartmentCount"></strong> employee(s) are in this department.
+                            Employees are <strong>not deleted</strong> — they will be moved to the department you choose below.
+                        </div>
+                        <label for="deleteDepartmentMoveTo" class="form-label">Move employees to <span class="text-danger">*</span></label>
+                        <select class="form-control" name="move_to" id="deleteDepartmentMoveTo">
+                            <option value="">-- Select Department --</option>
+                            <?php foreach ($departments as $dept): ?>
+                                <option value="<?= htmlspecialchars((string) $dept['code']) ?>"><?= htmlspecialchars((string) $dept['label']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash mr-1"></i> <span id="deleteDepartmentSubmitText">Delete</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
@@ -131,6 +176,39 @@ $totalDepartments = count($departments);
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
+    <script>
+    (function ($) {
+        var $modal = $('#deleteDepartmentModal');
+        var $moveTo = $('#deleteDepartmentMoveTo');
+
+        $('.js-delete-department').on('click', function () {
+            var $btn = $(this);
+            var code = String($btn.data('code'));
+            var count = parseInt($btn.data('count'), 10) || 0;
+
+            $('#deleteDepartmentId').val($btn.data('id'));
+            $('#deleteDepartmentName').text($btn.data('label') + ' (' + code + ')');
+            $moveTo.val('');
+            $moveTo.find('option').each(function () {
+                $(this).prop('hidden', this.value === code).prop('disabled', this.value === code);
+            });
+
+            if (count > 0) {
+                $('#deleteDepartmentCount').text(count);
+                $('#deleteDepartmentHasEmployees').removeClass('d-none');
+                $('#deleteDepartmentEmpty').addClass('d-none');
+                $moveTo.prop('required', true);
+                $('#deleteDepartmentSubmitText').text('Move & Delete');
+            } else {
+                $('#deleteDepartmentHasEmployees').addClass('d-none');
+                $('#deleteDepartmentEmpty').removeClass('d-none');
+                $moveTo.prop('required', false);
+                $('#deleteDepartmentSubmitText').text('Delete');
+            }
+            $modal.modal('show');
+        });
+    })(jQuery);
+    </script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 

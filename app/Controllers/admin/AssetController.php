@@ -1001,7 +1001,7 @@ class AssetController extends AuthController {
         $posted_token = $_POST['csrf_token'] ?? '';
         if (empty($posted_token) || $posted_token !== ($_SESSION['csrf_token'] ?? '')) {
             $_SESSION['flash_error'] = 'Invalid CSRF token.';
-            $this->redirect('/admin/employee');
+            $this->redirect('/admin/account');
             return;
         }
 
@@ -1053,17 +1053,17 @@ class AssetController extends AuthController {
         $posted_token = $_POST['csrf_token'] ?? '';
         if (empty($posted_token) || $posted_token !== ($_SESSION['csrf_token'] ?? '')) {
             $_SESSION['flash_error'] = 'Invalid CSRF token.';
-            $this->redirect('/admin/employee');
+            $this->redirect('/admin/account');
             return;
         }
 
         $assignmentId = (int) ($_POST['assignment_id'] ?? 0);
         $remarks = trim((string) ($_POST['remarks'] ?? ''));
-        $returnUrl = trim((string) ($_POST['return_url'] ?? '/admin/employee'));
+        $returnUrl = trim((string) ($_POST['return_url'] ?? '/admin/account'));
 
         if ($assignmentId <= 0 || $remarks === '') {
             $_SESSION['flash_error'] = 'Remarks are required.';
-            $this->redirect($returnUrl !== '' ? $returnUrl : '/admin/employee');
+            $this->redirect($returnUrl !== '' ? $returnUrl : '/admin/account');
             return;
         }
 
@@ -1074,7 +1074,7 @@ class AssetController extends AuthController {
             $_SESSION['flash_error'] = 'Unable to update accountability remarks.';
         }
 
-        $this->redirect($returnUrl !== '' ? $returnUrl : '/admin/employee');
+        $this->redirect($returnUrl !== '' ? $returnUrl : '/admin/account');
     }
 
     // Transfer Asset Item Here

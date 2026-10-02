@@ -143,15 +143,16 @@ $base = rtrim(BASE_URL, '/');
                                         <label for="department" class="form-label">Department</label>
                                         <select id="department" name="department" class="form-control" required>
                                         <option value="">-- Select Department --</option>
-                                        <option value="IT"<?= (($employee['department'] ?? '') === 'IT') ? 'selected' : '' ?>>Information Technology</option>
-                                        <option value="Sales" <?= (($employee['department'] ?? '') === 'Sales') ? 'selected' : '' ?>>Sales</option>
-                                        <option value="Purchasing"<?= (($employee['department'] ?? '') === 'Purchasing') ? 'selected' : '' ?>>Purchasing</option>
-                                        <option value="Accounting"<?= (($employee['department'] ?? '') === 'Accounting') ? 'selected' : '' ?>>Accounting</option>
-                                        <option value="HRMD"<?= (($employee['department'] ?? '') === 'HRMD') ? 'selected' : '' ?>>Human Resource Management and Development</option>
-                                        <option value="Marketing"<?= (($employee['department'] ?? '') === 'Marketing') ? 'selected' : '' ?>>Marketing</option>
-                                        <option value="Compliance"<?= (($employee['department'] ?? '') === 'Compliance') ? 'selected' : '' ?>>Corporate Compliance</option>
-                                        <option value="Operations"<?= (($employee['department'] ?? '') === 'Operations') ? 'selected' : '' ?>>Operations</option>
-                                        <option value="Digital Marketing"<?= (($employee['department'] ?? '') === 'Digital Marketing') ? 'selected' : '' ?>>Digital Marketing</option>
+                                        <?php
+                                        $currentDept = (string) ($employee['department'] ?? '');
+                                        $deptCodes = array_map(static fn($d) => (string) $d['code'], $departments ?? []);
+                                        ?>
+                                        <?php if ($currentDept !== '' && !in_array($currentDept, $deptCodes, true)): ?>
+                                            <option value="<?= htmlspecialchars($currentDept) ?>" selected><?= htmlspecialchars($currentDept) ?> (not in department list)</option>
+                                        <?php endif; ?>
+                                        <?php foreach (($departments ?? []) as $dept): ?>
+                                            <option value="<?= htmlspecialchars((string) $dept['code']) ?>"<?= $currentDept === (string) $dept['code'] ? ' selected' : '' ?>><?= htmlspecialchars((string) $dept['label']) ?></option>
+                                        <?php endforeach; ?>
                                         </select>
                                     </div>
                                     </div>
