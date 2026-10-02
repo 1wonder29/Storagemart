@@ -822,6 +822,42 @@ class Ticket extends BaseModel {
     }
 
     /**
+     * Every technical report file across all tickets: the latest generated
+     * technical record per ticket, plus every uploaded report.
+     */
+    public function fetchTechnicalReportFiles(): array
+    {
+        $sql = "SELECT 'generated' AS source, t.ticket_id, t.ticket_number, t.status,
+                       CONCAT(e.lastname, ', ', e.firstname) AS employee_name, e.department,
+                       p.pdf_filename AS filename, NULL AS stored_filename,
+                       p.date_generated AS file_date,
+                       TRIM(CONCAT(IFNULL(g.firstname, ''), ' ', IFNULL(g.lastname, ''))) AS by_name
+                FROM tblticket_pdfs p
+                JOIN {$this->tbltickets} t ON t.ticket_id = p.ticket_id
+                JOIN {$this->tblemployee} e ON e.employee_id = t.employee_id
+                LEFT JOIN {$this->tblemployee} g ON g.account_id = p.generated_by
+                WHERE p.is_active = 1
+                  AND p.pdf_id = (SELECT MAX(p2.pdf_id) FROM tblticket_pdfs p2
+                                  WHERE p2.ticket_id = p.ticket_id AND p2.is_active = 1)
+                UNION ALL
+                SELECT 'uploaded', t.ticket_id, t.ticket_number, t.status,
+                       CONCAT(e.lastname, ', ', e.firstname), e.department,
+                       u.original_filename, u.stored_filename,
+                       u.date_uploaded,
+                       TRIM(CONCAT(IFNULL(up.firstname, ''), ' ', IFNULL(up.lastname, '')))
+                FROM tblticket_uploads u
+                JOIN {$this->tbltickets} t ON t.ticket_id = u.ticket_id
+                JOIN {$this->tblemployee} e ON e.employee_id = t.employee_id
+                LEFT JOIN {$this->tblemployee} up ON up.employee_id = u.uploaded_by
+                WHERE u.is_active = 1
+                ORDER BY file_date DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
      * Insert PDF generation record for a resolved ticket
      * 
      * @param int $ticketId Ticket ID

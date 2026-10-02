@@ -80,9 +80,118 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
 
             <div class="page-hero">
                 <h1><i class="fas fa-clipboard-list mr-2"></i>Ticket Report</h1>
-                <p>Generate and export ticket activity by month or week — review filed tickets, statuses, and assignments for any period.</p>
+                <p>Every technical report filed on any ticket, plus monthly and weekly ticket summaries you can export.</p>
             </div>
 
+            <?php
+            $technicalReports = $technicalReports ?? [];
+            $reportTab = $reportTab ?? 'files';
+            $reportFileCount = count($technicalReports);
+            ?>
+            <ul class="nav nav-tabs report-tabs mb-3" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link <?= $reportTab === 'files' ? 'active' : '' ?>" id="reportFilesTab" data-toggle="tab" href="#reportFilesPane" role="tab">
+                        <i class="fas fa-file-alt mr-1"></i> Technical Report Files
+                        <span class="badge badge-primary ml-1"><?= $reportFileCount ?></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $reportTab === 'summary' ? 'active' : '' ?>" id="reportSummaryTab" data-toggle="tab" href="#reportSummaryPane" role="tab">
+                        <i class="fas fa-chart-bar mr-1"></i> Monthly / Weekly Summary
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+            <div class="tab-pane fade <?= $reportTab === 'files' ? 'show active' : '' ?>" id="reportFilesPane" role="tabpanel">
+                <div class="filter-toolbar">
+                    <div class="row align-items-end">
+                        <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                            <label for="reportFileTypeFilter">File Type</label>
+                            <select id="reportFileTypeFilter" class="form-control form-control-sm">
+                                <option value="">All Files</option>
+                                <option value="generated">Generated technical records</option>
+                                <option value="uploaded">Uploaded reports</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card report-list-card ticket-list-card shadow mb-4">
+                    <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                        <h6><i class="fas fa-folder-open mr-1 text-primary"></i> All Technical Report Files</h6>
+                        <span class="ticket-count-badge"><?= $reportFileCount ?> file<?= $reportFileCount === 1 ? '' : 's' ?></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <?php if (empty($technicalReports)): ?>
+                            <div class="empty-state">
+                                <i class="fas fa-file-alt d-block"></i>
+                                No technical report files yet. They appear here once IT resolves a ticket or someone uploads a report.
+                            </div>
+                        <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="technicalReportTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Ticket</th>
+                                        <th>Requested By</th>
+                                        <th>File</th>
+                                        <th>Type</th>
+                                        <th>Created By</th>
+                                        <th>Date</th>
+                                        <th class="text-right">Download</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($technicalReports as $file):
+                                        $isGenerated = $file['source'] === 'generated';
+                                        $fileDate = it_ticket_format_date((string) ($file['file_date'] ?? ''));
+                                        $downloadUrl = $isGenerated
+                                            ? $base . '/documents/download-ticket-pdf?id=' . (int) $file['ticket_id']
+                                            : $base . '/assets/generatePDF/' . rawurlencode((string) $file['stored_filename']);
+                                    ?>
+                                        <tr data-source="<?= htmlspecialchars($file['source']) ?>">
+                                            <td>
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/tickets/view?id=<?= (int) $file['ticket_id'] ?>" class="ticket-id">
+                                                    <?= htmlspecialchars((string) ($file['ticket_number'] ?: '#' . $file['ticket_id'])) ?>
+                                                </a>
+                                                <div class="small text-muted"><?= htmlspecialchars((string) ($file['status'] ?? '')) ?></div>
+                                            </td>
+                                            <td>
+                                                <div class="employee-name"><?= htmlspecialchars((string) ($file['employee_name'] ?? '')) ?></div>
+                                                <div class="small text-muted"><?= htmlspecialchars((string) ($file['department'] ?? '')) ?></div>
+                                            </td>
+                                            <td class="text-break"><?= htmlspecialchars((string) ($file['filename'] ?? '')) ?></td>
+                                            <td>
+                                                <?php if ($isGenerated): ?>
+                                                    <span class="badge badge-info">Technical record</span>
+                                                <?php else: ?>
+                                                    <span class="badge badge-success">Uploaded report</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><?= htmlspecialchars((string) ($file['by_name'] ?: '—')) ?></td>
+                                            <td class="date-cell" data-order="<?= (int) $fileDate['order'] ?>">
+                                                <div class="date-main"><?= htmlspecialchars($fileDate['main']) ?></div>
+                                                <?php if ($fileDate['time'] !== ''): ?>
+                                                    <div class="date-time"><?= htmlspecialchars($fileDate['time']) ?></div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-right">
+                                                <a href="<?= htmlspecialchars($downloadUrl) ?>" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">
+                                                    <i class="fas fa-download mr-1"></i> Download
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade <?= $reportTab === 'summary' ? 'show active' : '' ?>" id="reportSummaryPane" role="tabpanel">
             <div class="filter-toolbar">
                 <div class="toolbar-title"><i class="fas fa-calendar-alt"></i>Select Report Period</div>
                 <form method="GET" action="<?= htmlspecialchars($base) ?>/admin/reports/tickets" id="ticketReportForm">
@@ -321,6 +430,8 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
                     <?php endif; ?>
                 </div>
             </div>
+            </div>
+            </div>
 
         </div>
 
@@ -341,6 +452,34 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket-status-filter.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/admin_ticket_trend_chart.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-monthly-report.js"></script>
+    <script>
+    (function ($) {
+        var fileTable = null;
+        if ($('#technicalReportTable').length) {
+            fileTable = new DataTable('#technicalReportTable', {
+                order: [[5, 'desc']],
+                pageLength: 10,
+                columnDefs: [{ targets: [6], orderable: false, searchable: false }]
+            });
+            var sourceFilter = '';
+            DataTable.ext.search.push(function (settings, data, dataIndex) {
+                if (settings.nTable.id !== 'technicalReportTable' || !sourceFilter) return true;
+                var row = fileTable.row(dataIndex).node();
+                return row && row.getAttribute('data-source') === sourceFilter;
+            });
+            $('#reportFileTypeFilter').on('change', function () {
+                sourceFilter = $(this).val();
+                fileTable.draw();
+            });
+        }
+
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
+            $('.tab-pane.active table.dataTable').each(function () {
+                $(this).DataTable().columns.adjust();
+            });
+        });
+    })(jQuery);
+    </script>
 
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>

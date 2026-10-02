@@ -808,6 +808,8 @@ class AdminController extends AuthController
 
         $ticketCount = count($tickets);
         $monthlyTicketTrend = $ticketModel->fetchMonthlyTicketTrend((int) ($selectedYear ?? date('Y')));
+        $technicalReports = $ticketModel->fetchTechnicalReportFiles();
+        $reportTab = ($_GET['tab'] ?? '') === 'summary' || isset($_GET['type']) ? 'summary' : 'files';
 
         $weekOptions = [];
         $weekYear = $reportType === 'weekly' ? $selectedYear : (int) date('o');
