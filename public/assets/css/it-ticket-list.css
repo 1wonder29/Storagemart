@@ -1,4 +1,13 @@
 /* IT ticket list pages — shared modern layout */
+
+/* Keep the horizontal scrollbar reachable near the table instead of at the
+   bottom of a very tall page — constrain the table to a scrollable box that
+   scrolls both directions instead of letting it grow the whole page. */
+.it-ticket-page .table-responsive {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
 .it-ticket-page .page-hero {
   border-radius: 0.75rem;
   color: #fff;
@@ -104,6 +113,15 @@
   font-weight: 800;
   color: #3a3b45;
   letter-spacing: -0.03em;
+}
+
+html.it-dark .it-ticket-page .summary-stat-card {
+  background: var(--it-surface);
+  border-color: var(--it-border);
+}
+
+html.it-dark .it-ticket-page .summary-stat-card .stat-value {
+  color: var(--it-text);
 }
 
 .it-ticket-page .summary-stat-card.stat-warning { color: #d97706; }
@@ -251,6 +269,7 @@
 }
 
 .it-ticket-page .priority-pill.high { background: #f8d7da; color: #721c24; }
+.it-ticket-page .priority-pill.critical { background: #dc3545; color: #fff; font-weight: 700; }
 .it-ticket-page .priority-pill.medium { background: #fff3cd; color: #856404; }
 .it-ticket-page .priority-pill.low { background: #d1ecf1; color: #0c5460; }
 .it-ticket-page .priority-pill.default { background: #e2e3e5; color: #383d41; }

@@ -1,7 +1,8 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../Helpers/TicketSla.php';
-$adminName = htmlspecialchars($loggedFirstname ?? 'Admin');
+require_once __DIR__ . '/../../Helpers/AppShell.php';
+$adminName = htmlspecialchars(AppShell::currentUser()['firstname'] ?: 'Admin');
 $todayLabel = date('l, F j, Y');
 ?>
 <!DOCTYPE html>
@@ -228,6 +229,7 @@ $todayLabel = date('l, F j, Y');
                             <?php
                             $priorityCounts = $ticketPriorityCounts ?? [];
                             $priorityMeta = [
+                                'Critical (P1)' => '#dc3545',
                                 'High (P2)' => '#fd7e14',
                                 'Medium (P3)' => '#f6c23e',
                                 'Low (P4)' => '#1cc88a',

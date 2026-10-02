@@ -26,6 +26,7 @@ if (!function_exists('it_ticket_priority_class')) {
     function it_ticket_priority_class(string $priority): string
     {
         $p = strtolower(trim($priority));
+        if ($p === 'critical') return 'critical';
         if ($p === 'high') return 'high';
         if ($p === 'medium') return 'medium';
         if ($p === 'low') return 'low';
@@ -36,7 +37,7 @@ if (!function_exists('it_ticket_priority_class')) {
 if (!function_exists('it_ticket_priority_options')) {
     function it_ticket_priority_options(array $found = []): array
     {
-        $options = ['High', 'Medium', 'Low'];
+        $options = ['Critical', 'High', 'Medium', 'Low'];
         foreach ($found as $priority) {
             $priority = trim((string) $priority);
             if ($priority !== '' && !in_array($priority, $options, true)) {

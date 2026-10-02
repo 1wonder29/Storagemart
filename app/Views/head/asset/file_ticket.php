@@ -19,13 +19,13 @@ $base = rtrim(BASE_URL, '/');
 
 <div id="wrapper">
     <?php
-    $activePage = 'assets';
+    $activePage = empty($inventory['inventory_id']) ? 'create-ticket' : 'assets';
     require_once __DIR__ . '/../../partials/head/sidebar_topbar.php';
     ?>
     <div class="container-fluid ticket-create-page">
         <div class="page-hero">
-            <h1><i class="fas fa-ticket-alt mr-2"></i>Create Ticket</h1>
-            <p>File a support request for your department. Employee details are pre-filled from your profile.</p>
+            <h1><i class="fas fa-ticket-alt mr-2"></i>New Support Ticket</h1>
+            <p>Tell us what is going on and we will get it to the right person. Employee details are pre-filled from your profile.</p>
         </div>
 
         <?php require __DIR__ . '/../../partials/ticket/flash_messages.php'; ?>

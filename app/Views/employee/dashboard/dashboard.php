@@ -8,8 +8,6 @@ $inProgressTickets = (int)($inProgressTickets ?? 0);
 $resolvedTickets = (int)($resolvedTickets ?? 0);
 $totalTickets = (int)($totalTickets ?? 0);
 $assetsCount = (int)($assetsCount ?? 0);
-$hasAssets = $assetsCount > 0;
-$noAssetsTitle = 'You need at least one assigned asset to create a ticket.';
 
 $hasTicketChart = ($pendingTickets + $inProgressTickets + $resolvedTickets) > 0;
 $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
@@ -87,18 +85,9 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
             <a href="<?= htmlspecialchars($base) ?>/employee/tickets" class="quick-action-btn qa-success">
                 <i class="fas fa-ticket-alt"></i> My Tickets
             </a>
-            <?php if ($hasAssets): ?>
             <a href="<?= htmlspecialchars($base) ?>/employee/tickets/create" class="quick-action-btn qa-info">
                 <i class="fas fa-plus"></i> Create Ticket
             </a>
-            <?php else: ?>
-            <span class="quick-action-btn qa-info is-disabled"
-                  title="<?= htmlspecialchars($noAssetsTitle) ?>"
-                  data-toggle="tooltip"
-                  data-placement="bottom">
-                <i class="fas fa-plus"></i> Create Ticket
-            </span>
-            <?php endif; ?>
             <a href="<?= htmlspecialchars($base) ?>/employee/profile" class="quick-action-btn qa-secondary">
                 <i class="fas fa-user"></i> My Profile
             </a>
@@ -121,11 +110,7 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
                             <div class="empty-state">
                                 <i class="fas fa-chart-pie"></i>
                                 <p class="mb-0">No tickets yet.
-                                    <?php if ($hasAssets): ?>
                                     <a href="<?= htmlspecialchars($base) ?>/employee/tickets/create">Create one</a>
-                                    <?php else: ?>
-                                    <span class="text-muted" title="<?= htmlspecialchars($noAssetsTitle) ?>">Assign an asset first to create a ticket.</span>
-                                    <?php endif; ?>
                                 </p>
                             </div>
                         <?php endif; ?>

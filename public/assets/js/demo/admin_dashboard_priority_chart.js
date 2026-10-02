@@ -4,6 +4,7 @@
   if (!el || !window.Chart || !window.ticketPriorityCounts) return;
 
   const priorityMeta = [
+    { key: 'Critical (P1)', color: '#dc3545' },
     { key: 'High (P2)', color: '#fd7e14' },
     { key: 'Medium (P3)', color: '#f6c23e' },
     { key: 'Low (P4)', color: '#1cc88a' }

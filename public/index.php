@@ -193,6 +193,8 @@ if (strpos($uri, '/admin') === 0) {
         $ticket->getAssets();
     } elseif ($sub === 'tickets/search-employee') {
         $ticket->searchEmployee();
+    } elseif ($sub === 'tickets/employee-list') {
+        $ticket->employeeList();
     } elseif ($sub === 'tickets/file' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $ticket->fileTicket();
     } elseif ($sub === 'tickets/file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -205,10 +207,10 @@ if (strpos($uri, '/admin') === 0) {
         $asset->updateBranch();
     } elseif ($sub === 'assets/branch/delete') {
         $asset->deleteBranch();
-    } elseif ($sub === 'assets/branch/list' || $sub === 'assets/category/list' || $sub === 'assets/group/list') {
-        $asset->referenceLists();
-    } elseif ($sub === 'assets/reference') {
-        $asset->referenceLists();
+    } elseif ($sub === 'assets/branch/list' || $sub === 'assets/category/list' || $sub === 'assets/group/list' || $sub === 'assets/reference') {
+        if (method_exists($asset, 'referenceLists')) {
+            $asset->referenceLists();
+        }
     } elseif ($sub === 'assets/category/add') {
         $asset->category();
     } elseif ($sub === 'assets/category/delete') {
@@ -501,7 +503,7 @@ if (strpos($uri, '/hr') === 0) {
         $hrTicket->store();
     } elseif (strpos($sub, 'tickets/fetch-history/') === 0) {
         $pathId = (int) substr($sub, strlen('tickets/fetch-history/'));
-        $hrTicket->fetchHistory($pathId > 0 ? $pathId : null);
+        $hrTicket->fetchHistory();
     } elseif ($sub === 'tickets/employees-by-branch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $hrTicket->employeesByBranchAjax();
     } elseif ($sub === 'tickets/create') {
@@ -566,6 +568,8 @@ if (strpos($uri, '/hr') === 0) {
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uniform->assign();
         }
+    } elseif ($sub === 'uniforms/assignments') {
+        $uniform->allAssignments();
     } elseif (strpos($sub, 'uniforms/assignments/') === 0) {
         $uniformId = (int) substr($sub, strlen('uniforms/assignments/'));
         $uniform->assignments($uniformId);

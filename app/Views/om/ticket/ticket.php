@@ -127,6 +127,7 @@ $totalTickets = count($tickets ?? []);
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
                         <option value="High">High</option>
+                        <option value="Critical">Critical</option>
                     </select>
                 </div>
                 <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
@@ -168,7 +169,7 @@ $totalTickets = count($tickets ?? []);
                                     $ticketId = (int) ($ticket['ticket_id'] ?? 0);
                                     $priority = (string) ($ticket['priority'] ?? 'Low');
                                     $status = (string) ($ticket['status'] ?? 'Open');
-                                    $priorityClass = $priority === 'High' ? 'danger' : ($priority === 'Medium' ? 'warning' : 'success');
+                                    $priorityClass = in_array($priority, ['High', 'Critical'], true) ? 'danger' : ($priority === 'Medium' ? 'warning' : 'success');
                                     $statusClass = $status === 'Open' ? 'warning' : ($status === 'In Progress' ? 'info' : ($status === 'Resolved' ? 'success' : 'secondary'));
                                     ?>
                                     <tr data-ticket-id="<?= $ticketId ?>"

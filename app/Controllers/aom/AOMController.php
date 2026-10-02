@@ -2,6 +2,7 @@
 // app/Controllers/aom/AOMController.php
 
 require_once __DIR__ . '/../AuthController.php';
+require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Models/employee/Employee.php';
 require_once __DIR__ . '/../../Models/aom/AOMModel.php';
 require_once __DIR__ . '/../../Models/aom/AOMTicketModel.php';
@@ -391,25 +392,17 @@ class AOMController extends AuthController
             return;
         }
 
-        if ($this->employeeModel->countAssetsByEmployee($aom_employee_id) === 0) {
-            $_SESSION['flash_error'] = 'You need at least one assigned asset before creating a ticket.';
-            $this->redirect('/aom/tickets/create/my');
-            return;
-        }
-
+        // The asset is optional: a ticket can be about a general issue.
         $inventoryId = (int) ($_POST['inventory_id'] ?? 0);
-        if ($inventoryId <= 0) {
-            $_SESSION['flash_error'] = 'Please select an asset.';
-            $this->redirect('/aom/tickets/create/my');
-            return;
-        }
-
-        $ticketModel = new EmployeeTicket();
-        $inventory = $ticketModel->getInventoryDetailsByInventoryId($inventoryId);
-        if (!$inventory || (int) ($inventory['employee_id'] ?? 0) !== $aom_employee_id) {
-            $_SESSION['flash_error'] = 'Invalid asset selected.';
-            $this->redirect('/aom/tickets/create/my');
-            return;
+        $inventory = null;
+        if ($inventoryId > 0) {
+            $ticketModel = new EmployeeTicket();
+            $inventory = $ticketModel->getInventoryDetailsByInventoryId($inventoryId);
+            if (!$inventory || (int) ($inventory['employee_id'] ?? 0) !== $aom_employee_id) {
+                $_SESSION['flash_error'] = 'Invalid asset selected.';
+                $this->redirect('/aom/tickets/create/my');
+                return;
+            }
         }
 
         $employee = $this->employeeModel->getEmployeeById($aom_employee_id);
@@ -421,7 +414,7 @@ class AOMController extends AuthController
         }
 
         $priority = ucfirst(strtolower(trim((string) ($_POST['priority'] ?? 'Low'))));
-        if (!in_array($priority, ['Low', 'Medium', 'High'], true)) {
+        if (!in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true)) {
             $priority = 'Low';
         }
 
@@ -435,11 +428,12 @@ class AOMController extends AuthController
             'aom_id' => $aom_employee_id,
             'created_by' => $_SESSION['account_id'],
             'performed_by' => $aom_employee_id,
-            'inventory_id' => $inventoryId,
+            'inventory_id' => $inventoryId > 0 ? $inventoryId : null,
         ];
 
         $ticketId = $this->aomTicketModel->createTicket($ticketData);
         if ($ticketId) {
+            TicketFormFields::ticketCreated((int) $ticketId, $_POST);
             $_SESSION['flash_success'] = 'Ticket created successfully!';
             $this->redirect('/aom/tickets');
             return;
@@ -640,7 +634,7 @@ class AOMController extends AuthController
             }
 
             // Validate priority
-            $valid_priorities = ['Low', 'Medium', 'High'];
+            $valid_priorities = ['Low', 'Medium', 'High', 'Critical'];
             if (!in_array($priority, $valid_priorities)) {
                 $priority = 'Low';
             }
@@ -663,6 +657,7 @@ class AOMController extends AuthController
             $ticketId = $this->aomTicketModel->createTicket($ticketData);
 
             if ($ticketId) {
+                TicketFormFields::ticketCreated((int) $ticketId, $_POST);
                 $_SESSION['flash_success'] = 'Ticket created successfully!';
                 $this->redirect('/aom/tickets');
             } else {

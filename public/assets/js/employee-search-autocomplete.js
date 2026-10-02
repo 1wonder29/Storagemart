@@ -3,7 +3,7 @@
 
   function debounce(fn, delay) {
     var timer;
-    return function () {
+    var wrapped = function () {
       var args = arguments;
       var context = this;
       clearTimeout(timer);
@@ -11,6 +11,10 @@
         fn.apply(context, args);
       }, delay);
     };
+    wrapped.cancel = function () {
+      clearTimeout(timer);
+    };
+    return wrapped;
   }
 
   function hideSuggestions(list) {
@@ -19,6 +23,13 @@
   }
 
   function applyEmployeeSelection(fields, employee) {
+    // A selection just completed (via the Search button, a suggestion click, or Enter).
+    // Cancel any in-flight "as you type" lookup — otherwise it can resolve afterward
+    // and blindly clear employee_id/branchName again, even though the name box still
+    // shows the right person, silently breaking the assignment on submit.
+    if (fields.debouncedSuggest) {
+      fields.debouncedSuggest.cancel();
+    }
     fields.hiddenId.value = employee.employee_id || '';
     fields.input.value = employee.full_name || '';
     if (fields.branchInput) {
@@ -141,7 +152,11 @@
 
     var input = root.querySelector('[data-employee-search-input]');
     var hiddenId = root.querySelector('[data-employee-id-input]');
-    var branchInput = root.querySelector('[data-employee-branch-input]');
+    // The branch display field is laid out as a sibling of this root (a separate
+    // form column), not a descendant, so look it up within the whole enclosing
+    // form instead of just inside root.
+    var branchScope = root.closest('form') || document;
+    var branchInput = branchScope.querySelector('[data-employee-branch-input]');
     var list = root.querySelector('[data-employee-suggestions]');
     var searchButton = root.querySelector('[data-employee-search-button]');
     var suggestUrl = root.dataset.suggestUrl || '';
@@ -163,6 +178,7 @@
       searchUrl: searchUrl,
       latestResults: [],
       activeIndex: -1,
+      debouncedSuggest: null,
     };
 
     var debouncedSuggest = debounce(function () {
@@ -179,6 +195,7 @@
 
       fetchSuggestions(fields, query);
     }, 250);
+    fields.debouncedSuggest = debouncedSuggest;
 
     input.addEventListener('input', debouncedSuggest);
 

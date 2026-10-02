@@ -83,18 +83,15 @@ class RBAC
             'monitor_employees' => true,
             'access_branch_records' => true
         ],
+        // Operations Manager: monitors operations and files tickets; branch reassignment stays with the Operations Head (HOM).
         self::ROLE_OM => [
             'view_all_employees' => true,
             'view_all_aoms' => true,
-            'assign_employees_to_aom' => true,
-            'manage_aom_assignments' => true,
-            'view_assignment_history' => true,
-            'create_assignments' => true,
-            'update_assignments' => true,
-            'deactivate_assignments' => true,
             'view_aom_branches' => true,
-            'assign_aom_branches' => true,
-            'access_assignment_records' => true
+            'view_assignment_history' => true,
+            'create_tickets' => true,
+            'view_operations_tickets' => true,
+            'rate_tickets' => true
         ],
         self::ROLE_HOM => [
             'view_all_employees' => true,

@@ -165,6 +165,7 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
                         <option value="High">High</option>
+                        <option value="Critical">Critical</option>
                     </select>
                 </div>
             </div>
@@ -203,7 +204,7 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
                                     $fb = strtolower(trim((string)($ticket['branchName'] ?? '')));
                                     $fs = strtolower(trim((string)($ticket['status'] ?? '')));
                                     $fp = strtolower(trim((string)($ticket['priority'] ?? '')));
-                                    $priorityClass = $ticket['priority'] === 'High' ? 'danger' :
+                                    $priorityClass = in_array($ticket['priority'], ['High', 'Critical'], true) ? 'danger' :
                                                     ($ticket['priority'] === 'Medium' ? 'warning' : 'info');
                                     $statusClass = $ticket['status'] === 'Pending' ? 'warning' :
                                                   ($ticket['status'] === 'In Progress' ? 'info' :

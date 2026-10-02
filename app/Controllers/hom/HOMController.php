@@ -29,7 +29,7 @@ class HOMController extends AuthController
     /**
      * Check if user is HOM
      */
-    protected function requireHOM()
+    protected function requireHOM(bool $headOnly = false)
     {
         if (empty($_SESSION['account_id'])) {
             $_SESSION['loginMessage'] = 'Please log in to continue.';
@@ -42,6 +42,12 @@ class HOMController extends AuthController
         if (!$user || !in_array($role, ['HOM', 'OM'], true)) {
             http_response_code(403);
             exit('Unauthorized: This area requires HOM access.');
+        }
+
+        // Branch reassignment belongs to the Operations Head (HOM); an Operations Manager (OM) can view only.
+        if ($headOnly && $role !== 'HOM') {
+            http_response_code(403);
+            exit('Unauthorized: Only the Operations Head can reassign employees or AOM branches.');
         }
 
         return $user;
@@ -87,7 +93,8 @@ class HOMController extends AuthController
             'aomCount' => $aomCount,
             'ticketStats' => $ticketStats,
             'recentTickets' => $recentTickets,
-            'user_role' => 'HOM'
+            'user_role' => $role === 'OM' ? 'OM' : 'HOM',
+            'routePrefix' => $role === 'OM' ? 'om' : 'hom',
         ];
 
         extract($data);
@@ -158,7 +165,7 @@ class HOMController extends AuthController
      */
     public function transferEmployee()
     {
-        $user = $this->requireHOM();
+        $user = $this->requireHOM(true);
         if (!$user) return;
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -229,8 +236,8 @@ class HOMController extends AuthController
             'page_title' => 'AOM Branch Assignments',
             'user' => $user,
             'aoms' => $aoms,
-            'user_role' => 'HOM',
-            'routePrefix' => (strpos($_SERVER['REQUEST_URI'] ?? '', '/om/') !== false) ? 'om' : 'hom',
+            'user_role' => strtoupper($user['usertype'] ?? '') === 'OM' ? 'OM' : 'HOM',
+            'routePrefix' => strtoupper($user['usertype'] ?? '') === 'OM' ? 'om' : 'hom',
         ];
 
         extract($data);
@@ -242,7 +249,7 @@ class HOMController extends AuthController
      */
     public function editAOMBranches()
     {
-        $user = $this->requireHOM();
+        $user = $this->requireHOM(true);
         if (!$user) return;
 
         $aomEmployeeId = (int)($_GET['id'] ?? $_POST['aom_employee_id'] ?? 0);

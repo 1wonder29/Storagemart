@@ -7,6 +7,14 @@
   --audit-shadow: 0 0.15rem 1rem rgba(58, 59, 69, 0.1);
 }
 
+/* Keep the horizontal scrollbar reachable near the table instead of at the
+   bottom of a very tall page — constrain the table to a scrollable box that
+   scrolls both directions instead of letting it grow the whole page. */
+.admin-audit-page .table-responsive {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
 .admin-audit-page .page-hero {
   background: linear-gradient(135deg, #263238 0%, #37474f 50%, #3949ab 100%);
   border-radius: 0.75rem;

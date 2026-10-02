@@ -313,6 +313,59 @@ class Ticket extends BaseModel {
         return $row ?: null;
     }
 
+    /**
+     * Employees for the "Employee List" picker, optionally narrowed by branch and a text filter.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listEmployees(?int $branchId, string $q, int $limit = 300): array
+    {
+        $where = [];
+        $params = [];
+
+        if ($branchId) {
+            $where[] = 'e.branch_id = :branch_id';
+            $params[':branch_id'] = $branchId;
+        }
+
+        $q = trim($q);
+        if ($q !== '') {
+            $where[] = "(e.firstname LIKE :q1 OR e.lastname LIKE :q2 OR e.employee_id LIKE :q3
+                OR CONCAT(e.lastname, ', ', e.firstname) LIKE :q4
+                OR CONCAT(e.firstname, ' ', e.lastname) LIKE :q5)";
+            $like = '%' . $q . '%';
+            foreach ([':q1', ':q2', ':q3', ':q4', ':q5'] as $key) {
+                $params[$key] = $like;
+            }
+        }
+
+        $sql = "
+            SELECT
+                e.employee_id,
+                e.branch_id,
+                CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) AS full_name,
+                e.department,
+                e.position,
+                b.branchName
+            FROM {$this->tblemployee} e
+            LEFT JOIN {$this->tblbranch} b ON e.branch_id = b.branch_id
+            " . ($where ? 'WHERE ' . implode(' AND ', $where) : '') . "
+            ORDER BY e.lastname, e.firstname
+            LIMIT " . (int) $limit;
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /** @return array<int, array{branch_id: int, branchName: string}> */
+    public function listBranches(): array
+    {
+        $stmt = $this->pdo->query("SELECT branch_id, branchName FROM {$this->tblbranch} ORDER BY branchName");
+        return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+    }
+
     public function fetchAssetsByEmployee(int $employeeId): array
     {
         $sql = "
@@ -400,7 +453,7 @@ class Ticket extends BaseModel {
             'department'      => null,
             'category'        => null,
             'concern_details' => null,
-            'priority'        => 'Low',       // enum('Low','Medium','High')
+            'priority'        => 'Low',       // enum('Low','Medium','High','Critical')
             'status'          => TicketStatus::initial(),
             'remarks'         => null,
             'assigned_to'     => null,

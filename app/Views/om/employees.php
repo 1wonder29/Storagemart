@@ -1,6 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
+$canReassign = ($user_role ?? '') === 'HOM';
 $employees = $employees ?? [];
 $branches = $branches ?? [];
 $totalEmployees = count($employees);
@@ -34,7 +35,7 @@ $totalEmployees = count($employees);
             <div class="row align-items-center">
                 <div class="col-lg-7">
                     <h1><i class="fas fa-users mr-2"></i>Operations Employees</h1>
-                    <p>View all Operations staff and transfer employees between branches.</p>
+                    <p><?= $canReassign ? 'View all Operations staff and transfer employees between branches.' : 'View all Operations staff and their branch assignments.' ?></p>
                 </div>
                 <div class="col-lg-5 mt-3 mt-lg-0">
                     <div class="row">
@@ -172,6 +173,7 @@ $totalEmployees = count($employees);
                                     </span>
                                 </td>
                                 <td class="text-right">
+                                    <?php if ($canReassign): ?>
                                     <button type="button"
                                             class="btn btn-sm btn-primary transfer-branch-btn"
                                             data-employee-id="<?= $employeeId ?>"
@@ -180,6 +182,9 @@ $totalEmployees = count($employees);
                                             data-current-branch-name="<?= htmlspecialchars($branchLabel) ?>">
                                         <i class="fas fa-exchange-alt"></i> Transfer
                                     </button>
+                                    <?php else: ?>
+                                    <span class="text-muted small">View only</span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -201,6 +206,7 @@ $totalEmployees = count($employees);
 </div>
 <!-- End of Page Wrapper -->
 
+<?php if ($canReassign): ?>
 <div class="modal fade" id="transferBranchModal" tabindex="-1" role="dialog" aria-labelledby="transferBranchModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -242,6 +248,7 @@ $totalEmployees = count($employees);
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <a class="scroll-to-top rounded" href="#page-top">
     <i class="fas fa-angle-up"></i>

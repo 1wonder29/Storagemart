@@ -1,12 +1,15 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 $returnedCount = count($assignments ?? []);
+$showUniformColumn = empty($uniform);
 $conditionFilter = strtoupper(trim((string) ($conditionFilter ?? '')));
 $listTitle = 'Item Assignments';
 if ($conditionFilter === 'DAMAGED') {
     $listTitle = 'Damaged Item Returns';
 } elseif ($conditionFilter === 'LOST') {
     $listTitle = 'Lost Item Returns';
+} elseif ($conditionFilter === 'PENDING') {
+    $listTitle = 'Items Pending Return';
 }
 ?>
 <!DOCTYPE html>
@@ -41,7 +44,7 @@ if ($conditionFilter === 'DAMAGED') {
                                 <span class="text-white-50">(<?= htmlspecialchars($uniform['size'] ?? '') ?>)</span>
                             </p>
                         <?php else: ?>
-                            <p>Review assignment and return history for this item.</p>
+                            <p>Review current and past item assignments across every employee.</p>
                         <?php endif; ?>
                     </div>
                     <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
@@ -91,6 +94,8 @@ if ($conditionFilter === 'DAMAGED') {
                                 Damaged Return History
                             <?php elseif ($conditionFilter === 'LOST'): ?>
                                 Lost Return History
+                            <?php elseif ($conditionFilter === 'PENDING'): ?>
+                                Issued and Not Yet Returned
                             <?php else: ?>
                                 Assignment History
                             <?php endif; ?>
@@ -102,6 +107,9 @@ if ($conditionFilter === 'DAMAGED') {
                                 <thead>
                                     <tr>
                                         <th>Employee</th>
+                                        <?php if ($showUniformColumn): ?>
+                                            <th>Uniform</th>
+                                        <?php endif; ?>
                                         <th>Date Issued</th>
                                         <th>Quantity</th>
                                         <th>Date Returned</th>
@@ -114,6 +122,11 @@ if ($conditionFilter === 'DAMAGED') {
                                         <?php $isActive = empty($a['date_returned']); ?>
                                         <tr>
                                             <td><?= htmlspecialchars($a['employee_name'] ?? ($a['employee_id'] ?? '')) ?></td>
+                                            <?php if ($showUniformColumn): ?>
+                                                <td>
+                                                    <?= htmlspecialchars(trim(($a['uniform_type'] ?? '') . ' (' . ($a['size'] ?? '') . ')')) ?>
+                                                </td>
+                                            <?php endif; ?>
                                             <td>
                                                 <?= !empty($a['date_issued'])
                                                     ? htmlspecialchars(date('M d, Y', strtotime($a['date_issued'])))

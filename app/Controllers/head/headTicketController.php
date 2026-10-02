@@ -2,6 +2,7 @@
 // app/Controllers/head/HeadTicketController.php
 
 require_once __DIR__ . '/../AuthController.php';
+require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Models/employee/Employee.php';
 require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
@@ -202,7 +203,7 @@ class headTicketController extends AuthController
 
         // normalize priority
         $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
-        if (!in_array($priority, ['Low','Medium','High'], true)) $priority = 'Low';
+        if (!in_array($priority, ['Low','Medium','High','Critical'], true)) $priority = 'Low';
 
         // Use employee's branch if not provided in POST
         $branchId = (int)($_POST['branch_id'] ?? 0);
@@ -220,6 +221,7 @@ class headTicketController extends AuthController
             'priority'        => $priority,
             'created_by'      => $accountId
         ]);
+        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         require_once __DIR__ . '/../../Models/NotificationModel.php';
 

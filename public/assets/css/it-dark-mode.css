@@ -294,6 +294,25 @@ html.it-dark .dropdown-list {
   background-color: var(--it-surface) !important;
 }
 
+/* List groups (ticket history, activity feeds, etc.) */
+html.it-dark .list-group-item {
+  background-color: var(--it-surface) !important;
+  border-color: var(--it-border) !important;
+  color: var(--it-text) !important;
+}
+
+html.it-dark .list-group-item .text-gray-800 {
+  color: var(--it-text) !important;
+}
+
+html.it-dark .list-group-item .text-muted {
+  color: var(--it-text-dim) !important;
+}
+
+html.it-dark .progress {
+  background-color: var(--it-surface-2);
+}
+
 /* Modals */
 html.it-dark .modal-content {
   background-color: var(--it-surface) !important;
@@ -497,6 +516,7 @@ html.it-dark .mine-badge {
 }
 
 html.it-dark .priority-pill.high { background: rgba(231, 74, 59, 0.18); color: #f5a8a0; }
+html.it-dark .priority-pill.critical { background: rgba(220, 53, 69, 0.32); color: #ff9aa2; font-weight: 700; }
 html.it-dark .priority-pill.medium { background: rgba(246, 194, 62, 0.18); color: var(--it-warning); }
 html.it-dark .priority-pill.low { background: rgba(54, 185, 204, 0.18); color: var(--it-info); }
 

@@ -248,6 +248,7 @@ class DashboardModel extends BaseModel
         }
 
         return [
+            'Critical (P1)' => (int) ($counts['critical'] ?? 0),
             'High (P2)' => (int) ($counts['high'] ?? 0),
             'Medium (P3)' => (int) ($counts['medium'] ?? 0),
             'Low (P4)' => (int) ($counts['low'] ?? 0),

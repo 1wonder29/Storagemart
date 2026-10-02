@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../AuthController.php';
+require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Models/employee/Employee.php';
 require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
@@ -149,7 +150,7 @@ class OMTicketController extends AuthController
         }
 
         $priority = ucfirst(strtolower(trim((string) ($_POST['priority'] ?? 'Low'))));
-        if (!in_array($priority, ['Low', 'Medium', 'High'], true)) {
+        if (!in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true)) {
             $priority = 'Low';
         }
 
@@ -164,6 +165,7 @@ class OMTicketController extends AuthController
             'priority' => $priority,
             'created_by' => $accountId,
         ]);
+        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         $notificationModel = new NotificationModel();
         $recipients = $notificationModel->getTicketRecipientsWithType($department);

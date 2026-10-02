@@ -97,10 +97,14 @@ $aomCount = count($aoms ?? []);
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-right">
+                                            <?php if (($user_role ?? '') === 'HOM'): ?>
                                             <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/edit-aom-branches?id=<?= (int)$aom['employee_id'] ?>"
                                                class="btn btn-sm btn-primary">
                                                 <i class="fas fa-edit"></i> Assign Branches
-                                            </a>
+                                            </a>
+                                            <?php else: ?>
+                                            <span class="text-muted small">View only</span>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>

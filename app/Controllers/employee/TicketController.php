@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Models/employee/TicketRatingModel.php';
+require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 
 
 class EmployeeTicketController extends AuthController
@@ -21,8 +22,8 @@ class EmployeeTicketController extends AuthController
 
         $empModel = new Employee();
         $employeeId = $empModel->getEmployeeIdByAccountId((int) $_SESSION['account_id']);
-        if (!$employeeId || $empModel->countAssetsByEmployee((int) $employeeId) === 0) {
-            $_SESSION['flash_error'] = 'You need at least one assigned asset before creating a ticket.';
+        if (!$employeeId) {
+            $_SESSION['flash_error'] = 'Unable to determine your employee record.';
             $this->redirect('/employee/tickets');
             return;
         }
@@ -37,12 +38,14 @@ class EmployeeTicketController extends AuthController
             if ($employeeId) {
                 $empData = $empModel->getEmployeeById($employeeId);
                 if ($empData) {
+                    $branch = $empModel->getBranchById((int) ($empData['branch_id'] ?? 0));
                     $inventory = [
                         'employee_id' => $empData['employee_id'] ?? '',
                         'fullname' => ($empData['lastname'] ?? '') . ', ' . ($empData['firstname'] ?? '') . ' ' . ($empData['middlename'] ?? ''),
                         'department' => $empData['department'] ?? '',
                         'branch_id' => $empData['branch_id'] ?? '',
-                        'branchName' => '',
+                        'branchName' => $branch['branchName'] ?? '',
+                        'branchCode' => $branch['branchCode'] ?? '',
                         'inventory_id' => '',
                         'assetNumber' => '',
                         'groupName' => ''
@@ -94,12 +97,6 @@ class EmployeeTicketController extends AuthController
             return;
         }
 
-        if ($employeeModel->countAssetsByEmployee((int) $employeeId) === 0) {
-            $_SESSION['flash_error'] = 'You need at least one assigned asset before creating a ticket.';
-            $this->redirect('/employee/tickets');
-            return;
-        }
-
         /* ✅ GET EMPLOYEE DETAILS FIRST */
         $employee = $employeeModel->getEmployeeById($employeeId);
         $department = $employee['department'] ?? null;
@@ -115,7 +112,7 @@ class EmployeeTicketController extends AuthController
 
         // normalize priority
         $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
-        if (!in_array($priority, ['Low','Medium','High'], true)) $priority = 'Low';
+        if (!in_array($priority, ['Low','Medium','High','Critical'], true)) $priority = 'Low';
 
         // Use employee's branch if not provided in POST
         $branchId = (int)($_POST['branch_id'] ?? 0);
@@ -133,6 +130,7 @@ class EmployeeTicketController extends AuthController
             'priority'        => $priority,
             'created_by'      => $accountId
         ]);
+        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         require_once __DIR__ . '/../../Models/NotificationModel.php';
 

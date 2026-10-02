@@ -11,10 +11,34 @@ if (!function_exists('admin_account_usertype_class')) {
             'HR'       => 'role-hr',
             'HEAD'     => 'role-head',
             'OM'       => 'role-om',
+            'HOM'      => 'role-om',
             'AOM'      => 'role-aom',
             'EMPLOYEE' => 'role-employee',
         ];
         return $map[strtoupper(trim($usertype))] ?? 'role-default';
+    }
+}
+
+if (!function_exists('admin_account_role_options')) {
+    /**
+     * Every role an account can have (same list as the Add / Edit Account forms), plus any
+     * other usertype that already exists in the data, so the role filter never loses a role
+     * just because no account currently uses it.
+     *
+     * @param string[] $usertypesInUse
+     * @return string[]
+     */
+    function admin_account_role_options(array $usertypesInUse = []): array
+    {
+        $roles = ['ADMIN', 'AOM', 'EMPLOYEE', 'HEAD', 'HOM', 'HR', 'IT', 'OM'];
+        foreach ($usertypesInUse as $type) {
+            $type = strtoupper(trim((string) $type));
+            if ($type !== '' && !in_array($type, $roles, true)) {
+                $roles[] = $type;
+            }
+        }
+        sort($roles);
+        return $roles;
     }
 }
 

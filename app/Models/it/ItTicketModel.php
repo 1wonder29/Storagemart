@@ -277,6 +277,16 @@ class ItTicketModel extends BaseModel
         $stmt->execute([$status, $remarks, $ticketId]);
     }
 
+    public function updatePriority(int $ticketId, string $priority): void
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE {$this->tbltickets}
+             SET priority = ?, last_updated = NOW()
+             WHERE ticket_id = ?"
+        );
+        $stmt->execute([$priority, $ticketId]);
+    }
+
     public function getResolvedTechnicalTickets(): array
     {
         $this->autoCloseResolvedTickets();

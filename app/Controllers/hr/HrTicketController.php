@@ -2,6 +2,7 @@
 // app/Controllers/hr/HrTicketController.php
 
 require_once __DIR__ . '/../AuthController.php';
+require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Models/employee/Employee.php';
 require_once __DIR__ . '/../../Models/employee/Ticket.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
@@ -18,13 +19,14 @@ class HrTicketController extends AuthController
             return;
         }
 
-        $employeeModel = new Employee();
-        $user = $employeeModel->fetchUserDetails((int)$_SESSION['account_id']);
-
-        if (!$user || strtoupper($user['usertype']) !== 'HR') {
+        require_once __DIR__ . '/../../Helpers/HrDepartmentAccess.php';
+        if (!HrDepartmentAccess::canAccessHr()) {
             http_response_code(403);
             exit('Unauthorized');
         }
+
+        $employeeModel = new Employee();
+        $user = $employeeModel->fetchUserDetails((int)$_SESSION['account_id']);
 
         $employee = $employeeModel->getEmployeeById((int)$user['employee_id']);
         $department = $employee['department'] ?? null;
@@ -148,7 +150,7 @@ class HrTicketController extends AuthController
 
         // normalize priority
         $priority = ucfirst(strtolower(trim($_POST['priority'] ?? 'Low')));
-        if (!in_array($priority, ['Low','Medium','High'], true)) $priority = 'Low';
+        if (!in_array($priority, ['Low','Medium','High','Critical'], true)) $priority = 'Low';
 
         // Use employee's branch if not provided in POST
         $branchId = (int)($_POST['branch_id'] ?? 0);
@@ -166,6 +168,7 @@ class HrTicketController extends AuthController
             'priority'        => $priority,
             'created_by'      => $accountId
         ]);
+        TicketFormFields::ticketCreated((int) $ticketId, $_POST);
 
         require_once __DIR__ . '/../../Models/NotificationModel.php';
 

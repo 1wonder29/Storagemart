@@ -244,7 +244,7 @@ class AuthController {
                 $this->redirect('/hom/dashboard');
                 break;
             case 'OM':
-                $this->redirect('/hom/dashboard');
+                $this->redirect('/om/dashboard');
                 break;
             default:
                 // Unknown user type - redirect back to login
@@ -331,7 +331,8 @@ class AuthController {
             $this->redirect('/login');
         }
 
-        if (strtoupper($_SESSION['usertype'] ?? '') !== 'HR') {
+        require_once __DIR__ . '/../Helpers/HrDepartmentAccess.php';
+        if (!HrDepartmentAccess::canAccessHr()) {
             $_SESSION['loginMessage'] = 'Access denied. HR only.';
             $this->redirect('/login');
         }
