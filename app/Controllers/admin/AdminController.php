@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../AuthController.php';
 require_once __DIR__ . '/../../Models/admin/Account.php';
+require_once __DIR__ . '/../../Models/admin/Department.php';
 require_once __DIR__ . '/../../Models/admin/Logger.php';
 require_once __DIR__ . '/../../Models/admin/AuditTrail.php';
 require_once __DIR__ . '/../../Models/DashboardModel.php';
@@ -257,6 +258,7 @@ class AdminController extends AuthController
         $branches = method_exists($accountModel, 'fetchBranches')
             ? $accountModel->fetchBranches()
             : [];
+        $departments = (new Department())->fetchAll();
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
@@ -285,6 +287,7 @@ class AdminController extends AuthController
         }
 
         $accountModel = $this->model ?? new Account();
+        $departmentModel = new Department();
 
         // Helper to load layout variables consistently
         $loadLayout = function () {
@@ -335,6 +338,7 @@ class AdminController extends AuthController
             if ($old['username'] === '' || $password === '' || $old['usertype'] === '') {
                 $_SESSION['flash_error'] = 'Username, password and user type are required.';
                 $branches = $accountModel->fetchBranches();
+                $departments = $departmentModel->fetchAll();
                 extract($loadLayout());
                 require __DIR__ . '/../../Views/admin/account/add.php';
                 return;
@@ -349,6 +353,7 @@ class AdminController extends AuthController
             ) {
                 $_SESSION['flash_error'] = 'Employee ID is required and must be a positive number with no spaces.';
                 $branches = $accountModel->fetchBranches();
+                $departments = $departmentModel->fetchAll();
                 extract($loadLayout());
                 require __DIR__ . '/../../Views/admin/account/add.php';
                 return;
@@ -357,6 +362,7 @@ class AdminController extends AuthController
             if ($accountModel->isUsernameExists($old['username'])) {
                 $_SESSION['flash_error'] = 'Account username is already in use.';
                 $branches = $accountModel->fetchBranches();
+                $departments = $departmentModel->fetchAll();
                 extract($loadLayout());
                 require __DIR__ . '/../../Views/admin/account/add.php';
                 return;
@@ -433,6 +439,7 @@ class AdminController extends AuthController
 
                 $_SESSION['flash_error'] = 'Error creating account: ' . $e->getMessage();
                 $branches = $accountModel->fetchBranches();
+                $departments = $departmentModel->fetchAll();
                 extract($loadLayout());
                 require __DIR__ . '/../../Views/admin/account/add.php';
                 return;
@@ -443,6 +450,7 @@ class AdminController extends AuthController
         * GET
         * ========================= */
         $branches = $accountModel->fetchBranches();
+        $departments = $departmentModel->fetchAll();
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));

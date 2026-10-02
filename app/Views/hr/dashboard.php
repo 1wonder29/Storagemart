@@ -13,8 +13,8 @@ $pendingReturnTotal = (int)($uniformStats['pending_return_total'] ?? 0);
 $employeesWithoutUniforms = max(0, $totalEmployees - $totalEmployeesWithUniforms);
 
 $chartUniformStats = [
-    'With Uniforms'    => $totalEmployeesWithUniforms,
-    'Without Uniforms' => $employeesWithoutUniforms,
+    'With Items'    => $totalEmployeesWithUniforms,
+    'Without Items' => $employeesWithoutUniforms,
 ];
 $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
 ?>
@@ -48,7 +48,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
             <div class="row align-items-center">
                 <div class="col-lg-4">
                     <h1><i class="fas fa-tachometer-alt mr-2"></i>HR Dashboard</h1>
-                    <p>Welcome back, <?= htmlspecialchars($displayName) ?> — manage employees, uniforms, and accountability.</p>
+                    <p>Welcome back, <?= htmlspecialchars($displayName) ?> — manage employees, inventory, and accountability.</p>
                 </div>
                 <div class="col-lg-8 mt-3 mt-lg-0">
                     <div class="row">
@@ -61,7 +61,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                         <div class="col-6 col-md mb-2 mb-md-0">
                             <div class="hero-stat">
                                 <div class="stat-value"><?= (int)($uniformStats['total_uniform_types'] ?? 0) ?></div>
-                                <div class="stat-label">Uniform Types</div>
+                                <div class="stat-label">Item Types</div>
                             </div>
                         </div>
                         <div class="col-6 col-md mb-2 mb-md-0">
@@ -91,7 +91,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                         <div class="col-6 col-md">
                             <div class="hero-stat">
                                 <div class="stat-value"><?= $totalEmployeesWithUniforms ?></div>
-                                <div class="stat-label">With Uniforms</div>
+                                <div class="stat-label">With Items</div>
                             </div>
                         </div>
                     </div>
@@ -126,13 +126,13 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                 <i class="fas fa-users"></i> View Employees
             </a>
             <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="quick-action-btn qa-success">
-                <i class="fas fa-tshirt"></i> Manage Uniforms
+                <i class="fas fa-archive"></i> Manage Inventory
             </a>
             <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/add" class="quick-action-btn qa-info">
-                <i class="fas fa-plus"></i> Add Uniform
+                <i class="fas fa-plus"></i> Add Item
             </a>
             <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assign" class="quick-action-btn qa-warning">
-                <i class="fas fa-user-tag"></i> Assign Uniform
+                <i class="fas fa-user-tag"></i> Assign Item
             </a>
         </div>
 
@@ -141,7 +141,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
             <div class="col-xl-4 mb-4 mb-xl-0">
                 <div class="card dash-card shadow">
                     <div class="card-header">
-                        <h6><i class="fas fa-chart-pie"></i>Uniform Coverage</h6>
+                        <h6><i class="fas fa-chart-pie"></i>Inventory Coverage</h6>
                     </div>
                     <div class="card-body">
                         <?php if ($hasChartData): ?>
@@ -195,10 +195,10 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
             </div>
         </div>
 
-        <!-- Employees with Assigned Uniforms -->
+        <!-- Employees with Assigned Items -->
         <div class="card dash-card shadow mb-4">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
-                <h6><i class="fas fa-user-check"></i>Employees with Assigned Uniforms</h6>
+                <h6><i class="fas fa-user-check"></i>Employees with Assigned Items</h6>
                 <div class="d-flex align-items-center" style="gap:0.5rem;">
                     <?php if ($uniformsNeedingReorder > 0): ?>
                         <span class="reorder-alert">
@@ -214,8 +214,8 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
             <div class="card-body p-0">
                 <?php if (empty($employeesWithUniforms)): ?>
                     <div class="empty-state">
-                        <i class="fas fa-tshirt"></i>
-                        <p class="mb-0">No employees with assigned uniforms.
+                        <i class="fas fa-archive"></i>
+                        <p class="mb-0">No employees with assigned items.
                             <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assign">Assign one</a>
                         </p>
                     </div>
@@ -226,7 +226,7 @@ $hasChartData = ($totalEmployeesWithUniforms + $employeesWithoutUniforms) > 0;
                             <tr>
                                 <th>Employee</th>
                                 <th>Department / Position</th>
-                                <th>Uniforms</th>
+                                <th>Items</th>
                                 <th>Count</th>
                                 <th class="text-right">Action</th>
                             </tr>

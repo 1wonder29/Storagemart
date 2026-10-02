@@ -7,7 +7,7 @@ $base = rtrim(BASE_URL, '/');
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | Assign Uniform</title>
+    <title>Storage Mart | Assign Item</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
@@ -22,8 +22,8 @@ $base = rtrim(BASE_URL, '/');
     require_once dirname(dirname(__DIR__)) . '/partials/uniform_sidebar_topbar.php';?>
         <div class="container-fluid hr-uniform-page">
             <div class="page-hero">
-                <h1><i class="fas fa-user-tag mr-2"></i>Assign Uniform to Employee</h1>
-                <p>Issue uniforms with complete item details, quantity, and condition tracking in one consistent workflow.</p>
+                <h1><i class="fas fa-user-tag mr-2"></i>Assign Item to Employee</h1>
+                <p>Issue inventory items with complete details, quantity, and condition tracking in one consistent workflow.</p>
             </div>
 
             <!-- Messages -->
@@ -50,7 +50,7 @@ $base = rtrim(BASE_URL, '/');
             <!-- Assignment Form -->
             <div class="card shadow uniform-card">
                 <div class="card-header py-3">
-                    <h6><i class="fas fa-tshirt"></i>Assign Uniform</h6>
+                    <h6><i class="fas fa-archive"></i>Assign Item</h6>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="<?= htmlspecialchars($base) ?>/hr/uniforms/assign" id="assignForm">
@@ -70,11 +70,11 @@ $base = rtrim(BASE_URL, '/');
                         </div>
 
                         <div class="form-section">
-                            <div class="section-title"><i class="fas fa-tshirt"></i>Uniform Selection</div>
+                            <div class="section-title"><i class="fas fa-archive"></i>Item Selection</div>
                             <div class="form-group">
-                                <label class="form-label" for="uniform_type">Uniform Type</label>
+                                <label class="form-label" for="uniform_type">Item Type</label>
                                 <select class="form-control" id="uniform_type" required>
-                                    <option value="">-- Select a uniform type --</option>
+                                    <option value="">-- Select an item type --</option>
                                     <?php foreach ($uniformTypes as $type): ?>
                                         <option value="<?= htmlspecialchars($type) ?>">
                                             <?= htmlspecialchars($type) ?>
@@ -83,7 +83,7 @@ $base = rtrim(BASE_URL, '/');
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="uniform_id">Specific Uniform Item</label>
+                                <label class="form-label" for="uniform_id">Specific Item</label>
                                 <select class="form-control" id="uniform_id" name="uniform_id" required disabled>
                                     <option value="">-- Select a type first --</option>
                                 </select>
@@ -96,10 +96,10 @@ $base = rtrim(BASE_URL, '/');
                         </div>
 
                         <div class="form-section">
-                            <div class="section-title"><i class="fas fa-layer-group"></i>Additional Uniforms</div>
+                            <div class="section-title"><i class="fas fa-layer-group"></i>Additional Items</div>
                             <div id="specialistUniformsContainer"></div>
                             <button type="button" class="btn btn-sm btn-success" id="addMoreBtn">
-                                <i class="fas fa-plus"></i> Add More Uniform
+                                <i class="fas fa-plus"></i> Add More Item
                             </button>
                         </div>
 
@@ -121,7 +121,7 @@ $base = rtrim(BASE_URL, '/');
 
                         <div class="page-actions">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-check"></i> Assign Uniform
+                                <i class="fas fa-check"></i> Assign Item
                             </button>
                             <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Back
@@ -138,13 +138,13 @@ $base = rtrim(BASE_URL, '/');
                 </div>
                 <div class="card-body">
                     <ol class="instruction-list">
-                        <li>Select the employee who will receive the uniform</li>
-                        <li>Choose the type of uniform (e.g., Polo Shirt, Cap, ID Badge)</li>
-                        <li>Select the specific uniform (filtered by type, showing size, color, available stock)</li>
+                        <li>Select the employee who will receive the item</li>
+                        <li>Choose the item type (e.g., Polo Shirt, ID Badge, ID Lace, Radio, Laptop)</li>
+                        <li>Select the specific item (filtered by type, showing size, color, available stock)</li>
                         <li>Enter the quantity to issue</li>
                         <li>Set the condition (Good, Fair, Used)</li>
                         <li>Add any remarks if needed</li>
-                        <li>Click "Assign Uniform" to complete</li>
+                        <li>Click "Assign Item" to complete</li>
                     </ol>
                 </div>
             </div>
@@ -170,8 +170,8 @@ $base = rtrim(BASE_URL, '/');
         }
 
         makeSearchable(document.getElementById('employee_id'), '-- Search employee --', 'No employees found');
-        makeSearchable(document.getElementById('uniform_type'), '-- Search uniform type --', 'No uniform types found');
-        makeSearchable(document.getElementById('uniform_id'), '-- Search specific uniform --', 'No uniforms found');
+        makeSearchable(document.getElementById('uniform_type'), '-- Search item type --', 'No item types found');
+        makeSearchable(document.getElementById('uniform_id'), '-- Search specific item --', 'No items found');
 
         // Handle primary uniform type change
         $('#uniform_type').change(function() {
@@ -190,7 +190,7 @@ $base = rtrim(BASE_URL, '/');
                 dataType: 'json',
                 success: function(response) {
                     if (response.success && response.data.length > 0) {
-                        var html = '<option value="">-- Choose a uniform --</option>';
+                        var html = '<option value="">-- Choose an item --</option>';
                         $.each(response.data, function(index, uniform) {
                             html += '<option value="' + uniform.uniform_id + '">';
                             html += uniform.uniform_type + ' - Size: ' + uniform.size + ', Color: ' + uniform.color;
@@ -198,13 +198,13 @@ $base = rtrim(BASE_URL, '/');
                             html += '</option>';
                         });
                         uniformSelect.html(html).prop('disabled', false);
-                        makeSearchable(document.getElementById('uniform_id'), '-- Search specific uniform --', 'No uniforms found');
+                        makeSearchable(document.getElementById('uniform_id'), '-- Search specific item --', 'No items found');
                     } else {
-                        uniformSelect.html('<option value="">No uniforms available</option>').prop('disabled', true);
+                        uniformSelect.html('<option value="">No items available</option>').prop('disabled', true);
                     }
                 },
                 error: function() {
-                    uniformSelect.html('<option value="">Error loading uniforms</option>').prop('disabled', true);
+                    uniformSelect.html('<option value="">Error loading items</option>').prop('disabled', true);
                 }
             });
         });
@@ -240,7 +240,7 @@ $base = rtrim(BASE_URL, '/');
                 dataType: 'json',
                 success: function(response) {
                     if (response.success && response.data.length > 0) {
-                        var html = '<option value="">-- Choose a uniform --</option>';
+                        var html = '<option value="">-- Choose an item --</option>';
                         $.each(response.data, function(index, uniform) {
                             html += '<option value="' + uniform.uniform_id + '">';
                             html += uniform.uniform_type + ' - Size: ' + uniform.size + ', Color: ' + uniform.color;
@@ -248,13 +248,13 @@ $base = rtrim(BASE_URL, '/');
                             html += '</option>';
                         });
                         uniformSelect.html(html).prop('disabled', false);
-                        makeSearchable(uniformSelect.get(0), '-- Search specific uniform --', 'No uniforms found');
+                        makeSearchable(uniformSelect.get(0), '-- Search specific item --', 'No items found');
                     } else {
-                        uniformSelect.html('<option value="">No uniforms available</option>').prop('disabled', true);
+                        uniformSelect.html('<option value="">No items available</option>').prop('disabled', true);
                     }
                 },
                 error: function() {
-                    uniformSelect.html('<option value="">Error loading uniforms</option>').prop('disabled', true);
+                    uniformSelect.html('<option value="">Error loading items</option>').prop('disabled', true);
                 }
             });
         });
@@ -264,9 +264,9 @@ $base = rtrim(BASE_URL, '/');
             e.preventDefault();
             specificCount++;
             var html = '<div class="specific-uniform-item uniform-extra-item">';
-            html += '<button type="button" class="btn btn-sm btn-outline-danger remove-specific uniform-extra-remove" title="Remove this uniform">';
+            html += '<button type="button" class="btn btn-sm btn-outline-danger remove-specific uniform-extra-remove" title="Remove this item">';
             html += '<i class="fas fa-times"></i></button>';
-            html += '<label class="form-label" for="specific_uniform_type_' + specificCount + '">Uniform Type</label>';
+            html += '<label class="form-label" for="specific_uniform_type_' + specificCount + '">Item Type</label>';
             html += '<select class="form-control mb-2" id="specific_uniform_type_' + specificCount + '" name="specific_uniform_type_' + specificCount + '">';
             html += '<option value="">-- Select a type first --</option>';
             <?php foreach ($uniformTypes as $type): ?>
@@ -284,8 +284,8 @@ $base = rtrim(BASE_URL, '/');
             html += '</div>';
             
             $('#specialistUniformsContainer').append(html);
-            makeSearchable(document.getElementById('specific_uniform_type_' + specificCount), '-- Search uniform type --', 'No uniform types found');
-            makeSearchable(document.getElementById('specific_uniform_id_' + specificCount), '-- Search specific uniform --', 'No uniforms found');
+            makeSearchable(document.getElementById('specific_uniform_type_' + specificCount), '-- Search item type --', 'No item types found');
+            makeSearchable(document.getElementById('specific_uniform_id_' + specificCount), '-- Search specific item --', 'No items found');
         });
 
         // Remove specific uniform

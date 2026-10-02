@@ -172,7 +172,7 @@ $base = rtrim(BASE_URL, '/');
                                         <tr>
                                             <td>
                                                 <div class="font-weight-bold"><?= htmlspecialchars($itemLabel) ?></div>
-                                                <small class="text-muted">Uniform</small>
+                                                <small class="text-muted">Item</small>
                                             </td>
                                             <td><?= !empty($row['date_issued']) ? date('M d, Y', strtotime((string) $row['date_issued'])) : '—' ?></td>
                                             <td><?= !empty($row['date_returned']) ? date('M d, Y', strtotime((string) $row['date_returned'])) : '—' ?></td>
@@ -250,14 +250,14 @@ $base = rtrim(BASE_URL, '/');
                 </div>
             </div>
 
-            <!-- Current Uniforms -->
+            <!-- Current Items -->
             <div class="card shadow mb-4 data-card">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-tshirt mr-1"></i> Current Uniforms</h6>
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-archive mr-1"></i> Current Items</h6>
                 </div>
                 <div class="card-body">
                     <?php if (empty($uniforms)): ?>
-                        <p class="text-muted">No uniforms assigned.</p>
+                        <p class="text-muted">No items assigned.</p>
                     <?php else: ?>
                         <div class="table-responsive">
                             <table class="table table-sm table-hover mb-0">
@@ -292,11 +292,11 @@ $base = rtrim(BASE_URL, '/');
                 </div>
             </div>
 
-            <!-- Uniform History -->
+            <!-- Item History -->
             <?php if (!empty($uniformHistory)): ?>
             <div class="card shadow mb-4 data-card">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history mr-1"></i> Uniform History (All)</h6>
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history mr-1"></i> Item History (All)</h6>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">

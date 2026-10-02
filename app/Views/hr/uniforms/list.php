@@ -11,7 +11,7 @@ $totalPages = (int) ($totalPages ?? 1);
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | Uniforms</title>
+    <title>Storage Mart | Inventory</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
@@ -29,8 +29,8 @@ $totalPages = (int) ($totalPages ?? 1);
             <div class="page-hero">
                 <div class="row align-items-center">
                     <div class="col-lg-7">
-                        <h1><i class="fas fa-tshirt mr-2"></i>Uniform Inventory</h1>
-                        <p>Track stock levels, reorder thresholds, and uniform status across all types and sizes.</p>
+                        <h1><i class="fas fa-archive mr-2"></i>Inventory</h1>
+                        <p>Track stock levels, reorder thresholds, and item status across all types and sizes.</p>
                     </div>
                     <div class="col-lg-5 mt-3 mt-lg-0">
                         <div class="row">
@@ -53,10 +53,10 @@ $totalPages = (int) ($totalPages ?? 1);
 
             <div class="quick-actions">
                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/add" class="quick-action-btn qa-info">
-                    <i class="fas fa-plus"></i> Add New Uniform
+                    <i class="fas fa-plus"></i> Add New Item
                 </a>
                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assign" class="quick-action-btn qa-warning">
-                    <i class="fas fa-user-tag"></i> Assign Uniform to Employee
+                    <i class="fas fa-user-tag"></i> Assign Item to Employee
                 </a>
                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/export" class="quick-action-btn qa-success">
                     <i class="fas fa-file-excel"></i> Download Summary
@@ -86,33 +86,33 @@ $totalPages = (int) ($totalPages ?? 1);
             <?php if ($uniformsNeedingReorder > 0): ?>
                 <div class="alert alert-warning alert-modern" role="alert">
                     <i class="fas fa-exclamation-triangle mr-1"></i>
-                    <strong><?= $uniformsNeedingReorder ?> uniform<?= $uniformsNeedingReorder === 1 ? '' : 's' ?> need<?= $uniformsNeedingReorder === 1 ? 's' : '' ?> reorder.</strong>
+                    <strong><?= $uniformsNeedingReorder ?> item<?= $uniformsNeedingReorder === 1 ? '' : 's' ?> need<?= $uniformsNeedingReorder === 1 ? 's' : '' ?> reorder.</strong>
                 </div>
             <?php endif; ?>
 
             <div class="card shadow uniform-card data-card">
                 <div class="card-header py-3">
-                    <h6><i class="fas fa-list"></i> All Uniforms (<?= $totalCount ?> item<?= $totalCount === 1 ? '' : 's' ?>, Page <?= $page ?>/<?= $totalPages ?>)</h6>
+                    <h6><i class="fas fa-list"></i> All Items (<?= $totalCount ?> item<?= $totalCount === 1 ? '' : 's' ?>, Page <?= $page ?>/<?= $totalPages ?>)</h6>
                 </div>
                 <div class="card-body">
                     <?php if (empty($uniforms)): ?>
                         <div class="empty-state">
-                            <i class="fas fa-tshirt"></i>
-                            <p class="mb-0">No uniforms found.</p>
+                            <i class="fas fa-archive"></i>
+                            <p class="mb-0">No items found.</p>
                         </div>
                     <?php else: ?>
                         <div class="table-responsive">
                             <table class="table table-hover mb-0 uniforms-table">
                                 <thead>
                                     <tr>
-                                        <th>Uniform</th>
+                                        <th>Item</th>
                                         <th title="Units on hand, ready to issue">In Stock</th>
                                         <th title="Restock when In Stock falls to this number">Reorder At</th>
                                         <th>Stock Status</th>
                                         <th title="Issued to employees and not yet returned">Pending Return</th>
                                         <th>Damaged</th>
                                         <th>Lost</th>
-                                        <th title="Whether this uniform is still in use or discontinued">Item Status</th>
+                                        <th title="Whether this item is still in use or discontinued">Item Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -153,21 +153,21 @@ $totalPages = (int) ($totalPages ?? 1);
                                             <td>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments/<?= (int) $uniform['uniform_id'] ?>?condition=PENDING"
                                                    class="count-badge badge badge-<?= $pendingReturnCount > 0 ? 'info' : 'light' ?>"
-                                                   title="View uniforms issued and not yet returned">
+                                                   title="View items issued and not yet returned">
                                                     <?= $pendingReturnCount ?>
                                                 </a>
                                             </td>
                                             <td>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments/<?= (int) $uniform['uniform_id'] ?>?condition=DAMAGED"
                                                    class="count-badge badge badge-<?= $damagedCount > 0 ? 'danger' : 'light' ?>"
-                                                   title="View damaged uniforms">
+                                                   title="View damaged items">
                                                     <?= $damagedCount ?>
                                                 </a>
                                             </td>
                                             <td>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assignments/<?= (int) $uniform['uniform_id'] ?>?condition=LOST"
                                                    class="count-badge badge badge-<?= $lostCount > 0 ? 'dark' : 'light' ?>"
-                                                   title="View lost uniforms">
+                                                   title="View lost items">
                                                     <?= $lostCount ?>
                                                 </a>
                                             </td>
@@ -186,7 +186,7 @@ $totalPages = (int) ($totalPages ?? 1);
                                                         <form method="post"
                                                               action="<?= htmlspecialchars($base) ?>/hr/uniforms/reactivate/<?= (int) $uniform['uniform_id'] ?>"
                                                               class="d-inline"
-                                                              onsubmit="return confirm('Reactivate this uniform?');">
+                                                              onsubmit="return confirm('Reactivate this item?');">
                                                             <button type="submit" class="btn btn-sm btn-success" title="Reactivate">
                                                                 <i class="fas fa-undo"></i>
                                                             </button>

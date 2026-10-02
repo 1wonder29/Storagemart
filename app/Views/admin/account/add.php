@@ -130,15 +130,9 @@ $base = rtrim(BASE_URL, '/');
                                         <label for="department" class="form-label">Department</label>
                                         <select id="department" name="department" class="form-control" required>
                                             <option value="">-- Select Department --</option>
-                                            <option value="IT">Information Technology</option>
-                                            <option value="Sales">Sales</option>
-                                            <option value="Purchasing">Purchasing</option>
-                                            <option value="Accounting">Accounting</option>
-                                            <option value="HRMD">Human Resource Management and Development</option>
-                                            <option value="Marketing">Marketing</option>
-                                            <option value="Compliance">Corporate Compliance</option>
-                                            <option value="Operations">Operations</option>
-                                            <option value="Digital Marketing">Digital Marketing</option>
+                                            <?php foreach (($departments ?? []) as $dept): ?>
+                                                <option value="<?= htmlspecialchars((string) ($dept['code'] ?? '')) ?>"><?= htmlspecialchars((string) ($dept['label'] ?? '')) ?></option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                 </div>

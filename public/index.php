@@ -150,9 +150,11 @@ if (strpos($uri, '/admin') === 0) {
     require_once __DIR__ . '/../app/Controllers/admin/AdminController.php';
     require_once __DIR__ . '/../app/Controllers/admin/TicketController.php';
     require_once __DIR__ . '/../app/Controllers/admin/AssetController.php';
+    require_once __DIR__ . '/../app/Controllers/admin/DepartmentController.php';
     $admin = new AdminController();
     $ticket = new TicketController();
     $asset = new AssetController();
+    $department = new DepartmentController();
     $sub = trim(substr($uri, strlen('/admin')), '/');
 
     if ($sub === '' || $sub === 'dashboard') {
@@ -163,6 +165,12 @@ if (strpos($uri, '/admin') === 0) {
         $admin->addAccount();
     } elseif ($sub === 'account/edit') {
         $admin->editAccount();
+    } elseif ($sub === 'department') {
+        $department->manage();
+    } elseif ($sub === 'department/update') {
+        $department->update();
+    } elseif ($sub === 'department/delete') {
+        $department->delete();
     } elseif ($sub === 'employee') {
         $admin->employee();
     } elseif ($sub === 'profile') {

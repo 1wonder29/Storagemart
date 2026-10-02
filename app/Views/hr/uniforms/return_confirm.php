@@ -22,14 +22,14 @@ $base = rtrim(BASE_URL, '/');
         ?>
         <div class="container-fluid hr-uniform-page">
             <div class="page-hero">
-                <h1><i class="fas fa-undo-alt mr-2"></i>Confirm Uniform Return</h1>
+                <h1><i class="fas fa-undo-alt mr-2"></i>Confirm Item Return</h1>
                 <p>Split returned quantity by condition to record mixed returns accurately.</p>
             </div>
 
             <?php if (empty($assignment)): ?>
                 <div class="alert alert-danger">
                     <h5>Assignment Not Found</h5>
-                    <p>The uniform assignment could not be found in the system.</p>
+                    <p>The item assignment could not be found in the system.</p>
                     <a href="<?= htmlspecialchars($base) ?>/hr/employees" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Back to Employees
                     </a>
@@ -43,7 +43,7 @@ $base = rtrim(BASE_URL, '/');
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <p><strong>Employee:</strong> <?= htmlspecialchars($assignment['employee_name'] ?? '') ?></p>
-                                <p><strong>Uniform Type:</strong> <?= htmlspecialchars($assignment['uniform_type'] ?? '') ?></p>
+                                <p><strong>Item Type:</strong> <?= htmlspecialchars($assignment['uniform_type'] ?? '') ?></p>
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Quantity:</strong> <?= (int) ($assignment['quantity_issued'] ?? 0) ?></p>

@@ -44,6 +44,11 @@ $assetSubPage = $assetSubPage ?? '';
                             <i class="fas fa-user-tie"></i>
                             <span>Employee</span>
                         </a>
+                        <a class="sidebar-submenu-item <?= ($userSubPage === 'department') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/department">
+                            <i class="fas fa-building"></i>
+                            <span>Departments</span>
+                        </a>
                     </div>
                 </div>
             </li>

@@ -128,7 +128,12 @@ ksort($usertypes);
                                 <?php foreach ($users as $row):
                                     $usertype = (string) ($row['usertype'] ?? '');
                                     $secondaryType = trim((string) ($row['secondary_usertype'] ?? ''));
-                                    $department = trim((string) ($row['department'] ?? ''));
+                                    // Janette: top-level General Manager, not an HRMD-department staffer - show her
+                                    // position instead of department on the HEAD badge.
+                                    $isGeneralManagerAccount = (int) ($row['account_id'] ?? 0) === 2200616;
+                                    $department = $isGeneralManagerAccount
+                                        ? trim((string) ($row['position'] ?? ''))
+                                        : trim((string) ($row['department'] ?? ''));
                                     $date = admin_account_format_date((string) ($row['datecreated'] ?? ''));
                                     $roleTokens = array_filter([strtolower(trim($usertype)), strtolower($secondaryType)]);
                                 ?>

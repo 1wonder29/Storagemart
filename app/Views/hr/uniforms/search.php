@@ -7,7 +7,7 @@ $resultCount = count($uniforms ?? []);
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | Uniforms - Search</title>
+    <title>Storage Mart | Inventory - Search</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
@@ -26,8 +26,8 @@ $resultCount = count($uniforms ?? []);
             <div class="page-hero">
                 <div class="row align-items-center">
                     <div class="col-lg-8">
-                        <h1><i class="fas fa-search mr-2"></i>Uniform Search Results</h1>
-                        <p>Matching uniform inventory items from your search.</p>
+                        <h1><i class="fas fa-search mr-2"></i>Inventory Search Results</h1>
+                        <p>Matching inventory items from your search.</p>
                     </div>
                     <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
                         <div class="hero-stat d-inline-block text-center px-4">
@@ -45,7 +45,7 @@ $resultCount = count($uniforms ?? []);
                 <div class="card-body p-0">
                     <?php if (empty($uniforms)): ?>
                         <div class="empty-state p-4">
-                            <p class="text-muted mb-0">No uniforms match your search.</p>
+                            <p class="text-muted mb-0">No items match your search.</p>
                         </div>
                     <?php else: ?>
                         <div class="table-responsive">
@@ -70,7 +70,7 @@ $resultCount = count($uniforms ?? []);
                                             <td><?= (int)$uniform['quantity_in_stock'] ?></td>
                                             <td><?= (int)$uniform['reorder_level'] ?></td>
                                             <td>
-                                                <span class="btn btn-sm btn-info" title="Active uniforms to return">
+                                                <span class="btn btn-sm btn-info" title="Active items to return">
                                                     <?= (int)($uniform['return_count'] ?? 0) ?>
                                                 </span>
                                             </td>
@@ -82,7 +82,7 @@ $resultCount = count($uniforms ?? []);
                                                     <form method="post"
                                                           action="<?= htmlspecialchars($base) ?>/hr/uniforms/reactivate/<?= (int) $uniform['uniform_id'] ?>"
                                                           class="d-inline"
-                                                          onsubmit="return confirm('Reactivate this uniform?');">
+                                                          onsubmit="return confirm('Reactivate this item?');">
                                                         <button type="submit" class="btn btn-sm btn-success" title="Reactivate">
                                                             <i class="fas fa-undo"></i>
                                                         </button>

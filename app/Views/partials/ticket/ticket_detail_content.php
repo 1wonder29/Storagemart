@@ -132,9 +132,9 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                 </div>
 
                 <?php if ($canEditResolution): ?>
-                    <form method="POST" action="<?= htmlspecialchars($detailBase) ?>/it/tickets/update" class="resolution-edit-form">
+                    <form method="POST" action="<?= htmlspecialchars($detailBase) ?>/it/tickets/update" class="resolution-edit-form" id="ticketResolutionForm">
                         <input type="hidden" name="ticket_id" value="<?= $ticketId ?>">
-                        <input type="hidden" name="action" value="<?= htmlspecialchars($status) ?>">
+                        <input type="hidden" name="action" id="resolution_action_field" value="<?= htmlspecialchars($status) ?>">
                         <input type="hidden" name="technical_purpose" value="<?= htmlspecialchars((string) ($technical['technical_purpose'] ?? '')) ?>">
                         <input type="hidden" name="remarks" value="<?= htmlspecialchars((string) ($technical['remarks'] ?? '')) ?>">
                         <input type="hidden" name="return_to" value="/it/tickets/view?id=<?= $ticketId ?>">
@@ -162,7 +162,35 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                         <button type="submit" class="btn btn-primary btn-sm">
                             <i class="fas fa-save"></i> Save Changes
                         </button>
+                        <button type="button" class="btn btn-success btn-sm" id="markResolvedBtn">
+                            <i class="fas fa-check-circle"></i> Mark as Done
+                        </button>
+                        <small class="form-text text-muted mt-2 mb-0">
+                            "Save Changes" keeps the ticket at its current status and just saves your notes.
+                            "Mark as Done" saves your notes and resolves the ticket.
+                        </small>
                     </form>
+                    <script>
+                    (function () {
+                        var btn = document.getElementById('markResolvedBtn');
+                        var form = document.getElementById('ticketResolutionForm');
+                        var actionField = document.getElementById('resolution_action_field');
+                        if (!btn || !form || !actionField) { return; }
+                        btn.addEventListener('click', function () {
+                            var actionTaken = document.getElementById('action_taken_field');
+                            if (actionTaken && actionTaken.value.trim() === '') {
+                                window.alert('Please describe the action taken before marking this ticket as done.');
+                                actionTaken.focus();
+                                return;
+                            }
+                            if (!window.confirm('Mark this ticket as resolved? The requester will be notified.')) {
+                                return;
+                            }
+                            actionField.value = 'Resolve';
+                            form.submit();
+                        });
+                    })();
+                    </script>
                 <?php else: ?>
                     <div class="mb-3">
                         <div class="small text-gray-500 text-uppercase font-weight-bold">Action Taken</div>

@@ -6,7 +6,7 @@ $base = rtrim(BASE_URL, '/');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | Delete Uniform</title>
+    <title>Storage Mart | Delete Item</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
@@ -25,8 +25,8 @@ $base = rtrim(BASE_URL, '/');
             <div class="page-hero hero-danger">
                 <div class="row align-items-center">
                     <div class="col-lg-8">
-                        <h1><i class="fas fa-trash-alt mr-2"></i>Delete Uniform</h1>
-                        <p>Review the impact before removing this uniform from inventory.</p>
+                        <h1><i class="fas fa-trash-alt mr-2"></i>Delete Item</h1>
+                        <p>Review the impact before removing this item from inventory.</p>
                     </div>
                     <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
                         <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-light btn-sm">
@@ -43,23 +43,23 @@ $base = rtrim(BASE_URL, '/');
                             <h6 class="m-0 text-white"><i class="fas fa-exclamation-triangle mr-1"></i>Confirm Deletion</h6>
                         </div>
                         <div class="card-body">
-                            <p class="mb-3"><strong>Uniform:</strong> <?= htmlspecialchars($uniform['uniform_type'] . ' - ' . $uniform['size'] . ' - ' . $uniform['color']) ?></p>
-                            
+                            <p class="mb-3"><strong>Item:</strong> <?= htmlspecialchars($uniform['uniform_type'] . ' - ' . $uniform['size'] . ' - ' . $uniform['color']) ?></p>
+
                             <?php if ($isInUse): ?>
                                 <div class="alert alert-warning alert-modern">
-                                    <i class="fas fa-exclamation-triangle"></i> This uniform has active assignments and cannot be deleted.
+                                    <i class="fas fa-exclamation-triangle"></i> This item has active assignments and cannot be deleted.
                                     It will be marked as DISCONTINUED instead.
                                 </div>
                             <?php else: ?>
                                 <div class="alert alert-danger alert-modern">
-                                    <i class="fas fa-exclamation-triangle"></i> Are you sure you want to delete this uniform? This action cannot be undone.
+                                    <i class="fas fa-exclamation-triangle"></i> Are you sure you want to delete this item? This action cannot be undone.
                                 </div>
                             <?php endif; ?>
 
                             <div class="form-actions mt-4">
                                 <form method="POST" action="<?= htmlspecialchars($base) ?>/hr/uniforms/delete/<?= $uniform['uniform_id'] ?>" class="d-inline">
                                     <button type="submit" class="btn btn-danger">
-                                        <i class="fas fa-trash"></i> Delete Uniform
+                                        <i class="fas fa-trash"></i> Delete Item
                                     </button>
                                 </form>
                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-secondary">Cancel</a>

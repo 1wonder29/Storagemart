@@ -116,7 +116,7 @@ class Account extends BaseModel {
     }
 
     public function fetchAll(): array {
-        $sql = "SELECT a.*, e.department
+        $sql = "SELECT a.*, e.department, e.position
                 FROM {$this->table} a
                 LEFT JOIN {$this->tblemployee} e ON e.account_id = a.account_id";
         $stmt = $this->pdo->prepare($sql);

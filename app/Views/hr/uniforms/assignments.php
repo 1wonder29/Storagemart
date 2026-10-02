@@ -3,13 +3,13 @@ $base = rtrim(BASE_URL, '/');
 $returnedCount = count($assignments ?? []);
 $showUniformColumn = empty($uniform);
 $conditionFilter = strtoupper(trim((string) ($conditionFilter ?? '')));
-$listTitle = 'Uniform Assignments';
+$listTitle = 'Item Assignments';
 if ($conditionFilter === 'DAMAGED') {
-    $listTitle = 'Damaged Uniform Returns';
+    $listTitle = 'Damaged Item Returns';
 } elseif ($conditionFilter === 'LOST') {
-    $listTitle = 'Lost Uniform Returns';
+    $listTitle = 'Lost Item Returns';
 } elseif ($conditionFilter === 'PENDING') {
-    $listTitle = 'Uniforms Pending Return';
+    $listTitle = 'Items Pending Return';
 }
 ?>
 <!DOCTYPE html>
@@ -17,7 +17,7 @@ if ($conditionFilter === 'DAMAGED') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | Uniform Assignments</title>
+    <title>Storage Mart | Item Assignments</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
@@ -44,7 +44,7 @@ if ($conditionFilter === 'DAMAGED') {
                                 <span class="text-white-50">(<?= htmlspecialchars($uniform['size'] ?? '') ?>)</span>
                             </p>
                         <?php else: ?>
-                            <p>Review current and past uniform assignments across every employee.</p>
+                            <p>Review current and past item assignments across every employee.</p>
                         <?php endif; ?>
                     </div>
                     <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
@@ -54,7 +54,7 @@ if ($conditionFilter === 'DAMAGED') {
                         </div>
                         <br>
                         <a href="<?= htmlspecialchars($base) ?>/hr/uniforms" class="btn btn-light btn-sm">
-                            <i class="fas fa-arrow-left"></i> Back to Uniforms
+                            <i class="fas fa-arrow-left"></i> Back to Inventory
                         </a>
                     </div>
                 </div>
@@ -108,7 +108,7 @@ if ($conditionFilter === 'DAMAGED') {
                                     <tr>
                                         <th>Employee</th>
                                         <?php if ($showUniformColumn): ?>
-                                            <th>Uniform</th>
+                                            <th>Item</th>
                                         <?php endif; ?>
                                         <th>Date Issued</th>
                                         <th>Quantity</th>

@@ -6,7 +6,7 @@ $base = rtrim(BASE_URL, '/');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Storage Mart | Pending Uniform Returns</title>
+    <title>Storage Mart | Pending Item Returns</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
@@ -19,12 +19,12 @@ $base = rtrim(BASE_URL, '/');
         require_once __DIR__ . '/../../partials/hr/sidebar_topbar.php';
         ?>
         <div class="container-fluid">
-            <h1 class="h3 mb-4 text-gray-800">Pending Uniform Returns - Approval</h1>
+            <h1 class="h3 mb-4 text-gray-800">Pending Item Returns - Approval</h1>
 
             <?php if (empty($pendingReturns)): ?>
                 <div class="alert alert-info">
                     <h5>No Pending Returns</h5>
-                    <p>All uniform returns have been processed.</p>
+                    <p>All item returns have been processed.</p>
                 </div>
             <?php else: ?>
                 <div class="card shadow mb-4">
@@ -40,7 +40,7 @@ $base = rtrim(BASE_URL, '/');
                                     <tr>
                                         <th>Date Returned</th>
                                         <th>Employee</th>
-                                        <th>Uniform Type</th>
+                                        <th>Item Type</th>
                                         <th>Size</th>
                                         <th>Qty</th>
                                         <th>Condition</th>
