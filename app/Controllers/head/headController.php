@@ -108,19 +108,29 @@ class HeadController extends AuthController
         }
 
         $headEmployee = $employeeModel->getEmployeeById((int)$user['employee_id']);
-        $department = $headEmployee['department'] ?? null;
 
-        if (!$department) {
-            $_SESSION['flash_error'] = 'Department not found.';
-            $this->redirect('/head/dashboard');
-            return;
+        require_once __DIR__ . '/../../Helpers/SuperUser.php';
+        $allDepartments = SuperUser::isActingInRoleArea();
+
+        if ($allDepartments) {
+            // The General Manager oversees every department.
+            $department = 'All Departments';
+            $employees = $employeeModel->fetchAllActiveStaff((int) ($headEmployee['employee_id'] ?? 0));
+            require_once __DIR__ . '/../../Models/admin/Department.php';
+            $departmentLabels = array_column((new Department())->fetchAll(), 'label', 'code');
+        } else {
+            $department = $headEmployee['department'] ?? null;
+            if (!$department) {
+                $_SESSION['flash_error'] = 'Department not found.';
+                $this->redirect('/head/dashboard');
+                return;
+            }
+
+            $employees = $employeeModel->fetchDepartmentStaffForHead(
+                $department,
+                (int) ($headEmployee['employee_id'] ?? 0)
+            );
         }
-
-        // 👥 Employees under this HEAD
-        $employees = $employeeModel->fetchDepartmentStaffForHead(
-            $department,
-            (int) ($headEmployee['employee_id'] ?? 0)
-        );
 
         // Layout context
         $ctx = $this->getLoggedUserContext();

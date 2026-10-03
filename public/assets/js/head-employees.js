@@ -49,6 +49,7 @@
 
     var branchFilter = "";
     var positionFilter = "";
+    var departmentFilter = "";
 
     registerSearch(function (settings, searchData, dataIndex) {
       if (getTableId(settings) !== "employee-table") {
@@ -62,11 +63,15 @@
 
       var branch = (row.getAttribute("data-branch") || "").trim().toLowerCase();
       var position = (row.getAttribute("data-position") || "").trim().toLowerCase();
+      var department = (row.getAttribute("data-department") || "").trim().toLowerCase();
 
       if (branchFilter && branch !== branchFilter) {
         return false;
       }
       if (positionFilter && position !== positionFilter) {
+        return false;
+      }
+      if (departmentFilter && department !== departmentFilter) {
         return false;
       }
       return true;
@@ -76,6 +81,10 @@
       dt.draw();
     }
 
+    $("#employeeDepartmentFilter").on("change", function () {
+      departmentFilter = ($(this).val() || "").trim().toLowerCase();
+      redraw();
+    });
     $("#employeeBranchFilter").on("change", function () {
       branchFilter = ($(this).val() || "").trim().toLowerCase();
       redraw();
@@ -85,8 +94,8 @@
       redraw();
     });
     $("#employeeClearFilters").on("click", function () {
-      branchFilter = positionFilter = "";
-      $("#employeeBranchFilter, #employeePositionFilter").val("");
+      branchFilter = positionFilter = departmentFilter = "";
+      $("#employeeBranchFilter, #employeePositionFilter, #employeeDepartmentFilter").val("");
       dt.search("");
       redraw();
     });

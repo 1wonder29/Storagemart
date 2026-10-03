@@ -3,12 +3,19 @@ $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../partials/admin/account_view_helpers.php';
 
 $employees = $employees ?? [];
+$allDepartments = $allDepartments ?? false;
+$departmentLabels = $departmentLabels ?? [];
 $departmentLabel = htmlspecialchars($department ?? 'Department');
 $totalEmployees = count($employees);
 $branches = [];
 $positions = [];
+$departmentOptions = [];
 
 foreach ($employees as $row) {
+    $deptCode = trim((string) ($row['department'] ?? ''));
+    if ($deptCode !== '') {
+        $departmentOptions[$deptCode] = $departmentLabels[$deptCode] ?? $deptCode;
+    }
     $branch = trim((string) ($row['branchName'] ?? ''));
     if ($branch !== '') {
         $branches[$branch] = true;
@@ -21,6 +28,7 @@ foreach ($employees as $row) {
 
 ksort($branches);
 ksort($positions);
+asort($departmentOptions);
 ?>
 <html lang="en">
 
@@ -50,8 +58,10 @@ ksort($positions);
             <div class="page-hero">
                 <div class="row align-items-center">
                     <div class="col-lg-7">
-                        <h1><i class="fas fa-user-friends mr-2"></i>Department Employees</h1>
-                        <p>View and manage staff in your department — browse profiles, tickets, and assigned assets.</p>
+                        <h1><i class="fas fa-user-friends mr-2"></i><?= $allDepartments ? 'All Employees' : 'Department Employees' ?></h1>
+                        <p><?= $allDepartments
+                            ? 'Every active employee across all departments — filter by department, branch, or position.'
+                            : 'View and manage staff in your department — browse profiles, tickets, and assigned assets.' ?></p>
                         <div class="hero-dept"><i class="fas fa-building mr-1"></i><?= $departmentLabel ?></div>
                         <div class="quick-nav mt-3">
                             <a href="<?= htmlspecialchars($base) ?>/head/dashboard" class="btn btn-sm btn-outline-light">
@@ -72,8 +82,8 @@ ksort($positions);
                             </div>
                             <div class="col-4">
                                 <div class="hero-stat">
-                                    <div class="stat-value"><?= count($positions) ?></div>
-                                    <div class="stat-label">Positions</div>
+                                    <div class="stat-value"><?= $allDepartments ? count($departmentOptions) : count($positions) ?></div>
+                                    <div class="stat-label"><?= $allDepartments ? 'Departments' : 'Positions' ?></div>
                                 </div>
                             </div>
                             <div class="col-4">
@@ -87,9 +97,21 @@ ksort($positions);
                 </div>
             </div>
 
+            <?php $filterCol = $allDepartments ? 'col-md-3' : 'col-md-4'; ?>
             <div class="filter-toolbar">
                 <div class="row align-items-end">
-                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                    <?php if ($allDepartments): ?>
+                    <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                        <label for="employeeDepartmentFilter">Department</label>
+                        <select id="employeeDepartmentFilter" class="form-control form-control-sm">
+                            <option value="">All Departments</option>
+                            <?php foreach ($departmentOptions as $code => $label): ?>
+                                <option value="<?= htmlspecialchars(strtolower($code)) ?>"><?= htmlspecialchars($label) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+                    <div class="<?= $filterCol ?> col-sm-6 mb-2 mb-md-0">
                         <label for="employeeBranchFilter">Branch</label>
                         <select id="employeeBranchFilter" class="form-control form-control-sm">
                             <option value="">All Branches</option>
@@ -98,7 +120,7 @@ ksort($positions);
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                    <div class="<?= $filterCol ?> col-sm-6 mb-2 mb-md-0">
                         <label for="employeePositionFilter">Position</label>
                         <select id="employeePositionFilter" class="form-control form-control-sm">
                             <option value="">All Positions</option>
@@ -107,7 +129,7 @@ ksort($positions);
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-4 col-sm-6 text-md-right">
+                    <div class="<?= $filterCol ?> col-sm-6 text-md-right">
                         <button type="button" id="employeeClearFilters" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-undo mr-1"></i> Clear Filters
                         </button>
@@ -126,7 +148,7 @@ ksort($positions);
                     <?php if (empty($employees)): ?>
                         <div class="empty-state">
                             <i class="fas fa-users-slash d-block"></i>
-                            No employees found in this department.
+                            <?= $allDepartments ? 'No active employees found.' : 'No employees found in this department.' ?>
                         </div>
                     <?php else: ?>
                     <div class="table-responsive">
@@ -150,7 +172,8 @@ ksort($positions);
                                     $date = admin_account_format_date((string) ($row['datecreated'] ?? ''));
                                 ?>
                                     <tr data-branch="<?= htmlspecialchars(strtolower(trim((string) ($row['branchName'] ?? '')))) ?>"
-                                        data-position="<?= htmlspecialchars(strtolower(trim($position))) ?>">
+                                        data-position="<?= htmlspecialchars(strtolower(trim($position))) ?>"
+                                        data-department="<?= htmlspecialchars(strtolower(trim($dept))) ?>">
                                         <td>
                                             <div class="employee-name"><?= htmlspecialchars($fullName) ?></div>
                                             <div class="employee-meta">
@@ -392,7 +415,7 @@ ksort($positions);
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/head-employees.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/head-employees.js?v=20261003"></script>
 
     <script>
     $(document).on('click', '.viewEmployeeTicketsBtn', function () {

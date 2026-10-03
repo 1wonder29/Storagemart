@@ -315,6 +315,27 @@ class Employee extends BaseModel{
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    /** Every active employee in every department (General Manager view), minus the viewer and the system login. */
+    public function fetchAllActiveStaff(int $excludeEmployeeId): array
+    {
+        $sql = "
+            SELECT e.employee_id, e.account_id, e.firstname, e.lastname, e.middlename,
+                   e.department, e.position, e.branch_id, b.branchName, e.email,
+                   e.createdby, e.datecreated, a.usertype
+            FROM {$this->tblemployee} e
+            JOIN {$this->table} a ON a.account_id = e.account_id
+            LEFT JOIN {$this->tblbranch} b ON b.branch_id = e.branch_id
+            WHERE UPPER(a.status) = 'ACTIVE'
+              AND LOWER(a.username) <> 'admin'
+              AND e.employee_id <> ?
+            ORDER BY e.department ASC, e.lastname ASC, e.firstname ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$excludeEmployeeId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function fetchTicketsByAsset(int $inventoryId): array
     {
         $sql = "
