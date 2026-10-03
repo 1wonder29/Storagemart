@@ -1,5 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
 ?>
 <html lang="en">
 
@@ -82,13 +83,16 @@ $base = rtrim(BASE_URL, '/');
                                         <label for="usertype" class="form-label">User Type</label>
                                         <select id="usertype" name="usertype" class="form-control" required>
                                             <option value="">-- Select User Type --</option>
-                                            <option value="ADMIN" <?= (($account['usertype'] ?? '') === 'ADMIN') ? 'selected' : '' ?>>Admin</option>
-                                            <option value="IT" <?= (($account['usertype'] ?? '') === 'IT') ? 'selected' : '' ?>>Information Technology</option>
-                                            <option value="HEAD" <?= (($account['usertype'] ?? '') === 'HEAD') ? 'selected' : '' ?>>Head</option>
-                                            <option value="HR" <?= (($account['usertype'] ?? '') === 'HR') ? 'selected' : '' ?>>HR</option>
-                                            <option value="AOM" <?= (($account['usertype'] ?? '') === 'AOM') ? 'selected' : '' ?>>Area Operation Manager</option>
-                                            <option value="HOM" <?= (($account['usertype'] ?? '') === 'HOM') ? 'selected' : '' ?>>Operations Manager</option>
-                                            <option value="EMPLOYEE" <?= (($account['usertype'] ?? '') === 'EMPLOYEE') ? 'selected' : '' ?>>Employee</option>
+                                            <?php
+                                            $currentRole = strtoupper(trim((string) ($account['usertype'] ?? '')));
+                                            $roleChoices = RoleLabel::assignable();
+                                            if ($currentRole !== '' && !isset($roleChoices[$currentRole])) {
+                                                // Keep an older role selectable so saving doesn't change it by accident.
+                                                $roleChoices[$currentRole] = $currentRole;
+                                            }
+                                            foreach ($roleChoices as $roleCode => $roleName): ?>
+                                                <option value="<?= htmlspecialchars($roleCode) ?>" <?= $currentRole === $roleCode ? 'selected' : '' ?>><?= htmlspecialchars($roleName) ?></option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                         <div class="col-md-6">

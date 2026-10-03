@@ -62,7 +62,8 @@ if (!function_exists('tms_topbar_user_labels')) {
         $position = trim($position);
         $usertype = trim($usertype);
 
-        $role = $position !== '' ? $position : $usertype;
+        require_once __DIR__ . '/../../Helpers/RoleLabel.php';
+        $role = $position !== '' ? $position : RoleLabel::of($usertype);
 
         if ($firstname === '') {
             $firstname = $role !== '' ? $role : 'User';

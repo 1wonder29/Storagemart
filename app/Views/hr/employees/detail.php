@@ -1,5 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -87,7 +88,7 @@ $base = rtrim(BASE_URL, '/');
                             </div>
                             <div class="detail-grid-item">
                                 <span class="detail-label">User Type</span>
-                                <div class="detail-value"><span class="badge bg-primary"><?= htmlspecialchars($employee['usertype'] ?? '') ?></span></div>
+                                <div class="detail-value"><span class="badge bg-primary"><?= htmlspecialchars(RoleLabel::of($employee['usertype'] ?? '')) ?></span></div>
                             </div>
                             <div class="detail-grid-item">
                                 <span class="detail-label">Status</span>

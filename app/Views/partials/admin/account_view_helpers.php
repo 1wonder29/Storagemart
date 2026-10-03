@@ -19,26 +19,19 @@ if (!function_exists('admin_account_usertype_class')) {
     }
 }
 
-if (!function_exists('admin_account_role_options')) {
+if (!function_exists('admin_account_role_badge_text')) {
     /**
-     * Every role an account can have (same list as the Add / Edit Account forms), plus any
-     * other usertype that already exists in the data, so the role filter never loses a role
-     * just because no account currently uses it.
-     *
-     * @param string[] $usertypesInUse
-     * @return string[]
+     * Role name as shown on a badge, plus the department for department heads,
+     * e.g. "Department Head — Sales".
      */
-    function admin_account_role_options(array $usertypesInUse = []): array
+    function admin_account_role_badge_text(string $usertype, string $departmentLabel): string
     {
-        $roles = ['ADMIN', 'AOM', 'EMPLOYEE', 'HEAD', 'HOM', 'HR', 'IT', 'OM'];
-        foreach ($usertypesInUse as $type) {
-            $type = strtoupper(trim((string) $type));
-            if ($type !== '' && !in_array($type, $roles, true)) {
-                $roles[] = $type;
-            }
+        require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
+        $text = RoleLabel::of($usertype);
+        if (strtoupper(trim($usertype)) === 'HEAD' && $departmentLabel !== '') {
+            $text .= ' — ' . $departmentLabel;
         }
-        sort($roles);
-        return $roles;
+        return $text;
     }
 }
 

@@ -1,5 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../Helpers/RoleLabel.php';
 $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
 $canReassign = ($user_role ?? '') === 'HOM';
 $employees = $employees ?? [];
@@ -169,7 +170,7 @@ $totalEmployees = count($employees);
                                 </td>
                                 <td>
                                     <span class="role-pill role-<?= strtolower($usertype) ?>">
-                                        <?= htmlspecialchars($usertype) ?>
+                                        <?= htmlspecialchars(RoleLabel::of($usertype)) ?>
                                     </span>
                                 </td>
                                 <td class="text-right">

@@ -1,5 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
 
 $totalCancelled = count($tickets);
@@ -174,7 +175,7 @@ ksort($priorities);
                                         <td>
                                             <div class="employee-name"><?= htmlspecialchars((string) ($row['cancelled_by_name'] ?? '')) ?></div>
                                             <?php if (!empty($row['performed_role'])): ?>
-                                                <div class="assignee-hint"><?= htmlspecialchars((string) $row['performed_role']) ?></div>
+                                                <div class="assignee-hint"><?= htmlspecialchars(RoleLabel::of((string) $row['performed_role'])) ?></div>
                                             <?php endif; ?>
                                         </td>
                                         <td class="date-cell" data-order="<?= (int) $date['order'] ?>">

@@ -1,5 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
 ?>
 <html lang="en">
 
@@ -76,13 +77,9 @@ $base = rtrim(BASE_URL, '/');
                                         <label for="usertype" class="form-label">User Type</label>
                                         <select id="usertype" name="usertype" class="form-control" required>
                                             <option value="">-- Select User Type --</option>
-                                            <option value="ADMIN">Admin</option>
-                                            <option value="HEAD">Head</option>
-                                            <option value="HR">HR</option>
-                                            <option value="IT">Information Technology</option>
-                                            <option value="AOM">Area Operation Manager</option>
-                                            <option value="HOM">Operations Manager</option>
-                                            <option value="EMPLOYEE">Employee</option>
+                                            <?php foreach (RoleLabel::assignable() as $roleCode => $roleName): ?>
+                                                <option value="<?= htmlspecialchars($roleCode) ?>" <?= (($old['usertype'] ?? '') === $roleCode) ? 'selected' : '' ?>><?= htmlspecialchars($roleName) ?></option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                 </div>

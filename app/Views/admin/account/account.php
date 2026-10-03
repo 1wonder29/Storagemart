@@ -1,11 +1,11 @@
 <?php
 $base = BASE_URL !== '' ? rtrim(BASE_URL, '/') : '';
 require_once __DIR__ . '/../../partials/admin/account_view_helpers.php';
+require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
 
 $users = $users ?? [];
 $historyCounts = $historyCounts ?? [];
 $departmentLabels = $departmentLabels ?? [];
-$deptSuffixRoles = ['HEAD', 'HOM', 'OM'];
 
 $roleOptions = [];
 $departmentOptions = [];
@@ -25,7 +25,7 @@ foreach ($users as $row) {
     foreach ([$row['usertype'] ?? '', $row['secondary_usertype'] ?? ''] as $type) {
         $type = strtoupper(trim((string) $type));
         if ($type !== '') {
-            $roleOptions[$type] = true;
+            $roleOptions[$type] = RoleLabel::of($type);
         }
     }
     if (strtoupper((string) ($row['usertype'] ?? '')) === 'ADMIN') {
@@ -40,7 +40,7 @@ foreach ($users as $row) {
         $branchOptions[$branch] = true;
     }
 }
-ksort($roleOptions);
+asort($roleOptions);
 asort($departmentOptions);
 ksort($branchOptions);
 ?>
@@ -107,8 +107,8 @@ ksort($branchOptions);
                         <label for="userRoleFilter">Role</label>
                         <select id="userRoleFilter" class="form-control form-control-sm">
                             <option value="">All Roles</option>
-                            <?php foreach (array_keys($roleOptions) as $type): ?>
-                                <option value="<?= htmlspecialchars(strtolower($type)) ?>"><?= htmlspecialchars($type) ?></option>
+                            <?php foreach ($roleOptions as $type => $label): ?>
+                                <option value="<?= htmlspecialchars(strtolower($type)) ?>"><?= htmlspecialchars($label) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -195,7 +195,11 @@ ksort($branchOptions);
                                     $date = admin_account_format_date((string) ($row['datecreated'] ?? ''));
                                     $history = $historyCounts[$employeeId] ?? ['tickets' => 0, 'items' => 0, 'assets' => 0];
                                     $isGeneralManagerAccount = $accountId === 2200616;
-                                    $roleSuffix = $isGeneralManagerAccount ? $position : ($departmentLabels[$department] ?? $department);
+                                    $departmentLabel = $departmentLabels[$department] ?? $department;
+                                    $primaryRoleText = admin_account_role_badge_text($usertype, $departmentLabel);
+                                    $secondaryRoleText = $isGeneralManagerAccount && $position !== ''
+                                        ? $position
+                                        : admin_account_role_badge_text($secondaryType, $departmentLabel);
                                     $roleTokens = array_filter([strtolower(trim($usertype)), strtolower(trim($secondaryType))]);
                                 ?>
                                     <tr data-role="<?= htmlspecialchars(implode(' ', $roleTokens)) ?>"
@@ -225,10 +229,7 @@ ksort($branchOptions);
                                             <?php if ($usertype !== ''): ?>
                                                 <span class="role-badge <?= admin_account_usertype_class($usertype) ?>">
                                                     <i class="fas fa-shield-alt"></i>
-                                                    <?= htmlspecialchars($usertype) ?>
-                                                    <?php if (in_array(strtoupper($usertype), $deptSuffixRoles, true) && $roleSuffix !== ''): ?>
-                                                        — <?= htmlspecialchars($roleSuffix) ?>
-                                                    <?php endif; ?>
+                                                    <?= htmlspecialchars($primaryRoleText) ?>
                                                 </span>
                                             <?php else: ?>
                                                 <span class="text-muted">—</span>
@@ -236,10 +237,7 @@ ksort($branchOptions);
                                             <?php if ($secondaryType !== ''): ?>
                                                 <span class="role-badge role-badge-secondary <?= admin_account_usertype_class($secondaryType) ?>">
                                                     <i class="fas fa-shield-alt"></i>
-                                                    <?= htmlspecialchars($secondaryType) ?>
-                                                    <?php if (in_array(strtoupper($secondaryType), $deptSuffixRoles, true) && $roleSuffix !== ''): ?>
-                                                        — <?= htmlspecialchars($roleSuffix) ?>
-                                                    <?php endif; ?>
+                                                    <?= htmlspecialchars($secondaryRoleText) ?>
                                                 </span>
                                             <?php endif; ?>
                                         </td>

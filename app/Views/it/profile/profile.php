@@ -1,5 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
 $fullName = trim(($profile['lastname'] ?? '') . ', ' . ($profile['firstname'] ?? '') . ' ' . ($profile['middlename'] ?? ''));
 $displayName = $fullName !== ',' ? trim($fullName) : '-';
 $dateCreated = $profile['account_datecreated'] ?? null;
@@ -69,7 +70,7 @@ $dateCreatedLabel = $dateCreated ? date('M d, Y', strtotime($dateCreated)) : '-'
                     <div class="col-md-6">
                         <div class="profile-field">
                             <div class="profile-field-label">User Type</div>
-                            <div class="profile-field-value"><?= htmlspecialchars($profile['usertype'] ?? '-') ?></div>
+                            <div class="profile-field-value"><?= htmlspecialchars(RoleLabel::of($profile['usertype'] ?? '') ?: '-') ?></div>
                         </div>
                     </div>
                     <div class="col-md-6">

@@ -1,5 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
 $fullName = trim(
     ($profile['firstname'] ?? '') . ' ' .
     ($profile['middlename'] ?? '') . ' ' .
@@ -99,7 +100,7 @@ $dateCreatedLabel = $dateCreated ? date('M d, Y', strtotime($dateCreated)) : '-'
                             <div class="info-icon"><i class="fas fa-shield-alt"></i></div>
                             <div>
                                 <div class="info-label">User Type</div>
-                                <div class="info-value"><?= htmlspecialchars($profile['usertype'] ?? 'AOM') ?></div>
+                                <div class="info-value"><?= htmlspecialchars(RoleLabel::of($profile['usertype'] ?? 'AOM')) ?></div>
                             </div>
                         </div>
                         <div class="info-row">

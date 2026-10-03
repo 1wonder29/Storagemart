@@ -1,5 +1,6 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
 require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
 ?>
 <html lang="en">
@@ -137,7 +138,7 @@ require_once __DIR__ . '/../../partials/it/ticket_view_helpers.php';
                                         <td>
                                             <div class="employee-name"><?= htmlspecialchars($cancelledBy) ?></div>
                                             <?php if (!empty($row['performed_role'])): ?>
-                                                <span class="branch-pill"><?= htmlspecialchars((string) $row['performed_role']) ?></span>
+                                                <span class="branch-pill"><?= htmlspecialchars(RoleLabel::of((string) $row['performed_role'])) ?></span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="date-cell" data-order="<?= (int) $dateInfo['order'] ?>">
