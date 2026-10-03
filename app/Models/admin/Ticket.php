@@ -590,7 +590,7 @@ class Ticket extends BaseModel {
 
     protected function generateTicketNumber(int $ticketId): string
     {
-        return 'STM-' . date('Ymd') . '-' . str_pad((string)$ticketId, 5, '0', STR_PAD_LEFT);
+        return 'STM-' . date('Ymd') . '-' . str_pad((string)$ticketId, 4, '0', STR_PAD_LEFT);
     }
 
     public function fetchPendingTickets(): array
