@@ -19,3 +19,7 @@ public.zip
 .DS_Store
 vendor/
 composer.lock
+# Server-generated files: logs, cPanel .htaccess backups, SSL challenges
+error_log
+.htaccess.phpupgrader.*
+public/.well-known/
