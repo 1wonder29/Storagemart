@@ -715,13 +715,16 @@ class Asset extends BaseModel {
             $params[':like'] = $q . '%';
             $where = 'CAST(e.employee_id AS CHAR) LIKE :like';
         } else {
-            $params[':like'] = '%' . $q . '%';
-            $where = "e.firstname LIKE :like
-                OR e.lastname LIKE :like
-                OR e.middlename LIKE :like
-                OR CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) LIKE :like
-                OR CONCAT(e.firstname, ' ', e.lastname) LIKE :like
-                OR CONCAT(e.firstname, ' ', IFNULL(e.middlename, ''), ' ', e.lastname) LIKE :like";
+            // Each placeholder used once: native (non-emulated) prepares reject reused names.
+            for ($i = 1; $i <= 6; $i++) {
+                $params[":like{$i}"] = '%' . $q . '%';
+            }
+            $where = "e.firstname LIKE :like1
+                OR e.lastname LIKE :like2
+                OR e.middlename LIKE :like3
+                OR CONCAT(e.lastname, ', ', e.firstname, ' ', IFNULL(e.middlename, '')) LIKE :like4
+                OR CONCAT(e.firstname, ' ', e.lastname) LIKE :like5
+                OR CONCAT(e.firstname, ' ', IFNULL(e.middlename, ''), ' ', e.lastname) LIKE :like6";
         }
 
         $sql = "SELECT e.employee_id,
