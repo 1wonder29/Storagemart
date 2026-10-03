@@ -1,6 +1,17 @@
-Options +Indexes +FollowSymLinks
+Options -Indexes +FollowSymLinks
 RewriteEngine On
 RewriteBase /
+
+# Never serve log files (PHP error_log, debug logs) to browsers.
+<FilesMatch "(\.log|error_log)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

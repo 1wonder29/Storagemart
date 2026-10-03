@@ -1238,8 +1238,7 @@ class AssetController extends AuthController {
 
         } catch (\Throwable $e) {
             // Log to file for debugging (server-side)
-            file_put_contents(__DIR__ . '/../../../public/debug.log',
-                date('c') . " searchEmployee EXCEPTION: " . $e->getMessage() . PHP_EOL, FILE_APPEND);
+            error_log("AssetController::searchEmployee EXCEPTION: " . $e->getMessage());
 
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
@@ -1284,8 +1283,7 @@ class AssetController extends AuthController {
                 'results' => $results,
             ]);
         } catch (\Throwable $e) {
-            file_put_contents(__DIR__ . '/../../../public/debug.log',
-                date('c') . " searchEmployeeSuggestions EXCEPTION: " . $e->getMessage() . PHP_EOL, FILE_APPEND);
+            error_log("AssetController::searchEmployeeSuggestions EXCEPTION: " . $e->getMessage());
 
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
