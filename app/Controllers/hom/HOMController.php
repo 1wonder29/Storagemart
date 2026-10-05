@@ -41,13 +41,13 @@ class HOMController extends AuthController
         $role = strtoupper($user['usertype'] ?? '');
         if (!$user || !in_array($role, ['HOM', 'OM'], true)) {
             http_response_code(403);
-            exit('Unauthorized: This area requires HOM access.');
+            exit('Unauthorized: This area requires Operations Manager access.');
         }
 
-        // Branch reassignment belongs to the Operations Head (HOM); an Operations Manager (OM) can view only.
+        // Branch reassignment belongs to the Operations Manager (HOM); the retired OM role could view only.
         if ($headOnly && $role !== 'HOM') {
             http_response_code(403);
-            exit('Unauthorized: Only the Operations Head can reassign employees or AOM branches.');
+            exit('Unauthorized: Only the Operations Manager can reassign employees or Area Operations Manager branches.');
         }
 
         return $user;

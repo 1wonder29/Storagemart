@@ -11,8 +11,8 @@ class RoleLabel
     private const LABELS = [
         'ADMIN'    => 'Administrator',
         'HEAD'     => 'Department Head',
-        'HR'       => 'HR',
-        'IT'       => 'IT',
+        'HR'       => 'Human Resources',
+        'IT'       => 'Information Technology',
         'HOM'      => 'Operations Manager',
         'AOM'      => 'Area Operations Manager',
         'EMPLOYEE' => 'Employee',

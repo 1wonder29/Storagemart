@@ -2,7 +2,7 @@
 $base = rtrim(BASE_URL, '/');
 $routePrefix = $routePrefix ?? (($user_role ?? '') === 'HOM' ? 'hom' : 'om');
 $dashboardTitle = ($user_role ?? '') === 'HOM' ? 'Dashboard' : 'OM Dashboard';
-$roleLabel = ($user_role ?? '') === 'HOM' ? 'Head of Operations' : 'Operations Manager';
+$roleLabel = 'Operations Manager';
 $displayName = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? '')) ?: 'User';
 
 $statusOrder = ['Open', 'In Progress', 'Pending', 'Cancelled', 'Resolved', 'Closed'];
