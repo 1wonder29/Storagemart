@@ -1,6 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
+require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
 ?>
 <html lang="en">
 
@@ -54,6 +55,14 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                             </h6>
                         </div>
                         <div class="card-body">
+                            <?php if (isset($_GET['reset'])): ?>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-key mr-1"></i>
+                                    <strong>Password reset request.</strong> Confirm it's really this person (call them or see them in person),
+                                    then set a temporary password below and tell it to them directly. They can change it from
+                                    <em>Change password</em> in the sidebar after logging in. Saving a new password also unlocks the account.
+                                </div>
+                            <?php endif; ?>
                             <form class="account-edit-form" action="<?= htmlspecialchars($base) ?>/admin/account/edit" method="POST">
                                     <input type="hidden" name="account_id" value="<?= htmlspecialchars($account['account_id'] ?? '') ?>">
                                     <input type="hidden" name="employee_id" value="<?= htmlspecialchars($account ['employee_id'] ?? '') ?>">
@@ -68,11 +77,12 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                                         <label for="password" class="form-label">Password</label>
                                         <div class="input-group">
                                         <input type="password" class="form-control" id="password" name="password"
-                                            placeholder="Leave blank to keep current password">
+                                            placeholder="Leave blank to keep current password" autocomplete="new-password">
                                             <span class="input-group-text" id="showPassword" style="cursor: pointer;">
                                                 <i class="fas fa-eye"></i>
                                             </span>
                                         </div>
+                                        <small class="form-text text-muted"><?= htmlspecialchars(PasswordPolicy::HINT) ?></small>
                                     </div>
 
 
@@ -235,6 +245,7 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-edit.js"></script>
+    <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 
 </html>

@@ -30,6 +30,9 @@ $sidebarUser = AppShell::currentUser();
             <?php if ($sidebarUser['position'] !== ''): ?>
                 <div class="sidebar-user-position"><?= htmlspecialchars($sidebarUser['position']) ?></div>
             <?php endif; ?>
+            <a class="sidebar-user-link" href="<?= htmlspecialchars($base) ?>/change-password">
+                <i class="fas fa-key" aria-hidden="true"></i> Change password
+            </a>
         </div>
         <button type="button" class="sidebar-logout" data-toggle="modal" data-target="#logoutModal" title="Logout">
             <i class="fas fa-sign-out-alt" aria-hidden="true"></i>

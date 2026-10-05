@@ -72,10 +72,17 @@ if ($uri === '/forgot-password' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
-// FORGOT PASSWORD SUBMIT
+// FORGOT PASSWORD SUBMIT (files a request for IT/Admin)
 if ($uri === '/forgot-password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/../app/Controllers/AuthController.php';
-    (new AuthController())->resetPassword();
+    (new AuthController())->requestPasswordReset();
+    exit;
+}
+
+// CHANGE OWN PASSWORD (any signed-in user)
+if ($uri === '/change-password') {
+    require_once __DIR__ . '/../app/Controllers/AuthController.php';
+    (new AuthController())->changePassword();
     exit;
 }
 

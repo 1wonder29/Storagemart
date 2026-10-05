@@ -3,6 +3,8 @@
 
 require_once __DIR__ . '/../Helpers/Session.php';
 require_once __DIR__ . '/../Helpers/ActivityLogger.php';
+require_once __DIR__ . '/../Helpers/LoginThrottle.php';
+require_once __DIR__ . '/../Helpers/PasswordPolicy.php';
 require_once __DIR__ . '/../Models/admin/Account.php';
 
 class AuthController {
@@ -67,7 +69,12 @@ class AuthController {
         require __DIR__ . '/../Views/auth/forgot_password.php';
     }
 
-    public function resetPassword() {
+    /**
+     * Forgot password: files a request for an Admin, who verifies the person and
+     * sets a temporary password. The page never changes a password itself, and
+     * it gives the same answer whether or not the details match an account.
+     */
+    public function requestPasswordReset() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('/forgot-password');
         }
@@ -80,14 +87,13 @@ class AuthController {
 
         $username = trim($_POST['username'] ?? '');
         $email = trim($_POST['email'] ?? '');
-        $newPassword = $_POST['new_password'] ?? '';
-        $confirmPassword = $_POST['confirm_password'] ?? '';
+        $note = trim($_POST['note'] ?? '');
 
         $_SESSION['forgot_old_username'] = $username;
         $_SESSION['forgot_old_email'] = $email;
 
-        if ($username === '' || $email === '' || $newPassword === '' || $confirmPassword === '') {
-            $_SESSION['forgotMessage'] = "<span style='color:red'>Please complete all fields.</span>";
+        if ($username === '' || $email === '') {
+            $_SESSION['forgotMessage'] = "<span style='color:red'>Please enter your username and registered email.</span>";
             $this->redirect('/forgot-password');
         }
 
@@ -96,37 +102,97 @@ class AuthController {
             $this->redirect('/forgot-password');
         }
 
-        if ($newPassword !== $confirmPassword) {
-            $_SESSION['forgotMessage'] = "<span style='color:red'>Passwords do not match.</span>";
-            $this->redirect('/forgot-password');
-        }
-
-        if (strlen($newPassword) < 8) {
-            $_SESSION['forgotMessage'] = "<span style='color:red'>Password must be at least 8 characters.</span>";
-            $this->redirect('/forgot-password');
-        }
-
         $account = $this->model->findByUsernameAndEmail($username, $email);
-        if (!$account) {
-            $_SESSION['forgotMessage'] = "<span style='color:red'>No account matched the provided username and email.</span>";
-            $this->redirect('/forgot-password');
+        if ($account) {
+            require_once __DIR__ . '/../Models/PasswordResetRequest.php';
+            require_once __DIR__ . '/../Models/NotificationModel.php';
+            try {
+                $requests = new PasswordResetRequest();
+                $accountId = (int) $account['account_id'];
+                if (!$requests->hasPending($accountId)) {
+                    $requestId = $requests->create($accountId, $note, LoginThrottle::clientIp());
+                    $notifications = new NotificationModel();
+                    foreach ($requests->adminAccountIds() as $adminId) {
+                        $notifications->create($adminId, "Password reset requested by {$username}", 'fa-key', 'warning',
+                            '/admin/account#reset-requests', $requestId);
+                    }
+                    ActivityLogger::action('PASSWORD_RESET_REQUEST', 'Authentication', (string) $accountId,
+                        "Password reset requested for {$username}", $username);
+                }
+            } catch (Throwable $e) {
+                error_log('requestPasswordReset: ' . $e->getMessage());
+            }
         }
-
-        $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
-        $ok = $this->model->updatePasswordByAccountId((int)$account['account_id'], $passwordHash);
-
-        if (!$ok) {
-            $_SESSION['forgotMessage'] = "<span style='color:red'>Failed to reset password. Please try again.</span>";
-            $this->redirect('/forgot-password');
-        }
-
-        // Log password reset to audit trail
-        ActivityLogger::action('PASSWORD_RESET', 'Authentication', (string)$account['account_id'], 
-            "Password reset for {$username}", $username);
 
         unset($_SESSION['forgot_old_username'], $_SESSION['forgot_old_email']);
-        $_SESSION['loginMessage'] = "<span style='color:green'>Password reset successful. You can now log in.</span>";
+        $_SESSION['loginMessage'] = "<span style='color:green'>Request sent. If the username and email match an account, IT will verify "
+            . "your identity and give you a temporary password. You can also contact the IT Department directly.</span>";
         $this->redirect('/login');
+    }
+
+    /** Signed-in users change their own password (e.g. after IT gives them a temporary one). */
+    public function changePassword() {
+        if (empty($_SESSION['account_id'])) {
+            $_SESSION['loginMessage'] = 'Please log in to change your password.';
+            $this->redirect('/login');
+        }
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+
+        $accountId = (int) $_SESSION['account_id'];
+        $homePath = $this->homePathFor((string) ($_SESSION['superuser_real_usertype'] ?? $_SESSION['usertype'] ?? ''));
+        $changeMessage = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $current = (string) ($_POST['current_password'] ?? '');
+            $new = (string) ($_POST['new_password'] ?? '');
+            $confirm = (string) ($_POST['confirm_password'] ?? '');
+            $account = $this->model->getById($accountId);
+
+            if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], (string) $_POST['csrf_token'])) {
+                $changeMessage = 'Invalid form token. Please try again.';
+            } elseif (!$account || !$this->passwordMatches($current, (string) $account['password'])) {
+                $changeMessage = 'Your current password is incorrect.';
+            } elseif ($new !== $confirm) {
+                $changeMessage = 'The new passwords do not match.';
+            } elseif ($new === $current) {
+                $changeMessage = 'Choose a password different from your current one.';
+            } elseif (($problem = PasswordPolicy::problem($new)) !== null) {
+                $changeMessage = $problem;
+            } elseif (!$this->model->updatePasswordByAccountId($accountId, password_hash($new, PASSWORD_DEFAULT))) {
+                $changeMessage = 'Could not change your password. Please try again.';
+            } else {
+                ActivityLogger::action('PASSWORD_CHANGE', 'Authentication', (string) $accountId,
+                    'Password changed by the account owner', (string) ($_SESSION['username'] ?? ''));
+                $this->redirect('/change-password?done=1');
+            }
+        }
+
+        $changeDone = isset($_GET['done']);
+        require __DIR__ . '/../Views/auth/change_password.php';
+    }
+
+    private function passwordMatches(string $password, string $stored): bool {
+        if (strpos($stored, '$2y$') === 0 || strpos($stored, '$argon2') === 0) {
+            return password_verify($password, $stored);
+        }
+        return $stored !== '' && hash_equals($stored, $password); // legacy plain-text rows
+    }
+
+    /** Landing page for each role (same as after login). */
+    protected function homePathFor(string $usertype): string {
+        $paths = [
+            'EMPLOYEE' => '/employee/dashboard',
+            'HEAD'     => '/head/dashboard',
+            'ADMIN'    => '/admin',
+            'IT'       => '/it/dashboard',
+            'HR'       => '/hr/dashboard',
+            'AOM'      => '/aom/dashboard',
+            'HOM'      => '/hom/dashboard',
+            'OM'       => '/om/dashboard',
+        ];
+        return $paths[strtoupper($usertype)] ?? '/login';
     }
 
     public function login() {
@@ -150,6 +216,17 @@ class AuthController {
         if ($username === '' || $password === '') {
             $_SESSION['loginMessage'] = "<span style='color:red'>Please fill both fields.</span>";
             $this->log('Missing username or password — redirecting back.');
+            $this->redirect('/login');
+        }
+
+        // Locked after too many wrong passwords from this address (lifts by itself).
+        $pdo = $this->model->getPDO();
+        $clientIp = LoginThrottle::clientIp();
+        $lockedMinutes = LoginThrottle::minutesLeft($pdo, $username, $clientIp);
+        if ($lockedMinutes > 0) {
+            ActivityLogger::login($username, false, 'Blocked: locked after ' . LoginThrottle::MAX_ATTEMPTS . ' failed attempts');
+            $_SESSION['loginMessage'] = "<font color='red'><br>Too many failed attempts. Please try again in {$lockedMinutes} minute"
+                . ($lockedMinutes === 1 ? '' : 's') . ", or contact IT.</font>";
             $this->redirect('/login');
         }
 
@@ -183,19 +260,20 @@ class AuthController {
 
         // ✅ HANDLE FAILED LOGIN ATTEMPTS
         if (!$account) {
-            $failedAttempts = $this->model->getFailedAttempts($username);
+            $maxAttempts = LoginThrottle::MAX_ATTEMPTS;
+            $failedAttempts = LoginThrottle::recordFailure($pdo, $username, $clientIp);
             $this->model->recordFailedAttempt($username);
-            $failedAttempts++;
-            
+
             // Log failed login to audit trail
-            ActivityLogger::login($username, false, 'Invalid credentials (Attempt ' . $failedAttempts . '/3)');
-            
-            if ($failedAttempts >= 3) {
-                $_SESSION['loginMessage'] = "<font color='red'><br>Your account has been deactivated due to 3 failed login attempts. Please contact admin.</font>";
-                $this->log('Account deactivated for ' . $username . ' — 3 failed attempts');
+            ActivityLogger::login($username, false, "Invalid credentials (Attempt {$failedAttempts}/{$maxAttempts})");
+
+            if ($failedAttempts >= $maxAttempts) {
+                $_SESSION['loginMessage'] = "<font color='red'><br>Too many failed attempts. Login is locked for "
+                    . LoginThrottle::LOCK_MINUTES . " minutes. Contact IT if you need access sooner.</font>";
+                $this->log("Login locked for {$username} from {$clientIp} — {$failedAttempts} failed attempts");
             } else {
-                $_SESSION['loginMessage'] = "<font color='red'><br>Incorrect login details (Attempt " . $failedAttempts . "/3)</font>";
-                $this->log('Login failed for ' . $username . ' — attempt ' . $failedAttempts . '/3');
+                $_SESSION['loginMessage'] = "<font color='red'><br>Incorrect login details (Attempt {$failedAttempts}/{$maxAttempts})</font>";
+                $this->log("Login failed for {$username} — attempt {$failedAttempts}/{$maxAttempts}");
             }
             $this->redirect('/login');
         }
@@ -207,6 +285,7 @@ class AuthController {
         }
 
         // ✅ RESET FAILED ATTEMPTS ON SUCCESSFUL LOGIN
+        LoginThrottle::clear($pdo, $username, $clientIp);
         $this->model->resetFailedAttempts($username);
 
         // success: set session and redirect

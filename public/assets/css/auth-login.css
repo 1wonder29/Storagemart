@@ -450,6 +450,24 @@
   display: none;
 }
 
+/* Success messages (e.g. "Request sent") are green, not error-red. */
+.auth-alert:has(> span[style*="color:green"]),
+.auth-alert:has(> span[style*="color: green"]) {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.auth-optional {
+  font-weight: 400;
+  color: var(--auth-muted, #64748b);
+}
+
+a.auth-submit--link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;

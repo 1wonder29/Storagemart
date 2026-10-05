@@ -1,6 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
+require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
 ?>
 <html lang="en">
 
@@ -64,11 +65,12 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                                     <div class="col-md-6 position-relative">
                                         <label for="password" class="form-label">Password</label>
                                         <div class="input-group">
-                                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+                                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required autocomplete="new-password">
                                             <span class="input-group-text" id="showPassword" style="cursor: pointer;">
                                                 <i class="fas fa-eye"></i>
                                             </span>
                                         </div>
+                                        <small class="form-text text-muted"><?= htmlspecialchars(PasswordPolicy::HINT) ?></small>
                                     </div>
                                 </div>
 
@@ -171,6 +173,7 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-edit.js"></script>
+    <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 
 </html>

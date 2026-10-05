@@ -489,58 +489,31 @@ class Account extends BaseModel {
     // ========================
     
     /**
-     * Records a failed login attempt for a user
-     * If attempts reach 3, deactivates the account
+     * Counts a failed login for the record. Locking is handled by LoginThrottle
+     * (15 minutes), so failed logins never deactivate an account.
      */
     public function recordFailedAttempt(string $username): bool {
-        $stmt = $this->pdo->prepare("UPDATE {$this->table} 
-            SET failed_attempts = failed_attempts + 1, 
-                last_attempt_time = NOW() 
+        $stmt = $this->pdo->prepare("UPDATE {$this->table}
+            SET failed_attempts = failed_attempts + 1,
+                last_attempt_time = NOW()
             WHERE username = ? LIMIT 1");
-        $result = $stmt->execute([$username]);
-        
-        if ($result) {
-            // Check if attempts reached 3, then deactivate
-            $stmt = $this->pdo->prepare("SELECT failed_attempts FROM {$this->table} WHERE username = ? LIMIT 1");
-            $stmt->execute([$username]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($row && (int)$row['failed_attempts'] >= 3) {
-                $this->deactivateAccount($username);
-            }
-        }
-        
-        return $result;
+        return $stmt->execute([$username]);
     }
-    
+
     /**
      * Resets failed login attempts on successful login
      */
     public function resetFailedAttempts(string $username): bool {
-        $stmt = $this->pdo->prepare("UPDATE {$this->table} 
-            SET failed_attempts = 0, last_attempt_time = NULL 
+        $stmt = $this->pdo->prepare("UPDATE {$this->table}
+            SET failed_attempts = 0, last_attempt_time = NULL
             WHERE username = ? LIMIT 1");
         return $stmt->execute([$username]);
     }
-    
-    /**
-     * Deactivates an account by username
-     */
-    public function deactivateAccount(string $username): bool {
-        $stmt = $this->pdo->prepare("UPDATE {$this->table} 
-            SET status = 'Inactive' 
-            WHERE username = ? LIMIT 1");
-        return $stmt->execute([$username]);
-    }
-    
-    /**
-     * Get failed attempts count for a user
-     */
-    public function getFailedAttempts(string $username): int {
-        $stmt = $this->pdo->prepare("SELECT failed_attempts FROM {$this->table} WHERE username = ? LIMIT 1");
-        $stmt->execute([$username]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ? (int)$row['failed_attempts'] : 0;
+
+    /** Admin unlock / reactivation / new password: start the failed-login count over. */
+    public function resetFailedAttemptsById(int $accountId): bool {
+        $stmt = $this->pdo->prepare("UPDATE {$this->table} SET failed_attempts = 0, last_attempt_time = NULL WHERE account_id = ? LIMIT 1");
+        return $stmt->execute([$accountId]);
     }
 
     //Admin Account Model ends here

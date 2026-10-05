@@ -8,6 +8,9 @@ require_once __DIR__ . '/../../Models/admin/AuditTrail.php';
 require_once __DIR__ . '/../../Models/DashboardModel.php';
 require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
+require_once __DIR__ . '/../../Models/PasswordResetRequest.php';
+require_once __DIR__ . '/../../Helpers/LoginThrottle.php';
+require_once __DIR__ . '/../../Helpers/PasswordPolicy.php';
 
 class AdminController extends AuthController
 {
@@ -106,6 +109,8 @@ class AdminController extends AuthController
 
         $users = $accountModel->fetchUsersDirectory();
         $historyCounts = $accountModel->fetchHistoryCounts();
+        $resetRequests = (new PasswordResetRequest())->fetchPending();
+        $lockedUsernames = LoginThrottle::lockedUsernames($accountModel->getPDO());
         $departmentLabels = [];
         foreach ((new Department())->fetchAll() as $dept) {
             $departmentLabels[$dept['code']] = $dept['label'];
@@ -135,6 +140,30 @@ class AdminController extends AuthController
         $employeeId = (int) ($_POST['employee_id'] ?? 0);
         $account = $accountId > 0 ? $accountModel->getById($accountId) : null;
         $label = trim((string) ($_POST['display_name'] ?? '')) ?: ($account['username'] ?? "#{$employeeId}");
+        $actor = (string) ($_SESSION['username'] ?? 'Unknown');
+
+        if ($action === 'dismiss_reset') {
+            $requestId = (int) ($_POST['request_id'] ?? 0);
+            if ((new PasswordResetRequest())->dismiss($requestId, $actor)) {
+                ActivityLogger::update('Admin - Users', (string) $requestId, "Password reset request dismissed: {$label}", $actor);
+                $_SESSION['flash_success'] = "The password reset request from {$label} was dismissed.";
+            } else {
+                $_SESSION['flash_error'] = 'That request was already handled.';
+            }
+            return;
+        }
+
+        // Unlocking is allowed for every account, including the system admin.
+        if ($action === 'unlock') {
+            if (!$account) {
+                $_SESSION['flash_error'] = 'This person has no login account to unlock.';
+                return;
+            }
+            $this->clearLoginLock($accountModel, $account);
+            ActivityLogger::update('Admin - Users', (string) $accountId, "Login unlocked: {$label}", $actor);
+            $_SESSION['flash_success'] = "{$label} can log in again.";
+            return;
+        }
 
         if ($account && Account::isSystemAccount($account)) {
             $_SESSION['flash_error'] = 'The built-in system admin account cannot be changed here.';
@@ -152,6 +181,10 @@ class AdminController extends AuthController
             }
             $status = $action === 'deactivate' ? 'INACTIVE' : 'ACTIVE';
             if ($accountModel->setAccountStatus($accountId, $status)) {
+                if ($status === 'ACTIVE') {
+                    // A reactivated account starts with a clean failed-login count.
+                    $this->clearLoginLock($accountModel, $account);
+                }
                 ActivityLogger::update('Admin - Users', (string) $accountId,
                     "User {$action}d: {$label}", $_SESSION['username'] ?? 'Unknown',
                     ['account_id' => $accountId, 'employee_id' => $employeeId, 'status' => $status]);
@@ -178,6 +211,12 @@ class AdminController extends AuthController
         $_SESSION['flash_error'] = 'Unknown action.';
     }
 
+    private function clearLoginLock(Account $accountModel, array $account): void
+    {
+        LoginThrottle::clearAll($accountModel->getPDO(), (string) $account['username']);
+        $accountModel->resetFailedAttemptsById((int) $account['account_id']);
+    }
+
     /* ------------------------------------------------------
      * EDIT ACCOUNT
      * ------------------------------------------------------*/
@@ -200,7 +239,7 @@ class AdminController extends AuthController
             if (empty($_POST['csrf_token']) ||
                 !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
 
-                $_SESSION['flash'] = 'Invalid CSRF token.';
+                $_SESSION['flash_error'] = 'Invalid CSRF token.';
                 $this->redirect('/admin/account');
             }
 
@@ -223,20 +262,26 @@ class AdminController extends AuthController
                 'email'       => trim($_POST['email'] ?? ''),
             ];
 
+            $rawPw = trim($dataAcc['password']);
+            $passwordChanged = $rawPw !== '';
+            if ($passwordChanged && strpos($rawPw, '$2y$') !== 0 && ($problem = PasswordPolicy::problem($rawPw)) !== null) {
+                $_SESSION['flash_error'] = $problem;
+                $this->redirect('/admin/account/edit?account_id=' . $dataAcc['account_id']);
+            }
+            $before = $accountModel->getById($dataAcc['account_id']);
+
             try {
                 $pdo = $accountModel->getPDO();
                 if ($pdo instanceof PDO) $pdo->beginTransaction();
 
-                $rawPw = trim($dataAcc['password']);
-                if ($rawPw !== '') {
+                if ($passwordChanged) {
                     if (strpos($rawPw, '$2y$') === 0) {
                         $dataAcc['password'] = $rawPw;
                     } else {
                         $dataAcc['password'] = password_hash($rawPw, PASSWORD_DEFAULT);
                     }
                 } else {
-                    $old = $accountModel->getById($dataAcc['account_id']);
-                    $dataAcc['password'] = $old['password'] ?? '';
+                    $dataAcc['password'] = $before['password'] ?? '';
                 }
 
                 $okAcc = $accountModel->updateAccount($dataAcc);
@@ -259,13 +304,25 @@ class AdminController extends AuthController
 
                 if ($pdo instanceof PDO) $pdo->commit();
 
-                $_SESSION['flash'] = "Account updated successfully!";
+                // A new password (e.g. for a reset request) or a reactivation also lifts any login lock.
+                $reactivated = strtoupper((string) ($before['status'] ?? '')) !== 'ACTIVE'
+                    && strtoupper((string) $dataAcc['status']) === 'ACTIVE';
+                if ($passwordChanged || $reactivated) {
+                    $this->clearLoginLock($accountModel, ['account_id' => $dataAcc['account_id'], 'username' => $before['username'] ?? $dataAcc['username']]);
+                }
+                if ($passwordChanged) {
+                    (new PasswordResetRequest())->resolveForAccount((int) $dataAcc['account_id'], (string) ($_SESSION['username'] ?? 'admin'));
+                }
+
+                $_SESSION['flash_success'] = $passwordChanged
+                    ? "Account updated. Give the new password to {$dataAcc['username']} directly."
+                    : 'Account updated successfully!';
                 $this->redirect('/admin/account');
 
             } catch (Exception $e) {
                 if ($pdo instanceof PDO) $pdo->rollBack();
                 error_log("editAccount error: " . $e->getMessage());
-                $_SESSION['flash'] = "Error updating account.";
+                $_SESSION['flash_error'] = 'Error updating account.';
                 $this->redirect('/admin/account');
             }
         }
@@ -375,6 +432,15 @@ class AdminController extends AuthController
             // basic validation
             if ($old['username'] === '' || $password === '' || $old['usertype'] === '') {
                 $_SESSION['flash_error'] = 'Username, password and user type are required.';
+                $branches = $accountModel->fetchBranches();
+                $departments = $departmentModel->fetchAll();
+                extract($loadLayout());
+                require __DIR__ . '/../../Views/admin/account/add.php';
+                return;
+            }
+
+            if (($problem = PasswordPolicy::problem($password)) !== null) {
+                $_SESSION['flash_error'] = $problem;
                 $branches = $accountModel->fetchBranches();
                 $departments = $departmentModel->fetchAll();
                 extract($loadLayout());

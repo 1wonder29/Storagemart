@@ -138,6 +138,20 @@
   background: rgba(255, 255, 255, 0.14);
 }
 
+#accordionSidebar.sidebar-modern .sidebar-user-link {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+}
+
+#accordionSidebar.sidebar-modern .sidebar-user-link:hover,
+#accordionSidebar.sidebar-modern .sidebar-user-link:focus {
+  color: #fff;
+  text-decoration: underline;
+}
+
 #accordionSidebar.sidebar-modern .sidebar-logout {
   display: inline-flex;
   align-items: center;

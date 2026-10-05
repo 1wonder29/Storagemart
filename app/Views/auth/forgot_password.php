@@ -12,7 +12,7 @@ $base = rtrim(BASE_URL, '/');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png">
-    <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/auth-login.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/auth-login.css?v=20261005">
     <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/ui-readonly-interaction.css?v=2">
 </head>
 
@@ -35,7 +35,7 @@ $base = rtrim(BASE_URL, '/');
                     Account Recovery
                 </div>
                 <h1>Reset your <span class="highlight">password</span></h1>
-                <p>Verify your account details and set a new password to regain access to TMS.</p>
+                <p>Send a reset request to IT. They will verify that it's you and give you a temporary password.</p>
             </div>
 
             <p class="auth-brand-footer">&copy; <?= date('Y') ?> Storage Mart</p>
@@ -44,7 +44,7 @@ $base = rtrim(BASE_URL, '/');
         <main class="auth-form-panel">
             <div class="auth-form-header">
                 <h2>Forgot password</h2>
-                <p>Enter your username, registered email, and new password</p>
+                <p>Enter your username and registered email. IT will contact you to reset your password.</p>
             </div>
 
             <?php if (isset($forgotMessage) && $forgotMessage): ?>
@@ -92,62 +92,22 @@ $base = rtrim(BASE_URL, '/');
                 </div>
 
                 <div class="auth-field">
-                    <label for="new_password">New Password</label>
-                    <div class="auth-input-wrap has-toggle">
+                    <label for="note">How can IT reach you? <span class="auth-optional">(optional)</span></label>
+                    <div class="auth-input-wrap">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
                         </svg>
                         <input
-                            type="password"
-                            id="new_password"
-                            name="new_password"
-                            placeholder="Minimum 8 characters"
-                            required
+                            type="text"
+                            id="note"
+                            name="note"
+                            maxlength="255"
+                            placeholder="Mobile number, branch, or local"
                         >
-                        <button type="button" class="auth-toggle-pw" data-target="new_password" aria-label="Show password">
-                            <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                            <svg class="icon-eye-off" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                                <line x1="1" y1="1" x2="23" y2="23"/>
-                            </svg>
-                        </button>
                     </div>
                 </div>
 
-                <div class="auth-field">
-                    <label for="confirm_password">Confirm New Password</label>
-                    <div class="auth-input-wrap has-toggle">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                        </svg>
-                        <input
-                            type="password"
-                            id="confirm_password"
-                            name="confirm_password"
-                            placeholder="Re-enter new password"
-                            required
-                        >
-                        <button type="button" class="auth-toggle-pw" data-target="confirm_password" aria-label="Show password">
-                            <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                            <svg class="icon-eye-off" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                                <line x1="1" y1="1" x2="23" y2="23"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <button type="submit" class="auth-submit">Reset password</button>
+                <button type="submit" class="auth-submit">Send request to IT</button>
 
                 <div class="auth-footer-link">
                     <a href="<?= htmlspecialchars($base) ?>/login">Back to login</a>

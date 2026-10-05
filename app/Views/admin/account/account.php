@@ -2,10 +2,13 @@
 $base = BASE_URL !== '' ? rtrim(BASE_URL, '/') : '';
 require_once __DIR__ . '/../../partials/admin/account_view_helpers.php';
 require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
+require_once __DIR__ . '/../../../Helpers/LoginThrottle.php';
 
 $users = $users ?? [];
 $historyCounts = $historyCounts ?? [];
 $departmentLabels = $departmentLabels ?? [];
+$resetRequests = $resetRequests ?? [];
+$lockedUsernames = $lockedUsernames ?? [];
 
 $roleOptions = [];
 $departmentOptions = [];
@@ -100,6 +103,74 @@ ksort($branchOptions);
                     </div>
                 </div>
             </div>
+
+            <?php if ($resetRequests): ?>
+                <div class="card data-list-card shadow mb-4" id="reset-requests">
+                    <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                        <h6 class="m-0 font-weight-bold text-warning">
+                            <i class="fas fa-key mr-1"></i> Password reset requests
+                        </h6>
+                        <span class="badge badge-warning"><?= count($resetRequests) ?> pending</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <p class="px-3 pt-3 mb-2 text-muted small">
+                            Confirm it's really the person (call them or see them in person) before setting a temporary password.
+                            Tell them the password directly, never by email or chat, and ask them to change it after logging in.
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Username</th>
+                                        <th>Requested</th>
+                                        <th>How to reach them</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($resetRequests as $req):
+                                        $reqName = trim(($req['firstname'] ?? '') . ' ' . ($req['lastname'] ?? '')) ?: (string) $req['username'];
+                                        $reqDate = admin_account_format_date((string) $req['requested_at']);
+                                    ?>
+                                        <tr>
+                                            <td>
+                                                <div class="employee-name"><?= htmlspecialchars($reqName) ?></div>
+                                                <?php if (!empty($req['position'])): ?>
+                                                    <div class="meta-hint"><?= htmlspecialchars((string) $req['position']) ?></div>
+                                                <?php endif; ?>
+                                                <?php if (strtoupper((string) $req['status']) !== 'ACTIVE'): ?>
+                                                    <span class="badge badge-secondary">Account <?= htmlspecialchars(ucfirst(strtolower((string) $req['status']))) ?></span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><?= htmlspecialchars((string) $req['username']) ?></td>
+                                            <td class="date-cell">
+                                                <div class="date-main"><?= htmlspecialchars($reqDate['main']) ?></div>
+                                                <div class="date-time"><?= htmlspecialchars($reqDate['time']) ?></div>
+                                            </td>
+                                            <td><?= $req['note'] !== '' ? htmlspecialchars((string) $req['note']) : '<span class="text-muted">—</span>' ?></td>
+                                            <td class="text-right">
+                                                <div class="action-btn-group">
+                                                    <a class="btn btn-sm btn-primary" href="<?= htmlspecialchars($base) ?>/admin/account/edit?account_id=<?= (int) $req['account_id'] ?>&amp;reset=1">
+                                                        <i class="fas fa-key mr-1"></i> Set temporary password
+                                                    </a>
+                                                    <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/account" class="d-inline">
+                                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
+                                                        <input type="hidden" name="action" value="dismiss_reset">
+                                                        <input type="hidden" name="request_id" value="<?= (int) $req['request_id'] ?>">
+                                                        <input type="hidden" name="display_name" value="<?= htmlspecialchars($reqName) ?>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Not a real request">Dismiss</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <div class="filter-toolbar">
                 <div class="row align-items-end">
@@ -201,6 +272,7 @@ ksort($branchOptions);
                                         ? $position
                                         : admin_account_role_badge_text($secondaryType, $departmentLabel);
                                     $roleTokens = array_filter([strtolower(trim($usertype)), strtolower(trim($secondaryType))]);
+                                    $isLocked = $accountId > 0 && isset($lockedUsernames[LoginThrottle::key((string) ($row['username'] ?? ''))]);
                                 ?>
                                     <tr data-role="<?= htmlspecialchars(implode(' ', $roleTokens)) ?>"
                                         data-department="<?= htmlspecialchars(strtolower($department)) ?>"
@@ -270,6 +342,9 @@ ksort($branchOptions);
                                             <?php else: ?>
                                                 <span class="badge badge-secondary"><?= htmlspecialchars(ucfirst(strtolower($status))) ?></span>
                                             <?php endif; ?>
+                                            <?php if ($isLocked): ?>
+                                                <span class="badge badge-danger" title="Locked for <?= LoginThrottle::LOCK_MINUTES ?> minutes after <?= LoginThrottle::MAX_ATTEMPTS ?> wrong passwords">Locked</span>
+                                            <?php endif; ?>
                                         </td>
                                         <td class="date-cell" data-order="<?= (int) $date['order'] ?>">
                                             <div class="date-main"><?= htmlspecialchars($date['main']) ?></div>
@@ -282,6 +357,17 @@ ksort($branchOptions);
                                         </td>
                                         <td class="text-right">
                                             <div class="action-btn-group">
+                                                <?php if ($isLocked): ?>
+                                                    <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/account" class="d-inline">
+                                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
+                                                        <input type="hidden" name="action" value="unlock">
+                                                        <input type="hidden" name="account_id" value="<?= $accountId ?>">
+                                                        <input type="hidden" name="display_name" value="<?= htmlspecialchars($fullName) ?>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-warning btn-action-icon" title="Unlock login now">
+                                                            <i class="fas fa-unlock"></i>
+                                                        </button>
+                                                    </form>
+                                                <?php endif; ?>
                                                 <?php if ($employeeId > 0): ?>
                                                     <a href="<?= htmlspecialchars($base) ?>/admin/assets/view?employee_id=<?= $employeeId ?>"
                                                        class="btn btn-sm btn-outline-info btn-action-icon" title="View assigned assets">
