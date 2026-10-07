@@ -14,6 +14,12 @@ if ($isProduction) {
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
 }
+
+// File paths across the app are built from DOCUMENT_ROOT and expect it to be this
+// public/ folder. Pin it so uploads and PDFs also work when the site lives in a
+// subfolder (e.g. XAMPP: C:\xampp\htdocs\tms\public). No change on the live server.
+$_SERVER['DOCUMENT_ROOT'] = __DIR__;
+
 if (php_sapi_name() === 'cli-server') {
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $file = __DIR__ . $path;

@@ -1,6 +1,6 @@
 Options -Indexes +FollowSymLinks
 RewriteEngine On
-RewriteBase /
+RewriteBase /tms/public/
 
 # Never serve log files (PHP error_log, debug logs) to browsers.
 <FilesMatch "(\.log|error_log)$">
