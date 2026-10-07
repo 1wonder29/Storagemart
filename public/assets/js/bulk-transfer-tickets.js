@@ -41,6 +41,8 @@
         const base = (config.base || '').replace(/\/$/, '');
         const routePrefix = config.routePrefix || 'aom';
         const allOperationsEmployees = config.allOperationsEmployees || [];
+        // AOM: tickets may only move to staff in the same branch as "Transfer From".
+        const restrictTargetToBranch = !!config.restrictTargetToBranch;
         let branchEmployees = [];
 
         function formatEmployeeName(emp, includeTicketCount) {
@@ -80,11 +82,23 @@
             const excludeId = (excludeEmployeeId || '').toString();
             const $target = $('#bulk_transfer_employee_id');
             const currentTarget = ($target.val() || '').toString();
+            const branchId = ($('#bulk_transfer_branch_id').val() || '').toString();
 
-            $target.empty().append('<option value="">-- Select Employee --</option>');
+            if (restrictTargetToBranch && !branchId) {
+                resetSearchableSelect($target[0]);
+                $target.prop('disabled', true).html('<option value="">-- Select branch first --</option>');
+                return;
+            }
+
+            $target.prop('disabled', false).empty().append('<option value="">-- Select Employee --</option>');
+            let added = 0;
             allOperationsEmployees.forEach(function (emp) {
                 const id = String(emp.employee_id || '');
+                if (restrictTargetToBranch && String(emp.branch_id || '') !== branchId) {
+                    return;
+                }
                 if (id && id !== excludeId) {
+                    added++;
                     $target.append($('<option>', {
                         value: id,
                         text: formatEmployeeName(emp),
@@ -92,6 +106,11 @@
                     }));
                 }
             });
+            if (restrictTargetToBranch && added === 0) {
+                resetSearchableSelect($target[0]);
+                $target.prop('disabled', true).html('<option value="">No other Operations employees in this branch</option>');
+                return;
+            }
             initEmployeeSearchable($target[0], '-- Type to search employee --');
         }
 

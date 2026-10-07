@@ -273,7 +273,7 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/searchable-select.js"></script>
-<script src="<?= htmlspecialchars($base) ?>/assets/js/bulk-transfer-tickets.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/bulk-transfer-tickets.js?v=20261007"></script>
 
 <script>
     $(document).ready(function() {
@@ -308,7 +308,8 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
             window.initBulkTransferTickets({
                 base: <?= json_encode($base) ?>,
                 routePrefix: 'aom',
-                allOperationsEmployees: <?= json_encode($operationsEmployees ?? []) ?>
+                allOperationsEmployees: <?= json_encode($operationsEmployees ?? []) ?>,
+                restrictTargetToBranch: true
             });
         }
     });
@@ -317,6 +318,7 @@ $openCount = (int) ($summaryTicketStats['Pending'] ?? 0) + (int) ($summaryTicket
 <?php
 $routePrefix = 'aom';
 $bulkTransferAction = rtrim($base, '/') . '/aom/tickets/transfer';
+$bulkTransferSameBranch = true;
 require __DIR__ . '/../partials/ticket/bulk_transfer_modal.php';
 ?>
 <?php endif; ?>

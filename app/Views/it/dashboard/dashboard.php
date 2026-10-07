@@ -8,8 +8,6 @@ $inProgressTickets = (int)($inProgressTickets ?? 0);
 $resolveTickets = (int)($resolveTickets ?? 0);
 $myAssets = (int)($myAssets ?? 0);
 $myOpenTickets = (int)($myOpenTickets ?? 0);
-$myOngoingTickets = (int)($myOngoingTickets ?? 0);
-$myResolvedTickets = (int)($myResolvedTickets ?? 0);
 
 $hasTicketChart = ($assignedCount + $inProgressTickets + $resolveTickets) > 0;
 $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
@@ -26,7 +24,7 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/it-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/it-dashboard.css?v=20261007" rel="stylesheet">
     <?php require_once __DIR__ . '/../../partials/it/theme_head.php'; ?>
 </head>
 <body id="page-top">
@@ -50,66 +48,47 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
                     <?php endif; ?>
                 </div>
                 <div class="col-lg-7 mt-3 mt-lg-0">
+                    <!-- One clickable stat row (replaces the old hero stats + "My workspace" cards + duplicate quick links) -->
                     <div class="row">
-                        <div class="col-4">
-                            <div class="hero-stat">
+                        <div class="col-6 col-md-3 mb-2 mb-md-0">
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets" class="hero-stat hero-stat-link" title="Tickets assigned to me">
                                 <div class="stat-value"><?= $assignedCount ?></div>
-                                <div class="stat-label">Assigned</div>
-                            </div>
+                                <div class="stat-label">Assigned to Me</div>
+                            </a>
                         </div>
-                        <div class="col-4">
-                            <div class="hero-stat">
+                        <div class="col-6 col-md-3 mb-2 mb-md-0">
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/open" class="hero-stat hero-stat-link">
+                                <div class="stat-value"><?= $myOpenTickets ?></div>
+                                <div class="stat-label">Open</div>
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" class="hero-stat hero-stat-link">
                                 <div class="stat-value"><?= $inProgressTickets ?></div>
                                 <div class="stat-label">In Progress</div>
-                            </div>
+                            </a>
                         </div>
-                        <div class="col-4">
-                            <div class="hero-stat">
+                        <div class="col-6 col-md-3">
+                            <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" class="hero-stat hero-stat-link">
                                 <div class="stat-value"><?= $resolveTickets ?></div>
                                 <div class="stat-label">Resolved</div>
-                            </div>
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Personal Stats -->
-        <div class="workspace-minimal">
-            <p class="workspace-eyebrow">My workspace</p>
-            <div class="personal-stat-grid">
-                <a href="<?= htmlspecialchars($base) ?>/it/tickets/open" class="personal-stat-card tone-open">
-                    <span class="stat-number"><?= $myOpenTickets ?></span>
-                    <span class="stat-title"><i class="fas fa-ticket-alt" aria-hidden="true"></i> Open ticket</span>
-                </a>
-                <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" class="personal-stat-card tone-progress">
-                    <span class="stat-number"><?= $myOngoingTickets ?></span>
-                    <span class="stat-title"><i class="fas fa-spinner" aria-hidden="true"></i> In progress</span>
-                </a>
-                <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" class="personal-stat-card tone-resolved">
-                    <span class="stat-number"><?= $myResolvedTickets ?></span>
-                    <span class="stat-title"><i class="fas fa-check-circle" aria-hidden="true"></i> Resolved ticket</span>
-                </a>
-                <a href="<?= htmlspecialchars($base) ?>/it/assets" class="personal-stat-card tone-assets">
-                    <span class="stat-number"><?= $myAssets ?></span>
-                    <span class="stat-title"><i class="fas fa-archive" aria-hidden="true"></i> Assets</span>
-                </a>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
+        <!-- Quick Actions: only pages not already linked from the stats above -->
         <div class="quick-actions">
-            <a href="<?= htmlspecialchars($base) ?>/it/tickets/in_progress" class="quick-action-btn qa-primary">
-                <i class="fas fa-spinner"></i> In Progress
-            </a>
-            <a href="<?= htmlspecialchars($base) ?>/it/tickets/resolve" class="quick-action-btn qa-success">
-                <i class="fas fa-check-circle"></i> Resolved
-            </a>
             <a href="<?= htmlspecialchars($base) ?>/it/tickets" class="quick-action-btn qa-info">
                 <i class="fas fa-ticket-alt"></i> All Tickets
             </a>
+            <a href="<?= htmlspecialchars($base) ?>/it/assets" class="quick-action-btn qa-primary">
+                <i class="fas fa-archive"></i> My Assets (<?= $myAssets ?>)
+            </a>
             <a href="<?= htmlspecialchars($base) ?>/it/uploads" class="quick-action-btn qa-warning">
-                <i class="fas fa-file-upload"></i> Uploads
+                <i class="fas fa-file-upload"></i> Employee Uploads
             </a>
             <a href="<?= htmlspecialchars($base) ?>/it/ratings" class="quick-action-btn qa-secondary">
                 <i class="fas fa-star"></i> My Ratings

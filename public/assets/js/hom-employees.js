@@ -106,15 +106,11 @@
             redraw();
         });
 
-        $('#homSearchFilter').on('input', function () {
-            dt.search($(this).val() || '').draw();
-        });
-
         $('#homClearFilters').on('click', function () {
             branchFilter = '';
             $('#homBranchFilter').val('');
-            $('#homSearchFilter').val('');
             dt.search('');
+            $('#homEmployeesTable_wrapper input[type="search"]').val('');
             redraw();
         });
 

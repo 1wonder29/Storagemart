@@ -21,6 +21,7 @@ class AssetController extends AuthController {
 
         $assetModel = new Asset();
         $assets = $assetModel->fetchAllAssets();
+        $allCategories = $assetModel->fetchCategories();
         $defectiveCount = $assetModel->countDefectiveItems();
 
         if (empty($_SESSION['csrf_token'])) {
@@ -895,7 +896,8 @@ class AssetController extends AuthController {
         if (strtoupper($status) === 'DEFECTIVE') {
             $current = $assetModel->fetchInventoryById($inventoryID);
             $currentStatus = strtoupper(trim((string) ($current['status'] ?? '')));
-            if (!in_array($currentStatus, ['RETURNED', 'UNASSIGNED'], true)) {
+            // Already-defective items can be edited (reason, serial, info) without re-checking custody.
+            if (!in_array($currentStatus, ['RETURNED', 'UNASSIGNED', 'DEFECTIVE'], true)) {
                 $_SESSION['flash_error'] = 'Asset must be returned before marking as defective.';
                 $this->redirect('/admin/assets/item?group_id=' . (int) ($_POST['group_id'] ?? 0));
                 return;

@@ -450,7 +450,7 @@ class headTicketController extends AuthController
         $pdfService = new PdfGeneratorService();
 
         // Allow HEAD to generate record for tickets in their department
-        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $headEmployeeId, true);
+        $result = $pdfService->generateTechnicalRecord($ticketId, $headEmployeeId, true, ($_GET['format'] ?? 'docx'));
 
         if (!$result || !$result['success']) {
             http_response_code(404);
@@ -467,7 +467,7 @@ class headTicketController extends AuthController
             exit;
         }
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Type: ' . ($result['mime'] ?? 'application/octet-stream'));
         header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
         header('Content-Length: ' . filesize($filepath));
         header('Cache-Control: no-cache, no-store, must-revalidate');

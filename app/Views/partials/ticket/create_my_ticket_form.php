@@ -6,6 +6,8 @@ $myAssets = $myAssets ?? [];
 $profile = $profile ?? [];
 $csrf_token = $csrf_token ?? '';
 $hasAssets = !empty($myAssets);
+// Pre-select the asset when arriving from a "File Ticket" button on the assets page.
+$preselectedInventoryId = (int) ($_GET['inventory_id'] ?? 0);
 
 $fullName = trim(
     ($profile['lastname'] ?? '') . ', ' . ($profile['firstname'] ?? '') . ' ' . ($profile['middlename'] ?? '')
@@ -50,6 +52,7 @@ $fullName = trim(
                     <option value="">-- No specific asset / general issue --</option>
                     <?php foreach ($myAssets as $asset): ?>
                         <option value="<?= (int) ($asset['inventory_id'] ?? 0) ?>"
+                                <?= $preselectedInventoryId > 0 && $preselectedInventoryId === (int) ($asset['inventory_id'] ?? 0) ? 'selected' : '' ?>
                                 data-branch-id="<?= (int) ($asset['branch_id'] ?? 0) ?>"
                                 data-branch-name="<?= htmlspecialchars((string) ($asset['branchName'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                             <?= htmlspecialchars((string) ($asset['assetNumber'] ?? '')) ?>
@@ -89,7 +92,10 @@ $fullName = trim(
             document.dispatchEvent(new Event('tms:branch-changed'));
         }
     });
+    if (assetSelect.value) {
+        assetSelect.dispatchEvent(new Event('change'));
+    }
 })();
 </script>
 <?php endif; ?>
-
+

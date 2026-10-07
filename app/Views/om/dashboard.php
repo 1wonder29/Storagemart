@@ -31,7 +31,7 @@ $chartColors = ['#f59e0b', '#0891b2', '#dc2626', '#16a34a', '#64748b', '#7c3aed'
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/om-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/om-dashboard.css?v=20261007" rel="stylesheet">
 </head>
 <body id="page-top">
 

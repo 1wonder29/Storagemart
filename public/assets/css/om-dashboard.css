@@ -397,3 +397,10 @@
     margin-top: 0.25rem;
   }
 }
+
+/* Hero quick-nav buttons (same pill style as the Admin/Head pages) */
+.om-dashboard-page .page-hero .quick-nav .btn {
+  font-size: 0.8rem;
+  border-radius: 2rem;
+  padding: 0.35rem 0.9rem;
+}

@@ -770,14 +770,15 @@ class AOMController extends AuthController
 
         $validTarget = false;
         foreach ($this->employeeModel->fetchEmployeesByDepartment('Operations') as $emp) {
-            if ((int) ($emp['employee_id'] ?? 0) === $newEmployeeId) {
+            if ((int) ($emp['employee_id'] ?? 0) === $newEmployeeId
+                && (int) ($emp['branch_id'] ?? 0) === $branchId) {
                 $validTarget = true;
                 break;
             }
         }
 
         if (!$validTarget) {
-            $_SESSION['flash_error'] = 'Selected destination employee is not a valid Operations staff member.';
+            $_SESSION['flash_error'] = 'Destination employee must be an Operations staff member in the same branch.';
             $this->redirect('/aom/tickets');
             return;
         }
@@ -910,7 +911,7 @@ class AOMController extends AuthController
         $pdfService = new PdfGeneratorService();
 
         // Allow AOM to generate record for tickets in their branches
-        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $aom_employee_id, true);
+        $result = $pdfService->generateTechnicalRecord($ticketId, $aom_employee_id, true, ($_GET['format'] ?? 'docx'));
 
         if (!$result || !$result['success']) {
             http_response_code(404);
@@ -927,7 +928,7 @@ class AOMController extends AuthController
             exit;
         }
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Type: ' . ($result['mime'] ?? 'application/octet-stream'));
         header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
         header('Content-Length: ' . filesize($filepath));
         header('Cache-Control: no-cache, no-store, must-revalidate');

@@ -129,6 +129,127 @@ class PdfGeneratorService
     }
 
     /**
+     * Technical record in the requested format: 'docx' (Word template) or 'pdf'.
+     *
+     * @return array|false Same shape as generateTechnicalRecordDocx() plus 'mime'
+     */
+    public function generateTechnicalRecord($ticketId, $employeeId, $allowRequesterOverride = false, $format = 'docx')
+    {
+        if (strtolower((string) $format) !== 'pdf') {
+            $result = $this->generateTechnicalRecordDocx($ticketId, $employeeId, $allowRequesterOverride);
+            if ($result) {
+                $result['mime'] = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            }
+            return $result;
+        }
+
+        try {
+            $ticketData = $this->getTicketData($ticketId);
+            if (!$ticketData) {
+                $this->logError("No ticket data found for ticket_id: {$ticketId}");
+                return false;
+            }
+            if (!$allowRequesterOverride && (int) $ticketData['employee_id'] !== (int) $employeeId) {
+                $this->logError("Employee {$employeeId} attempted to access ticket {$ticketId} belonging to employee {$ticketData['employee_id']}");
+                return false;
+            }
+            if (strtolower($ticketData['status']) !== 'resolved') {
+                $this->logError("Cannot generate record for unresolved ticket: {$ticketId}");
+                return false;
+            }
+
+            require_once __DIR__ . '/../Libraries/dompdf/autoload.php';
+            $options = new \Dompdf\Options();
+            $options->set('isRemoteEnabled', false);
+            $options->set('defaultFont', 'DejaVu Sans');
+            $options->set('tempDir', $this->outputPath);
+            $dompdf = new \Dompdf\Dompdf($options);
+            $dompdf->loadHtml($this->buildTechnicalRecordHtml($ticketData), 'UTF-8');
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            $sanitizedTicketNumber = preg_replace('/[^A-Za-z0-9_-]/', '', $ticketData['ticket_number']);
+            $filename = "technical_record_{$sanitizedTicketNumber}_" . date('YmdHis') . '.pdf';
+            $filepath = $this->outputPath . '/' . $filename;
+            if (file_put_contents($filepath, $dompdf->output()) === false) {
+                $this->logError("Failed to save PDF: {$filepath}");
+                return false;
+            }
+
+            return [
+                'success' => true,
+                'filename' => $filename,
+                'filepath' => $filepath,
+                'file_size' => filesize($filepath),
+                'mime' => 'application/pdf',
+            ];
+        } catch (\Throwable $e) {
+            $this->logError("Exception in generateTechnicalRecord (pdf): " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /** HTML version of template_technical.docx for the PDF output. */
+    private function buildTechnicalRecordHtml(array $data): string
+    {
+        // Empty strings (not just NULLs) fall back to N/A so sentences never end in a blank.
+        $h = static fn($v) => nl2br(htmlspecialchars(trim((string) $v) !== '' ? (string) $v : 'N/A', ENT_QUOTES, 'UTF-8'));
+        $fullname = trim($data['emp_firstname'] . ' ' . $data['emp_lastname']);
+        $performedby = !empty($data['it_firstname']) ? trim($data['it_firstname'] . ' ' . $data['it_lastname']) : 'N/A';
+        $dateFiled = date('F d, Y', strtotime($data['date_filed']));
+
+        // Reuse the letterhead banner embedded in the Word template.
+        $banner = '';
+        $templateFile = $this->templatePath . '/template_technical.docx';
+        if (class_exists('ZipArchive') && file_exists($templateFile)) {
+            $zip = new \ZipArchive();
+            if ($zip->open($templateFile) === true) {
+                $png = $zip->getFromName('word/media/image1.png');
+                $zip->close();
+                if ($png !== false) {
+                    $banner = '<img class="banner" src="data:image/png;base64,' . base64_encode($png) . '">';
+                }
+            }
+        }
+
+        return '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+            @page { margin: 28px 48px 40px; }
+            body { font-family: "DejaVu Sans", sans-serif; font-size: 11px; color: #222; line-height: 1.5; }
+            .banner { width: 100%; margin-bottom: 18px; }
+            h1 { text-align: center; font-size: 16px; letter-spacing: 1px; margin: 6px 0 4px; color: #1f3a93; }
+            .date { text-align: right; margin-bottom: 14px; }
+            .label { font-weight: bold; margin-top: 14px; }
+            .box { border: 1px solid #c9ced8; padding: 8px 10px; margin-top: 4px; min-height: 30px; }
+            .hint { font-size: 9.5px; color: #666; }
+            table.sign { width: 100%; margin-top: 34px; border-collapse: collapse; }
+            table.sign td { width: 33%; vertical-align: bottom; padding: 0 8px; text-align: center; }
+            .sign-label { text-align: left; font-weight: bold; padding-bottom: 34px; }
+            .sign-name { border-top: 1px solid #333; padding-top: 4px; font-weight: bold; }
+            .sign-role { font-size: 9.5px; color: #555; }
+            .note { margin-top: 18px; font-size: 9.5px; font-style: italic; }
+        </style></head><body>'
+            . $banner
+            . '<h1>TECHNICAL SUMMARY REPORT</h1>'
+            . '<div class="date">' . $h($dateFiled) . '</div>'
+            . '<p>I, <strong>' . $h($fullname) . '</strong>, under StorageMart <strong>' . $h($data['branchName']) . '</strong> Branch hereby acknowledge that I have requested technical assistance which was assisted by <strong>' . $h($performedby) . '</strong>. This concern was classified under <strong>' . $h($data['technical_purpose'] ?? 'N/A') . '</strong>.</p>'
+            . '<p>By signing this document, I acknowledge the actions taken by the IT team and waive any accountability for potential risks arising after the initial resolution. I also confirm that I have been fully informed of matters within my responsibility.</p>'
+            . '<div class="label">Details of the Concern:</div><div class="box">' . $h($data['concern_details']) . '</div>'
+            . '<div class="label">Action Taken:</div><div class="box">' . $h($data['action_taken'] ?? 'N/A') . '</div>'
+            . '<div class="label">Department / Branch Monitoring Guideline:</div>'
+            . '<div class="hint">These are the things that the Technical person will ask the branch / department to monitor to prevent this concern from occurring again.</div>'
+            . '<div class="box">' . $h($data['result'] ?? 'N/A') . '</div>'
+            . '<p class="note">Note : Signature with Date Signed</p>'
+            . '<table class="sign"><tr>'
+            . '<td class="sign-label">Acknowledge By :</td><td class="sign-label">Reported By :</td><td class="sign-label">Verified By :</td>'
+            . '</tr><tr>'
+            . '<td><div class="sign-name">' . $h($fullname) . '</div><div class="sign-role">Customer Name</div></td>'
+            . '<td><div class="sign-name">' . $h($performedby) . '</div><div class="sign-role">IT Person In Charge</div></td>'
+            . '<td><div class="sign-name">Kenneth Dador</div><div class="sign-role">IT Officer</div></td>'
+            . '</tr></table>'
+            . '</body></html>';
+    }
+
+    /**
      * Generate Resolution PDF for a ticket
      * 
      * Automatically generates a technical report document when a ticket is resolved

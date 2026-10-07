@@ -32,8 +32,8 @@ $totalGroups = (int) ($totalGroups ?? 0);
             <div class="page-hero hero-form">
                 <div class="row align-items-center">
                     <div class="col-lg-7">
-                        <h1><i class="fas fa-layer-group mr-2"></i>Add Group</h1>
-                        <p>Create a new asset group by selecting a category and defining the model details.</p>
+                        <h1><i class="fas fa-layer-group mr-2"></i>Add Model / Group</h1>
+                        <p>Creates a new row in the Assets Directory (e.g. "Lenovo ThinkPad") under an existing category. To create a new category (e.g. "Laptop"), use Add Category.</p>
                         <div class="quick-nav mt-3">
                             <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-sm btn-outline-light">
                                 <i class="fas fa-arrow-left mr-1"></i> Back to Directory

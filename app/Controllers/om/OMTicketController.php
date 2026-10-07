@@ -548,7 +548,7 @@ class OMTicketController extends AuthController
         $pdfService = new PdfGeneratorService();
 
         // OM should be allowed to generate records for tickets they manage
-        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $omId, true);
+        $result = $pdfService->generateTechnicalRecord($ticketId, $omId, true, ($_GET['format'] ?? 'docx'));
 
         if (!$result || !$result['success']) {
             http_response_code(404);
@@ -565,7 +565,7 @@ class OMTicketController extends AuthController
             exit;
         }
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Type: ' . ($result['mime'] ?? 'application/octet-stream'));
         header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
         header('Content-Length: ' . filesize($filepath));
         header('Cache-Control: no-cache, no-store, must-revalidate');

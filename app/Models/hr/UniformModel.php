@@ -439,20 +439,33 @@ class UniformModel extends HRModel {
      */
     public function assignUniform(int $employeeId, int $uniformId, int $quantityIssued, string $conditionUponIssue = 'GOOD', string $remarks = '', int $createdBy = 0): bool {
         try {
+            $this->pdo->beginTransaction();
+
+            // Take the stock first; if it is no longer available, nothing is issued.
+            $stock = $this->pdo->prepare("UPDATE {$this->tbluniform_inventory}
+                    SET quantity_in_stock = quantity_in_stock - ?, date_updated = NOW()
+                    WHERE uniform_id = ? AND quantity_in_stock >= ?");
+            $stock->execute([$quantityIssued, $uniformId, $quantityIssued]);
+            if ($stock->rowCount() === 0) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
             $sql = "INSERT INTO {$this->tbluniform_assignment}
                     (employee_id, uniform_id, date_issued, quantity_issued, condition_upon_issue, remarks, createdby, datecreated)
                     VALUES (?, ?, NOW(), ?, ?, ?, ?, NOW())";
-            
             $stmt = $this->pdo->prepare($sql);
-            $result = $stmt->execute([$employeeId, $uniformId, $quantityIssued, $conditionUponIssue, $remarks, $createdBy]);
-            
-            // Decrease stock if assignment successful
-            if ($result) {
-                $this->decreaseUniformStock($uniformId, $quantityIssued);
+            if (!$stmt->execute([$employeeId, $uniformId, $quantityIssued, $conditionUponIssue, $remarks, $createdBy])) {
+                $this->pdo->rollBack();
+                return false;
             }
-            
-            return $result;
+
+            $this->pdo->commit();
+            return true;
         } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             error_log('UniformModel::assignUniform error: ' . $e->getMessage());
             return false;
         }
@@ -989,27 +1002,6 @@ class UniformModel extends HRModel {
         } catch (\Throwable $e) {
             error_log('UniformModel::getAssignmentsByUniformId error: ' . $e->getMessage());
             return [];
-        }
-    }
-
-    /**
-     * Decrease uniform stock after assignment
-     * @param int $uniformId
-     * @param int $quantity
-     * @return bool
-     */
-    private function decreaseUniformStock(int $uniformId, int $quantity): bool {
-        try {
-            $sql = "UPDATE {$this->tbluniform_inventory} 
-                    SET quantity_in_stock = quantity_in_stock - ?, 
-                        date_updated = NOW() 
-                    WHERE uniform_id = ? AND quantity_in_stock >= ?";
-            
-            $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute([$quantity, $uniformId, $quantity]);
-        } catch (\Throwable $e) {
-            error_log('UniformModel::decreaseUniformStock error: ' . $e->getMessage());
-            return false;
         }
     }
 }

@@ -928,4 +928,46 @@ class TicketController extends AuthController
             exit;
         }
     }
+
+    /**
+     * GET /it/tickets/download-record?id=&format=pdf|docx — technical record for a resolved ticket.
+     */
+    public function downloadTechnicalRecord()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'IT') {
+            http_response_code(403);
+            echo 'Unauthorized';
+            exit;
+        }
+
+        $ticketId = (int) ($_GET['id'] ?? 0);
+        if ($ticketId <= 0) {
+            http_response_code(400);
+            echo 'Invalid ticket ID';
+            exit;
+        }
+
+        require_once __DIR__ . '/../../Services/PdfGeneratorService.php';
+        $result = (new PdfGeneratorService())->generateTechnicalRecord($ticketId, 0, true, ($_GET['format'] ?? 'docx'));
+
+        if (!$result || empty($result['success']) || !file_exists($result['filepath'])) {
+            http_response_code(404);
+            echo 'Unable to generate technical record. Please ensure the ticket is resolved.';
+            exit;
+        }
+
+        header('Content-Type: ' . ($result['mime'] ?? 'application/octet-stream'));
+        header('Content-Disposition: attachment; filename="' . basename($result['filename']) . '"');
+        header('Content-Length: ' . filesize($result['filepath']));
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        readfile($result['filepath']);
+        exit;
+    }
 }

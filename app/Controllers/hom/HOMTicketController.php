@@ -428,6 +428,10 @@ class HOMTicketController extends AuthController
         $activePage = 'tickets';
         $user_role = $role === 'OM' ? 'OM' : 'HOM';
 
+        // Only the employee who filed the ticket rates it; the OM rates only their own tickets.
+        $ownEmployeeId = (int) $this->employeeModel->getEmployeeIdByAccountId((int) ($_SESSION['account_id'] ?? 0));
+        $canRateTicket = $ownEmployeeId > 0 && (int) ($ticket['employee_id'] ?? 0) === $ownEmployeeId;
+
         require __DIR__ . '/../../Views/hom/ticket/ticket-detail.php';
     }
 
@@ -971,6 +975,11 @@ class HOMTicketController extends AuthController
             exit;
         }
 
+        if ((int) ($ticket['employee_id'] ?? 0) !== (int) $homId) {
+            echo json_encode(['success' => false, 'message' => 'Only the employee who filed this ticket can rate it.']);
+            exit;
+        }
+
         $ratingModel = new HOMTicketRatingModel();
 
         if ($ratingModel->hasRated($ticketId, $homId)) {
@@ -1025,7 +1034,7 @@ class HOMTicketController extends AuthController
         $pdfService = new PdfGeneratorService();
 
         // HOM should be allowed to generate records for tickets they manage
-        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $homId, true);
+        $result = $pdfService->generateTechnicalRecord($ticketId, $homId, true, ($_GET['format'] ?? 'docx'));
 
         if (!$result || !$result['success']) {
             http_response_code(404);
@@ -1042,7 +1051,7 @@ class HOMTicketController extends AuthController
             exit;
         }
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Type: ' . ($result['mime'] ?? 'application/octet-stream'));
         header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
         header('Content-Length: ' . filesize($filepath));
         header('Cache-Control: no-cache, no-store, must-revalidate');

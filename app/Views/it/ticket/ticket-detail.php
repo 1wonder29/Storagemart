@@ -44,6 +44,7 @@ $base = rtrim(BASE_URL, '/');
             $ticketsListUrl = rtrim($base, '/') . ($backUrl ?? '/it/tickets');
             $showTechnicalUpload = false;
             $showRateDownload = false;
+            $showDownloadTechnicalRecord = true;
             require __DIR__ . '/../../partials/ticket/ticket_detail_content.php';
             ?>
         <?php else: ?>

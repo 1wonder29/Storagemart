@@ -64,9 +64,14 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                         </button>
                     <?php endif; ?>
                     <?php if ($showDownloadTechnicalRecord && strcasecmp($status, 'resolved') === 0): ?>
-                        <a href="<?= htmlspecialchars($detailBase) ?>/<?= htmlspecialchars($detailRoutePrefix) ?>/tickets/download-record?id=<?= $ticketId ?>"
-                           class="btn btn-success btn-sm" title="Generate technical report">
-                            <i class="fas fa-file-word"></i> Generate Report
+                        <?php $recordUrl = $detailBase . '/' . $detailRoutePrefix . '/tickets/download-record?id=' . $ticketId; ?>
+                        <a href="<?= htmlspecialchars($recordUrl) ?>&amp;format=pdf"
+                           class="btn btn-danger btn-sm" title="Download technical report as PDF">
+                            <i class="fas fa-file-pdf"></i> Report PDF
+                        </a>
+                        <a href="<?= htmlspecialchars($recordUrl) ?>&amp;format=docx"
+                           class="btn btn-success btn-sm" title="Download technical report as Word">
+                            <i class="fas fa-file-word"></i> Report Word
                         </a>
                     <?php endif; ?>
                 </div>

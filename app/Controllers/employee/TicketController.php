@@ -438,7 +438,7 @@ public function downloadTechnicalRecord()
     $pdfService = new PdfGeneratorService();
 
     // Generate technical record on-demand
-    $result = $pdfService->generateTechnicalRecordDocx($ticketId, $employeeId);
+    $result = $pdfService->generateTechnicalRecord($ticketId, $employeeId, false, ($_GET['format'] ?? 'docx'));
 
     if (!$result || !$result['success']) {
         http_response_code(404);
@@ -456,7 +456,7 @@ public function downloadTechnicalRecord()
         exit;
     }
 
-    header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    header('Content-Type: ' . ($result['mime'] ?? 'application/octet-stream'));
     header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
     header('Content-Length: ' . filesize($filepath));
     header('Cache-Control: no-cache, no-store, must-revalidate');

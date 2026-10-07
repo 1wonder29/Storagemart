@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../AuthController.php';
 require_once __DIR__ . '/../../Models/hr/HRModel.php';
 require_once __DIR__ . '/../../Models/hr/UniformModel.php';
+require_once __DIR__ . '/../../Models/hr/UniformReportModel.php';
 require_once __DIR__ . '/../../Models/hr/EmployeeModel.php';
 require_once __DIR__ . '/../../Models/NotificationModel.php';
 require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
@@ -57,6 +58,7 @@ class UniformController extends AuthController {
             $totalCount = $this->uniformModel->getTotalUniformCount();
             $totalPages = max(1, (int) ceil($totalCount / $limit));
             $uniformsNeedingReorder = count($this->uniformModel->getUniformsNeedingReorder());
+            $pendingItemReports = (new UniformReportModel())->countPendingReports();
 
             require __DIR__ . '/../../Views/hr/uniforms/list.php';
         } catch (\Throwable $e) {
@@ -603,6 +605,11 @@ class UniformController extends AuthController {
                 $this->redirect('/hr/uniforms/assign');
             }
 
+            if (strtoupper((string) ($uniform['status'] ?? 'ACTIVE')) !== 'ACTIVE') {
+                $_SESSION['errorMessage'] = 'This item is discontinued and cannot be issued.';
+                $this->redirect('/hr/uniforms/assign');
+            }
+
             if ($uniform['quantity_in_stock'] < $quantityIssued) {
                 $_SESSION['errorMessage'] = 'Insufficient uniform stock. Available: ' . $uniform['quantity_in_stock'];
                 $this->redirect('/hr/uniforms/assign');
@@ -618,7 +625,11 @@ class UniformController extends AuthController {
                 $_SESSION['account_id']
             );
 
+            $issuedLabels = [];
+            $skipped = [];
+
             if ($result) {
+                $issuedLabels[] = "{$quantityIssued} x {$uniform['uniform_type']} ({$uniform['size']})";
                 // Log action
                 $this->hrModel->logAction(
                     'ASSIGNED_UNIFORM',
@@ -648,8 +659,13 @@ class UniformController extends AuthController {
                         continue;
                     }
 
+                    $specificLabel = "{$specificUniform['uniform_type']} ({$specificUniform['size']})";
+                    if (strtoupper((string) ($specificUniform['status'] ?? 'ACTIVE')) !== 'ACTIVE') {
+                        $skipped[] = $specificLabel . ' — discontinued';
+                        continue;
+                    }
                     if ($specificUniform['quantity_in_stock'] < $specificQuantity) {
-                        $_SESSION['warningMessage'] = 'Warning: Insufficient stock for ' . $specificUniform['uniform_type'];
+                        $skipped[] = $specificLabel . ' — only ' . (int) $specificUniform['quantity_in_stock'] . ' in stock';
                         continue;
                     }
 
@@ -663,7 +679,11 @@ class UniformController extends AuthController {
                         $_SESSION['account_id']
                     );
 
+                    if (!$specificResult) {
+                        $skipped[] = $specificLabel . ' — could not be issued';
+                    }
                     if ($specificResult) {
+                        $issuedLabels[] = "{$specificQuantity} x {$specificLabel}";
                         // Log action
                         $this->hrModel->logAction(
                             'ASSIGNED_UNIFORM',
@@ -676,7 +696,22 @@ class UniformController extends AuthController {
                 }
             }
 
-            $_SESSION['successMessage'] = 'Uniforms assigned successfully!';
+            if (!empty($employee['account_id']) && !empty($issuedLabels)) {
+                $this->notificationModel->create(
+                    (int) $employee['account_id'],
+                    'HR issued you: ' . implode(', ', $issuedLabels) . '.',
+                    'fa-tshirt',
+                    'info',
+                    '/employee/items',
+                    $employeeId
+                );
+            }
+
+            // Previously skipped items were only stored in an unused warningMessage, so HR never saw them.
+            $_SESSION['successMessage'] = 'Issued: ' . implode(', ', $issuedLabels) . '.';
+            if (!empty($skipped)) {
+                $_SESSION['errorMessage'] = 'Not issued: ' . implode('; ', $skipped) . '.';
+            }
             $this->redirect('/hr/uniforms/assign');
         } catch (\Throwable $e) {
             error_log('UniformController::assign error: ' . $e->getMessage());
@@ -852,5 +887,79 @@ class UniformController extends AuthController {
     public function approveReturn() {
         $this->requireHR();
         $this->redirect('/hr/uniforms');
+    }
+
+    /**
+     * GET /hr/uniforms/reports — lost/damaged reports filed by employees.
+     */
+    public function reports() {
+        $this->requireHR();
+
+        $reportModel = new UniformReportModel();
+        $statusFilter = strtoupper(trim((string) ($_GET['status'] ?? 'PENDING')));
+        if (!in_array($statusFilter, ['PENDING', 'CONFIRMED', 'ITEM_OK', 'ALL'], true)) {
+            $statusFilter = 'PENDING';
+        }
+        $reports = $reportModel->getReports($statusFilter === 'ALL' ? null : $statusFilter);
+        $pendingItemReports = $reportModel->countPendingReports();
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+
+        require __DIR__ . '/../../Views/hr/uniforms/reports.php';
+    }
+
+    /**
+     * POST /hr/uniforms/reports/resolve — HR confirms the report or marks the item OK.
+     */
+    public function resolveReport() {
+        $this->requireHR();
+
+        if (empty($_POST['csrf_token']) || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), (string) $_POST['csrf_token'])) {
+            $_SESSION['errorMessage'] = 'Invalid form token. Please try again.';
+            $this->redirect('/hr/uniforms/reports');
+        }
+
+        $reportId = (int) ($_POST['report_id'] ?? 0);
+        $decision = strtoupper((string) ($_POST['decision'] ?? ''));
+        $remarks = trim((string) ($_POST['hr_remarks'] ?? ''));
+
+        $reportModel = new UniformReportModel();
+        $report = $reportModel->getReportById($reportId);
+        [$ok, $message] = $reportModel->resolveReport($reportId, $decision, $remarks, (int) $_SESSION['account_id']);
+
+        if ($ok && $report) {
+            $item = trim($report['uniform_type'] . ' (' . $report['size'] . ')');
+            $what = strtolower((string) $report['report_type']);
+            $text = $decision === 'CONFIRMED'
+                ? "HR confirmed your report: {$report['quantity']} x {$item} recorded as {$what}."
+                : "HR reviewed your report for {$item}: the item is OK and remains active with you.";
+            if ($remarks !== '') {
+                $text .= ' Remarks: ' . $remarks;
+            }
+            if (!empty($report['employee_account_id'])) {
+                $this->notificationModel->create(
+                    (int) $report['employee_account_id'],
+                    $text,
+                    $decision === 'CONFIRMED' ? 'fa-clipboard-check' : 'fa-check-circle',
+                    $decision === 'CONFIRMED' ? 'danger' : 'success',
+                    '/employee/items',
+                    $reportId
+                );
+            }
+
+            ActivityLogger::update('HR - Uniforms', (string) $reportId,
+                ($decision === 'CONFIRMED' ? 'Confirmed' : 'Closed as OK') . " {$what} report for {$item} ({$report['employee_name']})",
+                $_SESSION['username'] ?? 'system', [
+                    'report_id' => $reportId,
+                    'decision' => $decision,
+                    'quantity' => (int) $report['quantity'],
+                ]);
+        }
+
+        $_SESSION[$ok ? 'successMessage' : 'errorMessage'] = $message;
+        $this->redirect('/hr/uniforms/reports');
     }
 }
