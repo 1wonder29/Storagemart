@@ -118,22 +118,33 @@ class UniformReportModel extends UniformModel {
             : [false, 'Could not save the report. Please try again.', 0];
     }
 
-    public function getReports(?string $status = null): array
+    public function getReports(?string $status = null, ?int $reportId = null, ?int $employeeId = null): array
     {
         $params = [];
-        $where = '';
+        $conditions = [];
         if ($status !== null && $status !== '') {
-            $where = 'WHERE r.status = ?';
+            $conditions[] = 'r.status = ?';
             $params[] = strtoupper($status);
         }
+        if ($reportId !== null) {
+            $conditions[] = 'r.report_id = ?';
+            $params[] = $reportId;
+        }
+        if ($employeeId !== null) {
+            $conditions[] = 'r.employee_id = ?';
+            $params[] = $employeeId;
+        }
+        $where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
         $sql = "SELECT r.*, ui.uniform_type, ui.size, ui.color,
                        ua.quantity_issued, ua.date_returned,
                        CONCAT(e.firstname, ' ', e.lastname) AS employee_name,
-                       e.department, e.account_id AS employee_account_id
+                       e.department, e.email AS employee_email, e.account_id AS employee_account_id,
+                       acc.usertype AS employee_usertype
                 FROM {$this->tblreports} r
                 JOIN {$this->tbluniform_inventory} ui ON ui.uniform_id = r.uniform_id
                 LEFT JOIN {$this->tbluniform_assignment} ua ON ua.assignment_id = r.assignment_id
                 LEFT JOIN {$this->tblemployee} e ON e.employee_id = r.employee_id
+                LEFT JOIN {$this->tblaccounts} acc ON acc.account_id = e.account_id
                 {$where}
                 ORDER BY (r.status = 'PENDING') DESC, r.report_id DESC
                 LIMIT 300";
@@ -149,12 +160,8 @@ class UniformReportModel extends UniformModel {
 
     public function getReportById(int $reportId): ?array
     {
-        foreach ($this->getReports() as $row) {
-            if ((int) $row['report_id'] === $reportId) {
-                return $row;
-            }
-        }
-        return null;
+        $rows = $this->getReports(null, $reportId);
+        return $rows[0] ?? null;
     }
 
     /**
@@ -217,11 +224,70 @@ class UniformReportModel extends UniformModel {
             : 'Report closed. The item stays active with the employee.'];
     }
 
-    /** Active HR accounts to notify about new reports. */
-    public function getHrAccountIds(): array
+    /** Active items HR can hand out as a replacement, with stock on hand. */
+    public function getReplacementStock(): array
     {
-        $stmt = $this->pdo->query("SELECT account_id FROM {$this->tblaccounts}
-                WHERE UPPER(usertype) = 'HR' AND UPPER(status) = 'ACTIVE'");
+        $stmt = $this->pdo->query("SELECT uniform_id, uniform_type, size, color, quantity_in_stock
+                FROM {$this->tbluniform_inventory}
+                WHERE status = 'ACTIVE' AND quantity_in_stock > 0
+                ORDER BY uniform_type, size");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Issue a replacement to the reporter after HR confirmed a report.
+     *
+     * @return array{0: bool, 1: string} [ok, label or reason]
+     */
+    public function issueReplacement(array $report, int $uniformId, int $quantity, int $issuedBy): array
+    {
+        $uniform = $this->getUniformById($uniformId);
+        if (!$uniform) {
+            return [false, 'the replacement item was not found'];
+        }
+        $label = trim($uniform['uniform_type'] . ' (' . $uniform['size'] . ')');
+        if (strtoupper((string) ($uniform['status'] ?? 'ACTIVE')) !== 'ACTIVE') {
+            return [false, $label . ' is discontinued'];
+        }
+        if ($quantity < 1) {
+            return [false, 'the replacement quantity must be at least 1'];
+        }
+        if ((int) $uniform['quantity_in_stock'] < $quantity) {
+            return [false, 'only ' . (int) $uniform['quantity_in_stock'] . ' x ' . $label . ' in stock'];
+        }
+
+        $ok = $this->assignUniform(
+            (int) $report['employee_id'],
+            $uniformId,
+            $quantity,
+            'GOOD',
+            sprintf('Replacement for %s report #%d.', strtolower((string) $report['report_type']), (int) $report['report_id']),
+            $issuedBy
+        );
+        return $ok ? [true, $quantity . ' x ' . $label] : [false, $label . ' could not be issued (stock changed)'];
+    }
+
+    /** Active HR accounts plus full-access admins (General Manager), who review reports. */
+    public function getReviewerAccountIds(): array
+    {
+        try {
+            $stmt = $this->pdo->query("SELECT account_id FROM {$this->tblaccounts}
+                    WHERE UPPER(status) = 'ACTIVE'
+                      AND (UPPER(usertype) = 'HR' OR (UPPER(usertype) = 'ADMIN' AND is_superuser = 1))");
+        } catch (\Throwable $e) {
+            // is_superuser not migrated yet: HR only.
+            $stmt = $this->pdo->query("SELECT account_id FROM {$this->tblaccounts}
+                    WHERE UPPER(usertype) = 'HR' AND UPPER(status) = 'ACTIVE'");
+        }
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    }
+
+    /** The reporter's own "My Issued Items" page for their role. */
+    public static function itemsPathForUsertype(?string $usertype): string
+    {
+        $prefix = [
+            'HEAD' => 'head', 'AOM' => 'aom', 'HOM' => 'hom', 'OM' => 'om', 'ADMIN' => 'admin',
+        ][strtoupper((string) $usertype)] ?? 'employee';
+        return '/' . $prefix . '/items';
     }
 }

@@ -6,10 +6,40 @@ require_once __DIR__ . '/../../Models/NotificationModel.php';
 require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 
 /**
- * Items issued by HR (uniforms, ID badges, ...) and lost/damaged reports.
+ * "My Issued Items": items issued by HR (uniforms, ID badges, ...) and lost/damaged reports.
+ * Served under each role's own prefix (/employee, /head, /aom, /hom, /om, /admin) so the
+ * page keeps that role's sidebar; the user only ever sees their own items.
  */
 class EmployeeItemController extends AuthController
 {
+    /** Route prefix => usertypes allowed to use it. */
+    private const PREFIX_ROLES = [
+        'employee' => ['EMPLOYEE'],
+        'head'     => ['HEAD'],
+        'aom'      => ['AOM'],
+        'hom'      => ['HOM'],
+        'om'       => ['OM', 'HOM'],
+        'admin'    => ['ADMIN'],
+    ];
+
+    private string $prefix;
+
+    public function __construct(string $prefix = 'employee')
+    {
+        parent::__construct();
+        $this->prefix = isset(self::PREFIX_ROLES[$prefix]) ? $prefix : 'employee';
+    }
+
+    public static function handlesPrefix(string $prefix): bool
+    {
+        return isset(self::PREFIX_ROLES[$prefix]);
+    }
+
+    private function itemsPath(): string
+    {
+        return '/' . $this->prefix . '/items';
+    }
+
     private function requireEmployeeId(): int
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
@@ -18,23 +48,29 @@ class EmployeeItemController extends AuthController
             $this->redirect('/login');
         }
 
+        $role = strtoupper((string) ($_SESSION['usertype'] ?? ''));
+        if (!in_array($role, self::PREFIX_ROLES[$this->prefix], true)) {
+            http_response_code(403);
+            exit('Unauthorized');
+        }
+
         $user = (new Employee())->fetchUserDetails((int) $_SESSION['account_id']);
         $employeeId = (int) ($user['employee_id'] ?? 0);
         if ($employeeId <= 0) {
             $_SESSION['flash_error'] = 'Employee profile not found.';
-            $this->redirect('/employee/dashboard');
+            $this->redirect('/' . $this->prefix . ($this->prefix === 'admin' ? '' : '/dashboard'));
         }
         return $employeeId;
     }
 
-    /** GET /employee/items */
+    /** GET /{prefix}/items */
     public function index()
     {
         $employeeId = $this->requireEmployeeId();
 
         $reportModel = new UniformReportModel();
-        $items = $reportModel->getActiveIssuancesForEmployee($employeeId);
-        $reports = $reportModel->getReportsForEmployee($employeeId);
+        $issuedItems = $reportModel->getActiveIssuancesForEmployee($employeeId);
+        $itemReports = $reportModel->getReportsForEmployee($employeeId);
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
@@ -49,17 +85,20 @@ class EmployeeItemController extends AuthController
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
 
+        $routePrefix = $this->prefix;
+        $user_role = strtoupper((string) ($_SESSION['usertype'] ?? ''));
+
         require __DIR__ . '/../../Views/employee/items/items.php';
     }
 
-    /** POST /employee/items/report */
+    /** POST /{prefix}/items/report */
     public function report()
     {
         $employeeId = $this->requireEmployeeId();
 
         if (empty($_POST['csrf_token']) || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), (string) $_POST['csrf_token'])) {
             $_SESSION['flash_error'] = 'Invalid form token. Please try again.';
-            $this->redirect('/employee/items');
+            $this->redirect($this->itemsPath());
         }
 
         $assignmentId = (int) ($_POST['assignment_id'] ?? 0);
@@ -69,7 +108,7 @@ class EmployeeItemController extends AuthController
 
         if ($description === '') {
             $_SESSION['flash_error'] = 'Please describe what happened to the item.';
-            $this->redirect('/employee/items');
+            $this->redirect($this->itemsPath());
         }
 
         $reportModel = new UniformReportModel();
@@ -77,7 +116,7 @@ class EmployeeItemController extends AuthController
 
         if (!$ok) {
             $_SESSION['flash_error'] = $message;
-            $this->redirect('/employee/items');
+            $this->redirect($this->itemsPath());
         }
 
         $assignment = $reportModel->getAssignmentById($assignmentId);
@@ -85,10 +124,11 @@ class EmployeeItemController extends AuthController
         $employeeName = (string) ($assignment['employee_name'] ?? 'An employee');
         $typeLabel = strtoupper($type) === 'LOST' ? 'lost' : 'damaged';
 
+        // HR reviews reports; full-access admins (General Manager) see them through the HR area too.
         $notificationModel = new NotificationModel();
-        foreach ($reportModel->getHrAccountIds() as $hrAccountId) {
+        foreach ($reportModel->getReviewerAccountIds() as $reviewerAccountId) {
             $notificationModel->create(
-                $hrAccountId,
+                $reviewerAccountId,
                 "{$employeeName} reported {$quantity} x {$itemLabel} as {$typeLabel}.",
                 'fa-exclamation-triangle',
                 'warning',
@@ -106,6 +146,6 @@ class EmployeeItemController extends AuthController
             ]);
 
         $_SESSION['flash_success'] = 'Your report was sent to HR. You will be notified once it is reviewed.';
-        $this->redirect('/employee/items');
+        $this->redirect($this->itemsPath());
     }
 }

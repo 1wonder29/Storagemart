@@ -275,7 +275,12 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                                 <tbody>
                                     <?php foreach ($uniforms as $unif): ?>
                                         <tr>
-                                            <td><?= htmlspecialchars($unif['uniform_type'] ?? '') ?></td>
+                                            <td>
+                                                <?= htmlspecialchars($unif['uniform_type'] ?? '') ?>
+                                                <?php if (!empty($pendingReportTypes[(int) $unif['assignment_id']])): ?>
+                                                    <span class="badge badge-warning ml-1">Reported <?= htmlspecialchars(strtolower($pendingReportTypes[(int) $unif['assignment_id']])) ?></span>
+                                                <?php endif; ?>
+                                            </td>
                                             <td><?= htmlspecialchars($unif['size'] ?? '') ?></td>
                                             <td><?= $unif['quantity_issued'] ?></td>
                                             <td><?= date('M d, Y', strtotime($unif['date_issued'])) ?></td>
@@ -321,6 +326,52 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                                         <td><?= $hist['date_returned'] ? date('M d, Y', strtotime($hist['date_returned'])) : '-' ?></td>
                                         <td><?= htmlspecialchars($hist['condition_upon_issue'] ?? '-') ?></td>
                                         <td><?= htmlspecialchars($hist['condition_upon_return'] ?? '-') ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Lost / Damaged Reports -->
+            <?php if (!empty($itemReports)):
+                $reportStatusLabels = ['PENDING' => ['Pending', 'warning'], 'CONFIRMED' => ['Confirmed', 'danger'], 'ITEM_OK' => ['Item OK / Active', 'success']];
+            ?>
+            <div class="card shadow mb-4 data-card">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-exclamation-triangle mr-1"></i> Lost / Damaged Reports</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Reported</th>
+                                    <th>Item</th>
+                                    <th>Report</th>
+                                    <th>Details</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($itemReports as $r):
+                                    [$reportLabel, $reportColor] = $reportStatusLabels[$r['status']] ?? [$r['status'], 'secondary'];
+                                ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars(date('M d, Y', strtotime((string) $r['created_at']))) ?></td>
+                                        <td><?= htmlspecialchars($r['uniform_type'] . ' (' . $r['size'] . ')') ?></td>
+                                        <td><?= (int) $r['quantity'] ?> x <?= htmlspecialchars(ucfirst(strtolower((string) $r['report_type']))) ?></td>
+                                        <td>
+                                            <?= htmlspecialchars((string) ($r['description'] ?? '')) ?>
+                                            <?php if (!empty($r['hr_remarks'])): ?>
+                                                <div class="small text-muted"><strong>HR:</strong> <?= htmlspecialchars((string) $r['hr_remarks']) ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><span class="badge badge-<?= $reportColor ?>"><?= htmlspecialchars($reportLabel) ?></span></td>
+                                        <td class="text-nowrap"><?php require dirname(__DIR__, 2) . '/partials/hr/item_report_actions.php'; ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -400,6 +451,10 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/storagemart.min.js"></script>
+    <?php if (!empty($itemReports)) {
+        $reviewReturnTo = '/hr/employees/detail/' . (int) $employee['employee_id'];
+        require dirname(__DIR__, 2) . '/partials/hr/item_report_review_modal.php';
+    } ?>
     <script>
     (function () {
         $(document).on('click', '.btn-return-asset', function () {

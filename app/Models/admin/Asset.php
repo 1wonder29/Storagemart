@@ -470,6 +470,7 @@ class Asset extends BaseModel {
             i.serialNumber,
             i.itemInfo,
             i.status,
+            i.year_purchased,
             b.branch_id,
             b.branchName,
             e.employee_id,
@@ -495,7 +496,7 @@ class Asset extends BaseModel {
 
 
     // Adding asset item
-    public function addItem(int $groupId, string $serialNumber, string $itemInfo, string $year_purchased, string $createdBy): ?int
+    public function addItem(int $groupId, string $serialNumber, string $itemInfo, string $year_purchased, string $createdBy, ?int $branchId = null): ?int
     {
         try {
             // DDL must run outside a transaction; CREATE TABLE causes an implicit commit in MySQL.
@@ -542,11 +543,12 @@ class Asset extends BaseModel {
 
             // 3) insert into tblassets_inventory
             $sql = "INSERT INTO {$this->tblassets}
-                    (group_id, serialNumber, itemInfo, status, assetCode, assetNumber, year_purchased, datecreated, createdby)
-                    VALUES (:group_id, :serialNumber, :itemInfo, 'UNASSIGNED', :assetCode, :assetNumber, :year_purchased, :datecreated, :createdby)";
+                    (group_id, branch_id, serialNumber, itemInfo, status, assetCode, assetNumber, year_purchased, datecreated, createdby)
+                    VALUES (:group_id, :branch_id, :serialNumber, :itemInfo, 'UNASSIGNED', :assetCode, :assetNumber, :year_purchased, :datecreated, :createdby)";
             $stmt = $this->pdo->prepare($sql);
             $params = [
                 ':group_id'      => $groupId,
+                ':branch_id'     => $branchId,
                 ':serialNumber'  => $serialNumber,
                 ':itemInfo'      => $itemInfo,
                 ':assetCode'     => $assetCode,
@@ -714,6 +716,21 @@ class Asset extends BaseModel {
             return false;
         }
     }
+    /** Where the item physically is. Transfers also set this to the receiving employee's branch. */
+    public function updateItemBranch(int $inventoryId, ?int $branchId): bool
+    {
+        $stmt = $this->pdo->prepare("UPDATE {$this->tblassets} SET branch_id = :branch_id WHERE inventory_id = :inventory_id");
+        return $stmt->execute([':branch_id' => $branchId, ':inventory_id' => $inventoryId]);
+    }
+
+    /** Year Purchased must be a plausible 4-digit year (it used to accept any text, e.g. branch names). */
+    public static function isValidPurchaseYear(string $year): bool
+    {
+        return (bool) preg_match('/^\d{4}$/', $year)
+            && (int) $year >= 1990
+            && (int) $year <= (int) date('Y') + 1;
+    }
+
     public function fetchInventoryById(int $inventoryId): ?array
     {
         $sql = "SELECT i.*, g.group_id, g.groupName, a.transferDetails AS currentReason

@@ -95,8 +95,22 @@ $backUrl = $groupId > 0
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <label>Year Purchased</label>
-                                    <input type="text" name="year_purchased" class="form-control"
-                                           value="<?= htmlspecialchars($inventory['year_purchased'] ?? '') ?>" required>
+                                    <?php $currentYear = (string) ($inventory['year_purchased'] ?? ''); ?>
+                                    <input type="number" name="year_purchased" class="form-control"
+                                           value="<?= preg_match('/^\d{4}$/', $currentYear) ? htmlspecialchars($currentYear) : '' ?>"
+                                           min="1990" max="<?= (int) date('Y') + 1 ?>" step="1" placeholder="Leave blank if unknown">
+                                </div>
+                                <div class="col-md-6">
+                                <label for="branch_id" class="form-label">Branch / Location</label>
+                                <select id="branch_id" name="branch_id" class="form-control">
+                                    <option value="">-- Not set --</option>
+                                    <?php foreach (($branches ?? []) as $branch): ?>
+                                        <option value="<?= (int) $branch['branch_id'] ?>" <?= (int) $branch['branch_id'] === (int) ($inventory['branch_id'] ?? 0) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars((string) $branch['branchName']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <small class="form-text text-muted">Where the item is kept. Assigning it to an employee updates this to their branch.</small>
                                 </div>
                             </div>
 

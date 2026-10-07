@@ -165,6 +165,22 @@ if ($uri === '/notifications' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+// MY ISSUED ITEMS — the same page under each role's prefix, e.g. /head/items, /aom/items/report
+if (preg_match('#^/([a-z]+)/items(/report)?$#', $uri, $itemsMatch)) {
+    require_once __DIR__ . '/../app/Controllers/employee/ItemController.php';
+    if (EmployeeItemController::handlesPrefix($itemsMatch[1])) {
+        $items = new EmployeeItemController($itemsMatch[1]);
+        if (empty($itemsMatch[2]) && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            $items->index();
+            exit;
+        }
+        if (!empty($itemsMatch[2]) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $items->report();
+            exit;
+        }
+    }
+}
+
 // ADMIN PREFIX routes
 if (strpos($uri, '/admin') === 0) {
     require_once __DIR__ . '/../app/Controllers/admin/AdminController.php';
@@ -324,10 +340,6 @@ if (strpos($uri, '/employee') === 0) {
         $employee->profile();
     } elseif ($sub === 'assets') {
         $asset->asset();
-    } elseif ($sub === 'items' || ($sub === 'items/report' && $_SERVER['REQUEST_METHOD'] === 'POST')) {
-        require_once __DIR__ . '/../app/Controllers/employee/ItemController.php';
-        $items = new EmployeeItemController();
-        $sub === 'items' ? $items->index() : $items->report();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $ticket->create();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {

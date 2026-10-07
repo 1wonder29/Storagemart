@@ -89,7 +89,18 @@ $totalItems = (int) ($totalItems ?? 0);
                                 <label for="serialNumber" class="form-label">Serial Number <span class="text-danger">*</span></label>
                                 <input type="text" name="serialNumber" class="form-control" id="serialNumber" placeholder="Serial Number" required>
                                 <label for="year_purchased" class="form-label mt-3">Year Purchased <span class="text-danger">*</span></label>
-                                <input type="text" name="year_purchased" class="form-control" id="year_purchased" placeholder="e.g. 2024" required>
+                                <input type="number" name="year_purchased" class="form-control" id="year_purchased"
+                                       placeholder="e.g. <?= date('Y') ?>" min="1990" max="<?= (int) date('Y') + 1 ?>" step="1" required>
+                                <label for="branch_id" class="form-label mt-3">Branch / Location</label>
+                                <select id="branch_id" name="branch_id" class="form-control">
+                                    <option value="">-- Not set --</option>
+                                    <?php foreach (($branches ?? []) as $branch): ?>
+                                        <option value="<?= (int) $branch['branch_id'] ?>">
+                                            <?= htmlspecialchars((string) $branch['branchName']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <small class="form-text text-muted">Where the item is kept. Assigning it to an employee updates this to their branch.</small>
                             </div>
                         </div>
 

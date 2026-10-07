@@ -151,6 +151,18 @@ class HrController extends AuthController {
             $accountabilityUniforms = $this->employeeModel->getAccountabilityUniformItems($employeeId);
             $notifications = $this->notificationModel->getLatest($_SESSION['account_id'], 10);
 
+            // Lost / damaged reports this employee filed, reviewable right from the profile.
+            require_once __DIR__ . '/../../Models/hr/UniformReportModel.php';
+            $reportModel = new UniformReportModel();
+            $itemReports = $reportModel->getReports(null, null, $employeeId);
+            $replacementStock = $reportModel->getReplacementStock();
+            $pendingReportTypes = [];
+            foreach ($itemReports as $reportRow) {
+                if ($reportRow['status'] === 'PENDING') {
+                    $pendingReportTypes[(int) $reportRow['assignment_id']] = $reportRow['report_type'];
+                }
+            }
+
             if (empty($_SESSION['csrf_token'])) {
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
             }

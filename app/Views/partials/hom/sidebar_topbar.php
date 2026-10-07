@@ -50,6 +50,13 @@ $routePrefix = $routePrefix ?? 'hom';
         </a>
     </li>
 
+    <li class="nav-item <?= ($activePage === 'items') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/items">
+            <i class="fas fa-tshirt"></i>
+            <span>My Issued Items</span>
+        </a>
+    </li>
+
     <!-- AOM Branch Assignments -->
     <li class="nav-item <?= ($activePage === 'aom-branches') ? 'active' : '' ?>">
         <a class="nav-link" href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/aom-branches">

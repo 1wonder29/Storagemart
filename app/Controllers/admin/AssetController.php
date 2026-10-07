@@ -770,6 +770,7 @@ class AssetController extends AuthController {
             $count = $notificationData['count'];
             $notifications = $notificationData['notifications'];
             $groups = $assetModel->fetchAllAssets();
+            $branches = $assetModel->fetchBranches();
             $totalGroups = count($groups);
             $totalItems = 0;
             foreach ($groups as $groupRow) {
@@ -796,6 +797,7 @@ class AssetController extends AuthController {
             $itemInfo       = trim($_POST['itemInfo'] ?? '');
             $year_purchased = trim($_POST['year_purchased'] ?? '');
             $group_id       = isset($_POST['group_id']) ? (int) $_POST['group_id'] : 0;
+            $branchId       = (int) ($_POST['branch_id'] ?? 0);
             $createdBy      = $_SESSION['username'] ?? ($_SESSION['account_id'] ?? 'system');
 
             if ($serialNumber === '' || $itemInfo === '' || $year_purchased === '' || $group_id <= 0) {
@@ -803,9 +805,17 @@ class AssetController extends AuthController {
                 $this->redirect('/admin/assets/add');
                 return;
             }
+            if (!Asset::isValidPurchaseYear($year_purchased)) {
+                $_SESSION['flash_error'] = 'Year Purchased must be a 4-digit year (e.g. ' . date('Y') . '). Use the Branch field for the location.';
+                $this->redirect('/admin/assets/add');
+                return;
+            }
+            if ($branchId > 0 && !$assetModel->fetchBranchById($branchId)) {
+                $branchId = 0;
+            }
 
             try {
-                $newId = $assetModel->addItem($group_id, $serialNumber, $itemInfo, $year_purchased, $createdBy);
+                $newId = $assetModel->addItem($group_id, $serialNumber, $itemInfo, $year_purchased, $createdBy, $branchId > 0 ? $branchId : null);
 
                 if ($newId) {
                     $logger = new Logger();
@@ -862,6 +872,8 @@ class AssetController extends AuthController {
         if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
         $csrf_token = $_SESSION['csrf_token'];
 
+        $branches = $assetModel->fetchBranches();
+
         // pass $inventory to view
         require_once __DIR__ . '/../../Views/admin/asset/update_item.php';
     }
@@ -886,13 +898,22 @@ class AssetController extends AuthController {
         $yearPurchased = trim($_POST['year_purchased'] ?? '');
         $status = trim($_POST['status'] ?? '');
         $reason = trim($_POST['transferDetails'] ?? '');
+        $branchId = (int) ($_POST['branch_id'] ?? 0);
 
         if ($inventoryID <= 0 || $itemInfo === '' || $serialNumber === '') {
             $_SESSION['flash_error'] = 'Please complete required fields.';
             $this->redirect('/admin/assets/item?group_id=' . (int)($_POST['group_id'] ?? 0)); return;
         }
+        // Blank is allowed for older items whose purchase year is unknown.
+        if ($yearPurchased !== '' && !Asset::isValidPurchaseYear($yearPurchased)) {
+            $_SESSION['flash_error'] = 'Year Purchased must be a 4-digit year (e.g. ' . date('Y') . ') or left blank. Use the Branch field for the location.';
+            $this->redirect('/admin/assets/item/edit?inventory_id=' . $inventoryID); return;
+        }
 
         $assetModel = new Asset();
+        if ($branchId > 0 && !$assetModel->fetchBranchById($branchId)) {
+            $branchId = 0;
+        }
         if (strtoupper($status) === 'DEFECTIVE') {
             $current = $assetModel->fetchInventoryById($inventoryID);
             $currentStatus = strtoupper(trim((string) ($current['status'] ?? '')));
@@ -905,6 +926,9 @@ class AssetController extends AuthController {
         }
 
         $ok = $assetModel->updateItem($inventoryID, $itemInfo, $serialNumber, $yearPurchased, $status, $reason, $_SESSION['account_id'] ?? null);
+        if ($ok) {
+            $ok = $assetModel->updateItemBranch($inventoryID, $branchId > 0 ? $branchId : null);
+        }
 
         if ($ok) {
             require_once __DIR__ . '/../../Models/NotificationModel.php';

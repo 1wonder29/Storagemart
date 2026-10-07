@@ -15,6 +15,7 @@ if (SuperUser::isCurrent()) {
             ['/hr/employees', 'Employees', 'fa-users'],
             ['/hr/uniforms', 'Inventory', 'fa-archive'],
             ['/hr/uniforms/assignments', 'Item Assignments', 'fa-user-tag'],
+            ['/hr/uniforms/reports', 'Lost / Damaged Reports', 'fa-exclamation-triangle'],
             ['/hr/tickets', 'HR Tickets', 'fa-ticket-alt'],
         ]],
         'It' => ['IT', 'fa-laptop-code', [
@@ -149,6 +150,13 @@ if (SuperUser::isCurrent()) {
                     </div>
                 </div>
             </li>
+            <!-- Nav Item - My Issued Items (the admin's own uniforms / IDs from HR) -->
+            <li class="nav-item <?= ($adminActivePage === 'items') ? 'active' : '' ?>">
+                <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/items">
+                    <i class="fas fa-fw fa-tshirt"></i>
+                    <span>My Issued Items</span></a>
+            </li>
+
             <!-- Divider -->
             <hr class="sidebar-divider">
 
