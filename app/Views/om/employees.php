@@ -19,7 +19,7 @@ $totalEmployees = count($employees);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/om-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/om-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hom-employees.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
@@ -91,11 +91,7 @@ $totalEmployees = count($employees);
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
-                        <label for="homSearchFilter">Search</label>
-                        <input type="text" id="homSearchFilter" class="form-control form-control-sm" placeholder="Name, position, or email">
-                    </div>
-                    <div class="col-md-4 col-sm-6 text-md-right">
+                    <div class="col-md-8 col-sm-6 text-md-right">
                         <button type="button" id="homClearFilters" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-undo mr-1"></i> Clear Filters
                         </button>
@@ -261,6 +257,6 @@ $totalEmployees = count($employees);
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-<script src="<?= htmlspecialchars($base) ?>/assets/js/hom-employees.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/hom-employees.js?v=20261007"></script>
 </body>
 </html>

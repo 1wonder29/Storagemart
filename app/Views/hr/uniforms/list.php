@@ -16,7 +16,7 @@ $totalPages = (int) ($totalPages ?? 1);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-uniforms.css" rel="stylesheet">
 </head>
 <body id="page-top">
@@ -60,6 +60,12 @@ $totalPages = (int) ($totalPages ?? 1);
                 </a>
                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/export" class="quick-action-btn qa-success">
                     <i class="fas fa-file-excel"></i> Download Summary
+                </a>
+                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/reports" class="quick-action-btn qa-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Lost / Damaged Reports
+                    <?php if (!empty($pendingItemReports)): ?>
+                        <span class="badge badge-light ml-1"><?= (int) $pendingItemReports ?></span>
+                    <?php endif; ?>
                 </a>
             </div>
 

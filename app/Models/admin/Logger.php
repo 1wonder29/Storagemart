@@ -17,17 +17,32 @@ class Logger {
     /**
      * Basic log function (legacy compatibility)
      */
+    /**
+     * tbllogs columns are short (action 255, module 50, ID/performedby 20). Trim values so
+     * long usernames/emails don't make inserts fail on MySQL servers running in strict mode.
+     */
+    private static function fitColumns(array $row): array
+    {
+        $limits = [20, 20, 255, 50, 20, 20];
+        foreach ($row as $i => $value) {
+            $value = (string) $value;
+            $row[$i] = mb_strlen($value) > $limits[$i] ? mb_substr($value, 0, $limits[$i]) : $value;
+        }
+        return $row;
+    }
+
     public function log($action, $module, $id, $performedby) {
         $date = date('Y-m-d');
         $time = date('H:i:s');  
         if ($this->pdo) {
             $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute([$date, $time, $action, $module, $id, $performedby]);
+            return $stmt->execute(self::fitColumns([$date, $time, $action, $module, $id, $performedby]));
         }
         if ($this->link) {
             $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
             if ($stmt = mysqli_prepare($this->link, $sql)) {
+                [$date, $time, $action, $module, $id, $performedby] = self::fitColumns([$date, $time, $action, $module, $id, $performedby]);
                 mysqli_stmt_bind_param($stmt, 'ssssss', $date, $time, $action, $module, $id, $performedby);
                 $ok = mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
@@ -66,11 +81,12 @@ class Logger {
         if ($this->pdo) {
             $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute([$date, $time, $enhancedAction, $module, $recordId, $performedby]);
+            return $stmt->execute(self::fitColumns([$date, $time, $enhancedAction, $module, $recordId, $performedby]));
         }
         if ($this->link) {
             $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
             if ($stmt = mysqli_prepare($this->link, $sql)) {
+                [$date, $time, $enhancedAction, $module, $recordId, $performedby] = self::fitColumns([$date, $time, $enhancedAction, $module, $recordId, $performedby]);
                 mysqli_stmt_bind_param($stmt, 'ssssss', $date, $time, $enhancedAction, $module, $recordId, $performedby);
                 $ok = mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
@@ -131,11 +147,12 @@ class Logger {
         if ($this->pdo) {
             $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute([$date, $time, $enhancedAction, $module, $recordId, $performedby]);
+            return $stmt->execute(self::fitColumns([$date, $time, $enhancedAction, $module, $recordId, $performedby]));
         }
         if ($this->link) {
             $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
             if ($stmt = mysqli_prepare($this->link, $sql)) {
+                [$date, $time, $enhancedAction, $module, $recordId, $performedby] = self::fitColumns([$date, $time, $enhancedAction, $module, $recordId, $performedby]);
                 mysqli_stmt_bind_param($stmt, 'ssssss', $date, $time, $enhancedAction, $module, $recordId, $performedby);
                 $ok = mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
@@ -302,11 +319,12 @@ class Logger {
         if ($this->pdo) {
             $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute([$date, $time, $action, $module, $recordId, $performedby]);
+            return $stmt->execute(self::fitColumns([$date, $time, $action, $module, $recordId, $performedby]));
         }
         if ($this->link) {
             $sql = "INSERT INTO {$this->table} (datelog, timelog, action, module, ID, performedby) VALUES (?, ?, ?, ?, ?, ?)";
             if ($stmt = mysqli_prepare($this->link, $sql)) {
+                [$date, $time, $action, $module, $recordId, $performedby] = self::fitColumns([$date, $time, $action, $module, $recordId, $performedby]);
                 mysqli_stmt_bind_param($stmt, 'ssssss', $date, $time, $action, $module, $recordId, $performedby);
                 $ok = mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);

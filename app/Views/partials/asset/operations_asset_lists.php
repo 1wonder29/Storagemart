@@ -3,6 +3,8 @@ $myAssets = $myAssets ?? [];
 $teamAssets = $teamAssets ?? [];
 $branches = $branches ?? [];
 $teamEmptyMessage = $teamEmptyMessage ?? 'No employee assets found.';
+$assetRoutePrefix = $routePrefix ?? (strpos($_SERVER['REQUEST_URI'] ?? '', '/aom/') !== false ? 'aom' : 'hom');
+$fileTicketBaseUrl = rtrim(BASE_URL, '/') . '/' . $assetRoutePrefix . '/tickets/create/my?inventory_id=';
 
 $myAssetCount = count($myAssets);
 $teamAssetCount = count($teamAssets);
@@ -48,6 +50,7 @@ $renderAssetStatus = static function (array $row): string {
                         <th>Item Info</th>
                         <th>Status</th>
                         <th>Branch</th>
+                        <th class="text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,6 +63,12 @@ $renderAssetStatus = static function (array $row): string {
                             <td><?= htmlspecialchars((string) ($row['itemInfo'] ?? '')) ?></td>
                             <td><?= $renderAssetStatus($row) ?></td>
                             <td><?= htmlspecialchars((string) ($row['branchName'] ?? '')) ?></td>
+                            <td class="text-right">
+                                <a href="<?= htmlspecialchars($fileTicketBaseUrl . (int) ($row['inventory_id'] ?? 0)) ?>"
+                                   class="btn btn-sm btn-outline-primary" title="File a ticket for this asset">
+                                    <i class="fas fa-ticket-alt mr-1"></i> File Ticket
+                                </a>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

@@ -369,7 +369,7 @@ class HrTicketController extends AuthController
         $pdfService = new PdfGeneratorService();
 
         // Generate technical record on-demand (HR may access department tickets)
-        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $employeeId, true);
+        $result = $pdfService->generateTechnicalRecord($ticketId, $employeeId, true, ($_GET['format'] ?? 'docx'));
 
         if (!$result || !$result['success']) {
             http_response_code(404);
@@ -387,7 +387,7 @@ class HrTicketController extends AuthController
             exit;
         }
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Type: ' . ($result['mime'] ?? 'application/octet-stream'));
         header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
         header('Content-Length: ' . filesize($filepath));
         header('Cache-Control: no-cache, no-store, must-revalidate');

@@ -25,11 +25,12 @@ ksort($statuses);
 function admin_asset_status_class(string $status): string
 {
     $s = strtolower(trim($status));
-    if (strpos($s, 'assign') !== false) {
-        return 'status-assigned';
-    }
+    // Check "unassign" first: "unassigned" also contains "assign".
     if (strpos($s, 'unassign') !== false || strpos($s, 'available') !== false) {
         return 'status-unassigned';
+    }
+    if (strpos($s, 'assign') !== false) {
+        return 'status-assigned';
     }
     if (strpos($s, 'defect') !== false) {
         return 'status-defective';

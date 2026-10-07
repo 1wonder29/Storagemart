@@ -144,7 +144,7 @@ if (SuperUser::isCurrent()) {
                         <a class="sidebar-submenu-item <?= ($assetSubPage === 'add-group') ? 'active' : '' ?>"
                            href="<?= htmlspecialchars($base) ?>/admin/assets/group/add">
                             <i class="fas fa-layer-group"></i>
-                            <span>Add Group</span>
+                            <span>Add Model / Group</span>
                         </a>
                     </div>
                 </div>

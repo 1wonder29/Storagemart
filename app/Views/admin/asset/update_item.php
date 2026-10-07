@@ -104,7 +104,7 @@ $backUrl = $groupId > 0
                                 <div class="col-md-12">
                                     <label>Reason</label>
                                     <textarea class="form-control" id="transferDetails" name="transferDetails" rows="4"
-                                              placeholder="Enter reason for Defective, Disposed, Lost, or Returned"></textarea>
+                                              placeholder="Enter reason for Defective, Disposed, Lost, or Returned"><?= in_array(strtoupper((string) ($inventory['status'] ?? '')), ['DEFECTIVE', 'DISPOSED', 'LOST', 'RETURNED'], true) ? htmlspecialchars((string) ($inventory['currentReason'] ?? '')) : '' ?></textarea>
                                 </div>
                             </div>
 

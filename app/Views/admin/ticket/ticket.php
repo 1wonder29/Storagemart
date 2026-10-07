@@ -62,7 +62,7 @@ $summaryActiveFilter = $activeTicketFilter;
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/it-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/it-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-ticket-list.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/ticket-history-modal.css" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
@@ -295,8 +295,12 @@ $summaryActiveFilter = $activeTicketFilter;
                                                     <i class="fas fa-history"></i>
                                                 </button>
                                                 <?php if (strcasecmp($status, 'resolved') === 0): ?>
-                                                <a href="<?= htmlspecialchars($base) ?>/admin/tickets/download-record?id=<?= $ticketId ?>"
-                                                   class="btn btn-sm btn-success" title="Generate technical report">
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/tickets/download-record?id=<?= $ticketId ?>&amp;format=pdf"
+                                                   class="btn btn-sm btn-danger" title="Technical report (PDF)">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </a>
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/tickets/download-record?id=<?= $ticketId ?>&amp;format=docx"
+                                                   class="btn btn-sm btn-success" title="Technical report (Word)">
                                                     <i class="fas fa-file-word"></i>
                                                 </a>
                                                 <?php endif; ?>

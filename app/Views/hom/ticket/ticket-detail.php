@@ -45,6 +45,7 @@ $loggedLastname = $ctx['loggedLastname'] ?? '';
             <?php
             $showTechnicalUpload = true;
             $showRateDownload = true;
+            $showRateButton = !empty($canRateTicket);
             $showTransferTicket = true;
             require __DIR__ . '/../../partials/ticket/ticket_detail_content.php';
             ?>

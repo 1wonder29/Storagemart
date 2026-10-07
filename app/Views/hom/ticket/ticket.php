@@ -50,7 +50,7 @@ $totalTickets = count($tickets ?? []);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/om-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/om-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/searchable-select.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/bulk-transfer-modal.css" rel="stylesheet">
@@ -256,7 +256,7 @@ $totalTickets = count($tickets ?? []);
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
 <?php if (!empty($enableBulkTransfer)): ?>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/searchable-select.js"></script>
-<script src="<?= htmlspecialchars($base) ?>/assets/js/bulk-transfer-tickets.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/bulk-transfer-tickets.js?v=20261007"></script>
 <?php endif; ?>
 <script>
     function resetFilters() {

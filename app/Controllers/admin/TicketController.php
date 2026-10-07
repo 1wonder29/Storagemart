@@ -799,7 +799,7 @@ class TicketController extends AuthController
         }
 
         $pdfService = new PdfGeneratorService();
-        $result = $pdfService->generateTechnicalRecordDocx($ticketId, $requesterId, true);
+        $result = $pdfService->generateTechnicalRecord($ticketId, $requesterId, true, ($_GET['format'] ?? 'docx'));
 
         if (!$result || empty($result['success'])) {
             http_response_code(404);
@@ -816,7 +816,7 @@ class TicketController extends AuthController
             exit;
         }
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Type: ' . ($result['mime'] ?? 'application/octet-stream'));
         header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
         header('Content-Length: ' . filesize($filepath));
         header('Cache-Control: no-cache, no-store, must-revalidate');

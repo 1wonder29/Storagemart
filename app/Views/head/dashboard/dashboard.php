@@ -278,9 +278,14 @@ $todayLabel = date('l, F j, Y');
                     ?>
                 </div>
                 <div class="modal-footer">
-                    <a id="downloadPdfBtn" class="btn btn-sm btn-view-full-detail mr-auto d-none" download>
-                        <i class="fas fa-download mr-1"></i> Download Technical Report
-                    </a>
+                    <div id="downloadPdfBtn" class="mr-auto d-none">
+                        <a id="downloadRecordPdf" class="btn btn-sm btn-view-full-detail" download>
+                            <i class="fas fa-file-pdf mr-1"></i> Report PDF
+                        </a>
+                        <a id="downloadRecordDocx" class="btn btn-sm btn-view-full-detail" download>
+                            <i class="fas fa-file-word mr-1"></i> Report Word
+                        </a>
+                    </div>
                     <button class="btn btn-sm btn-modal-close" data-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -315,9 +320,9 @@ $todayLabel = date('l, F j, Y');
             $("#status").val(status);
 
             if (status.toLowerCase() === 'resolved') {
-                $("#downloadPdfBtn")
-                    .attr("href", base + "/head/tickets/download-record?id=" + id)
-                    .removeClass("d-none");
+                $("#downloadRecordPdf").attr("href", base + "/head/tickets/download-record?id=" + id + "&format=pdf");
+                $("#downloadRecordDocx").attr("href", base + "/head/tickets/download-record?id=" + id + "&format=docx");
+                $("#downloadPdfBtn").removeClass("d-none");
             } else {
                 $("#downloadPdfBtn").addClass("d-none");
             }

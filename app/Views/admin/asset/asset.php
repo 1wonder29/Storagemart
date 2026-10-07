@@ -14,6 +14,13 @@ foreach ($assets as $row) {
         $categories[$cat] = true;
     }
 }
+// Include every category, not only ones that already have groups, so newly added categories appear in the filter.
+foreach (($allCategories ?? []) as $catRow) {
+    $cat = trim((string) ($catRow['categoryName'] ?? ''));
+    if ($cat !== '') {
+        $categories[$cat] = true;
+    }
+}
 ksort($categories);
 ?>
 <html lang="en">
@@ -52,7 +59,10 @@ ksort($categories);
                                 <i class="fas fa-plus mr-1"></i> Add Item
                             </a>
                             <a href="<?= htmlspecialchars($base) ?>/admin/assets/group/add" class="btn btn-sm btn-outline-light mr-1">
-                                <i class="fas fa-layer-group mr-1"></i> Add Group
+                                <i class="fas fa-layer-group mr-1"></i> Add Model / Group
+                            </a>
+                            <a href="<?= htmlspecialchars($base) ?>/admin/assets/category/add" class="btn btn-sm btn-outline-light mr-1">
+                                <i class="fas fa-tags mr-1"></i> Add Category
                             </a>
                             <a href="<?= htmlspecialchars($base) ?>/admin/assets/defective" class="btn btn-sm btn-outline-light">
                                 <i class="fas fa-exclamation-triangle mr-1"></i> Defective Items

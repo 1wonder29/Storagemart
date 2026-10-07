@@ -324,6 +324,10 @@ if (strpos($uri, '/employee') === 0) {
         $employee->profile();
     } elseif ($sub === 'assets') {
         $asset->asset();
+    } elseif ($sub === 'items' || ($sub === 'items/report' && $_SERVER['REQUEST_METHOD'] === 'POST')) {
+        require_once __DIR__ . '/../app/Controllers/employee/ItemController.php';
+        $items = new EmployeeItemController();
+        $sub === 'items' ? $items->index() : $items->report();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $ticket->create();
     } elseif ($sub === 'assets/file_ticket' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -409,6 +413,8 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
         $ticket->cancelled();
     } elseif ($sub === 'tickets/upload-report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $ticket->uploadTechnicalReport();
+    } elseif ($sub === 'tickets/download-record' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $ticket->downloadTechnicalRecord();
     } elseif ($sub === 'ratings') {
         $it->ratings();
     } else {
@@ -553,6 +559,10 @@ if (strpos($uri, '/hr') === 0) {
         $uniform->exportSummary();
     } elseif ($sub === 'uniforms') {
         $uniform->list();
+    } elseif ($sub === 'uniforms/reports') {
+        $uniform->reports();
+    } elseif ($sub === 'uniforms/reports/resolve' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->resolveReport();
     } elseif ($sub === 'uniforms/add') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $uniform->addForm();

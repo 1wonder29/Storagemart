@@ -18,7 +18,7 @@ $assignedCount = count($assignedIds);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/om-dashboard.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/om-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/role-list-page.css" rel="stylesheet">
 </head>
 
@@ -35,9 +35,14 @@ $assignedCount = count($assignedIds);
                     <div class="col-lg-8">
                         <h1><i class="fas fa-edit mr-2"></i>Assign Branches for AOM</h1>
                         <p>Select the branches <?= htmlspecialchars($aomName) ?> is responsible for.</p>
+                        <div class="quick-nav mt-3">
+                            <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/aom-branches" class="btn btn-sm btn-outline-light">
+                                <i class="fas fa-arrow-left mr-1"></i> Back to List
+                            </a>
+                        </div>
                     </div>
                     <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
-                        <div class="row mb-3 mb-lg-0">
+                        <div class="row">
                             <div class="col-6">
                                 <div class="hero-stat">
                                     <div class="stat-value"><?= (int) $assignedCount ?></div>
@@ -51,9 +56,6 @@ $assignedCount = count($assignedIds);
                                 </div>
                             </div>
                         </div>
-                        <a href="<?= htmlspecialchars($base) ?>/<?= htmlspecialchars($routePrefix) ?>/aom-branches" class="btn btn-light btn-sm shadow-sm">
-                            <i class="fas fa-arrow-left fa-sm"></i> Back to List
-                        </a>
                     </div>
                 </div>
             </div>

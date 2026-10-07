@@ -592,6 +592,37 @@ class Asset extends BaseModel {
             $status = strtoupper($status);
             $now = date('Y-m-d H:i:s');
 
+            // Editing an item that is already DEFECTIVE/DISPOSED/LOST/RETURNED: keep the
+            // existing custody record and just update its reason instead of logging a new one.
+            $current = $this->fetchInventoryById($inventoryID);
+            $currentStatus = strtoupper(trim((string) ($current['status'] ?? '')));
+            $currentAssignmentId = (int) ($current['assignment_id'] ?? 0);
+            if (in_array($status, ['RETURNED', 'DISPOSED', 'LOST', 'DEFECTIVE'], true)
+                && $status === $currentStatus && $currentAssignmentId > 0) {
+                $sqlUp = "UPDATE {$this->tblassets}
+                        SET itemInfo = :itemInfo,
+                            serialNumber = :serialNumber,
+                            year_purchased = :yearPurchased
+                        WHERE inventory_id = :inventory_id";
+                $stmt = $this->pdo->prepare($sqlUp);
+                if (!$stmt->execute([
+                    ':itemInfo'     => $itemInfo,
+                    ':serialNumber' => $serialNumber,
+                    ':yearPurchased'=> $yearPurchased,
+                    ':inventory_id' => $inventoryID,
+                ])) { $this->pdo->rollBack(); return false; }
+
+                if ($reason !== null && trim($reason) !== '') {
+                    $stmt2 = $this->pdo->prepare("UPDATE {$this->tblassign} SET transferDetails = :td WHERE assignment_id = :aid");
+                    if (!$stmt2->execute([':td' => trim($reason), ':aid' => $currentAssignmentId])) {
+                        $this->pdo->rollBack(); return false;
+                    }
+                }
+
+                $this->pdo->commit();
+                return true;
+            }
+
             if (in_array($status, ['RETURNED', 'DISPOSED', 'LOST', 'DEFECTIVE'])) {
                 // 1) update inventory: clear assignment & employee
                 $sqlUp = "UPDATE {$this->tblassets}
@@ -685,9 +716,10 @@ class Asset extends BaseModel {
     }
     public function fetchInventoryById(int $inventoryId): ?array
     {
-        $sql = "SELECT i.*, g.group_id, g.groupName
+        $sql = "SELECT i.*, g.group_id, g.groupName, a.transferDetails AS currentReason
                 FROM {$this->tblassets} i
                 LEFT JOIN {$this->tblgroup} g ON i.group_id = g.group_id
+                LEFT JOIN {$this->tblassign} a ON i.assignment_id = a.assignment_id
                 WHERE i.inventory_id = :inventory_id
                 LIMIT 1";
         $stmt = $this->pdo->prepare($sql);

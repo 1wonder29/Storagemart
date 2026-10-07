@@ -4,7 +4,7 @@
  *
  * Expected: $ticket, $status, $base, $routePrefix
  * Optional: $ticketsListUrl, $showTechnicalUpload, $showRateDownload,
- *           $showUpdateAssignment
+ *           $showRateButton (defaults to $showRateDownload), $showUpdateAssignment
  */
 $ticketId = (int) ($ticket['ticket_id'] ?? 0);
 $ticketStatus = (string) ($ticket['status'] ?? '');
@@ -13,6 +13,7 @@ $status = (string) ($status ?? $ticketStatus);
 $routePrefix = $routePrefix ?? 'employee';
 $showTechnicalUpload = (bool) ($showTechnicalUpload ?? ($status === 'Resolved'));
 $showRateDownload = (bool) ($showRateDownload ?? ($status === 'Resolved'));
+$showRateButton = (bool) ($showRateButton ?? $showRateDownload);
 $showUpdateAssignment = (bool) ($showUpdateAssignment ?? false);
 $showUpdateAssignmentInHeader = (bool) ($showUpdateAssignmentInHeader ?? false);
 $btnBlock = true;
@@ -60,16 +61,25 @@ if (!$hasActions) {
 <div class="card shadow mb-4 ticket-detail-actions">
     <div class="card-body">
         <?php if ($showRateDownload && $status === 'Resolved'): ?>
+        <?php $recordUrl = rtrim($base ?? BASE_URL ?? '', '/') . '/' . $routePrefix . '/tickets/download-record?id=' . $ticketId; ?>
         <div class="mb-3">
-            <a href="<?= htmlspecialchars(rtrim($base ?? BASE_URL ?? '', '/')) ?>/<?= htmlspecialchars($routePrefix) ?>/tickets/download-record?id=<?= $ticketId ?>" class="btn btn-outline-secondary btn-block btn-sm">
-                <i class="fas fa-download"></i> Download Technical Record
-            </a>
+            <div class="small text-gray-600 font-weight-bold mb-1"><i class="fas fa-download"></i> Technical Record</div>
+            <div class="d-flex">
+                <a href="<?= htmlspecialchars($recordUrl) ?>&amp;format=pdf" class="btn btn-outline-danger btn-sm flex-fill mr-1">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+                <a href="<?= htmlspecialchars($recordUrl) ?>&amp;format=docx" class="btn btn-outline-primary btn-sm flex-fill">
+                    <i class="fas fa-file-word"></i> Word
+                </a>
+            </div>
         </div>
+        <?php if ($showRateButton): ?>
         <div class="mb-3">
             <button type="button" class="btn btn-outline-secondary btn-block btn-sm rateBtn" data-ticketid="<?= $ticketId ?>">
                 <i class="fas fa-star"></i> Rate Ticket
             </button>
         </div>
+        <?php endif; ?>
         <?php endif; ?>
 
         <?php if ($showUpdateInSidebar): ?>

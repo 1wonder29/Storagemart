@@ -1,0 +1,227 @@
+<?php
+
+require_once __DIR__ . '/UniformModel.php';
+
+/**
+ * Employee reports of lost or damaged issued items (uniforms, ID badges, etc.).
+ *
+ * Flow: employee files a PENDING report -> HR either CONFIRMS it (the quantity is
+ * moved to the item's lost/damaged counts and the issuance is closed or reduced) or
+ * marks the item OK (the issuance stays active with the employee).
+ */
+class UniformReportModel extends UniformModel {
+
+    protected $tblreports = 'tbluniform_reports';
+
+    public const TYPES = ['LOST', 'DAMAGED'];
+
+    public function __construct() {
+        parent::__construct();
+        $this->ensureReportTable();
+    }
+
+    private function ensureReportTable(): void
+    {
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS {$this->tblreports} (
+            report_id INT(11) NOT NULL AUTO_INCREMENT,
+            assignment_id INT(11) NOT NULL,
+            uniform_id INT(11) NOT NULL,
+            employee_id INT(11) NOT NULL,
+            report_type ENUM('LOST','DAMAGED') NOT NULL,
+            quantity INT(11) NOT NULL DEFAULT 1,
+            description TEXT,
+            status ENUM('PENDING','CONFIRMED','ITEM_OK') NOT NULL DEFAULT 'PENDING',
+            hr_remarks TEXT,
+            reviewed_by INT(11) DEFAULT NULL,
+            reviewed_at DATETIME DEFAULT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (report_id),
+            KEY idx_status (status),
+            KEY idx_employee (employee_id),
+            KEY idx_assignment (assignment_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    /** Items currently issued to the employee (not yet returned), with any open report. */
+    public function getActiveIssuancesForEmployee(int $employeeId): array
+    {
+        $sql = "SELECT ua.assignment_id, ua.uniform_id, ua.quantity_issued, ua.date_issued,
+                       ua.condition_upon_issue, ui.uniform_type, ui.size, ui.color,
+                       (SELECT r.report_type FROM {$this->tblreports} r
+                         WHERE r.assignment_id = ua.assignment_id AND r.status = 'PENDING'
+                         ORDER BY r.report_id DESC LIMIT 1) AS pending_report_type
+                FROM {$this->tbluniform_assignment} ua
+                JOIN {$this->tbluniform_inventory} ui ON ui.uniform_id = ua.uniform_id
+                WHERE ua.employee_id = ? AND ua.date_returned IS NULL AND ua.quantity_issued > 0
+                ORDER BY ua.date_issued DESC, ua.assignment_id DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$employeeId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function getReportsForEmployee(int $employeeId, int $limit = 50): array
+    {
+        $sql = "SELECT r.*, ui.uniform_type, ui.size
+                FROM {$this->tblreports} r
+                JOIN {$this->tbluniform_inventory} ui ON ui.uniform_id = r.uniform_id
+                WHERE r.employee_id = ?
+                ORDER BY r.report_id DESC
+                LIMIT " . max(1, min($limit, 200));
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$employeeId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * @return array{0: bool, 1: string, 2: int} [ok, message, reportId]
+     */
+    public function createReport(int $employeeId, int $assignmentId, string $type, int $quantity, string $description): array
+    {
+        $type = strtoupper(trim($type));
+        if (!in_array($type, self::TYPES, true)) {
+            return [false, 'Please choose Lost or Damaged.', 0];
+        }
+
+        $assignment = $this->getAssignmentById($assignmentId);
+        if (!$assignment || (int) $assignment['employee_id'] !== $employeeId) {
+            return [false, 'This item is not issued to you.', 0];
+        }
+        if (!empty($assignment['date_returned'])) {
+            return [false, 'This item has already been returned.', 0];
+        }
+
+        $issued = (int) ($assignment['quantity_issued'] ?? 0);
+        if ($quantity < 1 || $quantity > $issued) {
+            return [false, "Quantity must be between 1 and {$issued}.", 0];
+        }
+
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM {$this->tblreports} WHERE assignment_id = ? AND status = 'PENDING'");
+        $stmt->execute([$assignmentId]);
+        if ((int) $stmt->fetchColumn() > 0) {
+            return [false, 'You already have a pending report for this item. Please wait for HR to review it.', 0];
+        }
+
+        $stmt = $this->pdo->prepare("INSERT INTO {$this->tblreports}
+                (assignment_id, uniform_id, employee_id, report_type, quantity, description, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'PENDING', NOW())");
+        $ok = $stmt->execute([
+            $assignmentId,
+            (int) $assignment['uniform_id'],
+            $employeeId,
+            $type,
+            $quantity,
+            trim($description),
+        ]);
+
+        return $ok
+            ? [true, 'Report sent to HR.', (int) $this->pdo->lastInsertId()]
+            : [false, 'Could not save the report. Please try again.', 0];
+    }
+
+    public function getReports(?string $status = null): array
+    {
+        $params = [];
+        $where = '';
+        if ($status !== null && $status !== '') {
+            $where = 'WHERE r.status = ?';
+            $params[] = strtoupper($status);
+        }
+        $sql = "SELECT r.*, ui.uniform_type, ui.size, ui.color,
+                       ua.quantity_issued, ua.date_returned,
+                       CONCAT(e.firstname, ' ', e.lastname) AS employee_name,
+                       e.department, e.account_id AS employee_account_id
+                FROM {$this->tblreports} r
+                JOIN {$this->tbluniform_inventory} ui ON ui.uniform_id = r.uniform_id
+                LEFT JOIN {$this->tbluniform_assignment} ua ON ua.assignment_id = r.assignment_id
+                LEFT JOIN {$this->tblemployee} e ON e.employee_id = r.employee_id
+                {$where}
+                ORDER BY (r.status = 'PENDING') DESC, r.report_id DESC
+                LIMIT 300";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function countPendingReports(): int
+    {
+        return (int) $this->pdo->query("SELECT COUNT(*) FROM {$this->tblreports} WHERE status = 'PENDING'")->fetchColumn();
+    }
+
+    public function getReportById(int $reportId): ?array
+    {
+        foreach ($this->getReports() as $row) {
+            if ((int) $row['report_id'] === $reportId) {
+                return $row;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * HR decision on a pending report.
+     * CONFIRMED: moves the reported quantity to lost/damaged and closes/reduces the issuance.
+     * ITEM_OK:   leaves the issuance active with the employee.
+     *
+     * @return array{0: bool, 1: string}
+     */
+    public function resolveReport(int $reportId, string $decision, string $hrRemarks, int $reviewedBy): array
+    {
+        $decision = strtoupper(trim($decision));
+        if (!in_array($decision, ['CONFIRMED', 'ITEM_OK'], true)) {
+            return [false, 'Invalid decision.'];
+        }
+
+        $report = $this->getReportById($reportId);
+        if (!$report) {
+            return [false, 'Report not found.'];
+        }
+        if ($report['status'] !== 'PENDING') {
+            return [false, 'This report was already reviewed.'];
+        }
+
+        if ($decision === 'CONFIRMED') {
+            if (!empty($report['date_returned'])) {
+                return [false, 'The item was already returned; mark the report as OK instead.'];
+            }
+            $qty = min((int) $report['quantity'], (int) ($report['quantity_issued'] ?? 0));
+            if ($qty < 1) {
+                return [false, 'Nothing left on this issuance to mark as ' . strtolower($report['report_type']) . '.'];
+            }
+            $remarks = sprintf(
+                'Employee reported %d %s on %s. Confirmed by HR.%s',
+                $qty,
+                strtolower($report['report_type']),
+                date('F j, Y', strtotime((string) $report['created_at'])),
+                $hrRemarks !== '' ? ' ' . $hrRemarks : ''
+            );
+            // returnAssignment runs its own transaction and updates inventory counts.
+            $ok = $this->returnAssignment(
+                (int) $report['assignment_id'],
+                $reviewedBy,
+                $report['report_type'],
+                $remarks,
+                [$report['report_type'] => $qty]
+            );
+            if (!$ok) {
+                return [false, 'Could not update the inventory for this report.'];
+            }
+        }
+
+        $stmt = $this->pdo->prepare("UPDATE {$this->tblreports}
+                SET status = ?, hr_remarks = ?, reviewed_by = ?, reviewed_at = NOW()
+                WHERE report_id = ? AND status = 'PENDING'");
+        $stmt->execute([$decision, trim($hrRemarks), $reviewedBy, $reportId]);
+
+        return [true, $decision === 'CONFIRMED'
+            ? 'Report confirmed. Inventory updated.'
+            : 'Report closed. The item stays active with the employee.'];
+    }
+
+    /** Active HR accounts to notify about new reports. */
+    public function getHrAccountIds(): array
+    {
+        $stmt = $this->pdo->query("SELECT account_id FROM {$this->tblaccounts}
+                WHERE UPPER(usertype) = 'HR' AND UPPER(status) = 'ACTIVE'");
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    }
+}
