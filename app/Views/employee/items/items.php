@@ -2,12 +2,13 @@
 $base = rtrim(BASE_URL, '/');
 $routePrefix = $routePrefix ?? 'employee';
 $itemsUrl = $base . '/' . $routePrefix . '/items';
-// Each role keeps its own sidebar; Admin has no personal assets page, so it links to its dashboard.
+// Each role keeps its own sidebar; Admin and HR have no personal assets page, so they link to their dashboard.
 $sidebarPartial = [
-    'employee' => 'employee', 'head' => 'head', 'aom' => 'aom', 'hom' => 'om', 'om' => 'om', 'admin' => 'admin',
+    'employee' => 'employee', 'head' => 'head', 'aom' => 'aom', 'hom' => 'om', 'om' => 'om',
+    'hr' => 'hr', 'it' => 'it', 'admin' => 'admin',
 ][$routePrefix] ?? 'employee';
-[$backUrl, $backLabel, $backIcon] = $routePrefix === 'admin'
-    ? [$base . '/admin', 'Dashboard', 'fa-tachometer-alt']
+[$backUrl, $backLabel, $backIcon] = in_array($routePrefix, ['admin', 'hr'], true)
+    ? [$base . ($routePrefix === 'admin' ? '/admin' : '/hr/dashboard'), 'Dashboard', 'fa-tachometer-alt']
     : [$base . '/' . $routePrefix . '/assets', 'My Assets', 'fa-archive'];
 // Distinct names: the full-access admin sidebar uses $items in its own loop.
 $issuedItems = $issuedItems ?? [];

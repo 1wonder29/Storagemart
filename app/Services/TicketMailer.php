@@ -128,12 +128,7 @@ class TicketMailer
 
     private static function siteUrl(): string
     {
-        $configured = rtrim((string) (defined('BASE_URL') ? BASE_URL : ''), '/');
-        if ($configured !== '') {
-            return $configured;
-        }
-        $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
-        return ($https ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        return MailService::siteUrl();
     }
 
     private static function shorten(string $text, int $max): string

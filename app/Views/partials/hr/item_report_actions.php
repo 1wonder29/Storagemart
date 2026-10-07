@@ -6,15 +6,17 @@
  */
 $reportItemLabel = trim($r['uniform_type'] . ' (' . $r['size'] . ')');
 $reportWhat = strtolower((string) $r['report_type']);
+// Confirming writes off at most what is still on the issuance.
+$reportQty = min((int) $r['quantity'], max(0, (int) ($r['quantity_issued'] ?? $r['quantity'])));
 ?>
 <?php if (($r['status'] ?? '') === 'PENDING'): ?>
     <button type="button" class="btn btn-sm btn-danger btn-resolve"
             data-report-id="<?= (int) $r['report_id'] ?>" data-decision="CONFIRMED"
             data-item-type="<?= htmlspecialchars((string) $r['uniform_type']) ?>"
             data-uniform-id="<?= (int) $r['uniform_id'] ?>"
-            data-quantity="<?= (int) $r['quantity'] ?>"
+            data-quantity="<?= $reportQty ?>"
             data-title="Confirm <?= htmlspecialchars($reportWhat) ?> report"
-            data-text="<?= (int) $r['quantity'] ?> x <?= htmlspecialchars($reportItemLabel) ?> will be recorded as <?= htmlspecialchars($reportWhat) ?> and removed from <?= htmlspecialchars((string) $r['employee_name']) ?>'s issued items.">
+            data-text="<?= $reportQty ?> x <?= htmlspecialchars($reportItemLabel) ?> will be recorded as <?= htmlspecialchars($reportWhat) ?> and removed from <?= htmlspecialchars((string) $r['employee_name']) ?>'s issued items.">
         <i class="fas fa-check"></i> Confirm
     </button>
     <button type="button" class="btn btn-sm btn-success btn-resolve"

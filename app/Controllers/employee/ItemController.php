@@ -17,8 +17,10 @@ class EmployeeItemController extends AuthController
         'employee' => ['EMPLOYEE'],
         'head'     => ['HEAD'],
         'aom'      => ['AOM'],
-        'hom'      => ['HOM'],
+        'hom'      => ['HOM', 'OM'],
         'om'       => ['OM', 'HOM'],
+        'hr'       => ['HR'],
+        'it'       => ['IT'],
         'admin'    => ['ADMIN'],
     ];
 
@@ -50,6 +52,11 @@ class EmployeeItemController extends AuthController
 
         $role = strtoupper((string) ($_SESSION['usertype'] ?? ''));
         if (!in_array($role, self::PREFIX_ROLES[$this->prefix], true)) {
+            // e.g. an old "/employee/items" notification opened by a Head: send them to their own page.
+            $ownPath = UniformReportModel::itemsPathForUsertype($role);
+            if ($ownPath !== $this->itemsPath() && $_SERVER['REQUEST_METHOD'] === 'GET') {
+                $this->redirect($ownPath);
+            }
             http_response_code(403);
             exit('Unauthorized');
         }

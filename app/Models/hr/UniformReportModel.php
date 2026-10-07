@@ -169,31 +169,48 @@ class UniformReportModel extends UniformModel {
      * CONFIRMED: moves the reported quantity to lost/damaged and closes/reduces the issuance.
      * ITEM_OK:   leaves the issuance active with the employee.
      *
-     * @return array{0: bool, 1: string}
+     * The report is claimed (PENDING -> decision) before anything else happens, so when two
+     * reviewers act at once (HR and the General Manager both get the notification) only one
+     * of them applies it; if the inventory update then fails the claim is undone.
+     *
+     * @return array{0: bool, 1: string, 2: int} [ok, message, quantity written off]
      */
     public function resolveReport(int $reportId, string $decision, string $hrRemarks, int $reviewedBy): array
     {
         $decision = strtoupper(trim($decision));
         if (!in_array($decision, ['CONFIRMED', 'ITEM_OK'], true)) {
-            return [false, 'Invalid decision.'];
+            return [false, 'Invalid decision.', 0];
         }
 
         $report = $this->getReportById($reportId);
         if (!$report) {
-            return [false, 'Report not found.'];
-        }
-        if ($report['status'] !== 'PENDING') {
-            return [false, 'This report was already reviewed.'];
+            return [false, 'Report not found.', 0];
         }
 
-        if ($decision === 'CONFIRMED') {
-            if (!empty($report['date_returned'])) {
-                return [false, 'The item was already returned; mark the report as OK instead.'];
-            }
+        $claim = $this->pdo->prepare("UPDATE {$this->tblreports}
+                SET status = ?, hr_remarks = ?, reviewed_by = ?, reviewed_at = NOW()
+                WHERE report_id = ? AND status = 'PENDING'");
+        $claim->execute([$decision, trim($hrRemarks), $reviewedBy, $reportId]);
+        if ($claim->rowCount() !== 1) {
+            return [false, 'This report was already reviewed.', 0];
+        }
+
+        if ($decision === 'ITEM_OK') {
+            return [true, 'Report closed. The item stays active with the employee.', 0];
+        }
+
+        $failure = null;
+        $qty = 0;
+        if (!empty($report['date_returned'])) {
+            $failure = 'The item was already returned; mark the report as OK instead.';
+        } else {
             $qty = min((int) $report['quantity'], (int) ($report['quantity_issued'] ?? 0));
             if ($qty < 1) {
-                return [false, 'Nothing left on this issuance to mark as ' . strtolower($report['report_type']) . '.'];
+                $failure = 'Nothing left on this issuance to mark as ' . strtolower($report['report_type']) . '.';
             }
+        }
+
+        if ($failure === null) {
             $remarks = sprintf(
                 'Employee reported %d %s on %s. Confirmed by HR.%s',
                 $qty,
@@ -201,27 +218,40 @@ class UniformReportModel extends UniformModel {
                 date('F j, Y', strtotime((string) $report['created_at'])),
                 $hrRemarks !== '' ? ' ' . $hrRemarks : ''
             );
-            // returnAssignment runs its own transaction and updates inventory counts.
-            $ok = $this->returnAssignment(
+            // returnAssignment runs its own transaction (locking the issuance row) and updates inventory counts.
+            if (!$this->returnAssignment(
                 (int) $report['assignment_id'],
                 $reviewedBy,
                 $report['report_type'],
                 $remarks,
                 [$report['report_type'] => $qty]
-            );
-            if (!$ok) {
-                return [false, 'Could not update the inventory for this report.'];
+            )) {
+                $failure = 'Could not update the inventory for this report.';
             }
         }
 
-        $stmt = $this->pdo->prepare("UPDATE {$this->tblreports}
-                SET status = ?, hr_remarks = ?, reviewed_by = ?, reviewed_at = NOW()
-                WHERE report_id = ? AND status = 'PENDING'");
-        $stmt->execute([$decision, trim($hrRemarks), $reviewedBy, $reportId]);
+        if ($failure !== null) {
+            $undo = $this->pdo->prepare("UPDATE {$this->tblreports}
+                    SET status = 'PENDING', hr_remarks = NULL, reviewed_by = NULL, reviewed_at = NULL
+                    WHERE report_id = ? AND status = ?");
+            $undo->execute([$reportId, $decision]);
+            return [false, $failure, 0];
+        }
 
-        return [true, $decision === 'CONFIRMED'
-            ? 'Report confirmed. Inventory updated.'
-            : 'Report closed. The item stays active with the employee.'];
+        if ($qty !== (int) $report['quantity']) {
+            // Keep the report truthful when fewer units were left on the issuance than were reported.
+            $this->pdo->prepare("UPDATE {$this->tblreports} SET quantity = ? WHERE report_id = ?")
+                ->execute([$qty, $reportId]);
+        }
+
+        return [true, 'Report confirmed. Inventory updated.', $qty];
+    }
+
+    public function hasPendingReport(int $assignmentId): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM {$this->tblreports} WHERE assignment_id = ? AND status = 'PENDING'");
+        $stmt->execute([$assignmentId]);
+        return (int) $stmt->fetchColumn() > 0;
     }
 
     /** Active items HR can hand out as a replacement, with stock on hand. */
@@ -286,7 +316,7 @@ class UniformReportModel extends UniformModel {
     public static function itemsPathForUsertype(?string $usertype): string
     {
         $prefix = [
-            'HEAD' => 'head', 'AOM' => 'aom', 'HOM' => 'hom', 'OM' => 'om', 'ADMIN' => 'admin',
+            'HEAD' => 'head', 'AOM' => 'aom', 'HOM' => 'hom', 'OM' => 'om', 'ADMIN' => 'admin', 'HR' => 'hr', 'IT' => 'it',
         ][strtoupper((string) $usertype)] ?? 'employee';
         return '/' . $prefix . '/items';
     }

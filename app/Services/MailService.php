@@ -29,6 +29,20 @@ class MailService
         return 'no-reply@' . ($host ?: 'localhost');
     }
 
+    /**
+     * Absolute site URL for links in emails. BASE_URL may be empty or a bare path
+     * (e.g. /tms/public); mail clients need scheme and host, so fall back to the request's.
+     */
+    public static function siteUrl(): string
+    {
+        $configured = rtrim((string) (defined('BASE_URL') ? BASE_URL : ''), '/');
+        if (preg_match('#^https?://#i', $configured)) {
+            return $configured;
+        }
+        $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        return ($https ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . $configured;
+    }
+
     public static function send(string $to, string $subject, string $htmlBody, ?string $replyTo = null): bool
     {
         if (!self::isEnabled()) {

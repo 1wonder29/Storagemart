@@ -49,6 +49,13 @@ $base = rtrim(BASE_URL, '/');
         </a>
     </li>
 
+    <li class="nav-item <?= ($activePage === 'items') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/hr/items">
+            <i class="fas fa-tshirt"></i>
+            <span>My Issued Items</span>
+        </a>
+    </li>
+
     <li class="nav-item <?= ($activePage === 'tickets') ? 'active' : '' ?>">
         <a class="nav-link" href="<?= htmlspecialchars($base) ?>/hr/tickets">
             <i class="fas fa-ticket-alt"></i>

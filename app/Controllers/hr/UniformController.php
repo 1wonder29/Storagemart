@@ -702,7 +702,7 @@ class UniformController extends AuthController {
                     'HR issued you: ' . implode(', ', $issuedLabels) . '.',
                     'fa-tshirt',
                     'info',
-                    '/employee/items',
+                    UniformReportModel::itemsPathForUsertype($employee['usertype'] ?? null),
                     $employeeId
                 );
             }
@@ -792,6 +792,13 @@ class UniformController extends AuthController {
                 $this->redirect('/hr/employees');
             }
 
+            // A pending lost/damaged report covers some of these units; settle it first so they aren't counted twice.
+            if ((new UniformReportModel())->hasPendingReport($assignmentId)) {
+                $_SESSION['errorMessage'] = 'This item has a pending lost/damaged report. Review that report first '
+                    . '(Confirm records it, Item OK keeps it active), then process any remaining return.';
+                $this->redirect('/hr/employees/detail/' . (int) $assignment['employee_id']);
+            }
+
             $notifications = $this->notificationModel->getLatest($_SESSION['account_id'] ?? 0, 10);
             require __DIR__ . '/../../Views/hr/uniforms/return_confirm.php';
         } catch (\Throwable $e) {
@@ -818,6 +825,13 @@ class UniformController extends AuthController {
             if (!$assignment) {
                 $_SESSION['errorMessage'] = 'Assignment not found.';
                 $this->redirect('/hr/employees');
+            }
+
+            // A pending lost/damaged report covers some of these units; settle it first so they aren't counted twice.
+            if ((new UniformReportModel())->hasPendingReport($assignmentId)) {
+                $_SESSION['errorMessage'] = 'This item has a pending lost/damaged report. Review that report first '
+                    . '(Confirm records it, Item OK keeps it active), then process any remaining return.';
+                $this->redirect('/hr/employees/detail/' . (int) $assignment['employee_id']);
             }
 
             // Capture return quantity breakdown by condition
@@ -938,7 +952,10 @@ class UniformController extends AuthController {
 
         $reportModel = new UniformReportModel();
         $report = $reportModel->getReportById($reportId);
-        [$ok, $message] = $reportModel->resolveReport($reportId, $decision, $remarks, $hrAccountId);
+        [$ok, $message, $appliedQty] = $reportModel->resolveReport($reportId, $decision, $remarks, $hrAccountId);
+        if ($report && $appliedQty > 0) {
+            $report['quantity'] = $appliedQty; // what was actually written off
+        }
 
         $replacement = null;
         if ($ok && $report && $decision === 'CONFIRMED' && $replaceUniformId > 0) {
@@ -955,9 +972,12 @@ class UniformController extends AuthController {
         if ($ok && $report) {
             $item = trim($report['uniform_type'] . ' (' . $report['size'] . ')');
             $what = strtolower((string) $report['report_type']);
+            $alreadyReturned = !empty($report['date_returned']);
             $text = $decision === 'CONFIRMED'
                 ? "HR confirmed your report: {$report['quantity']} x {$item} recorded as {$what}."
-                : "HR reviewed your report for {$item}: the item is OK and remains active with you.";
+                : ($alreadyReturned
+                    ? "HR closed your report for {$item}: this item was already returned."
+                    : "HR reviewed your report for {$item}: the item is OK and remains active with you.");
             if ($replacement !== null) {
                 $text .= " Replacement issued: {$replacement}.";
             }
@@ -1006,11 +1026,16 @@ class UniformController extends AuthController {
         $confirmed = $decision === 'CONFIRMED';
         $subject = $confirmed
             ? "Your {$item} report was confirmed"
-            : "Your {$item} report was reviewed: item OK";
-        $outcome = $confirmed
-            ? 'HR confirmed your report. ' . (int) $report['quantity'] . ' x ' . $e($item)
-                . ' has been recorded as <strong>' . $e(strtolower((string) $report['report_type'])) . '</strong> and removed from your issued items.'
-            : 'HR reviewed your report and found the item OK. ' . $e($item) . ' remains <strong>active</strong> and issued to you.';
+            : "Your {$item} report was reviewed";
+        if ($confirmed) {
+            $outcome = 'HR confirmed your report. ' . (int) $report['quantity'] . ' x ' . $e($item)
+                . ' has been recorded as <strong>' . $e(strtolower((string) $report['report_type'])) . '</strong> and removed from your issued items.';
+        } elseif (!empty($report['date_returned'])) {
+            $outcome = 'HR closed your report. ' . $e($item) . ' was already returned on '
+                . $e(date('F j, Y', strtotime((string) $report['date_returned']))) . ', so nothing else changes.';
+        } else {
+            $outcome = 'HR reviewed your report and found the item OK. ' . $e($item) . ' remains <strong>active</strong> and issued to you.';
+        }
 
         $body = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#222;line-height:1.5">'
             . '<p>Hi ' . $e($report['employee_name'] ?? '') . ',</p>'
@@ -1019,7 +1044,7 @@ class UniformController extends AuthController {
             . ($remarks !== '' ? '<p><strong>HR remarks:</strong> ' . nl2br($e($remarks)) . '</p>' : '')
             . '<p>Your report: ' . (int) $report['quantity'] . ' x ' . $e($item) . ' reported as '
             . $e(strtolower((string) $report['report_type'])) . ' on ' . $e(date('F j, Y', strtotime((string) $report['created_at']))) . '.</p>'
-            . '<p><a href="' . $e(rtrim((string) BASE_URL, '/') . $itemsPath) . '">View My Issued Items</a></p>'
+            . '<p><a href="' . $e(MailService::siteUrl() . $itemsPath) . '">View My Issued Items</a></p>'
             . '<p style="color:#777;font-size:12px">Storage Mart TMS — automated message, please do not reply.</p>'
             . '</div>';
 

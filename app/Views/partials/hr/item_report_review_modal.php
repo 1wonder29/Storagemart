@@ -77,9 +77,10 @@ $reviewReturnTo = $reviewReturnTo ?? '';
 
         function setReplacementEnabled(on) {
             $('#replacementFields').toggleClass('d-none', !on);
-            // Only submit replacement fields when the box is ticked.
-            $select.attr('name', on ? 'replacement_uniform_id' : null);
-            $('#replacementQuantity').attr('name', on ? 'replacement_quantity' : null);
+            // Disabled controls are neither validated nor submitted, so an out-of-range
+            // quantity in a hidden field can never block Confirm / Item OK.
+            $select.attr('name', 'replacement_uniform_id').prop('disabled', !on);
+            $('#replacementQuantity').attr('name', 'replacement_quantity').prop('disabled', !on);
         }
 
         $('#issueReplacement').on('change', function () {
@@ -88,7 +89,11 @@ $reviewReturnTo = $reviewReturnTo ?? '';
 
         $select.on('change', function () {
             var stock = parseInt($select.find('option:selected').data('stock'), 10) || 1;
-            $('#replacementQuantity').attr('max', stock);
+            var $qty = $('#replacementQuantity');
+            $qty.attr('max', stock);
+            if ((parseInt($qty.val(), 10) || 0) > stock) {
+                $qty.val(stock);
+            }
         });
 
         $(document).on('click', '.btn-resolve', function () {
@@ -115,7 +120,7 @@ $reviewReturnTo = $reviewReturnTo ?? '';
                 });
                 $select.empty().append(sorted).prop('selectedIndex', 0).trigger('change');
                 var stock = parseInt($select.find('option:selected').data('stock'), 10) || 1;
-                $('#replacementQuantity').val(Math.min(parseInt($b.data('quantity'), 10) || 1, stock));
+                $('#replacementQuantity').val(Math.max(1, Math.min(parseInt($b.data('quantity'), 10) || 1, stock)));
             }
 
             $('#resolveSubmit').toggleClass('btn-danger', confirmDecision).toggleClass('btn-success', !confirmDecision)
