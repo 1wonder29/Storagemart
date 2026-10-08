@@ -22,8 +22,9 @@ class TicketManuals
     }
 
     /**
-     * Manuals for a ticket, best match first. Category match counts most, then
-     * keywords found in the subject/description. Always ends with the default manual.
+     * Manuals for a ticket, best match first. Each keyword found in the subject or
+     * description counts 3, the ticket category counts 2 (categories such as Hardware
+     * are broad, so specific words win). Always ends with the default manual.
      *
      * @return array<int, array{manual_id:int, title:string, url:string, description:string, score:int}>
      */
@@ -36,13 +37,14 @@ class TicketManuals
         foreach (self::all($pdo) as $manual) {
             $score = 0;
             foreach (self::splitList((string) ($manual['categories'] ?? '')) as $cat) {
-                if ($cat !== '' && $category !== '' && (strpos($category, $cat) !== false || strpos($cat, $category) !== false)) {
-                    $score += 5;
+                if ($category !== '' && $cat === $category) {
+                    $score += 2;
+                    break;
                 }
             }
             foreach (self::splitList((string) ($manual['keywords'] ?? '')) as $keyword) {
-                if ($keyword !== '' && preg_match('/\b' . preg_quote($keyword, '/') . '/i', $text)) {
-                    $score += 2;
+                if (preg_match('/\b' . preg_quote($keyword, '/') . '(s|es)?\b/i', $text)) {
+                    $score += 3;
                 }
             }
             $row = [
@@ -69,7 +71,7 @@ class TicketManuals
             $default = [
                 'manual_id' => 0,
                 'title' => 'IT Basic Troubleshooting Manual',
-                'url' => AppSettings::get('it_manual_url', self::DEFAULT_URL) ?: self::DEFAULT_URL,
+                'url' => self::defaultUrl($pdo),
                 'description' => 'Basic steps to try before IT arrives.',
                 'steps' => [],
                 'score' => 0,
@@ -100,7 +102,7 @@ class TicketManuals
             $matches = self::matchesFor($pdo, (string) $ticket['category'],
                 ($ticket['subject'] ?? '') . ' ' . ($ticket['concern_details'] ?? ''), 1);
             $manual = $matches[0];
-            $fullManualUrl = AppSettings::get('it_manual_url', self::DEFAULT_URL) ?: self::DEFAULT_URL;
+            $fullManualUrl = self::defaultUrl($pdo);
 
             $name = trim((string) ($ticket['firstname'] ?? ''));
             $lines = ['Hi' . ($name !== '' ? ' ' . $name : '') . '! Ticket ' . $ticket['ticket_number']
@@ -130,12 +132,24 @@ class TicketManuals
         }
     }
 
+    /** Link of the default manual (falls back to the it_manual_url setting). */
+    public static function defaultUrl(PDO $pdo): string
+    {
+        try {
+            $url = (string) $pdo->query("SELECT url FROM tblit_manuals WHERE is_default = 1 AND url <> '' ORDER BY manual_id LIMIT 1")->fetchColumn();
+            if ($url !== '') {
+                return $url;
+            }
+        } catch (Throwable $e) {
+            // table not created yet
+        }
+        return AppSettings::get('it_manual_url', self::DEFAULT_URL) ?: self::DEFAULT_URL;
+    }
+
     /** @return string[] one step per non-empty line */
     public static function steps(string $value): array
     {
-        $lines = preg_split('/
-||
-/', $value) ?: [];
+        $lines = preg_split('/\r\n|\r|\n/', $value) ?: [];
         return array_values(array_filter(array_map('trim', $lines), 'strlen'));
     }
 

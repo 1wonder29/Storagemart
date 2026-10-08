@@ -46,6 +46,7 @@ $base = rtrim(BASE_URL, '/');
             $showRateDownload = false;
             $showDownloadTechnicalRecord = true;
             require __DIR__ . '/../../partials/ticket/ticket_detail_content.php';
+            require __DIR__ . '/../../partials/ticket/it_guides_card.php';
             ?>
         <?php else: ?>
             <div class="alert alert-danger">

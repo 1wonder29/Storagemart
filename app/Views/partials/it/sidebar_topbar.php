@@ -57,6 +57,13 @@ $base = rtrim(BASE_URL, '/');
                     <span>My Ratings</span>
                 </a>
             </li>
+
+            <li class="nav-item <?= ($activePage === 'manuals') ? 'active' : '' ?>">
+                <a class="nav-link" href="<?= htmlspecialchars($base)?>/it/manuals">
+                    <i class="fas fa-book-medical"></i>
+                    <span>Troubleshooting Guides</span>
+                </a>
+            </li>
         </ul>
         <!-- End of Sidebar -->
 

@@ -223,6 +223,8 @@ if (strpos($uri, '/admin') === 0) {
     // System pages (ticket auto-assignment, announcements, IT manuals, themes).
     $systemRoutes = [
         'ticket-assignment' => 'ticketAssignment',
+        'manuals' => 'manuals',
+        'service-status' => 'serviceStatus',
     ];
     if (isset($systemRoutes[$sub])) {
         require_once __DIR__ . '/../app/Controllers/admin/SystemController.php';
@@ -423,6 +425,11 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
     if ($sub === 'availability' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once __DIR__ . '/../app/Controllers/admin/SystemController.php';
         (new SystemController())->itAvailability();
+        exit;
+    }
+    if ($sub === 'manuals' || $sub === 'service-status') {
+        require_once __DIR__ . '/../app/Controllers/admin/SystemController.php';
+        $sub === 'manuals' ? (new SystemController())->manuals() : (new SystemController())->serviceStatus();
         exit;
     }
 

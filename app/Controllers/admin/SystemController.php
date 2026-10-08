@@ -4,6 +4,8 @@ require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 require_once __DIR__ . '/../../Helpers/AppSettings.php';
 require_once __DIR__ . '/../../Helpers/TicketAssigner.php';
+require_once __DIR__ . '/../../Helpers/TicketManuals.php';
+require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 
 /**
  * Admin pages added with the Oct 2026 update: ticket auto-assignment (zones, IT
@@ -135,7 +137,186 @@ class SystemController extends AuthController
         $this->redirect('/it/dashboard');
     }
 
+    /**
+     * Admin > System > Troubleshooting Manuals, and IT > Manuals (IT adds and edits steps too).
+     * GET lists / edits; POST action=save|delete.
+     */
+    public function manuals(): void
+    {
+        $role = $this->requireRoles(['ADMIN', 'IT']);
+        $home = $role === 'IT' ? '/it/manuals' : '/admin/manuals';
+        global $pdo;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireCsrf($home);
+            $action = (string) ($_POST['action'] ?? 'save');
+            $manualId = (int) ($_POST['manual_id'] ?? 0);
+            try {
+                if ($action === 'delete') {
+                    $stmt = $pdo->prepare('SELECT title, is_default FROM tblit_manuals WHERE manual_id = ?');
+                    $stmt->execute([$manualId]);
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if (!$row) {
+                        $_SESSION['flash_error'] = 'Manual not found.';
+                    } elseif ((int) $row['is_default'] === 1) {
+                        $_SESSION['flash_error'] = 'The default manual cannot be deleted. Make another manual the default first.';
+                    } else {
+                        $pdo->prepare('DELETE FROM tblit_manuals WHERE manual_id = ?')->execute([$manualId]);
+                        ActivityLogger::delete('Troubleshooting Manuals', (string) $manualId, 'Deleted manual: ' . $row['title'],
+                            $_SESSION['username'] ?? 'Unknown');
+                        $_SESSION['flash_success'] = 'Manual deleted.';
+                    }
+                    $this->redirect($home);
+                    return;
+                }
+
+                $title = trim((string) ($_POST['title'] ?? ''));
+                $url = trim((string) ($_POST['url'] ?? ''));
+                $steps = trim(str_replace("\r\n", "\n", (string) ($_POST['steps'] ?? '')));
+                $categories = array_values(array_intersect(
+                    (array) ($_POST['categories'] ?? []),
+                    array_merge(TicketFormFields::HEAD_OFFICE_CATEGORIES, TicketFormFields::BRANCH_CATEGORIES)
+                ));
+                $keywords = implode(', ', array_slice(array_filter(array_map('trim',
+                    preg_split('/[,\n;]+/', strtolower((string) ($_POST['keywords'] ?? ''))) ?: []), 'strlen'), 0, 40));
+                $description = trim((string) ($_POST['description'] ?? ''));
+                $makeDefault = $role === 'ADMIN' && !empty($_POST['is_default']);
+
+                $errors = [];
+                if ($title === '' || mb_strlen($title) > 150) {
+                    $errors[] = 'Title is required (max 150 characters).';
+                }
+                if ($url !== '' && (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('#^https?://#i', $url))) {
+                    $errors[] = 'The link must start with http:// or https://.';
+                }
+                if ($url === '' && $steps === '') {
+                    $errors[] = 'Add the steps, a link, or both.';
+                }
+                if ($makeDefault && $url === '') {
+                    $errors[] = 'The default manual needs a link (it is sent with every ticket).';
+                }
+                if ($errors) {
+                    $_SESSION['flash_error'] = implode(' ', $errors);
+                    $_SESSION['manual_old_input'] = $_POST;
+                    $this->redirect($home . ($manualId ? '?edit=' . $manualId : ''));
+                    return;
+                }
+
+                $params = [
+                    ':title' => $title,
+                    ':url' => $url !== '' ? mb_substr($url, 0, 500) : null,
+                    ':description' => $description !== '' ? mb_substr($description, 0, 255) : null,
+                    ':steps' => $steps !== '' ? $steps : null,
+                    ':categories' => implode(', ', $categories),
+                    ':keywords' => $keywords,
+                    ':by' => (int) $_SESSION['account_id'],
+                ];
+                $pdo->beginTransaction();
+                if ($manualId > 0) {
+                    $params[':id'] = $manualId;
+                    $pdo->prepare('UPDATE tblit_manuals SET title = :title, url = :url, description = :description, steps = :steps,
+                            categories = :categories, keywords = :keywords, updated_by = :by, updated_at = NOW()
+                            WHERE manual_id = :id')->execute($params);
+                } else {
+                    $pdo->prepare('INSERT INTO tblit_manuals (title, url, description, steps, categories, keywords, is_default, created_by, created_at)
+                            VALUES (:title, :url, :description, :steps, :categories, :keywords, 0, :by, NOW())')->execute($params);
+                    $manualId = (int) $pdo->lastInsertId();
+                }
+                if ($makeDefault) {
+                    $pdo->prepare('UPDATE tblit_manuals SET is_default = (manual_id = ?)')->execute([$manualId]);
+                    AppSettings::set('it_manual_url', $url);
+                }
+                $pdo->commit();
+                ActivityLogger::update('Troubleshooting Manuals', (string) $manualId, 'Saved manual: ' . $title,
+                    $_SESSION['username'] ?? 'Unknown');
+                $_SESSION['flash_success'] = 'Manual saved.';
+            } catch (PDOException $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                error_log('SystemController::manuals save failed: ' . $e->getMessage());
+                $_SESSION['flash_error'] = $e->getCode() === '23000'
+                    ? 'A manual with that title already exists.'
+                    : 'Could not save the manual. Please run the database update first.';
+                $_SESSION['manual_old_input'] = $_POST;
+            }
+            $this->redirect($home);
+            return;
+        }
+
+        $manuals = TicketManuals::all($pdo);
+        $setupMissing = !$manuals && !$this->tableExists('tblit_manuals');
+        $editId = (int) ($_GET['edit'] ?? 0);
+        $editing = null;
+        foreach ($manuals as $manual) {
+            if ((int) $manual['manual_id'] === $editId) {
+                $editing = $manual;
+            }
+        }
+        $old = $_SESSION['manual_old_input'] ?? null;
+        unset($_SESSION['manual_old_input']);
+
+        $testCategory = (string) ($_GET['test_category'] ?? '');
+        $testText = (string) ($_GET['test_text'] ?? '');
+        $testResult = ($testCategory !== '' || $testText !== '')
+            ? TicketManuals::matchesFor($pdo, $testCategory, $testText, 3)
+            : null;
+
+        $allCategories = array_values(array_unique(array_merge(TicketFormFields::HEAD_OFFICE_CATEGORIES, TicketFormFields::BRANCH_CATEGORIES)));
+        $this->renderAdmin('system/manuals.php', compact(
+            'role', 'home', 'manuals', 'setupMissing', 'editing', 'old', 'allCategories', 'testCategory', 'testText', 'testResult'
+        ));
+    }
+
+    /** GET /it/service-status (JSON): DNS / mail / website check for email tickets. */
+    public function serviceStatus(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        $role = strtoupper((string) ($_SESSION['usertype'] ?? ''));
+        if (empty($_SESSION['account_id']) || !in_array($role, ['IT', 'ADMIN'], true)) {
+            http_response_code(403);
+            echo json_encode(['success' => false]);
+            return;
+        }
+        // One live check per minute per user is plenty.
+        $cached = $_SESSION['service_status_cache'] ?? null;
+        if (empty($_GET['refresh']) && is_array($cached) && ($cached['time'] ?? 0) > time() - 60) {
+            echo json_encode(['success' => true, 'cached' => true] + $cached['data']);
+            return;
+        }
+        require_once __DIR__ . '/../../Helpers/ServiceStatus.php';
+        $data = ServiceStatus::run();
+        $_SESSION['service_status_cache'] = ['time' => time(), 'data' => $data];
+        echo json_encode(['success' => true] + $data);
+    }
+
     /* ------------------------------------------------------------------ */
+
+    /** @param string[] $roles @return string the signed-in role */
+    protected function requireRoles(array $roles): string
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $role = strtoupper((string) ($_SESSION['usertype'] ?? ''));
+        if (empty($_SESSION['account_id']) || !in_array($role, $roles, true)) {
+            $this->redirect('/login');
+            exit;
+        }
+        return $role;
+    }
+
+    protected function tableExists(string $table): bool
+    {
+        global $pdo;
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?');
+        $stmt->execute([$table]);
+        return (int) $stmt->fetchColumn() > 0;
+    }
 
     protected function requireAdmin(): void
     {
