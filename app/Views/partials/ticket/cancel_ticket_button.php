@@ -24,7 +24,10 @@ $buttonClasses = trim(
     . ' cancelTicketBtn'
 );
 
-$cancellableStatuses = ['Open', 'In Progress', 'Pending'];
+// Only the admin cancels a ticket once IT has it (In Progress / Pending); everyone else
+// can cancel while it is still Open and unassigned (TicketCancelModel enforces the same).
+$isAdminViewer = strtoupper((string) ($_SESSION['usertype'] ?? '')) === 'ADMIN';
+$cancellableStatuses = $isAdminViewer ? ['Open', 'In Progress', 'Pending'] : ['Open'];
 $showCancel = $ticketId > 0 && in_array($ticketStatus, $cancellableStatuses, true);
 
 if (!$showCancel) {

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../Helpers/AppUrl.php';
 /** @var string $base */
 /** @var string $loggedFirstname */
 /** @var string $loggedPosition */
@@ -132,7 +133,7 @@ if (!function_exists('tms_notification_time')) {
                             $icon = (string) ($n['icon'] ?? 'fa-bell');
                         ?>
                             <a class="notification-item <?= $isRead ? 'notification-read' : 'notification-unread' ?>"
-                               href="<?= htmlspecialchars((string) ($n['action_url'] ?? '#')) ?>"
+                               href="<?= htmlspecialchars(AppUrl::resolve($n['action_url'] ?? null)) ?>"
                                data-id="<?= (int) ($n['id'] ?? 0) ?>"
                                data-related="<?= (int) ($n['related_id'] ?? 0) ?>">
                                 <span class="notification-indicator" aria-hidden="true"></span>

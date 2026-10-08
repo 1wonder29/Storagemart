@@ -14,6 +14,14 @@ $branchIdHint = (int) ($inventory['branch_id'] ?? $profile['branch_id'] ?? 0);
 $isHeadOfficeForm = TicketFormFields::isHeadOffice($branchCodeHint, $branchNameHint)
     || ($branchNameHint === '' && TicketFormFields::isHeadOfficeBranchId($branchIdHint));
 $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
+
+// What the user typed before a rule sent them back (TicketRules::rejectAndReturnPath); shown once.
+$oldTicketInput = $_SESSION['ticket_old_input'] ?? [];
+unset($_SESSION['ticket_old_input']);
+$oldSubject = (string) ($oldTicketInput['subject'] ?? '');
+$oldDescription = (string) ($oldTicketInput['concern_details'] ?? '');
+$oldCategory = (string) ($oldTicketInput['category'] ?? '');
+$oldPriority = (string) ($oldTicketInput['priority'] ?? 'Medium');
 ?>
 <div class="ticket-issue-layout">
     <div class="ticket-issue-main">
@@ -28,8 +36,9 @@ $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
                     <i class="fas fa-heading"></i> Subject <span class="text-danger">*</span>
                 </label>
                 <input type="text" id="subject" name="subject" class="form-control form-control-lg" maxlength="255" required
-                       placeholder="Brother MFC-T810W Printer is not working">
-                <small class="form-text text-muted">Brief description of the issue.</small>
+                       value="<?= htmlspecialchars($oldSubject) ?>"
+                       placeholder="Brother MFC-T810W printer at the front desk shows Paper Jam">
+                <small class="form-text text-muted">Brief description of the issue: device brand/model, where, and what happens.</small>
             </div>
 
             <div class="mb-3">
@@ -37,11 +46,13 @@ $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
                     <i class="fas fa-align-left"></i> Description <?= $descriptionRequired ? '<span class="text-danger">*</span>' : '' ?>
                 </label>
                 <textarea id="concern_details" name="concern_details" class="form-control form-control-lg" rows="6"
-                          placeholder="Describe the issue in detail..." maxlength="1000"<?= $descriptionRequired ? ' required' : '' ?>></textarea>
+                          placeholder="Describe the issue in detail..." maxlength="1000"<?= $descriptionRequired ? ' required' : '' ?>><?= htmlspecialchars($oldDescription) ?></textarea>
                 <small class="form-text text-muted">
-                    Please describe the issue in detail. Include any error messages, steps to reproduce the issue,
-                    and other relevant information. Maximum 1,000 characters.
+                    Be specific: the device brand/model (e.g. Brother DCP-L2540DW), where it is (e.g. front desk,
+                    2nd floor), what happens and any error message. Vague tickets such as "Printer is not working"
+                    are not accepted. Maximum 1,000 characters.
                 </small>
+                <div class="ticket-specific-hint text-warning small mt-1" id="ticketSpecificHint" hidden></div>
             </div>
 
             <div class="row">
@@ -54,7 +65,7 @@ $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
                             data-branch="<?= htmlspecialchars(json_encode(TicketFormFields::BRANCH_CATEGORIES), ENT_QUOTES, 'UTF-8') ?>">
                         <option value="">-- Select Category --</option>
                         <?php foreach ($categoryOptions as $categoryOption): ?>
-                            <option value="<?= htmlspecialchars($categoryOption) ?>"><?= htmlspecialchars($categoryOption) ?></option>
+                            <option value="<?= htmlspecialchars($categoryOption) ?>"<?= $categoryOption === $oldCategory ? ' selected' : '' ?>><?= htmlspecialchars($categoryOption) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -64,7 +75,7 @@ $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
                     </label>
                     <select id="priority" name="priority" class="form-control form-control-lg">
                         <?php foreach (TicketFormFields::PRIORITIES as $priorityOption): ?>
-                            <option value="<?= $priorityOption ?>"<?= $priorityOption === 'Medium' ? ' selected' : '' ?>><?= $priorityOption ?></option>
+                            <option value="<?= $priorityOption ?>"<?= $priorityOption === $oldPriority ? ' selected' : '' ?>><?= $priorityOption ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -107,4 +118,5 @@ $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
         <i class="fas fa-times"></i> Cancel
     </a>
 </div>
-<script src="<?= htmlspecialchars($formBase) ?>/assets/js/ticket-form.js"></script>
+<script src="<?= htmlspecialchars($formBase) ?>/assets/js/ticket-form.js?v=<?= (int) @filemtime(__DIR__ . '/../../../../public/assets/js/ticket-form.js') ?>"></script>
+<script src="<?= htmlspecialchars($formBase) ?>/assets/js/ticket-guide.js?v=<?= (int) @filemtime(__DIR__ . '/../../../../public/assets/js/ticket-guide.js') ?>"></script>

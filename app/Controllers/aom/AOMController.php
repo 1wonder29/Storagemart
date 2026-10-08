@@ -431,6 +431,22 @@ class AOMController extends AuthController
             'inventory_id' => $inventoryId > 0 ? $inventoryId : null,
         ];
 
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketRules.php';
+        $ruleError = TicketRules::rejectionFor($pdo, [
+            'employee_id'     => (int) $aom_employee_id,
+            'category'        => $ticketData['category'],
+            'subject'         => trim((string) ($_POST['subject'] ?? '')),
+            'concern_details' => $concern,
+            'inventory_id'    => $ticketData['inventory_id'],
+            'branch_id'       => (int) $ticketData['branch_id'],
+            'self_filed'      => true,
+        ], (string) ($_SESSION['usertype'] ?? ''));
+        if ($ruleError !== null) {
+            $this->redirect(TicketRules::rejectAndReturnPath($ruleError, $_POST, '/aom/tickets/create/my'));
+            return;
+        }
+
         $ticketId = $this->aomTicketModel->createTicket($ticketData);
         if ($ticketId) {
             TicketFormFields::ticketCreated((int) $ticketId, $_POST);
@@ -653,6 +669,22 @@ class AOMController extends AuthController
                 'performed_by' => $aom_employee_id,
                 'inventory_id' => null,
             ];
+
+            global $pdo;
+            require_once __DIR__ . '/../../Helpers/TicketRules.php';
+            $ruleError = TicketRules::rejectionFor($pdo, [
+                'employee_id'     => (int) $employee_id,
+                'category'        => (string) $category,
+                'subject'         => trim((string) ($_POST['subject'] ?? '')),
+                'concern_details' => (string) $concern_details,
+                'inventory_id'    => null,
+                'branch_id'       => (int) $branch_id,
+                'self_filed'      => false,
+            ], (string) ($_SESSION['usertype'] ?? ''));
+            if ($ruleError !== null) {
+                $this->redirect(TicketRules::rejectAndReturnPath($ruleError, $_POST, '/aom/tickets/create/employee'));
+                return;
+            }
 
             $ticketId = $this->aomTicketModel->createTicket($ticketData);
 

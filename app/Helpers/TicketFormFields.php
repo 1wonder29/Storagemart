@@ -117,5 +117,9 @@ class TicketFormFields
             require_once __DIR__ . '/../Services/TicketMailer.php';
             TicketMailer::newTicket($ticketId);
         }
+
+        // Branch zone / Head Office rule assigns IT right away (no admin approval step).
+        require_once __DIR__ . '/TicketAssigner.php';
+        TicketAssigner::autoAssign($pdo, $ticketId);
     }
 }

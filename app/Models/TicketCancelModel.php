@@ -52,6 +52,11 @@ class TicketCancelModel extends BaseModel
 
         $role = strtoupper(trim($usertype));
 
+        // Once IT is assigned (automatically or by the admin) only the admin can cancel.
+        if ($role !== 'ADMIN' && !empty($ticket['assigned_to'])) {
+            return false;
+        }
+
         switch ($role) {
             case 'ADMIN':
                 return true;
