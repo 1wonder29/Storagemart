@@ -59,6 +59,9 @@ class Announcements
         }
         $pdo->prepare('INSERT IGNORE INTO tblannouncement_reads (announcement_id, account_id, read_at) VALUES (?, ?, NOW())')
             ->execute([$announcementId, $accountId]);
+        // Its bell notification is read too.
+        $pdo->prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ? AND action_url = ? AND is_read = 0')
+            ->execute([$accountId, '/announcements/open?id=' . $announcementId]);
     }
 
     /** Announcements a poster manages: Admin sees all, a head only their department's. */

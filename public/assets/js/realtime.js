@@ -586,8 +586,7 @@
   }
 
   function startPolling() {
-    if (!baseUrl()) return;
-
+    // An empty base is fine (site at the domain root): links are then root-relative.
     document.addEventListener('click', handleNotificationClick);
     document.addEventListener('click', handleMarkAllReadClick);
 

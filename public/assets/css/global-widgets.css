@@ -6,7 +6,7 @@
 .tmsw-header-btn:hover, .tmsw-header-btn:focus { color: #4e73df; }
 .tmsw-bday-btn { color: #e74a3b; animation: tmsw-wiggle 1.6s ease-in-out infinite; }
 .tmsw-theme-btn { color: var(--tms-theme-main, #f26522); }
-.tmsw-badge { position: absolute; top: 6px; right: 2px; margin-top: 0; font-size: 0.6rem; }
+.app-topbar .nav-item .tmsw-header-btn .tmsw-badge { position: absolute; top: 0.6rem; right: 0.1rem; margin-top: 0; }
 .tmsw-badge[hidden] { display: none; }
 
 /* Announcement popup */

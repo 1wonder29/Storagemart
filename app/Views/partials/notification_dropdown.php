@@ -1,8 +1,20 @@
 <?php
 require_once __DIR__ . '/../../Helpers/AppUrl.php';
 $base = rtrim(BASE_URL, '/');
-$count = (int) ($count ?? 0);
-$notifications = $notifications ?? [];
+// Always read the bell from the database: some pages never loaded it, and others reuse
+// $count as a loop variable (the HOM dashboard showed "1 new" with an empty list).
+$bellCount = 0;
+$bellItems = [];
+if (!empty($_SESSION['account_id'])) {
+    try {
+        require_once __DIR__ . '/../../Models/NotificationModel.php';
+        $bellModel = new NotificationModel();
+        $bellCount = $bellModel->getUnreadCount((int) $_SESSION['account_id']);
+        $bellItems = $bellModel->getLatest((int) $_SESSION['account_id'], 10);
+    } catch (Throwable $e) {
+        error_log('Notification bell failed: ' . $e->getMessage());
+    }
+}
 $notifShowAllUrl = $notifShowAllUrl ?? ($base . '/notifications');
 
 if (!function_exists('tms_notification_time')) {
@@ -23,8 +35,8 @@ if (!function_exists('tms_notification_time')) {
     <a class="nav-link dropdown-toggle topbar-icon-btn" href="#" id="alertsDropdown"
        role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <i class="fas fa-bell fa-fw"></i>
-        <?php if ($count > 0): ?>
-            <span class="badge badge-danger badge-counter"><?= $count > 9 ? '9+' : $count ?></span>
+        <?php if ($bellCount > 0): ?>
+            <span class="badge badge-danger badge-counter"><?= $bellCount > 9 ? '9+' : $bellCount ?></span>
         <?php endif; ?>
     </a>
 
@@ -37,23 +49,23 @@ if (!function_exists('tms_notification_time')) {
                 <span>Notifications</span>
             </div>
             <div class="notification-dropdown-actions">
-                <?php if ($count > 0): ?>
+                <?php if ($bellCount > 0): ?>
                     <button type="button" class="notification-mark-all-read" aria-label="Mark all notifications as read">
                         Mark all read
                     </button>
-                    <span class="notification-unread-pill"><?= $count > 9 ? '9+' : $count ?> new</span>
+                    <span class="notification-unread-pill"><?= $bellCount > 9 ? '9+' : $bellCount ?> new</span>
                 <?php endif; ?>
             </div>
         </div>
 
-        <?php if (empty($notifications)): ?>
+        <?php if (empty($bellItems)): ?>
             <div class="notification-empty">
                 <i class="fas fa-check-circle d-block mb-2"></i>
                 You're all caught up
             </div>
         <?php else: ?>
             <div class="notification-scroll">
-                <?php foreach ($notifications as $n):
+                <?php foreach ($bellItems as $n):
                     $isRead = !empty($n['is_read']);
                     $bgColor = (string) ($n['bg_color'] ?? 'primary');
                     $icon = (string) ($n['icon'] ?? 'fa-bell');
