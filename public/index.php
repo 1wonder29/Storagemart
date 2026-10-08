@@ -242,6 +242,7 @@ if (strpos($uri, '/admin') === 0) {
         'ticket-assignment' => 'ticketAssignment',
         'manuals' => 'manuals',
         'themes' => 'themes',
+        'assets/replacement' => 'assetReplacement',
         'service-status' => 'serviceStatus',
     ];
     if (isset($systemRoutes[$sub])) {
@@ -445,9 +446,16 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
         (new SystemController())->itAvailability();
         exit;
     }
-    if ($sub === 'manuals' || $sub === 'service-status') {
+    if ($sub === 'manuals' || $sub === 'service-status' || $sub === 'asset-replacement') {
         require_once __DIR__ . '/../app/Controllers/admin/SystemController.php';
-        $sub === 'manuals' ? (new SystemController())->manuals() : (new SystemController())->serviceStatus();
+        $systemController = new SystemController();
+        if ($sub === 'manuals') {
+            $systemController->manuals();
+        } elseif ($sub === 'service-status') {
+            $systemController->serviceStatus();
+        } else {
+            $systemController->assetReplacement();
+        }
         exit;
     }
 

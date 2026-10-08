@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../Helpers/AssetAge.php';
 $base = rtrim(BASE_URL, '/');
 
 $totalGroups = count($assets);
@@ -125,6 +126,9 @@ ksort($categories);
                         <i class="fas fa-boxes mr-1"></i> Asset Groups
                     </h6>
                     <div class="card-header-actions">
+                        <a href="<?= htmlspecialchars($base) ?>/admin/assets/replacement" class="btn btn-sm btn-outline-warning mr-2">
+                            <i class="fas fa-history mr-1"></i> For replacement (<?= (int) array_sum(array_column($assets, 'dueReplacement')) ?>)
+                        </a>
                         <span class="badge badge-info"><?= (int) $totalGroups ?> group<?= $totalGroups === 1 ? '' : 's' ?></span>
                     </div>
                 </div>
@@ -146,6 +150,7 @@ ksort($categories);
                                     <th>Assigned</th>
                                     <th>Unassigned</th>
                                     <th>Defective</th>
+                                    <th title="Purchased <?= (int) AssetAge::threshold() ?> or more years ago">For Replacement</th>
                                     <th class="text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -174,6 +179,15 @@ ksort($categories);
                                         <td><span class="qty-badge assigned"><?= (int) ($row['assigned'] ?? 0) ?></span></td>
                                         <td><span class="qty-badge unassigned"><?= (int) ($row['unassigned'] ?? 0) ?></span></td>
                                         <td><span class="qty-badge defective"><?= (int) ($row['defective'] ?? 0) ?></span></td>
+                                        <td>
+                                            <?php if ((int) ($row['dueReplacement'] ?? 0) > 0): ?>
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/assets/replacement" class="badge badge-warning p-2" title="See the replacement list">
+                                                    <i class="fas fa-history"></i> <?= (int) $row['dueReplacement'] ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="qty-badge">0</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="text-right">
                                             <div class="action-btn-group">
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= (int) ($row['group_id'] ?? 0) ?>"
@@ -216,7 +230,7 @@ ksort($categories);
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-assets-directory.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-assets-directory.js?v=20261009"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 

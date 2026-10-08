@@ -49,6 +49,7 @@
 
     var branchFilter = "";
     var statusFilter = "";
+    var ageFilter = "";
 
     registerSearch(function (settings, searchData, dataIndex) {
       if (getTableId(settings) !== "asset_inventory") {
@@ -66,6 +67,9 @@
       if (statusFilter && status !== statusFilter) {
         return false;
       }
+      if (ageFilter && (row.getAttribute("data-age") || "") !== ageFilter) {
+        return false;
+      }
       return true;
     });
 
@@ -81,9 +85,13 @@
       statusFilter = ($(this).val() || "").trim().toLowerCase();
       redraw();
     });
+    $("#invAgeFilter").on("change", function () {
+      ageFilter = ($(this).val() || "").trim();
+      redraw();
+    });
     $("#invClearFilters").on("click", function () {
-      branchFilter = statusFilter = "";
-      $("#invBranchFilter, #invStatusFilter").val("");
+      branchFilter = statusFilter = ageFilter = "";
+      $("#invBranchFilter, #invStatusFilter, #invAgeFilter").val("");
       dt.search("");
       redraw();
     });

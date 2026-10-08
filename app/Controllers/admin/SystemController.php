@@ -342,6 +342,39 @@ class SystemController extends AuthController
         $this->renderAdmin('admin/system/themes.php', compact('schedules', 'setupMissing', 'current'));
     }
 
+    /**
+     * /admin/assets/replacement and /it/asset-replacement: every asset purchased the set number
+     * of years ago or earlier (TV, CCTV, PC set, laptop... all types). Admin can change the years.
+     */
+    public function assetReplacement(): void
+    {
+        $role = $this->requireRoles(['ADMIN', 'IT']);
+        $home = $role === 'IT' ? '/it/asset-replacement' : '/admin/assets/replacement';
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/AssetAge.php';
+        require_once __DIR__ . '/../../Models/admin/Asset.php';
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $role === 'ADMIN') {
+            $this->requireCsrf($home);
+            $years = max(1, min(30, (int) ($_POST['years'] ?? AssetAge::DEFAULT_YEARS)));
+            AppSettings::set('asset_replacement_years', (string) $years);
+            ActivityLogger::update('Admin - Assets', 'replacement-years', "Replacement age set to {$years} years",
+                $_SESSION['username'] ?? 'Unknown');
+            $_SESSION['flash_success'] = "Items {$years} or more years old are now tagged for replacement.";
+            $this->redirect($home);
+            return;
+        }
+
+        $items = [];
+        try {
+            $items = (new Asset())->fetchReplacementDue();
+        } catch (Throwable $e) {
+            error_log('SystemController::assetReplacement failed: ' . $e->getMessage());
+        }
+        $years = AssetAge::threshold();
+        $this->renderAdmin('system/asset_replacement.php', compact('role', 'home', 'items', 'years'));
+    }
+
     /** GET /it/service-status (JSON): DNS / mail / website check for email tickets. */
     public function serviceStatus(): void
     {
