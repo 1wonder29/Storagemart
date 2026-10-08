@@ -1,14 +1,14 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 $reports = $reports ?? [];
-$statusFilter = $statusFilter ?? 'PENDING';
+$statusFilter = $statusFilter ?? 'ALL';
 $pendingItemReports = (int) ($pendingItemReports ?? 0);
 $statusLabels = [
     'PENDING'   => ['Pending', 'warning'],
     'CONFIRMED' => ['Confirmed', 'danger'],
     'ITEM_OK'   => ['Item OK / Active', 'success'],
 ];
-$filters = ['PENDING' => 'Pending', 'CONFIRMED' => 'Confirmed', 'ITEM_OK' => 'Item OK', 'ALL' => 'All'];
+$filters = ['ALL' => 'All', 'PENDING' => 'Pending', 'CONFIRMED' => 'Confirmed', 'ITEM_OK' => 'Item OK'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,7 +35,7 @@ $filters = ['PENDING' => 'Pending', 'CONFIRMED' => 'Confirmed', 'ITEM_OK' => 'It
                 <div class="row align-items-center">
                     <div class="col-lg-8">
                         <h1><i class="fas fa-exclamation-triangle mr-2"></i>Lost / Damaged Reports</h1>
-                        <p>Items employees reported as lost or damaged. Confirm the report to update inventory, or mark the item OK to keep it active with the employee. The employee is notified either way.</p>
+                        <p>Items reported lost or damaged by employees, plus losses HR recorded when an item was returned. Confirm an employee's report to update inventory, or mark the item OK to keep it active. The employee is notified either way.</p>
                     </div>
                     <div class="col-lg-4 mt-3 mt-lg-0">
                         <div class="hero-stat">
@@ -113,6 +113,9 @@ $filters = ['PENDING' => 'Pending', 'CONFIRMED' => 'Confirmed', 'ITEM_OK' => 'It
                                                 <span class="badge badge-<?= $r['report_type'] === 'LOST' ? 'dark' : 'danger' ?>">
                                                     <?= (int) $r['quantity'] ?> × <?= htmlspecialchars(ucfirst(strtolower((string) $r['report_type']))) ?>
                                                 </span>
+                                                <?php if (($r['source'] ?? '') === 'HR_RETURN'): ?>
+                                                    <div class="small text-muted mt-1"><i class="fas fa-undo"></i> Recorded at return</div>
+                                                <?php endif; ?>
                                             </td>
                                             <td style="max-width:260px;">
                                                 <?= htmlspecialchars((string) ($r['description'] ?? '')) ?>

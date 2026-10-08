@@ -35,11 +35,69 @@ class UniformReportModel extends UniformModel {
             reviewed_by INT(11) DEFAULT NULL,
             reviewed_at DATETIME DEFAULT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            source ENUM('EMPLOYEE','HR_RETURN') NOT NULL DEFAULT 'EMPLOYEE',
+            return_id INT(11) DEFAULT NULL,
             PRIMARY KEY (report_id),
+            UNIQUE KEY uq_return (return_id),
             KEY idx_status (status),
             KEY idx_employee (employee_id),
             KEY idx_assignment (assignment_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Tables created before HR-return records existed: add the two columns once.
+        $columns = $this->pdo->query("SHOW COLUMNS FROM {$this->tblreports}")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('source', $columns, true)) {
+            $this->pdo->exec("ALTER TABLE {$this->tblreports}
+                ADD COLUMN source ENUM('EMPLOYEE','HR_RETURN') NOT NULL DEFAULT 'EMPLOYEE',
+                ADD COLUMN return_id INT(11) DEFAULT NULL,
+                ADD UNIQUE KEY uq_return (return_id)");
+        }
+    }
+
+    /**
+     * Damaged / lost units HR recorded while processing a return become report records too
+     * (status CONFIRMED, source HR_RETURN), so every loss shows on the Lost / Damaged Reports page.
+     * Idempotent: each return row is linked at most once (unique return_id).
+     */
+    public function syncReturnReports(): void
+    {
+        // Returns written when HR confirmed an employee's report belong to that report
+        // (older confirmations were saved before reports were linked to their return row).
+        $unlinked = $this->pdo->query("SELECT r.report_id, rt.return_id
+            FROM {$this->tblreports} r
+            JOIN tbluniform_returns rt
+              ON rt.assignment_id = r.assignment_id
+             AND rt.condition_upon_return = r.report_type
+             AND rt.remarks LIKE 'Employee reported %'
+            WHERE r.status = 'CONFIRMED' AND r.source = 'EMPLOYEE' AND r.return_id IS NULL
+            ORDER BY r.report_id, rt.return_id")->fetchAll(PDO::FETCH_ASSOC);
+        if ($unlinked) {
+            $link = $this->pdo->prepare("UPDATE IGNORE {$this->tblreports} SET return_id = ? WHERE report_id = ? AND return_id IS NULL");
+            $usedReturnIds = [];
+            foreach ($unlinked as $row) {
+                if (isset($usedReturnIds[$row['return_id']])) {
+                    continue;
+                }
+                $link->execute([(int) $row['return_id'], (int) $row['report_id']]);
+                if ($link->rowCount() === 1) {
+                    $usedReturnIds[$row['return_id']] = true;
+                }
+            }
+        }
+
+        $this->pdo->exec("INSERT IGNORE INTO {$this->tblreports}
+                (assignment_id, uniform_id, employee_id, report_type, quantity, description, status,
+                 hr_remarks, reviewed_by, reviewed_at, created_at, source, return_id)
+            SELECT rt.assignment_id, rt.uniform_id, rt.employee_id, rt.condition_upon_return, rt.quantity_returned,
+                   NULLIF(TRIM(rt.remarks), ''), 'CONFIRMED',
+                   'Recorded by HR when the item was returned.',
+                   CASE WHEN rt.processed_by REGEXP '^[0-9]+$' THEN CAST(rt.processed_by AS UNSIGNED) ELSE NULL END,
+                   COALESCE(rt.processed_at, rt.datecreated), COALESCE(rt.datecreated, NOW()), 'HR_RETURN', rt.return_id
+            FROM tbluniform_returns rt
+            WHERE rt.condition_upon_return IN ('DAMAGED', 'LOST')
+              AND rt.return_status <> 'REJECTED'
+              AND (rt.remarks IS NULL OR rt.remarks NOT LIKE 'Employee reported %')
+              AND NOT EXISTS (SELECT 1 FROM {$this->tblreports} r WHERE r.return_id = rt.return_id)");
     }
 
     /** Items currently issued to the employee (not yet returned), with any open report. */
@@ -61,6 +119,7 @@ class UniformReportModel extends UniformModel {
 
     public function getReportsForEmployee(int $employeeId, int $limit = 50): array
     {
+        $this->syncReturnReports();
         $sql = "SELECT r.*, ui.uniform_type, ui.size
                 FROM {$this->tblreports} r
                 JOIN {$this->tbluniform_inventory} ui ON ui.uniform_id = r.uniform_id
@@ -120,6 +179,7 @@ class UniformReportModel extends UniformModel {
 
     public function getReports(?string $status = null, ?int $reportId = null, ?int $employeeId = null): array
     {
+        $this->syncReturnReports();
         $params = [];
         $conditions = [];
         if ($status !== null && $status !== '') {
@@ -227,6 +287,14 @@ class UniformReportModel extends UniformModel {
                 [$report['report_type'] => $qty]
             )) {
                 $failure = 'Could not update the inventory for this report.';
+            } else {
+                // Link the return row this confirmation wrote, so it is never listed twice.
+                $this->pdo->prepare("UPDATE {$this->tblreports} SET return_id = (
+                        SELECT rt.return_id FROM tbluniform_returns rt
+                        WHERE rt.assignment_id = ? AND rt.condition_upon_return = ? AND rt.remarks = ?
+                        ORDER BY rt.return_id DESC LIMIT 1)
+                    WHERE report_id = ?")
+                    ->execute([(int) $report['assignment_id'], $report['report_type'], $remarks, $reportId]);
             }
         }
 

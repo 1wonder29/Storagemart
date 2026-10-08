@@ -59,6 +59,10 @@ class UniformController extends AuthController {
             $totalPages = max(1, (int) ceil($totalCount / $limit));
             $uniformsNeedingReorder = count($this->uniformModel->getUniformsNeedingReorder());
             $pendingItemReports = (new UniformReportModel())->countPendingReports();
+            if (empty($_SESSION['csrf_token'])) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+            }
+            $csrf_token = $_SESSION['csrf_token'];
 
             require __DIR__ . '/../../Views/hr/uniforms/list.php';
         } catch (\Throwable $e) {
@@ -84,97 +88,86 @@ class UniformController extends AuthController {
             $uniforms = $this->uniformModel->getUniformInventorySummary();
 
             $headers = [
-                'Type',
+                'Item',
                 'Size',
                 'Color',
                 'In Stock',
                 'Reorder At',
                 'Stock Status',
-                'Pending Return',
+                'Issued (Not Returned)',
                 'Damaged',
                 'Lost',
                 'Item Status',
                 'Supplier',
                 'Cost Per Unit',
+                'Stock Value',
                 'Date Added',
             ];
 
             $rows = [];
-            $totals = [
-                'in_stock' => 0,
-                'pending' => 0,
-                'damaged' => 0,
-                'lost' => 0,
-            ];
+            $totals = ['in_stock' => 0, 'issued' => 0, 'damaged' => 0, 'lost' => 0, 'value' => 0.0];
+            $missingSupplier = 0;
 
             foreach ($uniforms as $uniform) {
                 $inStock = (int) ($uniform['quantity_in_stock'] ?? 0);
-                $pending = (int) ($uniform['quantity_pending_return'] ?? 0);
+                $issued = (int) ($uniform['quantity_pending_return'] ?? 0);
                 $damaged = (int) ($uniform['quantity_damaged'] ?? 0);
                 $lost = (int) ($uniform['quantity_lost'] ?? 0);
+                $cost = ($uniform['cost_per_unit'] ?? null) !== null && $uniform['cost_per_unit'] !== ''
+                    ? round((float) $uniform['cost_per_unit'], 2) : null;
+                $value = $cost !== null ? round($cost * $inStock, 2) : null;
+                $supplier = trim((string) ($uniform['supplier'] ?? ''));
+                if ($supplier === '') {
+                    $missingSupplier++;
+                }
 
                 $totals['in_stock'] += $inStock;
-                $totals['pending'] += $pending;
+                $totals['issued'] += $issued;
                 $totals['damaged'] += $damaged;
                 $totals['lost'] += $lost;
+                $totals['value'] += $value ?? 0;
 
                 if ($inStock <= 0) {
                     $stockLabel = 'Out of Stock';
                 } elseif (($uniform['stock_status'] ?? 'OK') === 'NEEDS_REORDER') {
-                    $stockLabel = 'Low Stock';
+                    $stockLabel = 'Low Stock - reorder';
                 } else {
                     $stockLabel = 'In Stock';
                 }
 
                 $rows[] = [
-                    $uniform['uniform_type'] ?? '',
-                    $uniform['size'] ?? '',
-                    $uniform['color'] ?? '',
+                    (string) ($uniform['uniform_type'] ?? ''),
+                    strtoupper((string) ($uniform['size'] ?? '')) === 'ONE SIZE' ? 'One Size' : (string) ($uniform['size'] ?? ''),
+                    (string) ($uniform['color'] ?? ''),
                     $inStock,
                     (int) ($uniform['reorder_level'] ?? 0),
                     $stockLabel,
-                    $pending,
+                    $issued,
                     $damaged,
                     $lost,
                     strtoupper($uniform['status'] ?? 'ACTIVE'),
-                    $uniform['supplier'] ?? '',
-                    $uniform['cost_per_unit'] ?? '',
-                    $uniform['datecreated'] ?? '',
+                    $supplier !== '' ? $supplier : 'Not set',
+                    $cost ?? '',
+                    $value ?? '',
+                    !empty($uniform['datecreated']) ? date('Y-m-d', strtotime((string) $uniform['datecreated'])) : '',
                 ];
             }
 
             if (!empty($rows)) {
                 $blank = array_fill(0, count($headers), '');
                 $rows[] = $blank;
-                $rows[] = [
-                    'TOTALS',
-                    '',
-                    '',
-                    $totals['in_stock'],
-                    '',
-                    '',
-                    $totals['pending'],
-                    $totals['damaged'],
-                    $totals['lost'],
-                    '',
-                    '',
-                    '',
-                    '',
-                ];
+                $rows[] = array_replace($blank, [
+                    0 => 'TOTALS', 3 => $totals['in_stock'], 6 => $totals['issued'],
+                    7 => $totals['damaged'], 8 => $totals['lost'], 12 => round($totals['value'], 2),
+                ]);
 
-                // Pending return details: which uniform (by name) is out with which employee.
+                // Which item is out with which employee.
                 $outstanding = $this->uniformModel->getOutstandingIssuances();
                 if (!empty($outstanding)) {
                     $rows[] = $blank;
-                    $rows[] = array_replace($blank, [0 => 'PENDING RETURN DETAILS']);
+                    $rows[] = array_replace($blank, [0 => 'ISSUED AND NOT YET RETURNED']);
                     $rows[] = array_replace($blank, [
-                        0 => 'Uniform',
-                        1 => 'Size',
-                        2 => 'Color',
-                        3 => 'Qty',
-                        4 => 'Employee',
-                        5 => 'Department',
-                        6 => 'Date Issued',
+                        0 => 'Item', 1 => 'Size', 2 => 'Color', 3 => 'Qty', 4 => 'Employee', 5 => 'Department', 6 => 'Date Issued',
                     ]);
                     foreach ($outstanding as $issued) {
                         $rows[] = array_replace($blank, [
@@ -188,10 +181,19 @@ class UniformController extends AuthController {
                         ]);
                     }
                 }
+
+                $rows[] = $blank;
+                $rows[] = array_replace($blank, [0 => 'NOTES']);
+                $rows[] = array_replace($blank, [0 => 'Issued (Not Returned) = quantity currently with employees.']);
+                $rows[] = array_replace($blank, [0 => 'Stock Value = In Stock x Cost Per Unit (only for items with a cost).']);
+                if ($missingSupplier > 0) {
+                    $rows[] = array_replace($blank, [0 => $missingSupplier . ' item(s) have no supplier. Set Supplier and Cost Per Unit in Inventory > Edit Item.']);
+                }
+                $rows[] = array_replace($blank, [0 => 'Generated ' . date('Y-m-d H:i') . ' by ' . ($_SESSION['username'] ?? 'HR')]);
             }
 
-            $filename = 'uniform_inventory_summary_' . date('Ymd_His') . '.xls';
-            (new ExcelExportService())->download($headers, $rows, $filename);
+            $filename = 'item_inventory_summary_' . date('Ymd_His') . '.xls';
+            (new ExcelExportService())->download($headers, $rows, $filename, 'Inventory Summary');
         } catch (\Throwable $e) {
             error_log('UniformController::exportSummary error: ' . $e->getMessage());
             http_response_code(500);
@@ -231,6 +233,11 @@ class UniformController extends AuthController {
                 'size' => trim($_POST['size'] ?? ''),
                 'quantity_in_stock' => (int) ($_POST['quantity_in_stock'] ?? 0),
                 'reorder_level' => (int) ($_POST['reorder_level'] ?? 5),
+                // Optional details; blank clears them (NULL) so placeholder suppliers can be removed.
+                'color' => trim((string) ($_POST['color'] ?? '')),
+                'supplier' => trim((string) ($_POST['supplier'] ?? '')) !== '' ? trim((string) $_POST['supplier']) : null,
+                'cost_per_unit' => is_numeric($_POST['cost_per_unit'] ?? null) && (float) $_POST['cost_per_unit'] >= 0
+                    ? round((float) $_POST['cost_per_unit'], 2) : null,
                 'createdby' => $_SESSION['username'] ?? 'system'
             ];
 
@@ -316,6 +323,11 @@ class UniformController extends AuthController {
                 'size' => trim($_POST['size'] ?? ''),
                 'quantity_in_stock' => (int) ($_POST['quantity_in_stock'] ?? 0),
                 'reorder_level' => (int) ($_POST['reorder_level'] ?? 5),
+                // Optional details; blank clears them (NULL) so placeholder suppliers can be removed.
+                'color' => trim((string) ($_POST['color'] ?? '')),
+                'supplier' => trim((string) ($_POST['supplier'] ?? '')) !== '' ? trim((string) $_POST['supplier']) : null,
+                'cost_per_unit' => is_numeric($_POST['cost_per_unit'] ?? null) && (float) $_POST['cost_per_unit'] >= 0
+                    ? round((float) $_POST['cost_per_unit'], 2) : null,
                 'updated_by' => $_SESSION['username'] ?? 'system'
             ];
 
@@ -910,9 +922,10 @@ class UniformController extends AuthController {
         $this->requireHR();
 
         $reportModel = new UniformReportModel();
-        $statusFilter = strtoupper(trim((string) ($_GET['status'] ?? 'PENDING')));
+        // Default to everything (pending first) so losses HR recorded at return are visible too.
+        $statusFilter = strtoupper(trim((string) ($_GET['status'] ?? 'ALL')));
         if (!in_array($statusFilter, ['PENDING', 'CONFIRMED', 'ITEM_OK', 'ALL'], true)) {
-            $statusFilter = 'PENDING';
+            $statusFilter = 'ALL';
         }
         $reports = $reportModel->getReports($statusFilter === 'ALL' ? null : $statusFilter);
         $pendingItemReports = $reportModel->countPendingReports();
@@ -1049,5 +1062,154 @@ class UniformController extends AuthController {
             . '</div>';
 
         MailService::send($to, $subject, $body);
+    }
+
+    /* ---------- Import items from Excel / CSV ---------- */
+
+    private function csrfOk(): bool
+    {
+        return !empty($_POST['csrf_token']) && hash_equals((string) ($_SESSION['csrf_token'] ?? ''), (string) $_POST['csrf_token']);
+    }
+
+    /** GET /hr/uniforms/import — upload form (and, after upload, the preview). */
+    public function importForm() {
+        $this->requireHR();
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+        $import = $_SESSION['uniform_import'] ?? null;
+        require __DIR__ . '/../../Views/hr/uniforms/import.php';
+    }
+
+    /** GET /hr/uniforms/import/template */
+    public function importTemplate() {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Services/UniformImportService.php';
+        $csv = UniformImportService::templateCsv();
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="item_import_template.csv"');
+        header('Content-Length: ' . strlen($csv));
+        echo $csv;
+        exit;
+    }
+
+    /** POST /hr/uniforms/import/preview — read the file and show what would happen. */
+    public function importPreview() {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Services/UniformImportService.php';
+        unset($_SESSION['uniform_import']);
+
+        if (!$this->csrfOk()) {
+            $_SESSION['errorMessage'] = 'Invalid form token. Please try again.';
+            $this->redirect('/hr/uniforms/import');
+        }
+
+        $file = $_FILES['import_file'] ?? null;
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            $_SESSION['errorMessage'] = 'Please choose an .xlsx or .csv file to upload.';
+            $this->redirect('/hr/uniforms/import');
+        }
+        if ($file['size'] > 2 * 1024 * 1024) {
+            $_SESSION['errorMessage'] = 'The file is larger than 2 MB. Split it into smaller files.';
+            $this->redirect('/hr/uniforms/import');
+        }
+        $ext = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, ['xlsx', 'csv', 'xls', 'txt'], true)) {
+            $_SESSION['errorMessage'] = 'Only .xlsx and .csv files can be imported.';
+            $this->redirect('/hr/uniforms/import');
+        }
+
+        try {
+            $result = UniformImportService::parse(
+                (string) $file['tmp_name'],
+                (string) $file['name'],
+                fn(string $type, string $size, string $color) => $this->uniformModel->findUniformByKey($type, $size, $color)
+            );
+        } catch (\Throwable $e) {
+            $_SESSION['errorMessage'] = $e->getMessage();
+            $this->redirect('/hr/uniforms/import');
+        }
+
+        $_SESSION['uniform_import'] = [
+            'token'    => bin2hex(random_bytes(16)),
+            'filename' => basename((string) $file['name']),
+            'mode'     => ($_POST['mode'] ?? 'add') === 'set' ? 'set' : 'add',
+            'rows'     => $result['rows'],
+            'errors'   => $result['errors'],
+            'total'    => $result['total'],
+        ];
+        $this->redirect('/hr/uniforms/import');
+    }
+
+    /** POST /hr/uniforms/import/apply — import the previewed valid rows. */
+    public function importApply() {
+        $this->requireHR();
+        $import = $_SESSION['uniform_import'] ?? null;
+
+        if (!$this->csrfOk() || !$import || !hash_equals($import['token'], (string) ($_POST['import_token'] ?? ''))) {
+            $_SESSION['errorMessage'] = 'This import preview has expired. Please upload the file again.';
+            $this->redirect('/hr/uniforms/import');
+        }
+        if (empty($import['rows'])) {
+            $_SESSION['errorMessage'] = 'There are no valid rows to import. Fix the errors and upload again.';
+            $this->redirect('/hr/uniforms/import');
+        }
+
+        try {
+            $result = $this->uniformModel->applyImport($import['rows'], $import['mode'], $_SESSION['username'] ?? 'system');
+        } catch (\Throwable $e) {
+            error_log('UniformController::importApply error: ' . $e->getMessage());
+            $_SESSION['errorMessage'] = 'Import failed; nothing was changed. ' . $e->getMessage();
+            $this->redirect('/hr/uniforms/import');
+        }
+        unset($_SESSION['uniform_import']);
+
+        ActivityLogger::create('HR - Uniforms', 'import',
+            "Imported items from {$import['filename']}: {$result['created']} new, {$result['updated']} updated ({$import['mode']} mode)",
+            $_SESSION['username'] ?? 'system', ['rows' => count($import['rows']), 'skipped' => count($import['errors'])]);
+
+        $_SESSION['successMessage'] = "Import done: {$result['created']} new item(s) added, {$result['updated']} existing item(s) updated"
+            . (count($import['errors']) ? '; ' . count($import['errors']) . ' row(s) with errors were skipped.' : '.');
+        $this->redirect('/hr/uniforms');
+    }
+
+    /** POST /hr/uniforms/import/cancel */
+    public function importCancel() {
+        $this->requireHR();
+        unset($_SESSION['uniform_import']);
+        $this->redirect('/hr/uniforms/import');
+    }
+
+    /* ---------- Reset all stock ---------- */
+
+    /** POST /hr/uniforms/reset-stock — set every item's stock to 0 (typed confirmation required). */
+    public function resetStock() {
+        $this->requireHR();
+        if (!$this->csrfOk() || strtoupper(trim((string) ($_POST['confirm_text'] ?? ''))) !== 'RESET') {
+            $_SESSION['errorMessage'] = 'Stock was not reset. Type RESET to confirm.';
+            $this->redirect('/hr/uniforms');
+        }
+
+        $includeCounts = !empty($_POST['include_damaged_lost']);
+        try {
+            $result = $this->uniformModel->resetAllStock($includeCounts, $_SESSION['username'] ?? 'system');
+        } catch (\Throwable $e) {
+            error_log('UniformController::resetStock error: ' . $e->getMessage());
+            $_SESSION['errorMessage'] = 'Stock reset failed; nothing was changed.';
+            $this->redirect('/hr/uniforms');
+        }
+
+        // Keep the previous counts in the audit log (compact) so a reset can be traced or undone by hand.
+        $snapshot = implode('; ', array_map(static fn($r) => "#{$r['uniform_id']} {$r['uniform_type']} {$r['size']}={$r['quantity_in_stock']}"
+            . ($includeCounts ? "/D{$r['quantity_damaged']}/L{$r['quantity_lost']}" : ''), $result['before']));
+        ActivityLogger::update('HR - Uniforms', 'reset-stock',
+            'Reset stock to 0 for ' . $result['count'] . ' item(s)' . ($includeCounts ? ' (incl. damaged/lost counts)' : ''),
+            $_SESSION['username'] ?? 'system', ['before' => $snapshot]);
+        error_log('Uniform stock reset by ' . ($_SESSION['username'] ?? '?') . '. Previous: ' . $snapshot);
+
+        $_SESSION['successMessage'] = 'Stock reset to 0 for ' . $result['count'] . ' item(s)'
+            . ($includeCounts ? ', including damaged and lost counts' : '') . '. Issued items were not changed.';
+        $this->redirect('/hr/uniforms');
     }
 }

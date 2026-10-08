@@ -5,13 +5,13 @@
  */
 class ExcelExportService
 {
-    public function download(array $headers, array $rows, string $filename): void
+    public function download(array $headers, array $rows, string $filename, string $sheetName = 'Report'): void
     {
         if (!preg_match('/\.xls(x)?$/i', $filename)) {
             $filename .= '.xls';
         }
 
-        $content = $this->buildSpreadsheet($headers, $rows);
+        $content = $this->buildSpreadsheet($headers, $rows, $sheetName);
 
         while (ob_get_level() > 0) {
             ob_end_clean();
@@ -27,12 +27,10 @@ class ExcelExportService
         exit;
     }
 
-    private function buildSpreadsheet(array $headers, array $rows): string
+    private function buildSpreadsheet(array $headers, array $rows, string $sheetName): string
     {
-        $sheetRows = [$headers];
-        foreach ($rows as $row) {
-            $sheetRows[] = is_array($row) ? array_values($row) : [$row];
-        }
+        // Excel sheet names: max 31 chars, no : \ / ? * [ ]
+        $sheetName = substr(preg_replace('#[:\\\\/?*\[\]]#', ' ', $sheetName) ?: 'Report', 0, 31);
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         $xml .= '<?mso-application progid="Excel.Sheet"?>' . "\n";
@@ -40,11 +38,24 @@ class ExcelExportService
             . 'xmlns:o="urn:schemas-microsoft-com:office:office" '
             . 'xmlns:x="urn:schemas-microsoft-com:office:excel" '
             . 'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' . "\n";
-        $xml .= '<Worksheet ss:Name="Tickets"><Table>' . "\n";
+        $xml .= '<Styles><Style ss:ID="hdr"><Font ss:Bold="1"/><Interior ss:Color="#EEF1FB" ss:Pattern="Solid"/></Style></Styles>' . "\n";
+        $xml .= '<Worksheet ss:Name="' . htmlspecialchars($sheetName, ENT_XML1 | ENT_QUOTES, 'UTF-8') . '"><Table>' . "\n";
 
-        foreach ($sheetRows as $row) {
+        $xml .= '<Row>';
+        foreach ($headers as $header) {
+            $xml .= '<Cell ss:StyleID="hdr"><Data ss:Type="String">'
+                . htmlspecialchars((string) $header, ENT_XML1 | ENT_QUOTES, 'UTF-8') . '</Data></Cell>';
+        }
+        $xml .= '</Row>' . "\n";
+
+        foreach ($rows as $row) {
             $xml .= '<Row>';
-            foreach ($row as $cell) {
+            foreach ((is_array($row) ? array_values($row) : [$row]) as $cell) {
+                // Real numbers (int/float) are written as numbers so Excel can sum and sort them.
+                if (is_int($cell) || is_float($cell)) {
+                    $xml .= '<Cell><Data ss:Type="Number">' . $cell . '</Data></Cell>';
+                    continue;
+                }
                 $value = htmlspecialchars((string) $cell, ENT_XML1 | ENT_QUOTES, 'UTF-8');
                 $xml .= '<Cell><Data ss:Type="String">' . $value . '</Data></Cell>';
             }

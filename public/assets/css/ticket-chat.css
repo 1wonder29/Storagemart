@@ -1,0 +1,215 @@
+/* Floating ticket chat head (messenger style). Shown while the user has an active ticket. */
+:root {
+  --tc-blue: #1f3a93;
+  --tc-blue-2: #3355c9;
+  --tc-orange: #f26522;
+  --tc-surface: #ffffff;
+  --tc-surface-2: #f3f5fb;
+  --tc-text: #1f2937;
+  --tc-muted: #6b7280;
+  --tc-border: #e3e6f0;
+  --tc-mine: #1f3a93;
+  --tc-mine-text: #ffffff;
+  --tc-theirs: #eef1f7;
+}
+html.it-dark {
+  --tc-surface: #1e2230;
+  --tc-surface-2: #262b3b;
+  --tc-text: #e5e7eb;
+  --tc-muted: #9ca3af;
+  --tc-border: #343a4f;
+  --tc-theirs: #2e3448;
+}
+
+.tc-head {
+  position: fixed;
+  bottom: 18px;
+  left: 0;
+  z-index: 1060;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: linear-gradient(135deg, var(--tc-blue), var(--tc-blue-2));
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(31, 58, 147, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.tc-head:hover { transform: scale(1.05); }
+.tc-head.tc-dragging { cursor: grabbing; transform: scale(1.08); transition: none; }
+.tc-head:focus-visible { outline: 3px solid var(--tc-orange); outline-offset: 2px; }
+.tc-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: #e02424;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 22px;
+  text-align: center;
+  border: 2px solid #fff;
+}
+.tc-badge[hidden] { display: none; }
+
+.tc-panel {
+  position: fixed;
+  bottom: 88px;
+  z-index: 1061;
+  width: 350px;
+  max-width: calc(100vw - 24px);
+  height: 480px;
+  max-height: calc(100vh - 110px);
+  background: var(--tc-surface);
+  color: var(--tc-text);
+  border: 1px solid var(--tc-border);
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.28);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: "Nunito", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+.tc-panel[hidden] { display: none; }
+
+.tc-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, var(--tc-blue), var(--tc-blue-2));
+  color: #fff;
+}
+.tc-header .tc-title { flex: 1; min-width: 0; }
+.tc-header .tc-title strong { display: block; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-header .tc-title small { display: block; opacity: 0.85; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-icon-btn {
+  background: rgba(255, 255, 255, 0.16);
+  border: 0;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.tc-icon-btn:hover { background: rgba(255, 255, 255, 0.28); }
+.tc-icon-btn[hidden] { display: none; }
+
+.tc-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--tc-orange);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.tc-header .tc-avatar { background: rgba(255, 255, 255, 0.22); }
+
+.tc-body { flex: 1; overflow-y: auto; background: var(--tc-surface-2); }
+
+.tc-thread {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 11px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--tc-border);
+  background: var(--tc-surface);
+  color: var(--tc-text);
+  text-align: left;
+  cursor: pointer;
+}
+.tc-thread:hover { background: var(--tc-surface-2); }
+.tc-thread .tc-meta { flex: 1; min-width: 0; }
+.tc-thread .tc-name { font-weight: 800; font-size: 0.86rem; display: flex; justify-content: space-between; gap: 6px; }
+.tc-thread .tc-name span:last-child { font-weight: 600; color: var(--tc-muted); font-size: 0.7rem; flex: 0 0 auto; }
+.tc-thread .tc-sub { font-size: 0.72rem; color: var(--tc-muted); }
+.tc-thread .tc-preview { font-size: 0.78rem; color: var(--tc-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-thread.tc-unread .tc-preview { color: var(--tc-text); font-weight: 800; }
+.tc-dot { width: 10px; height: 10px; border-radius: 50%; background: #e02424; flex: 0 0 auto; }
+
+.tc-messages { padding: 12px 12px 4px; display: flex; flex-direction: column; gap: 6px; }
+.tc-msg { max-width: 82%; display: flex; flex-direction: column; }
+.tc-msg .tc-author { font-size: 0.68rem; color: var(--tc-muted); margin: 0 8px 2px; }
+.tc-msg .tc-bubble {
+  padding: 8px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+.tc-msg .tc-time { font-size: 0.64rem; color: var(--tc-muted); margin: 2px 8px 0; }
+.tc-msg.tc-theirs { align-self: flex-start; }
+.tc-msg.tc-theirs .tc-bubble { background: var(--tc-theirs); color: var(--tc-text); border-bottom-left-radius: 4px; }
+.tc-msg.tc-mine { align-self: flex-end; align-items: flex-end; }
+.tc-msg.tc-mine .tc-bubble { background: var(--tc-mine); color: var(--tc-mine-text); border-bottom-right-radius: 4px; }
+.tc-day { align-self: center; font-size: 0.68rem; color: var(--tc-muted); margin: 6px 0; }
+.tc-empty { padding: 28px 18px; text-align: center; color: var(--tc-muted); font-size: 0.85rem; }
+
+.tc-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--tc-border);
+  background: var(--tc-surface);
+}
+.tc-composer[hidden] { display: none; }
+.tc-composer textarea {
+  flex: 1;
+  resize: none;
+  max-height: 96px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 19px;
+  border: 1px solid var(--tc-border);
+  background: var(--tc-surface-2);
+  color: var(--tc-text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+}
+.tc-composer textarea:focus { border-color: var(--tc-blue-2); }
+.tc-send {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--tc-orange);
+  color: #fff;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.tc-send:disabled { opacity: 0.5; cursor: default; }
+.tc-error { padding: 6px 12px; font-size: 0.75rem; color: #b91c1c; background: #fee2e2; }
+.tc-error[hidden] { display: none; }
+
+@media (max-width: 480px) {
+  .tc-panel { left: 12px !important; right: 12px !important; width: auto; height: calc(100vh - 120px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tc-head, .tc-head:hover { transition: none; transform: none; }
+}

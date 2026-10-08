@@ -75,6 +75,26 @@ $pageTitle = $isEditing ? 'Edit Item' : 'Add Item';
                             </div>
                         </div>
 
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="color" class="form-label">Color</label>
+                                <input type="text" class="form-control" id="color" name="color" maxlength="50"
+                                       value="<?= $uniform ? htmlspecialchars((string) ($uniform['color'] ?? '')) : '' ?>" placeholder="e.g., Blue">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="supplier" class="form-label">Supplier</label>
+                                <input type="text" class="form-control" id="supplier" name="supplier" maxlength="150"
+                                       value="<?= $uniform ? htmlspecialchars((string) ($uniform['supplier'] ?? '')) : '' ?>" placeholder="Who you buy it from (optional)">
+                                <small class="form-text text-muted">Leave blank if unknown; it shows as "Not set" in the summary.</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="cost_per_unit" class="form-label">Cost per Unit (PHP)</label>
+                                <input type="number" class="form-control" id="cost_per_unit" name="cost_per_unit" min="0" step="0.01"
+                                       value="<?= $uniform && $uniform['cost_per_unit'] !== null ? htmlspecialchars((string) $uniform['cost_per_unit']) : '' ?>" placeholder="Optional">
+                                <small class="form-text text-muted">Used for the Stock Value column in the summary.</small>
+                            </div>
+                        </div>
+
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> <?= $isEditing ? 'Update' : 'Add' ?> Item

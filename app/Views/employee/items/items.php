@@ -153,7 +153,9 @@ $statusLabels = [
                         </thead>
                         <tbody>
                             <?php foreach ($itemReports as $r):
-                                [$label, $color] = $statusLabels[$r['status']] ?? [$r['status'], 'secondary'];
+                                [$label, $color] = ($r['source'] ?? '') === 'HR_RETURN'
+                                    ? ['Recorded by HR at return', 'secondary']
+                                    : ($statusLabels[$r['status']] ?? [$r['status'], 'secondary']);
                             ?>
                                 <tr>
                                     <td><?= htmlspecialchars(date('M j, Y', strtotime((string) $r['created_at']))) ?></td>
