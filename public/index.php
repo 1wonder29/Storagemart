@@ -215,6 +215,16 @@ if (strpos($uri, '/admin') === 0) {
     $department = new DepartmentController();
     $sub = trim(substr($uri, strlen('/admin')), '/');
 
+    // System pages (ticket auto-assignment, announcements, IT manuals, themes).
+    $systemRoutes = [
+        'ticket-assignment' => 'ticketAssignment',
+    ];
+    if (isset($systemRoutes[$sub])) {
+        require_once __DIR__ . '/../app/Controllers/admin/SystemController.php';
+        (new SystemController())->{$systemRoutes[$sub]}();
+        exit;
+    }
+
     if ($sub === '' || $sub === 'dashboard') {
         $admin->dashboard();
     } elseif ($sub === 'account') {
@@ -404,6 +414,12 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
     $ticket = new TicketController();
 
     $sub = trim(substr($uri, strlen('/it')), '/');
+
+    if ($sub === 'availability' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        require_once __DIR__ . '/../app/Controllers/admin/SystemController.php';
+        (new SystemController())->itAvailability();
+        exit;
+    }
 
     if ($sub === '' || $sub === 'dashboard') {
         $it->dashboard();

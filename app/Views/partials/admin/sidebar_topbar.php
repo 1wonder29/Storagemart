@@ -159,6 +159,43 @@ if (SuperUser::isCurrent()) {
                     <span>My Issued Items</span></a>
             </li>
 
+            <!-- Nav Item - System (auto-assignment, announcements, IT manuals, themes) -->
+            <?php
+            $systemSubPage = $inRoleArea ? '' : ($systemSubPage ?? '');
+            $systemOpen = $adminActivePage === 'system';
+            ?>
+            <li class="nav-item <?= $systemOpen ? 'active' : '' ?>">
+                <a class="nav-link <?= $systemOpen ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapseSystem"
+                    aria-expanded="<?= $systemOpen ? 'true' : 'false' ?>" aria-controls="collapseSystem">
+                    <i class="fas fa-fw fa-cogs"></i>
+                    <span>System</span>
+                </a>
+                <div id="collapseSystem" class="collapse <?= $systemOpen ? 'show' : '' ?>" data-parent="#accordionSidebar">
+                    <div class="sidebar-submenu">
+                        <a class="sidebar-submenu-item <?= $systemSubPage === 'ticket-assignment' ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/ticket-assignment">
+                            <i class="fas fa-random"></i>
+                            <span>Ticket Auto-Assignment</span>
+                        </a>
+                        <a class="sidebar-submenu-item <?= $systemSubPage === 'announcements' ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/announcements">
+                            <i class="fas fa-bullhorn"></i>
+                            <span>Announcements</span>
+                        </a>
+                        <a class="sidebar-submenu-item <?= $systemSubPage === 'manuals' ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/manuals">
+                            <i class="fas fa-book"></i>
+                            <span>IT Manuals</span>
+                        </a>
+                        <a class="sidebar-submenu-item <?= $systemSubPage === 'themes' ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/themes">
+                            <i class="fas fa-palette"></i>
+                            <span>Themes &amp; Events</span>
+                        </a>
+                    </div>
+                </div>
+            </li>
+
             <!-- Divider -->
             <hr class="sidebar-divider">
 
@@ -172,28 +209,29 @@ if (SuperUser::isCurrent()) {
             <?php if (!empty($fullAccessGroups)): ?>
             <hr class="sidebar-divider">
             <div class="sidebar-heading">Full Access</div>
-            <?php foreach ($fullAccessGroups as $groupKey => [$groupLabel, $groupIcon, $groupItems]):
-                $groupOpen = in_array($activeFullAccessPath, array_column($groupItems, 0), true);
+            <?php foreach ($fullAccessGroups as $faGroupKey => [$faGroupLabel, $faGroupIcon, $faGroupLinks]):
+                $faGroupOpen = in_array($activeFullAccessPath, array_column($faGroupLinks, 0), true);
             ?>
-            <li class="nav-item <?= $groupOpen ? 'active' : '' ?>">
-                <a class="nav-link <?= $groupOpen ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapseFull<?= $groupKey ?>"
-                   aria-expanded="<?= $groupOpen ? 'true' : 'false' ?>" aria-controls="collapseFull<?= $groupKey ?>">
-                    <i class="fas fa-fw <?= $groupIcon ?>"></i>
-                    <span><?= $groupLabel ?></span>
+            <li class="nav-item <?= $faGroupOpen ? 'active' : '' ?>">
+                <a class="nav-link <?= $faGroupOpen ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapseFull<?= $faGroupKey ?>"
+                   aria-expanded="<?= $faGroupOpen ? 'true' : 'false' ?>" aria-controls="collapseFull<?= $faGroupKey ?>">
+                    <i class="fas fa-fw <?= $faGroupIcon ?>"></i>
+                    <span><?= $faGroupLabel ?></span>
                 </a>
-                <div id="collapseFull<?= $groupKey ?>" class="collapse <?= $groupOpen ? 'show' : '' ?>" data-parent="#accordionSidebar">
+                <div id="collapseFull<?= $faGroupKey ?>" class="collapse <?= $faGroupOpen ? 'show' : '' ?>" data-parent="#accordionSidebar">
                     <div class="sidebar-submenu">
-                        <?php foreach ($groupItems as [$itemPath, $itemLabel, $itemIcon]): ?>
-                            <a class="sidebar-submenu-item <?= $itemPath === $activeFullAccessPath ? 'active' : '' ?>"
-                               href="<?= htmlspecialchars($base . $itemPath) ?>">
-                                <i class="fas <?= $itemIcon ?>"></i>
-                                <span><?= htmlspecialchars($itemLabel) ?></span>
+                        <?php foreach ($faGroupLinks as [$faLinkPath, $faLinkLabel, $faLinkIcon]): ?>
+                            <a class="sidebar-submenu-item <?= $faLinkPath === $activeFullAccessPath ? 'active' : '' ?>"
+                               href="<?= htmlspecialchars($base . $faLinkPath) ?>">
+                                <i class="fas <?= $faLinkIcon ?>"></i>
+                                <span><?= htmlspecialchars($faLinkLabel) ?></span>
                             </a>
                         <?php endforeach; ?>
                     </div>
                 </div>
             </li>
             <?php endforeach; ?>
+            <?php unset($faGroupKey, $faGroupLabel, $faGroupIcon, $faGroupLinks, $faGroupOpen, $faLinkPath, $faLinkLabel, $faLinkIcon); ?>
             <?php endif; ?>
 
             <!-- Divider -->
