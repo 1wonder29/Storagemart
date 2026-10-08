@@ -105,6 +105,11 @@ if ($uri === '/ticket-chat/threads' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     (new TicketChatController())->threads();
     exit;
 }
+if ($uri === '/ticket-chat/help' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../app/Controllers/TicketChatController.php';
+    (new TicketChatController())->requestHelp();
+    exit;
+}
 
 // TICKET COMMENTS (shared — employee, IT, admin)
 if ($uri === '/ticket-comments/fetch' && $_SERVER['REQUEST_METHOD'] === 'GET') {

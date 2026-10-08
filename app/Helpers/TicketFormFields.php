@@ -121,5 +121,11 @@ class TicketFormFields
         // Branch zone / Head Office rule assigns IT right away (no admin approval step).
         require_once __DIR__ . '/TicketAssigner.php';
         TicketAssigner::autoAssign($pdo, $ticketId);
+
+        // Troubleshooting guide in the ticket chat; the chat opens on the next page for the filer.
+        require_once __DIR__ . '/TicketManuals.php';
+        if (TicketManuals::postWelcome($pdo, $ticketId) && strtoupper((string) ($_SESSION['usertype'] ?? '')) !== 'ADMIN') {
+            $_SESSION['tms_open_chat_ticket'] = $ticketId;
+        }
     }
 }

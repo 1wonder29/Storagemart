@@ -15,9 +15,15 @@
   var HEAD_SIZE = 58;
   var THREADS_EVERY = 30000;
   var MESSAGES_EVERY = 5000;
+  var HELP_WAIT_MS = 60000;          // "Need help from IT personnel" unlocks 1 minute after the guide was sent
+  var PING_AFTER_MS = 120000;        // "Are you there?" when IT's message is unanswered for 2 minutes
+  var PING_WINDOW_MS = 3600000;      // ... but not for messages older than an hour
 
   var state = {
     accountId: 0,
+    usertype: '',
+    serverOffset: 0,       // server clock minus browser clock, in ms
+    helpTimer: null,
     threads: [],
     open: false,
     view: 'list',          // 'list' | 'chat'
@@ -70,6 +76,26 @@
     return sameDay ? t : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + t;
   }
 
+  function serverNow() { return Date.now() + state.serverOffset; }
+
+  // Message text with clickable links (built from text nodes, never innerHTML).
+  function bubble(text) {
+    var node = el('div', 'tc-bubble');
+    var parts = String(text || '').split(/(https?:\/\/[^\s<>"']+)/);
+    parts.forEach(function (part, i) {
+      if (i % 2 === 1) {
+        var a = el('a', null, part);
+        a.href = part;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        node.appendChild(a);
+      } else if (part) {
+        node.appendChild(document.createTextNode(part));
+      }
+    });
+    return node;
+  }
+
   function api(path, options) {
     return fetch(BASE + path, Object.assign({ credentials: 'same-origin', headers: { 'Accept': 'application/json' } }, options || {}))
       .then(function (r) {
@@ -81,7 +107,7 @@
   }
 
   // ---------- build UI ----------
-  var head, badge, panel, titleName, titleSub, avatar, backBtn, openLink, body, composer, input, sendBtn, errorBox;
+  var head, badge, panel, titleName, titleSub, avatar, backBtn, openLink, body, composer, input, sendBtn, errorBox, helpBar;
 
   function build() {
     head = el('button', 'tc-head');
@@ -128,6 +154,8 @@
     body = el('div', 'tc-body');
     errorBox = el('div', 'tc-error');
     errorBox.hidden = true;
+    helpBar = el('div', 'tc-help');
+    helpBar.hidden = true;
 
     composer = el('form', 'tc-composer');
     input = el('textarea');
@@ -144,6 +172,7 @@
 
     panel.appendChild(header);
     panel.appendChild(body);
+    panel.appendChild(helpBar);
     panel.appendChild(errorBox);
     panel.appendChild(composer);
     document.body.appendChild(panel);
@@ -270,6 +299,7 @@
   function showList() {
     state.view = 'list';
     stopMessages();
+    hideHelpBar();
     backBtn.hidden = true;
     openLink.hidden = true;
     composer.hidden = true;
@@ -326,6 +356,7 @@
     body.appendChild(list);
     loadMessages(true);
     stopMessages();
+    renderHelpBar(t);
     state.messagesTimer = setInterval(function () { if (!document.hidden) loadMessages(false); }, MESSAGES_EVERY);
     setTimeout(function () { input.focus(); }, 50);
   }
@@ -352,7 +383,12 @@
   function renderMessages(comments, full) {
     var list = body.querySelector('.tc-messages');
     if (!list) return;
-    if (full) list.textContent = '';
+    if (full) {
+      // A full reload redraws everything (two loads can overlap when the chat opens).
+      list.textContent = '';
+      list.removeAttribute('data-last-day');
+      state.lastCommentId = 0;
+    }
     if (full && !comments.length) {
       list.appendChild(el('div', 'tc-empty', 'No messages yet. Ask a question or share an update about this ticket.'));
     }
@@ -372,9 +408,14 @@
         lastDay = day;
       }
       var mine = parseInt(c.account_id, 10) === state.accountId;
-      var msg = el('div', 'tc-msg ' + (mine ? 'tc-mine' : 'tc-theirs'));
-      if (!mine) msg.appendChild(el('div', 'tc-author', c.author_name + (c.author_role ? ' · ' + c.author_role : '')));
-      msg.appendChild(el('div', 'tc-bubble', c.comment_text));
+      var system = String(c.author_role || '').toUpperCase() === 'SYSTEM';
+      var msg = el('div', 'tc-msg ' + (mine ? 'tc-mine' : 'tc-theirs') + (system ? ' tc-system' : ''));
+      if (system) {
+        msg.appendChild(el('div', 'tc-author', c.author_name || 'IT Helpdesk'));
+      } else if (!mine) {
+        msg.appendChild(el('div', 'tc-author', c.author_name + (c.author_role ? ' · ' + c.author_role : '')));
+      }
+      msg.appendChild(bubble(c.comment_text));
       msg.appendChild(el('div', 'tc-time', timeLabel(c.created_at)));
       list.appendChild(msg);
       state.lastCommentId = Math.max(state.lastCommentId, id);
@@ -388,8 +429,8 @@
     errorBox.hidden = true;
   }
 
-  function send() {
-    var text = input.value.trim();
+  function send(preset) {
+    var text = typeof preset === 'string' ? preset : input.value.trim();
     if (!text || state.sending) return;
     state.sending = true;
     sendBtn.disabled = true;
@@ -401,8 +442,10 @@
         showError(res.message || 'Message not sent.');
         return;
       }
-      input.value = '';
-      input.style.height = 'auto';
+      if (typeof preset !== 'string') {
+        input.value = '';
+        input.style.height = 'auto';
+      }
       if (res.comment) renderMessages([res.comment], false);
     }).catch(function () {
       showError('Message not sent. Check your connection.');
@@ -410,6 +453,153 @@
       state.sending = false;
       sendBtn.disabled = false;
       input.focus();
+    });
+  }
+
+  // ---------- "Need help from IT personnel" (requester) / "Are you there?" (IT) ----------
+  function hideHelpBar() {
+    if (state.helpTimer) clearInterval(state.helpTimer);
+    state.helpTimer = null;
+    if (helpBar) { helpBar.hidden = true; helpBar.textContent = ''; }
+  }
+
+  function renderHelpBar(t) {
+    hideHelpBar();
+    if (!t) return;
+
+    if (!t.i_am_requester) {
+      // IT side: one tap to check whether the requester is still there.
+      if (state.usertype !== 'IT' && state.usertype !== 'ADMIN') return;
+      var ping = el('button', 'tc-help-btn tc-help-ghost');
+      ping.type = 'button';
+      ping.appendChild(el('i', 'fas fa-hand-paper'));
+      ping.appendChild(document.createTextNode(' Ask "Are you there?"'));
+      ping.addEventListener('click', function () { send('Are you there? Please reply so we can continue with your ticket.'); });
+      helpBar.appendChild(ping);
+      helpBar.hidden = false;
+      return;
+    }
+
+    if (!t.manual_sent_at) return;
+
+    if (t.help_requested_at) {
+      var done = el('div', 'tc-help-done');
+      done.appendChild(el('i', 'fas fa-check-circle'));
+      done.appendChild(document.createTextNode(' IT personnel was alerted ' + timeLabel(t.help_requested_at) + '. They will reply here.'));
+      helpBar.appendChild(done);
+      helpBar.hidden = false;
+      return;
+    }
+
+    var sent = parseDate(t.manual_sent_at);
+    var deadline = sent ? sent.getTime() + HELP_WAIT_MS : 0;
+    var info = el('div', 'tc-help-info');
+    var bar = el('div', 'tc-help-progress');
+    var fill = el('span');
+    bar.appendChild(fill);
+    var btn = el('button', 'tc-help-btn');
+    btn.type = 'button';
+    btn.appendChild(el('i', 'fas fa-life-ring'));
+    btn.appendChild(document.createTextNode(' Need help from IT personnel'));
+    helpBar.appendChild(info);
+    helpBar.appendChild(bar);
+    helpBar.appendChild(btn);
+    helpBar.hidden = false;
+
+    function tick() {
+      var left = Math.max(0, deadline - serverNow());
+      if (left > 0) {
+        var secs = Math.ceil(left / 1000);
+        info.textContent = 'Please try the guide above first. The help button unlocks in 0:' + (secs < 10 ? '0' : '') + secs + '.';
+        fill.style.width = Math.round(100 - (left / HELP_WAIT_MS) * 100) + '%';
+        btn.disabled = true;
+        bar.hidden = false;
+        return;
+      }
+      info.textContent = 'Still not working after trying the guide?';
+      bar.hidden = true;
+      btn.disabled = false;
+      if (state.helpTimer) { clearInterval(state.helpTimer); state.helpTimer = null; }
+    }
+    tick();
+    if (deadline - serverNow() > 0) state.helpTimer = setInterval(tick, 1000);
+
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      var form = new FormData();
+      form.append('ticket_id', String(t.ticket_id));
+      api('/ticket-chat/help', { method: 'POST', body: form }).then(function (res) {
+        if (!res.success) {
+          showError(res.message || 'Could not alert IT. Please try again.');
+          btn.disabled = false;
+          return;
+        }
+        t.help_requested_at = res.help_requested_at || '';
+        renderHelpBar(t);
+        loadMessages(false);
+      }).catch(function () {
+        showError('Connection problem. Please try again.');
+        btn.disabled = false;
+      });
+    });
+  }
+
+  // Requester popup when IT's last message has gone unanswered for a while.
+  function pingKey() { return 'tc_ping_' + state.accountId; }
+  function checkPing() {
+    if (document.querySelector('.tc-ping')) return;
+    var acked = store(pingKey()) || {};
+    var now = serverNow();
+    var target = null;
+    state.threads.forEach(function (t) {
+      if (target || !t.i_am_requester || t.last_is_mine || !t.last_comment_id) return;
+      if (t.last_role !== 'IT' && t.last_role !== 'ADMIN') return;
+      if (acked[t.ticket_id] && acked[t.ticket_id] >= t.last_comment_id) return;
+      if (state.open && state.view === 'chat' && state.ticketId === t.ticket_id && !document.hidden) return;
+      var at = parseDate(t.last_created_at);
+      if (!at) return;
+      var age = now - at.getTime();
+      var asked = /are you there/i.test(t.last_text || '');
+      if (age < PING_WINDOW_MS && (asked || age >= PING_AFTER_MS)) target = t;
+    });
+    if (target) showPing(target);
+  }
+
+  function showPing(t) {
+    var acked = store(pingKey()) || {};
+    function ack() {
+      acked[t.ticket_id] = t.last_comment_id;
+      store(pingKey(), acked);
+      overlay.remove();
+    }
+    var overlay = el('div', 'tc-ping');
+    overlay.setAttribute('role', 'alertdialog');
+    overlay.setAttribute('aria-label', 'Are you there?');
+    var card = el('div', 'tc-ping-card');
+    var icon = el('div', 'tc-ping-icon');
+    icon.appendChild(el('i', 'fas fa-user-clock'));
+    card.appendChild(icon);
+    card.appendChild(el('h5', null, 'Are you there?'));
+    card.appendChild(el('p', null, t.other_name + ' is waiting for your reply on ticket ' + t.ticket_number + '.'));
+    var yes = el('button', 'tc-help-btn', 'Yes, I\'m here');
+    yes.type = 'button';
+    var later = el('button', 'tc-help-btn tc-help-ghost', 'Later');
+    later.type = 'button';
+    var actions = el('div', 'tc-ping-actions');
+    actions.appendChild(later);
+    actions.appendChild(yes);
+    card.appendChild(actions);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    yes.focus();
+
+    later.addEventListener('click', ack);
+    yes.addEventListener('click', function () {
+      ack();
+      if (!head) return;
+      setOpen(true);
+      openChat(t.ticket_id);
+      send('Yes, I\'m here.');
     });
   }
 
@@ -432,6 +622,9 @@
     return api('/ticket-chat/threads').then(function (res) {
       if (!res.success) return;
       state.accountId = parseInt(res.account_id, 10) || 0;
+      state.usertype = String(res.usertype || '').toUpperCase();
+      var srv = parseDate(res.server_now);
+      if (srv) state.serverOffset = srv.getTime() - Date.now();
       state.threads = res.threads || [];
 
       // A ticket this browser has not tracked yet: replies after your own last message are unread.
@@ -455,6 +648,14 @@
       updateBadge();
       if (state.open && state.view === 'list') showList();
       if (state.open && state.view === 'chat' && !findThread(state.ticketId)) showList();
+
+      var openId = parseInt(res.open_ticket_id, 10) || 0;
+      if (openId && findThread(openId)) {
+        // Just filed a ticket: open its chat with the troubleshooting guide.
+        if (!state.open) setOpen(true);
+        if (state.view !== 'chat' || state.ticketId !== openId) openChat(openId);
+      }
+      checkPing();
     }).catch(function () { /* offline: try again on the next tick */ });
   }
 
