@@ -85,8 +85,8 @@ $base = rtrim(BASE_URL, '/');
       }
 
       if (message) {
-          // show for 6 seconds (6000 ms) then auto-hide — change to null to disable
-          showNotification(title, message, 6000);
+          // Success messages hide after 6 seconds; errors stay until dismissed so they are not missed.
+          showNotification(title, message, flashSuccess ? 6000 : null);
       }
   });
 })();

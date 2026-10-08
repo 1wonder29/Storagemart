@@ -16,7 +16,7 @@ class Asset extends BaseModel {
         $sql = "SELECT g.group_id, g.groupName, g.description, c.categoryName,
             SUM(CASE WHEN i.status NOT IN ('DISPOSE','DISPOSED','LOST','DEFECTIVE') THEN 1 ELSE 0 END) AS totalItems,
             SUM(CASE WHEN i.status = 'ASSIGNED' THEN 1 ELSE 0 END) AS assigned,
-            SUM(CASE WHEN i.status = 'UNASSIGNED' THEN 1 ELSE 0 END) AS unassigned,
+            SUM(CASE WHEN i.status IN ('UNASSIGNED', 'RETURNED') THEN 1 ELSE 0 END) AS unassigned,
             SUM(CASE WHEN i.status = 'DEFECTIVE' THEN 1 ELSE 0 END) AS defective
         FROM {$this->tblgroup} g
         JOIN {$this->tblcategory} c ON g.category_id = c.category_id
@@ -104,6 +104,38 @@ class Asset extends BaseModel {
             return (int) $this->pdo->lastInsertId();
         }
         return null;
+    }
+
+    /** True when another category already uses this name or IC code (asset numbers are built from the IC code). */
+    public function categoryExists(string $categoryName, string $ic_code): bool
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->tblcategory}
+                WHERE LOWER(TRIM(categoryName)) = LOWER(TRIM(:categoryName))
+                   OR LOWER(TRIM(ic_code)) = LOWER(TRIM(:ic_code))";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':categoryName' => $categoryName, ':ic_code' => $ic_code]);
+        return (int) ($stmt->fetchColumn() ?: 0) > 0;
+    }
+
+    public function countAssignedItemsInGroup(int $groupId): int
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM {$this->tblassets} WHERE group_id = :group_id AND status = 'ASSIGNED'");
+        $stmt->execute([':group_id' => $groupId]);
+        return (int) ($stmt->fetchColumn() ?: 0);
+    }
+
+    /** True when the record is one of this item's "Unassigned / STATUS" rows (no employee on it). */
+    private function isCustodyRecord(int $assignmentId, int $inventoryId): bool
+    {
+        if ($assignmentId <= 0) {
+            return false;
+        }
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM {$this->tblassign}
+                WHERE assignment_id = :assignment_id
+                  AND inventory_id = :inventory_id
+                  AND employee_id IS NULL");
+        $stmt->execute([':assignment_id' => $assignmentId, ':inventory_id' => $inventoryId]);
+        return (int) ($stmt->fetchColumn() ?: 0) > 0;
     }
 
     public function addCategory(string $categoryName, string $ic_code, string $createdBy): ?int
@@ -372,8 +404,8 @@ class Asset extends BaseModel {
                 }
             } else {
                 $sqlIns = "INSERT INTO {$this->tblassign}
-                        (employee_id, inventory_id, assignedTo, dateIssued, transferDetails, dateReturned, datecreated, createdby)
-                        VALUES (:employee_id, :inventory_id, :assignedTo, :dateIssued, :transferDetails, :dateReturned, :datecreated, :createdby)";
+                        (employee_id, inventory_id, transferCount, assignedTo, dateIssued, transferDetails, dateReturned, datecreated, createdby)
+                        VALUES (:employee_id, :inventory_id, '', :assignedTo, :dateIssued, :transferDetails, :dateReturned, :datecreated, :createdby)";
                 $stmtIns = $this->pdo->prepare($sqlIns);
                 if (!$stmtIns->execute([
                     ':employee_id' => $employeeId,
@@ -599,8 +631,15 @@ class Asset extends BaseModel {
             $current = $this->fetchInventoryById($inventoryID);
             $currentStatus = strtoupper(trim((string) ($current['status'] ?? '')));
             $currentAssignmentId = (int) ($current['assignment_id'] ?? 0);
+            // An item an employee returned points at that employee's own record; its remarks are
+            // only rewritten here when they are an "Unassigned / STATUS" row, otherwise a changed
+            // reason is recorded as a new row below.
+            $isCustodyRecord = $this->isCustodyRecord($currentAssignmentId, $inventoryID);
+            $newReason = trim((string) $reason);
+            $reasonUnchanged = $newReason === '' || $newReason === trim((string) ($current['currentReason'] ?? ''));
             if (in_array($status, ['RETURNED', 'DISPOSED', 'LOST', 'DEFECTIVE'], true)
-                && $status === $currentStatus && $currentAssignmentId > 0) {
+                && $status === $currentStatus && $currentAssignmentId > 0
+                && ($isCustodyRecord || $reasonUnchanged)) {
                 $sqlUp = "UPDATE {$this->tblassets}
                         SET itemInfo = :itemInfo,
                             serialNumber = :serialNumber,
@@ -614,7 +653,7 @@ class Asset extends BaseModel {
                     ':inventory_id' => $inventoryID,
                 ])) { $this->pdo->rollBack(); return false; }
 
-                if ($reason !== null && trim($reason) !== '') {
+                if ($isCustodyRecord && $newReason !== '') {
                     $stmt2 = $this->pdo->prepare("UPDATE {$this->tblassign} SET transferDetails = :td WHERE assignment_id = :aid");
                     if (!$stmt2->execute([':td' => trim($reason), ':aid' => $currentAssignmentId])) {
                         $this->pdo->rollBack(); return false;
@@ -651,8 +690,8 @@ class Asset extends BaseModel {
                 $dateReturned = date('Y-m-d');
 
                 $sqlIns = "INSERT INTO {$this->tblassign}
-                        (employee_id, inventory_id, assignedTo, dateIssued, transferDetails, dateReturned, datecreated, createdby)
-                        VALUES (:employee_id, :inventory_id, :assignedTo, :dateIssued, :transferDetails, :dateReturned, :datecreated, :createdby)";
+                        (employee_id, inventory_id, transferCount, assignedTo, dateIssued, transferDetails, dateReturned, datecreated, createdby)
+                        VALUES (:employee_id, :inventory_id, '', :assignedTo, :dateIssued, :transferDetails, :dateReturned, :datecreated, :createdby)";
                 $stmt2 = $this->pdo->prepare($sqlIns);
 
                 // employee_id is NULL (unassigned) for returned/lost/disposed in legacy
@@ -712,7 +751,7 @@ class Asset extends BaseModel {
             }
         } catch (\Throwable $e) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
-            // optionally log $e->getMessage()
+            error_log('Asset::updateItem failed: ' . $e->getMessage());
             return false;
         }
     }
@@ -807,6 +846,11 @@ class Asset extends BaseModel {
                 return ['ok'=>false, 'message'=>'Inventory not found'];
             }
             $oldAssetNumber = $inventory['assetNumber'] ?? '';
+            $currentStatus = strtoupper(trim((string) ($inventory['status'] ?? '')));
+            if (in_array($currentStatus, ['DEFECTIVE', 'LOST', 'DISPOSED', 'DISPOSE'], true)) {
+                $this->pdo->rollBack();
+                return ['ok'=>false, 'message'=>"This asset is marked {$currentStatus} and cannot be assigned. Change its status first."];
+            }
 
             // 2) compute baseAssetNumber (first two dash parts like OE-24)
             $parts = explode('-', $oldAssetNumber);
@@ -848,6 +892,18 @@ class Asset extends BaseModel {
             // 7) insert into assignment table
             $now = date('Y-m-d H:i:s');
             $dateIssued = date('Y-m-d');
+
+            // Moving from one employee to another: close the previous holder's record
+            // so their accountability form shows the asset as handed over.
+            $previousAssignmentId = (int) ($inventory['assignment_id'] ?? 0);
+            if ($currentStatus === 'ASSIGNED' && $previousAssignmentId > 0) {
+                $stmt = $this->pdo->prepare("UPDATE {$this->tblassign}
+                        SET dateReturned = :dateReturned
+                        WHERE assignment_id = :assignment_id
+                          AND (dateReturned IS NULL OR dateReturned = '')");
+                $stmt->execute([':dateReturned' => $dateIssued, ':assignment_id' => $previousAssignmentId]);
+            }
+
             $sqlInsert = "INSERT INTO {$this->tblassign} (employee_id, inventory_id, transferCount, assignedTo, dateIssued, transferDetails, datecreated, createdby)
                         VALUES (:employee_id, :inventory_id, :transferCount, :assignedTo, :dateIssued, :transferDetails, :datecreated, :createdby)";
             $stmt = $this->pdo->prepare($sqlInsert);
@@ -941,11 +997,13 @@ class Asset extends BaseModel {
                 emp.department
             FROM tblassets_inventory inv
             JOIN tblemployee emp ON emp.employee_id = inv.employee_id
-            LEFT JOIN tblemployee head_emp 
-                ON head_emp.department = emp.department
-            AND head_emp.position = 'HEAD'
-            LEFT JOIN tblaccounts head 
-                ON head.account_id = head_emp.account_id
+            -- Department heads are accounts with usertype HEAD; tblemployee.position holds the job title.
+            LEFT JOIN (
+                tblemployee head_emp
+                JOIN tblaccounts head
+                    ON head.account_id = head_emp.account_id
+                   AND head.usertype = 'HEAD'
+            ) ON head_emp.department = emp.department
             WHERE inv.inventory_id = :inventory_id
             LIMIT 1
         ";

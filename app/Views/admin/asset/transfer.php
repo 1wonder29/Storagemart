@@ -110,9 +110,9 @@ $backUrl = $groupId > 0
                                                       name="transferDetails"
                                                       class="form-control"
                                                       rows="6"
-                                                      maxlength="1000"
+                                                      maxlength="200"
                                                       required></textarea>
-                                            <small class="form-text text-muted">Maximum 1000 characters.</small>
+                                            <small class="form-text text-muted">Maximum 200 characters.</small>
                                         </div>
                                     </div>
                                     <?php endif; ?>

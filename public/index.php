@@ -428,7 +428,7 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
     } elseif ($sub === 'tickets/create') {
         $ticket->create();
     } elseif ($sub === 'tickets/history') {
-        $ticket->history();
+        $ticket->index();
     } elseif ($sub === 'tickets/history/fetch') {
         $ticket->fetchHistory();
     } elseif ($sub === 'tickets/in_progress') {

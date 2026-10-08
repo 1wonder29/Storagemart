@@ -91,8 +91,8 @@ $totalGroups = (int) ($totalGroups ?? 0);
                             </div>
                             <div class="col-md-6">
                                 <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
-                                <textarea id="description" name="description" class="form-control" rows="5" maxlength="1000" required placeholder="Model details, specs, or notes"></textarea>
-                                <small class="form-text text-muted">Maximum 1000 characters.</small>
+                                <textarea id="description" name="description" class="form-control" rows="5" maxlength="150" required placeholder="e.g. Laptops issued to employees and branches"></textarea>
+                                <small class="form-text text-muted">Maximum 150 characters.</small>
                             </div>
                         </div>
 

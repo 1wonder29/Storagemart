@@ -77,10 +77,23 @@ class AssetController extends AuthController {
             return;
         }
 
+        $posted_token = $_POST['csrf_token'] ?? '';
+        if (empty($posted_token) || $posted_token !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token.';
+            $this->redirect('/admin/assets/branch/add');
+            exit;
+        }
+
         $branchName    = trim($_POST['branchName'] ?? '');
         $branchCode    = trim($_POST['branchCode'] ?? '');
         $branchAddress = trim($_POST['branchAddress'] ?? '');
-        $createdBy     = $_SESSION['account_id'] ?? '';
+        $createdBy     = (string) ($_SESSION['account_id'] ?? '');
+
+        if ($branchName === '' || $branchCode === '' || $branchAddress === '') {
+            $_SESSION['flash_error'] = 'All branch fields are required.';
+            $this->redirect('/admin/assets/branch/add');
+            exit;
+        }
 
         try {
             $id = $assetModel->addBranch($branchName, $branchCode, $branchAddress, $createdBy);
@@ -300,10 +313,28 @@ class AssetController extends AuthController {
             return;
         }
 
-        $assetModel = new Asset();
+        $posted_token = $_POST['csrf_token'] ?? '';
+        if (empty($posted_token) || $posted_token !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token.';
+            $this->redirect('/admin/assets/category/add');
+            exit;
+        }
+
         $categoryName = trim($_POST['categoryName'] ?? '');
         $ic_code = trim($_POST['ic_code'] ?? '');
-        $createdBy     = $_SESSION['account_id'] ?? '';
+        $createdBy     = (string) ($_SESSION['account_id'] ?? '');
+
+        if ($categoryName === '' || $ic_code === '') {
+            $_SESSION['flash_error'] = 'Category name and IC code are required.';
+            $this->redirect('/admin/assets/category/add');
+            exit;
+        }
+        // Asset numbers are built from the IC code (e.g. IT-0001), so it must be unique.
+        if ($assetModel->categoryExists($categoryName, $ic_code)) {
+            $_SESSION['flash_error'] = 'A category with this name or IC code already exists.';
+            $this->redirect('/admin/assets/category/add');
+            exit;
+        }
 
         try{
             $id = $assetModel->addCategory($categoryName, $ic_code, $createdBy);
@@ -430,11 +461,27 @@ class AssetController extends AuthController {
             return;
         }
 
+        $posted_token = $_POST['csrf_token'] ?? '';
+        if (empty($posted_token) || $posted_token !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['flash_error'] = 'Invalid CSRF token.';
+            $this->redirect('/admin/assets/group/add');
+            exit;
+        }
+
         $category_id = (int) trim($_POST['category_id'] ?? 0);
-        $ic_code     = trim($_POST['ic_code'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $groupName   = trim($_POST['groupName'] ?? '');
-        $createdBy   = $_SESSION['account_id'] ?? '';
+        $createdBy   = (string) ($_SESSION['account_id'] ?? '');
+
+        // Take the IC code from the category itself, not the read-only form field.
+        $category = $category_id > 0 ? $assetModel->fetchCategoryById($category_id) : null;
+        $ic_code  = trim((string) ($category['ic_code'] ?? ''));
+
+        if (!$category || $groupName === '' || $description === '') {
+            $_SESSION['flash_error'] = 'Please select a category and enter the group name and description.';
+            $this->redirect('/admin/assets/group/add');
+            exit;
+        }
 
         try {
             // NOTE: model signature below expects (groupName, description, categoryId, ic_code, createdBy)
@@ -459,9 +506,7 @@ class AssetController extends AuthController {
 
         } catch (\Throwable $e) {
             $_SESSION['flash_error'] = 'Error adding group: ' . $e->getMessage();
-            $groups = $assetModel->fetchAllAssets();
-            $totalGroups = count($groups);
-            require_once __DIR__ . '/../../Views/admin/asset/add_group.php';
+            $this->redirect('/admin/assets/group/add');
             exit;
         }
     }
@@ -914,15 +959,34 @@ class AssetController extends AuthController {
         if ($branchId > 0 && !$assetModel->fetchBranchById($branchId)) {
             $branchId = 0;
         }
-        if (strtoupper($status) === 'DEFECTIVE') {
-            $current = $assetModel->fetchInventoryById($inventoryID);
-            $currentStatus = strtoupper(trim((string) ($current['status'] ?? '')));
-            // Already-defective items can be edited (reason, serial, info) without re-checking custody.
-            if (!in_array($currentStatus, ['RETURNED', 'UNASSIGNED', 'DEFECTIVE'], true)) {
-                $_SESSION['flash_error'] = 'Asset must be returned before marking as defective.';
-                $this->redirect('/admin/assets/item?group_id=' . (int) ($_POST['group_id'] ?? 0));
-                return;
+        $current = $assetModel->fetchInventoryById($inventoryID);
+        if (!$current) {
+            $_SESSION['flash_error'] = 'Item not found.';
+            $this->redirect('/admin/assets'); return;
+        }
+        $status = strtoupper($status);
+        $currentStatus = strtoupper(trim((string) ($current['status'] ?? '')));
+        $editUrl = '/admin/assets/item/edit?inventory_id=' . $inventoryID;
+        if (!in_array($status, ['UNASSIGNED', 'ASSIGNED', 'DEFECTIVE', 'DISPOSED', 'LOST', 'RETURNED'], true)) {
+            $_SESSION['flash_error'] = 'Please choose a valid status.';
+            $this->redirect($editUrl); return;
+        }
+        // Giving an asset to an employee, or taking it back, goes through Assign/Transfer and
+        // Return, which keep the employee's accountability record in step. An item that is
+        // already DEFECTIVE (or LOST, ...) can still be edited, keeping the same status.
+        if ($status !== $currentStatus) {
+            if ($status === 'ASSIGNED') {
+                $_SESSION['flash_error'] = 'To give this asset to an employee, use the Assign button on the item list.';
+                $this->redirect($editUrl); return;
             }
+            if ($currentStatus === 'ASSIGNED') {
+                $_SESSION['flash_error'] = 'This asset is assigned to an employee. Return it first (Users & Employees → View Asset → Return), then change its status.';
+                $this->redirect($editUrl); return;
+            }
+        }
+        if (in_array($status, ['DEFECTIVE', 'DISPOSED', 'LOST', 'RETURNED'], true) && $reason === '') {
+            $_SESSION['flash_error'] = 'Please enter the reason for marking this item ' . ucfirst(strtolower($status)) . '.';
+            $this->redirect($editUrl); return;
         }
 
         $ok = $assetModel->updateItem($inventoryID, $itemInfo, $serialNumber, $yearPurchased, $status, $reason, $_SESSION['account_id'] ?? null);
@@ -953,10 +1017,11 @@ class AssetController extends AuthController {
             $_SESSION['flash_success'] = 'Item updated successfully.';
         } else {
             $_SESSION['flash_error'] = 'Error updating item.';
+            $this->redirect($editUrl); return;
         }
 
         // redirect back to item list for the group
-        $group_id = (int) ($_POST['group_id'] ?? 0);
+        $group_id = (int) ($current['group_id'] ?? 0);
         $this->redirect('/admin/assets/item?group_id=' . $group_id);
     }
 
@@ -1395,6 +1460,12 @@ class AssetController extends AuthController {
             return;
         }
 
+        if (strtoupper(trim((string) ($inventory['status'] ?? ''))) === 'ASSIGNED') {
+            $_SESSION['flash_error'] = 'This asset is assigned to an employee. Return it first, then delete it.';
+            $this->redirect('/admin/assets/item?group_id=' . (int)($inventory['group_id'] ?? 0));
+            return;
+        }
+
         try {
             $ok = $assetModel->deleteItem($inventoryId);
 
@@ -1441,6 +1512,13 @@ class AssetController extends AuthController {
         $group = $assetModel->fetchGroupById($groupId);
         if (!$group) {
             $_SESSION['flash_error'] = 'Group not found.';
+            $this->redirect('/admin/assets');
+            return;
+        }
+
+        $assignedCount = $assetModel->countAssignedItemsInGroup($groupId);
+        if ($assignedCount > 0) {
+            $_SESSION['flash_error'] = "Cannot delete this group: {$assignedCount} of its items are assigned to employees. Return them first.";
             $this->redirect('/admin/assets');
             return;
         }

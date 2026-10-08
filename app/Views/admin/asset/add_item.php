@@ -82,8 +82,8 @@ $totalItems = (int) ($totalItems ?? 0);
                         <div class="row form-row-gap">
                             <div class="col-md-6">
                                 <label for="itemInfo" class="form-label">Item General Info <span class="text-danger">*</span></label>
-                                <textarea id="itemInfo" name="itemInfo" class="form-control" rows="5" maxlength="1000" required placeholder="Describe the item (e.g. Laptop, Monitor)"></textarea>
-                                <small class="form-text text-muted">Maximum 1000 characters.</small>
+                                <textarea id="itemInfo" name="itemInfo" class="form-control" rows="5" maxlength="150" required placeholder="Brand, model and specs (e.g. Asus VivoBook, Core i3, 16GB RAM)"></textarea>
+                                <small class="form-text text-muted">Maximum 150 characters.</small>
                             </div>
                             <div class="col-md-6">
                                 <label for="serialNumber" class="form-label">Serial Number <span class="text-danger">*</span></label>
