@@ -271,6 +271,54 @@ class UniformModel extends HRModel {
     }
 
     /**
+     * Remove a discontinued item and its finished history (returned issuances, return rows,
+     * closed reports). Refused while units are still issued or waiting for review.
+     *
+     * @return array{0: bool, 1: string, 2: int} [ok, message, history rows removed]
+     */
+    public function deleteUniformPermanently(int $uniformId): array {
+        $open = $this->pdo->prepare("SELECT
+                (SELECT COUNT(*) FROM {$this->tbluniform_assignment} WHERE uniform_id = ? AND date_returned IS NULL AND quantity_issued > 0)
+              + (SELECT COUNT(*) FROM tbluniform_returns WHERE uniform_id = ? AND return_status = 'PENDING')");
+        $open->execute([$uniformId, $uniformId]);
+        if ((int) $open->fetchColumn() > 0) {
+            return [false, 'This item is still issued to an employee or has a return waiting for review. Settle those first.', 0];
+        }
+        try {
+            $this->pdo->beginTransaction();
+            $history = 0;
+            $hasReports = (int) $this->pdo->query("SELECT COUNT(*) FROM information_schema.TABLES
+                    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tbluniform_reports'")->fetchColumn() > 0;
+            if ($hasReports) {
+                $pendingReports = $this->pdo->prepare("SELECT COUNT(*) FROM tbluniform_reports WHERE uniform_id = ? AND status = 'PENDING'");
+                $pendingReports->execute([$uniformId]);
+                if ((int) $pendingReports->fetchColumn() > 0) {
+                    $this->pdo->rollBack();
+                    return [false, 'This item has a lost / damaged report waiting for review. Review it first.', 0];
+                }
+                $stmt = $this->pdo->prepare('DELETE FROM tbluniform_reports WHERE uniform_id = ?');
+                $stmt->execute([$uniformId]);
+                $history += $stmt->rowCount();
+            }
+            foreach (['tbluniform_returns', $this->tbluniform_assignment] as $table) {
+                $stmt = $this->pdo->prepare("DELETE FROM {$table} WHERE uniform_id = ?");
+                $stmt->execute([$uniformId]);
+                $history += $stmt->rowCount();
+            }
+            $this->pdo->prepare("DELETE FROM {$this->tbluniform_inventory} WHERE uniform_id = ? AND status = 'DISCONTINUED'")
+                ->execute([$uniformId]);
+            $this->pdo->commit();
+            return [true, 'Item deleted permanently' . ($history > 0 ? " together with {$history} past record(s)." : '.'), $history];
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('UniformModel::deleteUniformPermanently error: ' . $e->getMessage());
+            return [false, 'Could not delete the item.', 0];
+        }
+    }
+
+    /**
      * Reactivate a discontinued uniform
      * @param int $uniformId
      * @param string $updatedBy
@@ -504,6 +552,8 @@ class UniformModel extends HRModel {
      * @param string $condition Backward-compatible fallback condition
      * @param string $remarks Optional remarks
      * @param array<string,int> $returnBreakdown ['GOOD'=>x,'DAMAGED'=>x,'LOST'=>x]
+     * @param bool $holdForReview Damaged / lost units go to Pending (Lost / Damaged Reports)
+     *             until HR confirms them or marks the item OK; good units go back to stock now.
      * @return bool
      */
     public function returnAssignment(
@@ -511,7 +561,8 @@ class UniformModel extends HRModel {
         int $processedBy,
         string $condition = 'GOOD',
         string $remarks = '',
-        array $returnBreakdown = []
+        array $returnBreakdown = [],
+        bool $holdForReview = false
     ): bool {
         try {
             $this->pdo->beginTransaction();
@@ -606,7 +657,12 @@ class UniformModel extends HRModel {
                     continue;
                 }
 
-                if ($conditionKey === 'DAMAGED') {
+                if ($holdForReview && in_array($conditionKey, ['DAMAGED', 'LOST'], true)) {
+                    // Counted as "pending return" until HR reviews it (approveReturn moves it on).
+                    $sqlInv = "UPDATE {$this->tbluniform_inventory}
+                               SET quantity_returned = COALESCE(quantity_returned, 0) + ?, date_updated = NOW()
+                               WHERE uniform_id = ?";
+                } elseif ($conditionKey === 'DAMAGED') {
                     $sqlInv = "UPDATE {$this->tbluniform_inventory}
                                SET quantity_damaged = COALESCE(quantity_damaged, 0) + ?, date_updated = NOW()
                                WHERE uniform_id = ?";
@@ -628,10 +684,10 @@ class UniformModel extends HRModel {
                 }
             }
 
-            // 3) Record per-condition return rows as already approved (no pending queue).
+            // 3) Record per-condition return rows: approved, or PENDING for damaged / lost under review.
             $sql3 = "INSERT INTO tbluniform_returns
                     (assignment_id, uniform_id, employee_id, quantity_returned, condition_upon_return, remarks, date_returned, processed_by, return_status, approved_by, processed_at, createdby, datecreated)
-                    VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, 'APPROVED', ?, NOW(), ?, NOW())";
+                    VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, ?, ?, NOW(), ?, NOW())";
             $stmt3 = $this->pdo->prepare($sql3);
             $ok3 = true;
             foreach ($normalizedBreakdown as $conditionKey => $conditionQty) {
@@ -644,6 +700,7 @@ class UniformModel extends HRModel {
                     $rowRemarks = trim(($remarks !== '' ? $remarks . ' | ' : '') . 'Split return');
                 }
 
+                $pending = $holdForReview && in_array($conditionKey, ['DAMAGED', 'LOST'], true);
                 $insertOk = $stmt3->execute([
                     $assignmentId,
                     $uniformId,
@@ -652,7 +709,8 @@ class UniformModel extends HRModel {
                     $conditionKey,
                     $rowRemarks,
                     $processedBy,
-                    $processedBy,
+                    $pending ? 'PENDING' : 'APPROVED',
+                    $pending ? null : $processedBy,
                     'system'
                 ]);
 
@@ -1056,22 +1114,58 @@ class UniformModel extends HRModel {
                 ORDER BY (status = 'ACTIVE') DESC, uniform_id ASC
                 LIMIT 1");
         $stmt->execute([$type, $size, $color]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $found = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        if ($found || trim($color) !== '') {
+            return $found;
+        }
+        // No color in the file: use the item with that type and size when there is only one.
+        $stmt = $this->pdo->prepare("SELECT * FROM {$this->tbluniform_inventory}
+                WHERE LOWER(TRIM(uniform_type)) = LOWER(TRIM(?)) AND LOWER(TRIM(size)) = LOWER(TRIM(?))
+                ORDER BY (status = 'ACTIVE') DESC, uniform_id ASC");
+        $stmt->execute([$type, $size]);
+        $matches = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return count($matches) === 1 ? $matches[0] : null;
+    }
+
+    /** Active items that an "overwrite the list" import would discontinue (not in the file). */
+    public function activeItemsNotInImport(array $rows): array
+    {
+        $keys = [];
+        $ids = [];
+        foreach ($rows as $row) {
+            $keys[mb_strtolower(trim($row['type']) . '|' . trim($row['size']) . '|' . trim((string) $row['color']))] = true;
+            $existing = $this->findUniformByKey($row['type'], $row['size'], (string) $row['color']);
+            if ($existing) {
+                $ids[(int) $existing['uniform_id']] = true;
+            }
+        }
+        $items = $this->pdo->query("SELECT uniform_id, uniform_type, size, color, quantity_in_stock
+                FROM {$this->tbluniform_inventory} WHERE status = 'ACTIVE' ORDER BY uniform_type, size")
+            ->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return array_values(array_filter($items, static function (array $item) use ($keys, $ids): bool {
+            $key = mb_strtolower(trim($item['uniform_type']) . '|' . trim($item['size']) . '|' . trim((string) $item['color']));
+            return !isset($keys[$key]) && !isset($ids[(int) $item['uniform_id']]);
+        }));
     }
 
     /**
      * Apply validated import rows in one transaction.
-     * mode "add": add the quantity to current stock; mode "set": replace current stock.
-     * Existing items get reorder level / supplier / cost updated when the row has them,
+     * mode "add": add the quantity to current stock (other items unchanged).
+     * mode "replace" (overwrite the list): stock becomes the file's quantity and active items
+     * that are not in the file are discontinued (their history is kept).
+     * Existing items get reorder level / cost updated when the row has them,
      * and a discontinued item that receives stock is made active again.
      *
-     * @param array<int, array{type: string, size: string, color: string, quantity: int, reorder: ?int, cost: ?float, supplier: ?string}> $rows
-     * @return array{created: int, updated: int}
+     * @param array<int, array{type: string, size: string, color: string, quantity: int, reorder: ?int, cost: ?float}> $rows
+     * @return array{created: int, updated: int, discontinued: int}
      */
     public function applyImport(array $rows, string $mode, string $by): array
     {
         $created = 0;
         $updated = 0;
+        $discontinued = 0;
+        $toDiscontinue = $mode === 'replace' ? $this->activeItemsNotInImport($rows) : [];
+        $mode = $mode === 'replace' ? 'set' : $mode;
         $this->pdo->beginTransaction();
         try {
             foreach ($rows as $row) {
@@ -1079,8 +1173,8 @@ class UniformModel extends HRModel {
                 if ($existing) {
                     $sets = [$mode === 'set' ? 'quantity_in_stock = ?' : 'quantity_in_stock = quantity_in_stock + ?'];
                     $params = [$row['quantity']];
-                    foreach (['reorder' => 'reorder_level', 'cost' => 'cost_per_unit', 'supplier' => 'supplier'] as $key => $column) {
-                        if ($row[$key] !== null) {
+                    foreach (['reorder' => 'reorder_level', 'cost' => 'cost_per_unit'] as $key => $column) {
+                        if (($row[$key] ?? null) !== null) {
                             $sets[] = "{$column} = ?";
                             $params[] = $row[$key];
                         }
@@ -1100,12 +1194,20 @@ class UniformModel extends HRModel {
                             (uniform_type, size, color, quantity_in_stock, cost_per_unit, supplier, reorder_level, status, createdby, datecreated)
                             VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, NOW())")
                         ->execute([$row['type'], $row['size'], $row['color'], $row['quantity'], $row['cost'],
-                            $row['supplier'], $row['reorder'] ?? 5, $by]);
+                            null, $row['reorder'] ?? 5, $by]);
                     $created++;
                 }
             }
+            if ($toDiscontinue) {
+                $stop = $this->pdo->prepare("UPDATE {$this->tbluniform_inventory}
+                        SET status = 'DISCONTINUED', updated_by = ?, date_updated = NOW() WHERE uniform_id = ? AND status = 'ACTIVE'");
+                foreach ($toDiscontinue as $item) {
+                    $stop->execute([$by, (int) $item['uniform_id']]);
+                    $discontinued += $stop->rowCount();
+                }
+            }
             $this->pdo->commit();
-            return ['created' => $created, 'updated' => $updated];
+            return ['created' => $created, 'updated' => $updated, 'discontinued' => $discontinued];
         } catch (\Throwable $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();

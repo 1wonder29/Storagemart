@@ -191,22 +191,31 @@ $totalPages = (int) ($totalPages ?? 1);
                                             <td class="actions-cell">
                                                 <div class="action-btn-group">
                                                     <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/edit/<?= (int) $uniform['uniform_id'] ?>"
-                                                       class="btn btn-sm btn-primary" title="Edit">
-                                                        <i class="fas fa-edit"></i>
+                                                       class="btn btn-sm btn-primary" title="Edit item">
+                                                        <i class="fas fa-edit"></i> Edit
                                                     </a>
                                                     <?php if ($itemStatus === 'DISCONTINUED'): ?>
                                                         <form method="post"
                                                               action="<?= htmlspecialchars($base) ?>/hr/uniforms/reactivate/<?= (int) $uniform['uniform_id'] ?>"
                                                               class="d-inline"
                                                               onsubmit="return confirm('Reactivate this item?');">
-                                                            <button type="submit" class="btn btn-sm btn-success" title="Reactivate">
-                                                                <i class="fas fa-undo"></i>
+                                                            <button type="submit" class="btn btn-sm btn-success" title="Make the item active again">
+                                                                <i class="fas fa-undo"></i> Reactivate
+                                                            </button>
+                                                        </form>
+                                                        <form method="post"
+                                                              action="<?= htmlspecialchars($base) ?>/hr/uniforms/delete-permanent/<?= (int) $uniform['uniform_id'] ?>"
+                                                              class="d-inline"
+                                                              onsubmit="return confirm('Delete this item permanently? Its past issuance records are removed too. This cannot be undone.');">
+                                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
+                                                            <button type="submit" class="btn btn-sm btn-danger" title="Remove the item for good">
+                                                                <i class="fas fa-trash-alt"></i> Delete permanently
                                                             </button>
                                                         </form>
                                                     <?php else: ?>
                                                         <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/delete/<?= (int) $uniform['uniform_id'] ?>"
-                                                           class="btn btn-sm btn-danger" title="Delete">
-                                                            <i class="fas fa-trash"></i>
+                                                           class="btn btn-sm btn-outline-danger" title="Stop using this item (it can be reactivated)">
+                                                            <i class="fas fa-ban"></i> Discontinue
                                                         </a>
                                                     <?php endif; ?>
                                                 </div>

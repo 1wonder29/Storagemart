@@ -646,12 +646,16 @@ if (strpos($uri, '/hr') === 0) {
         $uniform->importApply();
     } elseif ($sub === 'uniforms/import/cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $uniform->importCancel();
+    } elseif ($sub === 'uniforms/import/mode' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->importMode();
     } elseif ($sub === 'uniforms/reset-stock' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $uniform->resetStock();
     } elseif ($sub === 'uniforms/reports') {
         $uniform->reports();
     } elseif ($sub === 'uniforms/reports/resolve' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $uniform->resolveReport();
+    } elseif ($sub === 'uniforms/reports/change-type' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->changeReportType();
     } elseif ($sub === 'uniforms/add') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $uniform->addForm();
@@ -672,6 +676,8 @@ if (strpos($uri, '/hr') === 0) {
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uniform->delete($uniformId);
         }
+    } elseif (strpos($sub, 'uniforms/delete-permanent/') === 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->deletePermanently((int) substr($sub, strlen('uniforms/delete-permanent/')));
     } elseif (strpos($sub, 'uniforms/reactivate/') === 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $uniformId = (int) substr($sub, strlen('uniforms/reactivate/'));
         $uniform->reactivate($uniformId);

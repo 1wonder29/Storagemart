@@ -98,7 +98,6 @@ class UniformController extends AuthController {
                 'Damaged',
                 'Lost',
                 'Item Status',
-                'Supplier',
                 'Cost Per Unit',
                 'Stock Value',
                 'Date Added',
@@ -106,7 +105,6 @@ class UniformController extends AuthController {
 
             $rows = [];
             $totals = ['in_stock' => 0, 'issued' => 0, 'damaged' => 0, 'lost' => 0, 'value' => 0.0];
-            $missingSupplier = 0;
 
             foreach ($uniforms as $uniform) {
                 $inStock = (int) ($uniform['quantity_in_stock'] ?? 0);
@@ -116,10 +114,6 @@ class UniformController extends AuthController {
                 $cost = ($uniform['cost_per_unit'] ?? null) !== null && $uniform['cost_per_unit'] !== ''
                     ? round((float) $uniform['cost_per_unit'], 2) : null;
                 $value = $cost !== null ? round($cost * $inStock, 2) : null;
-                $supplier = trim((string) ($uniform['supplier'] ?? ''));
-                if ($supplier === '') {
-                    $missingSupplier++;
-                }
 
                 $totals['in_stock'] += $inStock;
                 $totals['issued'] += $issued;
@@ -146,7 +140,6 @@ class UniformController extends AuthController {
                     $damaged,
                     $lost,
                     strtoupper($uniform['status'] ?? 'ACTIVE'),
-                    $supplier !== '' ? $supplier : 'Not set',
                     $cost ?? '',
                     $value ?? '',
                     !empty($uniform['datecreated']) ? date('Y-m-d', strtotime((string) $uniform['datecreated'])) : '',
@@ -158,7 +151,7 @@ class UniformController extends AuthController {
                 $rows[] = $blank;
                 $rows[] = array_replace($blank, [
                     0 => 'TOTALS', 3 => $totals['in_stock'], 6 => $totals['issued'],
-                    7 => $totals['damaged'], 8 => $totals['lost'], 12 => round($totals['value'], 2),
+                    7 => $totals['damaged'], 8 => $totals['lost'], 11 => round($totals['value'], 2),
                 ]);
 
                 // Which item is out with which employee.
@@ -186,9 +179,7 @@ class UniformController extends AuthController {
                 $rows[] = array_replace($blank, [0 => 'NOTES']);
                 $rows[] = array_replace($blank, [0 => 'Issued (Not Returned) = quantity currently with employees.']);
                 $rows[] = array_replace($blank, [0 => 'Stock Value = In Stock x Cost Per Unit (only for items with a cost).']);
-                if ($missingSupplier > 0) {
-                    $rows[] = array_replace($blank, [0 => $missingSupplier . ' item(s) have no supplier. Set Supplier and Cost Per Unit in Inventory > Edit Item.']);
-                }
+
                 $rows[] = array_replace($blank, [0 => 'Generated ' . date('Y-m-d H:i') . ' by ' . ($_SESSION['username'] ?? 'HR')]);
             }
 
@@ -233,9 +224,9 @@ class UniformController extends AuthController {
                 'size' => trim($_POST['size'] ?? ''),
                 'quantity_in_stock' => (int) ($_POST['quantity_in_stock'] ?? 0),
                 'reorder_level' => (int) ($_POST['reorder_level'] ?? 5),
-                // Optional details; blank clears them (NULL) so placeholder suppliers can be removed.
+                // Optional details; blank clears them (NULL). Supplier is no longer asked for.
                 'color' => trim((string) ($_POST['color'] ?? '')),
-                'supplier' => trim((string) ($_POST['supplier'] ?? '')) !== '' ? trim((string) $_POST['supplier']) : null,
+                'supplier' => null,
                 'cost_per_unit' => is_numeric($_POST['cost_per_unit'] ?? null) && (float) $_POST['cost_per_unit'] >= 0
                     ? round((float) $_POST['cost_per_unit'], 2) : null,
                 'createdby' => $_SESSION['username'] ?? 'system'
@@ -323,9 +314,8 @@ class UniformController extends AuthController {
                 'size' => trim($_POST['size'] ?? ''),
                 'quantity_in_stock' => (int) ($_POST['quantity_in_stock'] ?? 0),
                 'reorder_level' => (int) ($_POST['reorder_level'] ?? 5),
-                // Optional details; blank clears them (NULL) so placeholder suppliers can be removed.
+                // Optional details; blank clears them (NULL). Supplier is no longer asked for.
                 'color' => trim((string) ($_POST['color'] ?? '')),
-                'supplier' => trim((string) ($_POST['supplier'] ?? '')) !== '' ? trim((string) $_POST['supplier']) : null,
                 'cost_per_unit' => is_numeric($_POST['cost_per_unit'] ?? null) && (float) $_POST['cost_per_unit'] >= 0
                     ? round((float) $_POST['cost_per_unit'], 2) : null,
                 'updated_by' => $_SESSION['username'] ?? 'system'
@@ -418,7 +408,7 @@ class UniformController extends AuthController {
                         'quantity_in_stock' => $uniform['quantity_in_stock']
                     ]);
                 
-                $_SESSION['successMessage'] = 'Uniform deleted successfully!';
+                $_SESSION['successMessage'] = 'Item discontinued. You can reactivate it, or delete it permanently from the list.';
                 $this->redirect('/hr/uniforms');
             } else {
                 $_SESSION['errorMessage'] = 'Error deleting uniform.';
@@ -430,6 +420,38 @@ class UniformController extends AuthController {
             $_SESSION['errorMessage'] = 'Error deleting uniform: ' . $e->getMessage();
             $this->redirect('/hr/uniforms');
         }
+    }
+
+    /**
+     * POST /hr/uniforms/delete-permanent/{id}: remove a discontinued item for good,
+     * with its past issuance records. Not allowed while any unit is still issued or
+     * waiting for review.
+     */
+    public function deletePermanently($uniformId) {
+        $this->requireHR();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->csrfOk()) {
+            $_SESSION['errorMessage'] = 'Invalid request. Please try again.';
+            $this->redirect('/hr/uniforms');
+        }
+        $uniformId = (int) $uniformId;
+        $uniform = $this->uniformModel->getUniformById($uniformId);
+        if (!$uniform) {
+            $_SESSION['errorMessage'] = 'Item not found.';
+            $this->redirect('/hr/uniforms');
+        }
+        if (strtoupper((string) ($uniform['status'] ?? '')) !== 'DISCONTINUED') {
+            $_SESSION['errorMessage'] = 'Discontinue the item first, then delete it permanently.';
+            $this->redirect('/hr/uniforms');
+        }
+        [$ok, $message, $history] = $this->uniformModel->deleteUniformPermanently($uniformId);
+        if ($ok) {
+            ActivityLogger::delete('HR - Uniforms', (string) $uniformId,
+                "Permanently deleted item: {$uniform['uniform_type']} - Size {$uniform['size']}"
+                    . ($history > 0 ? " (with {$history} past record(s))" : ''),
+                $_SESSION['username'] ?? 'system', $uniform);
+        }
+        $_SESSION[$ok ? 'successMessage' : 'errorMessage'] = $message;
+        $this->redirect('/hr/uniforms');
     }
 
     /**
@@ -874,13 +896,17 @@ class UniformController extends AuthController {
                 (int) ($_SESSION['account_id'] ?? 0),
                 $condition,
                 $remarks,
-                $returnBreakdown
+                $returnBreakdown,
+                true
             );
 
             if ($result) {
                 $this->hrModel->logAction('RETURNED_UNIFORM', $assignment['employee_id'] ?? null, $assignment['uniform_id'] ?? null, $_SESSION['account_id'] ?? 0,
                     "Returned assignment: {$assignmentId} (Breakdown total: {$breakdownTotal})");
-                $_SESSION['successMessage'] = 'Uniform returned successfully. Accountability form has been updated.';
+                $held = $returnBreakdown['DAMAGED'] + $returnBreakdown['LOST'];
+                $_SESSION['successMessage'] = 'Item returned. Accountability form has been updated.'
+                    . ($held > 0 ? " {$held} damaged / lost unit(s) are Pending in Lost / Damaged Reports: "
+                        . 'Confirm them, mark the item OK, or switch damaged / lost if it was a mistake.' : '');
             } else {
                 $_SESSION['errorMessage'] = 'Failed to process return.';
             }
@@ -986,11 +1012,16 @@ class UniformController extends AuthController {
             $item = trim($report['uniform_type'] . ' (' . $report['size'] . ')');
             $what = strtolower((string) $report['report_type']);
             $alreadyReturned = !empty($report['date_returned']);
-            $text = $decision === 'CONFIRMED'
+            $fromReturn = ($report['source'] ?? '') === 'HR_RETURN';
+            $text = $fromReturn
+                ? ($decision === 'CONFIRMED'
+                    ? "HR confirmed the item you returned: {$report['quantity']} x {$item} recorded as {$what}."
+                    : "HR checked the item you returned ({$item}): it is OK and went back to stock.")
+                : ($decision === 'CONFIRMED'
                 ? "HR confirmed your report: {$report['quantity']} x {$item} recorded as {$what}."
                 : ($alreadyReturned
                     ? "HR closed your report for {$item}: this item was already returned."
-                    : "HR reviewed your report for {$item}: the item is OK and remains active with you.");
+                    : "HR reviewed your report for {$item}: the item is OK and remains active with you."));
             if ($replacement !== null) {
                 $text .= " Replacement issued: {$replacement}.";
             }
@@ -1021,6 +1052,26 @@ class UniformController extends AuthController {
                 ]);
         }
 
+        $_SESSION[$ok ? 'successMessage' : 'errorMessage'] = $message;
+        $this->redirect($returnPath);
+    }
+
+    /** POST /hr/uniforms/reports/change-type: switch a report between damaged and lost (fix a mistake). */
+    public function changeReportType() {
+        $this->requireHR();
+        $returnTo = (string) ($_POST['return_to'] ?? '');
+        $returnPath = preg_match('#^/hr/employees/detail/\d+$#', $returnTo) ? $returnTo : '/hr/uniforms/reports';
+        if (!$this->csrfOk()) {
+            $_SESSION['errorMessage'] = 'Invalid form token. Please try again.';
+            $this->redirect($returnPath);
+        }
+        $reportId = (int) ($_POST['report_id'] ?? 0);
+        $newType = (string) ($_POST['report_type'] ?? '');
+        [$ok, $message] = (new UniformReportModel())->changeReportType($reportId, $newType);
+        if ($ok) {
+            ActivityLogger::update('HR - Uniforms', (string) $reportId, 'Lost / damaged report changed: ' . $message,
+                $_SESSION['username'] ?? 'system', ['report_id' => $reportId, 'report_type' => strtoupper($newType)]);
+        }
         $_SESSION[$ok ? 'successMessage' : 'errorMessage'] = $message;
         $this->redirect($returnPath);
     }
@@ -1079,6 +1130,10 @@ class UniformController extends AuthController {
         }
         $csrf_token = $_SESSION['csrf_token'];
         $import = $_SESSION['uniform_import'] ?? null;
+        // Overwrite mode: active items that are not in the file will be discontinued.
+        $toDiscontinue = ($import && ($import['mode'] ?? '') === 'replace')
+            ? $this->uniformModel->activeItemsNotInImport($import['rows'])
+            : [];
         require __DIR__ . '/../../Views/hr/uniforms/import.php';
     }
 
@@ -1134,7 +1189,7 @@ class UniformController extends AuthController {
         $_SESSION['uniform_import'] = [
             'token'    => bin2hex(random_bytes(16)),
             'filename' => basename((string) $file['name']),
-            'mode'     => ($_POST['mode'] ?? 'add') === 'set' ? 'set' : 'add',
+            'mode'     => null, // chosen in the popup after the first preview
             'rows'     => $result['rows'],
             'errors'   => $result['errors'],
             'total'    => $result['total'],
@@ -1155,6 +1210,10 @@ class UniformController extends AuthController {
             $_SESSION['errorMessage'] = 'There are no valid rows to import. Fix the errors and upload again.';
             $this->redirect('/hr/uniforms/import');
         }
+        if (!in_array($import['mode'] ?? null, ['add', 'replace'], true)) {
+            $_SESSION['errorMessage'] = 'Choose how to import the file first (add new rows or overwrite the list).';
+            $this->redirect('/hr/uniforms/import');
+        }
 
         try {
             $result = $this->uniformModel->applyImport($import['rows'], $import['mode'], $_SESSION['username'] ?? 'system');
@@ -1170,8 +1229,21 @@ class UniformController extends AuthController {
             $_SESSION['username'] ?? 'system', ['rows' => count($import['rows']), 'skipped' => count($import['errors'])]);
 
         $_SESSION['successMessage'] = "Import done: {$result['created']} new item(s) added, {$result['updated']} existing item(s) updated"
+            . (!empty($result['discontinued']) ? ", {$result['discontinued']} item(s) not in the file discontinued" : '')
             . (count($import['errors']) ? '; ' . count($import['errors']) . ' row(s) with errors were skipped.' : '.');
         $this->redirect('/hr/uniforms');
+    }
+
+    /** POST /hr/uniforms/import/mode: answer to the "add or overwrite" popup. */
+    public function importMode() {
+        $this->requireHR();
+        if (!$this->csrfOk() || empty($_SESSION['uniform_import'])) {
+            $_SESSION['errorMessage'] = 'This import preview has expired. Please upload the file again.';
+            $this->redirect('/hr/uniforms/import');
+        }
+        $mode = (string) ($_POST['mode'] ?? '');
+        $_SESSION['uniform_import']['mode'] = in_array($mode, ['add', 'replace'], true) ? $mode : null;
+        $this->redirect('/hr/uniforms/import');
     }
 
     /** POST /hr/uniforms/import/cancel */

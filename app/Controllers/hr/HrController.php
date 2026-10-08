@@ -118,6 +118,22 @@ class HrController extends AuthController {
 
             $employees = $this->employeeModel->getFilteredEmployees($offset, $limit, $filters);
             $totalPages = $showAll ? 1 : max(1, (int) ceil($totalCount / $limit));
+
+            // Items still issued to each listed employee (HR items, not yet returned).
+            $issuedCounts = [];
+            $ids = array_values(array_filter(array_map(static fn($e) => (int) ($e['employee_id'] ?? 0), $employees)));
+            if ($ids) {
+                global $pdo;
+                $in = implode(',', array_fill(0, count($ids), '?'));
+                $stmt = $pdo->prepare("SELECT employee_id, COUNT(*) AS items, COALESCE(SUM(quantity_issued), 0) AS units
+                        FROM tbluniform_assignment
+                        WHERE employee_id IN ({$in}) AND date_returned IS NULL AND quantity_issued > 0
+                        GROUP BY employee_id");
+                $stmt->execute($ids);
+                foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $issuedCounts[(int) $row['employee_id']] = ['items' => (int) $row['items'], 'units' => (int) $row['units']];
+                }
+            }
             $departments = $this->employeeModel->getDistinctDepartments();
             $branches = $this->employeeModel->getDistinctBranches();
 

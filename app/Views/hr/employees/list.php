@@ -151,6 +151,7 @@ if (!empty($queryParams)) {
                                         <th>Department</th>
                                         <th>Email</th>
                                         <th>Branch</th>
+                                        <th>Issued Items</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -162,14 +163,25 @@ if (!empty($queryParams)) {
                                             <td><?= htmlspecialchars($emp['department']) ?></td>
                                             <td><?= htmlspecialchars($emp['email']) ?></td>
                                             <td class="branch-cell"><?= htmlspecialchars($emp['branchName'] ?? 'N/A') ?></td>
-                                            <td class="actions-cell">
-                                                <a href="<?= htmlspecialchars($base) ?>/hr/employees/detail/<?= $emp['employee_id'] ?>" 
-                                                   class="btn btn-sm btn-primary">
+                                            <td>
+                                                <?php $issued = $issuedCounts[(int) $emp['employee_id']] ?? null; ?>
+                                                <?php if ($issued): ?>
+                                                    <a href="<?= htmlspecialchars($base) ?>/hr/employees/detail/<?= (int) $emp['employee_id'] ?>#accountability-form"
+                                                       class="badge badge-warning p-2" title="Has items not yet returned">
+                                                        <i class="fas fa-box-open"></i> <?= $issued['items'] ?> active (<?= $issued['units'] ?> pc<?= $issued['units'] === 1 ? '' : 's' ?>)
+                                                    </a>
+                                                <?php else: ?>
+                                                    <span class="badge badge-light p-2 text-muted">None</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="actions-cell text-nowrap">
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/employees/detail/<?= (int) $emp['employee_id'] ?>"
+                                                   class="btn btn-sm btn-primary" title="View profile, issued items and history">
                                                     <i class="fas fa-eye"></i> View
                                                 </a>
-                                                <a href="<?= htmlspecialchars($base) ?>/hr/employees/accountability/<?= $emp['employee_id'] ?>" 
-                                                   class="btn btn-sm btn-success">
-                                                    <i class="fas fa-download"></i> Form
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/employees/accountability/<?= (int) $emp['employee_id'] ?>"
+                                                   class="btn btn-sm btn-outline-success" title="Download the accountability form">
+                                                    <i class="fas fa-file-download"></i> Form
                                                 </a>
                                             </td>
                                         </tr>

@@ -11,7 +11,7 @@ class UniformImportService
     public const MAX_ROWS = 500;
 
     /** Template / header names, in the order the template uses. */
-    public const TEMPLATE_HEADERS = ['Item Type', 'Size', 'Color', 'Quantity', 'Reorder Level', 'Cost per Unit', 'Supplier'];
+    public const TEMPLATE_HEADERS = ['Item Type', 'Size', 'Color', 'Quantity', 'Reorder Level', 'Cost per Unit'];
 
     private const ALIASES = [
         'type'     => ['item type', 'item', 'type', 'uniform type', 'item name', 'name', 'uniform'],
@@ -20,7 +20,6 @@ class UniformImportService
         'quantity' => ['quantity', 'qty', 'in stock', 'stock', 'quantity in stock', 'count'],
         'reorder'  => ['reorder level', 'reorder at', 'reorder', 'reorder point'],
         'cost'     => ['cost per unit', 'cost', 'unit cost', 'price', 'unit price'],
-        'supplier' => ['supplier', 'vendor'],
     ];
 
     /**
@@ -104,7 +103,6 @@ class UniformImportService
             }
 
             $existing = $findExisting($type, $size, $color);
-            $supplier = $get('supplier');
             $rows[] = [
                 'excel_row' => $excelRow,
                 'type'      => $type,
@@ -113,7 +111,7 @@ class UniformImportService
                 'quantity'  => (int) $qtyRaw,
                 'reorder'   => $reorderRaw === '' ? null : (int) $reorderRaw,
                 'cost'      => $costRaw === '' ? null : round((float) $costRaw, 2),
-                'supplier'  => $supplier === '' ? null : mb_substr($supplier, 0, 150),
+
                 'existing_id'     => $existing ? (int) $existing['uniform_id'] : null,
                 'existing_stock'  => $existing ? (int) $existing['quantity_in_stock'] : null,
                 'existing_status' => $existing ? (string) $existing['status'] : null,
@@ -148,8 +146,8 @@ class UniformImportService
     {
         $lines = [
             self::TEMPLATE_HEADERS,
-            ['New Polo Shirt', 'M', 'Blue', '20', '10', '350.00', 'ABC Garments'],
-            ['ID Badge', 'One Size', 'White/Blue', '50', '20', '', ''],
+            ['New Polo Shirt', 'M', 'Blue', '20', '10', '350.00'],
+            ['ID Badge', 'One Size', 'White/Blue', '50', '20', ''],
         ];
         $out = fopen('php://temp', 'r+');
         foreach ($lines as $line) {

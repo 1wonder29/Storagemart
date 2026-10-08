@@ -73,6 +73,24 @@ $filters = ['ALL' => 'All', 'PENDING' => 'Pending', 'CONFIRMED' => 'Confirmed', 
                 <?php unset($_SESSION['errorMessage']); ?>
             <?php endif; ?>
 
+            <div class="card shadow uniform-card data-card mb-4">
+                <div class="card-header py-3">
+                    <h6><i class="fas fa-question-circle"></i> How Pending works</h6>
+                </div>
+                <div class="card-body small">
+                    <ol class="mb-2 pl-3">
+                        <li><strong>An item comes in as lost or damaged</strong>: the employee reports it from My Issued Items, or HR marks units
+                            Damaged / Lost while processing a return. Either way it lands here as <span class="badge badge-warning">Pending</span>.
+                            Nothing is written off yet; a returned unit is held as "pending return".</li>
+                        <li><strong>HR reviews it.</strong> <em>Confirm</em> records it as lost / damaged (inventory counts are updated, and you can
+                            issue a replacement). <em>Item OK</em> means it is fine: an employee's report is closed with the item still with them,
+                            and a returned unit goes back to stock as good.</li>
+                        <li><strong>Made a mistake?</strong> Use <em>Mark lost</em> / <em>Mark damaged</em> to switch it, before or after confirming.</li>
+                    </ol>
+                    <span class="text-muted">The employee is notified of every decision.</span>
+                </div>
+            </div>
+
             <div class="card shadow uniform-card data-card">
                 <div class="card-header py-3">
                     <h6><i class="fas fa-list"></i> Reports (<?= count($reports) ?>)</h6>
