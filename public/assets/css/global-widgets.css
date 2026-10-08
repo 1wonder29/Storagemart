@@ -1,0 +1,97 @@
+/* Announcements, birthday greeting and seasonal themes (global-widgets.js). */
+
+.app-topbar-extras { gap: 2px; }
+.app-topbar-extras:empty { display: none !important; }
+.tmsw-header-btn { position: relative; color: #858796; }
+.tmsw-header-btn:hover, .tmsw-header-btn:focus { color: #4e73df; }
+.tmsw-bday-btn { color: #e74a3b; animation: tmsw-wiggle 1.6s ease-in-out infinite; }
+.tmsw-theme-btn { color: var(--tms-theme-main, #f26522); }
+.tmsw-badge { position: absolute; top: 2px; right: 0; font-size: 0.6rem; }
+.tmsw-badge[hidden] { display: none; }
+
+/* Announcement popup */
+.tmsw-modal, .tmsw-bday {
+  position: fixed; inset: 0; z-index: 1090;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(17, 24, 39, 0.5);
+}
+.tmsw-card {
+  width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto;
+  background: #fff; color: #1f2937; border-radius: 16px; padding: 20px 22px 16px;
+  border-top: 6px solid #4e73df; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  animation: tmsw-pop 0.2s ease-out;
+}
+.tmsw-card.tmsw-important { border-top-color: #e74a3b; }
+.tmsw-card-head { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: #4e73df; }
+.tmsw-important .tmsw-card-head { color: #e74a3b; }
+.tmsw-card-title { margin: 8px 0 8px; font-weight: 800; }
+.tmsw-card-body { white-space: pre-wrap; font-size: 0.92rem; line-height: 1.5; }
+.tmsw-card-meta { margin-top: 10px; font-size: 0.75rem; color: #6b7280; }
+.tmsw-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+/* Megaphone panel */
+.tmsw-panel {
+  position: fixed; z-index: 1085; width: 360px; max-width: calc(100vw - 24px); max-height: 70vh;
+  display: flex; flex-direction: column; background: #fff; color: #1f2937;
+  border-radius: 14px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2); overflow: hidden;
+}
+.tmsw-panel-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #e3e6f0; }
+.tmsw-panel-list { overflow-y: auto; padding: 6px 0; }
+.tmsw-ann { padding: 10px 14px; border-left: 3px solid transparent; }
+.tmsw-ann + .tmsw-ann { border-top: 1px solid #f1f2f6; }
+.tmsw-ann.tmsw-unread { background: #f5f7ff; border-left-color: #4e73df; }
+.tmsw-ann.tmsw-important { border-left-color: #e74a3b; }
+.tmsw-ann-title { font-weight: 700; font-size: 0.9rem; }
+.tmsw-ann-body { white-space: pre-wrap; font-size: 0.82rem; color: #4b5563; margin-top: 2px; }
+.tmsw-empty { padding: 20px; text-align: center; color: #6b7280; font-size: 0.85rem; }
+.tmsw-x { border: 0; background: transparent; font-size: 1.3rem; line-height: 1; color: inherit; opacity: 0.6; cursor: pointer; padding: 0 4px; }
+.tmsw-x:hover { opacity: 1; }
+
+/* Birthday */
+.tmsw-bday-card {
+  width: 100%; max-width: 380px; text-align: center; background: #fff; color: #1f2937;
+  border-radius: 20px; padding: 26px 22px 20px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  animation: tmsw-pop 0.25s ease-out;
+}
+.tmsw-bday-cake { font-size: 3.4rem; line-height: 1; animation: tmsw-bounce 1.2s ease-in-out infinite; }
+.tmsw-bday-card h4 { font-weight: 800; margin: 12px 0 6px; color: #f26522; }
+.tmsw-bday-card p { color: #6b7280; }
+
+/* Seasonal theme */
+html.tms-theme .app-topbar { border-bottom: 4px solid var(--tms-theme-main); }
+html.tms-theme .sidebar-user-card { box-shadow: inset 0 3px 0 var(--tms-theme-main); }
+.tmsw-ribbon {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin: -1.25rem 0 1.25rem; padding: 6px 44px 6px 14px; position: relative;
+  font-size: 0.85rem; font-weight: 700; color: #fff;
+  background: linear-gradient(90deg, var(--tms-theme-main), var(--tms-theme-accent));
+}
+.tmsw-ribbon .tmsw-x { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #fff; }
+.tmsw-ribbon-items { letter-spacing: 2px; }
+
+/* Effects */
+.tmsw-fx { position: fixed; inset: 0; z-index: 1095; pointer-events: none; overflow: hidden; }
+.tmsw-item, .tmsw-confetti { position: absolute; top: -40px; will-change: transform; }
+.tmsw-confetti { border-radius: 2px; }
+.tmsw-fall { animation-name: tmsw-fall; animation-timing-function: linear; animation-fill-mode: forwards; }
+.tmsw-rise { top: auto; bottom: -60px; animation-name: tmsw-rise; animation-timing-function: ease-out; animation-fill-mode: forwards; }
+
+@keyframes tmsw-fall {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  100% { transform: translate3d(40px, 110vh, 0) rotate(360deg); }
+}
+@keyframes tmsw-rise {
+  0% { transform: translate3d(0, 0, 0); opacity: 1; }
+  100% { transform: translate3d(-30px, -115vh, 0); opacity: 0.8; }
+}
+@keyframes tmsw-pop { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes tmsw-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes tmsw-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
+
+html.it-dark .tmsw-card, html.it-dark .tmsw-panel, html.it-dark .tmsw-bday-card { background: #1e2230; color: #e5e7eb; }
+html.it-dark .tmsw-ann.tmsw-unread { background: #262b3b; }
+html.it-dark .tmsw-ann-body, html.it-dark .tmsw-card-meta { color: #9ca3af; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tmsw-bday-btn, .tmsw-bday-cake { animation: none; }
+}

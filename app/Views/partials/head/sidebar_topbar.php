@@ -71,6 +71,12 @@ $base = rtrim(BASE_URL, '/');
         </a>
     </li>
 
+    <li class="nav-item <?= ($activePage === 'announcements') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/head/announcements">
+            <i class="fas fa-bullhorn"></i>
+            <span>Announcements</span>
+        </a>
+    </li>
 
 </ul>
 <!-- End of Sidebar -->

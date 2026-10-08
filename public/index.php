@@ -105,6 +105,23 @@ if ($uri === '/ticket-chat/threads' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     (new TicketChatController())->threads();
     exit;
 }
+// ANNOUNCEMENTS — Admin to everyone, HEAD / HOM to their own department; feed for the header
+if (preg_match('#^/(admin|head|hom)/announcements$#', $uri, $announcementArea)) {
+    require_once __DIR__ . '/../app/Controllers/AnnouncementController.php';
+    (new AnnouncementController())->manage($announcementArea[1]);
+    exit;
+}
+if ($uri === '/announcements/feed' || $uri === '/announcements/read' || $uri === '/announcements/open') {
+    require_once __DIR__ . '/../app/Controllers/AnnouncementController.php';
+    $announcementAction = substr($uri, strlen('/announcements/'));
+    if ($announcementAction === 'read' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        exit;
+    }
+    (new AnnouncementController())->{$announcementAction}();
+    exit;
+}
+
 if ($uri === '/ticket-chat/help' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/../app/Controllers/TicketChatController.php';
     (new TicketChatController())->requestHelp();

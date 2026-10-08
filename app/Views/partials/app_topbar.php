@@ -1,7 +1,8 @@
 <?php
 /**
  * Shared header for every role.
- * Left: sidebar toggle + logo. Right: time, date, notifications, dark mode, profile.
+ * Left: sidebar toggle + logo. Right: time, date, notifications, dark mode.
+ * Profile and logout live in the sidebar user card.
  *
  * Expected (set by the role's sidebar partial): $shellHomeUrl, $shellProfileUrl
  */
@@ -41,27 +42,8 @@ $shellDisplayName = $shellUser['fullname'] !== '' ? $shellUser['fullname'] : (st
             </button>
         </li>
 
-        <div class="topbar-divider d-none d-sm-block"></div>
-
-        <li class="nav-item dropdown no-arrow">
-            <a class="nav-link dropdown-toggle app-profile-link" href="#" id="userDropdown" role="button"
-               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <img class="img-profile rounded-circle" src="<?= htmlspecialchars($base) ?>/assets/img/undraw_profile.svg" alt="">
-                <span class="app-profile-name d-none d-md-inline"><?= htmlspecialchars($shellDisplayName) ?></span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-                <?php if ($shellProfileUrl !== ''): ?>
-                    <a class="dropdown-item" href="<?= htmlspecialchars($shellProfileUrl) ?>">
-                        <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                        Profile
-                    </a>
-                <?php endif; ?>
-                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
-                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Logout
-                </a>
-            </div>
-        </li>
+        <!-- Filled by global-widgets.js (e.g. the birthday greeting button) -->
+        <li class="nav-item d-flex align-items-center app-topbar-extras" id="appTopbarExtras"></li>
     </ul>
 </nav>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/app-shell.js?v=1" defer></script>

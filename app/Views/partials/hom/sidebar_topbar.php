@@ -92,6 +92,15 @@ $routePrefix = $routePrefix ?? 'hom';
         </a>
     </li>
 
+    <?php if ($routePrefix === 'hom'): ?>
+    <li class="nav-item <?= ($activePage === 'announcements') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/hom/announcements">
+            <i class="fas fa-bullhorn"></i>
+            <span>Announcements</span>
+        </a>
+    </li>
+    <?php endif; ?>
+
 </ul>
 <!-- End of Sidebar -->
 

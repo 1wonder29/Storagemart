@@ -10,6 +10,34 @@ class AppShell
     private const SHARED_ADMIN_USERNAMES = ['admin'];
 
     /** @return array{firstname: string, lastname: string, fullname: string, email: string, position: string} */
+    /** Profile page of the role area in the current URL ('' when that area has none). */
+    public static function profileUrl(): string
+    {
+        $base = rtrim(BASE_URL, '/');
+        $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+        $basePath = (string) parse_url($base, PHP_URL_PATH);
+        if ($basePath !== '' && strpos($path, $basePath) === 0) {
+            $path = substr($path, strlen($basePath));
+        }
+        $area = strtolower(explode('/', trim($path, '/'))[0] ?? '');
+        if (in_array($area, ['admin', 'aom', 'employee', 'head', 'hom', 'om', 'it'], true)) {
+            return $base . '/' . $area . '/profile';
+        }
+        if ($area === 'hr' && !empty($_SESSION['account_id'])) {
+            global $pdo;
+            try {
+                $stmt = $pdo->prepare('SELECT employee_id FROM tblemployee WHERE account_id = ? LIMIT 1');
+                $stmt->execute([(int) $_SESSION['account_id']]);
+                $employeeId = (int) $stmt->fetchColumn();
+                return $employeeId > 0 ? $base . '/hr/employees/detail/' . $employeeId : '';
+            } catch (Throwable $e) {
+                return '';
+            }
+        }
+        $role = strtolower((string) ($_SESSION['usertype'] ?? ''));
+        return in_array($role, ['admin', 'aom', 'employee', 'head', 'hom', 'om', 'it'], true) ? $base . '/' . $role . '/profile' : '';
+    }
+
     public static function currentUser(): array
     {
         $isSharedAdmin = strtoupper((string) ($_SESSION['usertype'] ?? '')) === 'ADMIN'
