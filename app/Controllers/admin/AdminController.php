@@ -1006,7 +1006,7 @@ class AdminController extends AuthController
         }
 
         try {
-            (new ExcelExportService())->download($headers, $rows, $filename);
+            (new ExcelExportService())->download($headers, $rows, $filename, 'Tickets');
         } catch (Throwable $e) {
             error_log('Ticket report export failed: ' . $e->getMessage());
             http_response_code(500);

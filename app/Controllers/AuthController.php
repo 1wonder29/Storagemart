@@ -61,10 +61,9 @@ class AuthController {
         }
 
         $forgotMessage = $_SESSION['forgotMessage'] ?? null;
-        $oldUsername = $_SESSION['forgot_old_username'] ?? '';
         $oldEmail = $_SESSION['forgot_old_email'] ?? '';
 
-        unset($_SESSION['forgotMessage'], $_SESSION['forgot_old_username'], $_SESSION['forgot_old_email']);
+        unset($_SESSION['forgotMessage'], $_SESSION['forgot_old_email']);
 
         require __DIR__ . '/../Views/auth/forgot_password.php';
     }
@@ -85,15 +84,14 @@ class AuthController {
             $this->redirect('/forgot-password');
         }
 
-        $username = trim($_POST['username'] ?? '');
+        // Accounts are identified by their registered email; there is no separate username to remember.
         $email = trim($_POST['email'] ?? '');
         $note = trim($_POST['note'] ?? '');
 
-        $_SESSION['forgot_old_username'] = $username;
         $_SESSION['forgot_old_email'] = $email;
 
-        if ($username === '' || $email === '') {
-            $_SESSION['forgotMessage'] = "<span style='color:red'>Please enter your username and registered email.</span>";
+        if ($email === '') {
+            $_SESSION['forgotMessage'] = "<span style='color:red'>Please enter your registered email.</span>";
             $this->redirect('/forgot-password');
         }
 
@@ -102,8 +100,9 @@ class AuthController {
             $this->redirect('/forgot-password');
         }
 
-        $account = $this->model->findByUsernameAndEmail($username, $email);
+        $account = $this->model->findByEmail($email);
         if ($account) {
+            $username = (string) $account['username'];
             require_once __DIR__ . '/../Models/PasswordResetRequest.php';
             require_once __DIR__ . '/../Models/NotificationModel.php';
             try {
@@ -124,8 +123,8 @@ class AuthController {
             }
         }
 
-        unset($_SESSION['forgot_old_username'], $_SESSION['forgot_old_email']);
-        $_SESSION['loginMessage'] = "<span style='color:green'>Request sent. If the username and email match an account, IT will verify "
+        unset($_SESSION['forgot_old_email']);
+        $_SESSION['loginMessage'] = "<span style='color:green'>Request sent. If the email matches an account, IT will verify "
             . "your identity and give you a temporary password. You can also contact the IT Department directly.</span>";
         $this->redirect('/login');
     }

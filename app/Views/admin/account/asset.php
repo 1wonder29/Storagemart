@@ -43,7 +43,7 @@ $assetCount = is_array($assets ?? null) ? count($assets) : 0;
                         <div class="stat-label">Assigned Assets</div>
                     </div>
                     <br>
-                    <a href="<?= htmlspecialchars($base) ?>/assets/generatePDF/generate_accountability.php?employee_id=<?= $employee_id ?>"
+                    <a href="<?= htmlspecialchars($base) ?>/admin/employees/accountability/<?= (int) $employee_id ?>"
                        class="btn btn-light btn-sm shadow-sm">
                         <i class="fas fa-file-word"></i> Generate Accountability Form
                     </a>
@@ -163,7 +163,9 @@ $assetCount = is_array($assets ?? null) ? count($assets) : 0;
                         </thead>
                         <tbody>
                             <?php foreach ($itemReports as $r):
-                                [$reportLabel, $reportColor] = $reportStatusLabels[$r['status']] ?? [$r['status'], 'secondary'];
+                                [$reportLabel, $reportColor] = ($r['source'] ?? '') === 'HR_RETURN'
+                                    ? ['Recorded at return', 'secondary']
+                                    : ($reportStatusLabels[$r['status']] ?? [$r['status'], 'secondary']);
                             ?>
                             <tr>
                                 <td><?= htmlspecialchars(date('M d, Y', strtotime((string) $r['created_at']))) ?></td>

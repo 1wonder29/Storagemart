@@ -44,7 +44,7 @@ $base = rtrim(BASE_URL, '/');
         <main class="auth-form-panel">
             <div class="auth-form-header">
                 <h2>Forgot password</h2>
-                <p>Enter your username and registered email. IT will contact you to reset your password.</p>
+                <p>Enter your registered email. IT will contact you to reset your password.</p>
             </div>
 
             <?php if (isset($forgotMessage) && $forgotMessage): ?>
@@ -53,25 +53,6 @@ $base = rtrim(BASE_URL, '/');
 
             <form class="auth-form auth-form--compact" action="<?= htmlspecialchars($base) ?>/forgot-password" method="POST" autocomplete="off">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['forgot_csrf'] ?? '') ?>">
-
-                <div class="auth-field">
-                    <label for="username">Username</label>
-                    <div class="auth-input-wrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
-                        </svg>
-                        <input
-                            type="text"
-                            id="username"
-                            name="username"
-                            placeholder="Enter your username"
-                            value="<?= htmlspecialchars($oldUsername ?? '') ?>"
-                            required
-                            autofocus
-                        >
-                    </div>
-                </div>
 
                 <div class="auth-field">
                     <label for="email">Registered Email</label>
@@ -87,6 +68,7 @@ $base = rtrim(BASE_URL, '/');
                             placeholder="Enter your registered email"
                             value="<?= htmlspecialchars($oldEmail ?? '') ?>"
                             required
+                            autofocus
                         >
                     </div>
                 </div>

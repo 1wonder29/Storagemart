@@ -358,7 +358,9 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                             </thead>
                             <tbody>
                                 <?php foreach ($itemReports as $r):
-                                    [$reportLabel, $reportColor] = $reportStatusLabels[$r['status']] ?? [$r['status'], 'secondary'];
+                                    [$reportLabel, $reportColor] = ($r['source'] ?? '') === 'HR_RETURN'
+                                        ? ['Recorded at return', 'secondary']
+                                        : ($reportStatusLabels[$r['status']] ?? [$r['status'], 'secondary']);
                                 ?>
                                     <tr>
                                         <td><?= htmlspecialchars(date('M d, Y', strtotime((string) $r['created_at']))) ?></td>

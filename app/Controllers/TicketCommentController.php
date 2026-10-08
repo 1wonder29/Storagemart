@@ -146,19 +146,42 @@ class TicketCommentController extends AuthController
         }
     }
 
+    /**
+     * Who may read / post on a ticket's comment thread: the shared ticket visibility rules
+     * (TicketAccess), plus the ticket's own requester or creator in any role, plus Operations
+     * managers on Operations tickets (they manage those from the HOM ticket pages).
+     * Previously every signed-in user could read and post on every ticket.
+     */
     private function resolveAccess(int $ticketId, int $accountId, string $usertype): array
     {
         $model = new TicketCommentModel();
 
-        if (!$model->ticketExists($ticketId)) {
+        if ($accountId <= 0 || !$model->ticketExists($ticketId)) {
             return ['canView' => false, 'canPost' => false];
         }
 
-        if ($accountId <= 0) {
+        global $pdo;
+        require_once __DIR__ . '/../Helpers/TicketAccess.php';
+        $ticket = TicketAccess::fetchTicketRow($pdo, $ticketId);
+        if ($ticket === null) {
             return ['canView' => false, 'canPost' => false];
         }
 
-        // All authenticated roles can view and post on tickets in the shared thread
-        return ['canView' => true, 'canPost' => true];
+        $allowed = TicketAccess::canViewTicket($pdo, $ticket, $accountId, $usertype);
+
+        if (!$allowed) {
+            $ownEmployeeId = (int) ($model->getEmployeeIdByAccountId($accountId) ?? 0);
+            $allowed = ($ownEmployeeId > 0 && (int) $ticket['employee_id'] === $ownEmployeeId)
+                || (int) ($ticket['created_by'] ?? 0) === $accountId;
+        }
+
+        if (!$allowed && in_array($usertype, ['HOM', 'OM'], true)) {
+            $stmt = $pdo->prepare('SELECT e.department FROM tbltickets t JOIN tblemployee e ON e.employee_id = t.employee_id
+                                   WHERE t.ticket_id = ? LIMIT 1');
+            $stmt->execute([$ticketId]);
+            $allowed = strcasecmp((string) $stmt->fetchColumn(), 'Operations') === 0;
+        }
+
+        return ['canView' => $allowed, 'canPost' => $allowed];
     }
 }

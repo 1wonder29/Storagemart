@@ -61,6 +61,12 @@ $totalPages = (int) ($totalPages ?? 1);
                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/export" class="quick-action-btn qa-success">
                     <i class="fas fa-file-excel"></i> Download Summary
                 </a>
+                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/import" class="quick-action-btn qa-primary">
+                    <i class="fas fa-file-import"></i> Import from Excel
+                </a>
+                <button type="button" class="quick-action-btn qa-secondary border-0" data-toggle="modal" data-target="#resetStockModal">
+                    <i class="fas fa-redo"></i> Reset All Stock
+                </button>
                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/reports" class="quick-action-btn qa-danger">
                     <i class="fas fa-exclamation-triangle"></i> Lost / Damaged Reports
                     <?php if (!empty($pendingItemReports)): ?>
@@ -115,7 +121,7 @@ $totalPages = (int) ($totalPages ?? 1);
                                         <th title="Units on hand, ready to issue">In Stock</th>
                                         <th title="Restock when In Stock falls to this number">Reorder At</th>
                                         <th>Stock Status</th>
-                                        <th title="Issued to employees and not yet returned">Pending Return</th>
+                                        <th title="Issued to employees and not yet returned">Issued (Not Returned)</th>
                                         <th>Damaged</th>
                                         <th>Lost</th>
                                         <th title="Whether this uniform is still in use or discontinued">Item Status</th>
@@ -238,6 +244,36 @@ $totalPages = (int) ($totalPages ?? 1);
 
             </div>
         </div>
+    <div class="modal fade" id="resetStockModal" tabindex="-1" role="dialog" aria-labelledby="resetStockTitle" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" action="<?= htmlspecialchars($base) ?>/hr/uniforms/reset-stock">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="resetStockTitle"><i class="fas fa-redo mr-1"></i> Reset All Stock</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
+                        <p>This sets <strong>In Stock to 0 for every item</strong>, for example before a physical count.
+                            Items already issued to employees are not changed. After counting, use <em>Import from Excel</em>
+                            with "Physical count — replace current stock" to load the new numbers.</p>
+                        <p class="mb-2"><a href="<?= htmlspecialchars($base) ?>/hr/uniforms/export"><i class="fas fa-file-excel"></i> Download the summary first</a> to keep a copy of the current counts.</p>
+                        <div class="custom-control custom-checkbox mb-3">
+                            <input type="checkbox" class="custom-control-input" id="includeDamagedLost" name="include_damaged_lost" value="1">
+                            <label class="custom-control-label" for="includeDamagedLost">Also reset the Damaged and Lost counts</label>
+                        </div>
+                        <label for="resetConfirmText" class="font-weight-bold">Type <code>RESET</code> to confirm</label>
+                        <input type="text" class="form-control" id="resetConfirmText" name="confirm_text" autocomplete="off" required pattern="[Rr][Ee][Ss][Ee][Tt]">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Reset Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/storagemart.min.js"></script>

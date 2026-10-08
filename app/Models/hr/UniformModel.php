@@ -227,7 +227,8 @@ class UniformModel extends HRModel {
             $allowedFields = ['uniform_type', 'size', 'color', 'quantity_in_stock', 'cost_per_unit', 'supplier', 'reorder_level', 'status'];
             
             foreach ($allowedFields as $field) {
-                if (isset($data[$field])) {
+                // array_key_exists: an explicit NULL clears the field (e.g. removing a supplier).
+                if (array_key_exists($field, $data)) {
                     $updates[] = "$field = ?";
                     $params[] = $data[$field];
                 }
@@ -1014,6 +1015,102 @@ class UniformModel extends HRModel {
         } catch (\Throwable $e) {
             error_log('UniformModel::getAssignmentsByUniformId error: ' . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Set every item's stock to 0 (e.g. before a physical count), optionally also the
+     * damaged/lost counters. Issued items are not touched.
+     *
+     * @return array{count: int, before: array<int, array>} rows changed and their previous counts
+     */
+    public function resetAllStock(bool $includeDamagedLost, string $updatedBy): array
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $before = $this->pdo->query("SELECT uniform_id, uniform_type, size, quantity_in_stock,
+                    COALESCE(quantity_damaged, 0) AS quantity_damaged, COALESCE(quantity_lost, 0) AS quantity_lost
+                FROM {$this->tbluniform_inventory} FOR UPDATE")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            $sql = "UPDATE {$this->tbluniform_inventory}
+                    SET quantity_in_stock = 0"
+                . ($includeDamagedLost ? ", quantity_damaged = 0, quantity_lost = 0" : "")
+                . ", updated_by = ?, date_updated = NOW()";
+            $this->pdo->prepare($sql)->execute([$updatedBy]);
+            $this->pdo->commit();
+            return ['count' => count($before), 'before' => $before];
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    /** Same item = same type, size and color (case- and space-insensitive). */
+    public function findUniformByKey(string $type, string $size, string $color): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM {$this->tbluniform_inventory}
+                WHERE LOWER(TRIM(uniform_type)) = LOWER(TRIM(?))
+                  AND LOWER(TRIM(size)) = LOWER(TRIM(?))
+                  AND LOWER(TRIM(COALESCE(color, ''))) = LOWER(TRIM(?))
+                ORDER BY (status = 'ACTIVE') DESC, uniform_id ASC
+                LIMIT 1");
+        $stmt->execute([$type, $size, $color]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /**
+     * Apply validated import rows in one transaction.
+     * mode "add": add the quantity to current stock; mode "set": replace current stock.
+     * Existing items get reorder level / supplier / cost updated when the row has them,
+     * and a discontinued item that receives stock is made active again.
+     *
+     * @param array<int, array{type: string, size: string, color: string, quantity: int, reorder: ?int, cost: ?float, supplier: ?string}> $rows
+     * @return array{created: int, updated: int}
+     */
+    public function applyImport(array $rows, string $mode, string $by): array
+    {
+        $created = 0;
+        $updated = 0;
+        $this->pdo->beginTransaction();
+        try {
+            foreach ($rows as $row) {
+                $existing = $this->findUniformByKey($row['type'], $row['size'], $row['color']);
+                if ($existing) {
+                    $sets = [$mode === 'set' ? 'quantity_in_stock = ?' : 'quantity_in_stock = quantity_in_stock + ?'];
+                    $params = [$row['quantity']];
+                    foreach (['reorder' => 'reorder_level', 'cost' => 'cost_per_unit', 'supplier' => 'supplier'] as $key => $column) {
+                        if ($row[$key] !== null) {
+                            $sets[] = "{$column} = ?";
+                            $params[] = $row[$key];
+                        }
+                    }
+                    if ($row['quantity'] > 0) {
+                        $sets[] = "status = 'ACTIVE'";
+                    }
+                    $sets[] = 'updated_by = ?';
+                    $sets[] = 'date_updated = NOW()';
+                    $params[] = $by;
+                    $params[] = (int) $existing['uniform_id'];
+                    $this->pdo->prepare("UPDATE {$this->tbluniform_inventory} SET " . implode(', ', $sets) . " WHERE uniform_id = ?")
+                        ->execute($params);
+                    $updated++;
+                } else {
+                    $this->pdo->prepare("INSERT INTO {$this->tbluniform_inventory}
+                            (uniform_type, size, color, quantity_in_stock, cost_per_unit, supplier, reorder_level, status, createdby, datecreated)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, NOW())")
+                        ->execute([$row['type'], $row['size'], $row['color'], $row['quantity'], $row['cost'],
+                            $row['supplier'], $row['reorder'] ?? 5, $by]);
+                    $created++;
+                }
+            }
+            $this->pdo->commit();
+            return ['created' => $created, 'updated' => $updated];
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
         }
     }
 }

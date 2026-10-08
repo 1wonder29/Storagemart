@@ -684,7 +684,7 @@ class AssetController extends AuthController {
         $filename = sprintf('defective_items_%04d_%02d.xls', $year, $month);
 
         try {
-            (new ExcelExportService())->download($headers, $rows, $filename);
+            (new ExcelExportService())->download($headers, $rows, $filename, 'Defective Items');
         } catch (Throwable $e) {
             error_log('Defective items export failed: ' . $e->getMessage());
             http_response_code(500);

@@ -20,18 +20,20 @@ class Account extends BaseModel {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function findByUsernameAndEmail(string $username, string $email): ?array {
+    /** Account for a registered email (accounts sign in with their email, so the username may match too). */
+    public function findByEmail(string $email): ?array {
         $sql = "SELECT a.*
                 FROM {$this->table} a
                 INNER JOIN {$this->tblemployee} e ON e.account_id = a.account_id
-                WHERE a.username = :username
-                  AND e.email = :email
+                WHERE LOWER(e.email) = LOWER(:email) OR LOWER(a.username) = LOWER(:username_email)
+                ORDER BY (LOWER(e.email) = LOWER(:email_rank)) DESC, a.account_id ASC
                 LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            ':username' => $username,
             ':email' => $email,
+            ':username_email' => $email,
+            ':email_rank' => $email,
         ]);
 
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;

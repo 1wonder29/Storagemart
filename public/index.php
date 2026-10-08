@@ -99,6 +99,13 @@ if ($uri === '/logout') {
     exit;
 }
 
+// TICKET CHAT HEAD — the signed-in user's active tickets (messages use /ticket-comments/*)
+if ($uri === '/ticket-chat/threads' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Controllers/TicketChatController.php';
+    (new TicketChatController())->threads();
+    exit;
+}
+
 // TICKET COMMENTS (shared — employee, IT, admin)
 if ($uri === '/ticket-comments/fetch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     require_once __DIR__ . '/../app/Controllers/TicketCommentController.php';
@@ -162,6 +169,21 @@ if ($uri === '/dev/reload-check' && $_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($uri === '/notifications' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     require_once __DIR__ . '/../app/Controllers/NotificationController.php';
     (new NotificationController())->index();
+    exit;
+}
+
+// ACCOUNTABILITY FORM BUILDER — HR and Admin: options + preview + PDF/Word download
+if (preg_match('#^/(hr|admin)/employees/accountability/(\d+)(?:/(preview|download))?$#', $uri, $accMatch)) {
+    require_once __DIR__ . '/../app/Controllers/AccountabilityFormController.php';
+    $accountability = new AccountabilityFormController($accMatch[1]);
+    $accAction = $accMatch[3] ?? '';
+    if ($accAction === 'preview') {
+        $accountability->preview((int) $accMatch[2]);
+    } elseif ($accAction === 'download') {
+        $accountability->download((int) $accMatch[2]);
+    } else {
+        $accountability->builder((int) $accMatch[2]);
+    }
     exit;
 }
 
@@ -520,9 +542,6 @@ if (strpos($uri, '/hr') === 0) {
     } elseif (strpos($sub, 'employees/detail/') === 0) {
         $employeeId = (int) substr($sub, strlen('employees/detail/'));
         $hr->employeeDetail($employeeId);
-    } elseif (strpos($sub, 'employees/accountability/') === 0) {
-        $employeeId = (int) substr($sub, strlen('employees/accountability/'));
-        $hr->downloadAccountabilityForm($employeeId);
     } elseif (strpos($sub, 'employees/search') === 0) {
         $hr->searchEmployees();
     } elseif ($sub === 'assets/transfer') {
@@ -571,6 +590,18 @@ if (strpos($uri, '/hr') === 0) {
         $uniform->exportSummary();
     } elseif ($sub === 'uniforms') {
         $uniform->list();
+    } elseif ($sub === 'uniforms/import') {
+        $uniform->importForm();
+    } elseif ($sub === 'uniforms/import/template') {
+        $uniform->importTemplate();
+    } elseif ($sub === 'uniforms/import/preview' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->importPreview();
+    } elseif ($sub === 'uniforms/import/apply' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->importApply();
+    } elseif ($sub === 'uniforms/import/cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->importCancel();
+    } elseif ($sub === 'uniforms/reset-stock' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->resetStock();
     } elseif ($sub === 'uniforms/reports') {
         $uniform->reports();
     } elseif ($sub === 'uniforms/reports/resolve' && $_SERVER['REQUEST_METHOD'] === 'POST') {
