@@ -521,6 +521,18 @@ class UniformModel extends HRModel {
                 return false;
             }
 
+            // Lock the issuance and use its current quantity so concurrent returns/confirmations can't double-apply.
+            $lock = $this->pdo->prepare("SELECT quantity_issued, date_returned FROM {$this->tbluniform_assignment}
+                    WHERE assignment_id = ? FOR UPDATE");
+            $lock->execute([$assignmentId]);
+            $locked = $lock->fetch(PDO::FETCH_ASSOC);
+            if (!$locked) {
+                $this->pdo->rollBack();
+                return false;
+            }
+            $assignment['quantity_issued'] = $locked['quantity_issued'];
+            $assignment['date_returned'] = $locked['date_returned'];
+
             if (!empty($assignment['date_returned'])) {
                 // already returned
                 $this->pdo->rollBack();

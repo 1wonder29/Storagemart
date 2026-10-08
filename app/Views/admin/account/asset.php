@@ -95,6 +95,95 @@ $assetCount = is_array($assets ?? null) ? count($assets) : 0;
                 </div>
             </div>
         </div>
+
+        <div class="card data-card shadow mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6><i class="fas fa-tshirt mr-1"></i>Issued Items (from HR)</h6>
+                <span class="ticket-count-badge"><?= count($issuedItems ?? []) ?> item<?= count($issuedItems ?? []) === 1 ? '' : 's' ?></span>
+            </div>
+            <div class="card-body p-0">
+                <?php if (empty($issuedItems)): ?>
+                    <p class="text-muted p-3 mb-0">No uniforms or other items are currently issued to this employee.</p>
+                <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Size</th>
+                                <th>Qty</th>
+                                <th>Date Issued</th>
+                                <th>Report</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($issuedItems as $item): ?>
+                            <tr>
+                                <td><?= htmlspecialchars((string) $item['uniform_type']) ?></td>
+                                <td><?= htmlspecialchars((string) $item['size']) ?></td>
+                                <td><?= (int) $item['quantity_issued'] ?></td>
+                                <td><?= $item['date_issued'] ? htmlspecialchars(date('M d, Y', strtotime((string) $item['date_issued']))) : '—' ?></td>
+                                <td>
+                                    <?php if (!empty($item['pending_report_type'])): ?>
+                                        <span class="badge badge-warning">Reported <?= htmlspecialchars(strtolower((string) $item['pending_report_type'])) ?> — pending HR</span>
+                                    <?php else: ?>
+                                        <span class="text-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php if (!empty($itemReports)):
+            $reportStatusLabels = ['PENDING' => ['Pending', 'warning'], 'CONFIRMED' => ['Confirmed', 'danger'], 'ITEM_OK' => ['Item OK / Active', 'success']];
+        ?>
+        <div class="card data-card shadow mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6><i class="fas fa-exclamation-triangle mr-1"></i>Lost / Damaged Reports</h6>
+                <?php if (!empty($canReviewItemReports)): ?>
+                    <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/reports" class="btn btn-sm btn-outline-primary">Review in HR</a>
+                <?php endif; ?>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Reported</th>
+                                <th>Item</th>
+                                <th>Report</th>
+                                <th>Details</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($itemReports as $r):
+                                [$reportLabel, $reportColor] = $reportStatusLabels[$r['status']] ?? [$r['status'], 'secondary'];
+                            ?>
+                            <tr>
+                                <td><?= htmlspecialchars(date('M d, Y', strtotime((string) $r['created_at']))) ?></td>
+                                <td><?= htmlspecialchars($r['uniform_type'] . ' (' . $r['size'] . ')') ?></td>
+                                <td><?= (int) $r['quantity'] ?> x <?= htmlspecialchars(ucfirst(strtolower((string) $r['report_type']))) ?></td>
+                                <td>
+                                    <?= htmlspecialchars((string) ($r['description'] ?? '')) ?>
+                                    <?php if (!empty($r['hr_remarks'])): ?>
+                                        <div class="small text-muted"><strong>HR:</strong> <?= htmlspecialchars((string) $r['hr_remarks']) ?></div>
+                                    <?php endif; ?>
+                                </td>
+                                <td><span class="badge badge-<?= $reportColor ?>"><?= htmlspecialchars($reportLabel) ?></span></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 
             </div>

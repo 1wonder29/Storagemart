@@ -1,9 +1,20 @@
 <?php
 $base = rtrim(BASE_URL, '/');
-$items = $items ?? [];
-$reports = $reports ?? [];
+$routePrefix = $routePrefix ?? 'employee';
+$itemsUrl = $base . '/' . $routePrefix . '/items';
+// Each role keeps its own sidebar; Admin and HR have no personal assets page, so they link to their dashboard.
+$sidebarPartial = [
+    'employee' => 'employee', 'head' => 'head', 'aom' => 'aom', 'hom' => 'om', 'om' => 'om',
+    'hr' => 'hr', 'it' => 'it', 'admin' => 'admin',
+][$routePrefix] ?? 'employee';
+[$backUrl, $backLabel, $backIcon] = in_array($routePrefix, ['admin', 'hr'], true)
+    ? [$base . ($routePrefix === 'admin' ? '/admin' : '/hr/dashboard'), 'Dashboard', 'fa-tachometer-alt']
+    : [$base . '/' . $routePrefix . '/assets', 'My Assets', 'fa-archive'];
+// Distinct names: the full-access admin sidebar uses $items in its own loop.
+$issuedItems = $issuedItems ?? [];
+$itemReports = $itemReports ?? [];
 $pendingCount = 0;
-foreach ($reports as $r) {
+foreach ($itemReports as $r) {
     if (($r['status'] ?? '') === 'PENDING') {
         $pendingCount++;
     }
@@ -33,7 +44,7 @@ $statusLabels = [
 <div id="wrapper">
     <?php
     $activePage = 'items';
-    require_once dirname(__DIR__, 2) . '/partials/employee/sidebar_topbar.php';
+    require_once dirname(__DIR__, 2) . '/partials/' . $sidebarPartial . '/sidebar_topbar.php';
     ?>
 
     <div class="container-fluid employee-assets-page">
@@ -44,8 +55,8 @@ $statusLabels = [
                     <h1><i class="fas fa-tshirt mr-2"></i>My Issued Items</h1>
                     <p>Uniforms and other items issued to you by HR. Report an item here if it was lost or damaged.</p>
                     <div class="quick-nav mt-3">
-                        <a href="<?= htmlspecialchars($base) ?>/employee/assets" class="btn btn-sm btn-outline-light">
-                            <i class="fas fa-archive mr-1"></i> My Assets
+                        <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-sm btn-outline-light">
+                            <i class="fas <?= $backIcon ?> mr-1"></i> <?= htmlspecialchars($backLabel) ?>
                         </a>
                     </div>
                 </div>
@@ -53,7 +64,7 @@ $statusLabels = [
                     <div class="row mt-3 mt-lg-0">
                         <div class="col-6">
                             <div class="hero-stat">
-                                <div class="stat-value"><?= count($items) ?></div>
+                                <div class="stat-value"><?= count($issuedItems) ?></div>
                                 <div class="stat-label">Issued</div>
                             </div>
                         </div>
@@ -71,10 +82,10 @@ $statusLabels = [
         <div class="card asset-list-card shadow mb-4">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h6><i class="fas fa-tshirt"></i>Issued Items</h6>
-                <span class="asset-count-badge"><?= count($items) ?> item<?= count($items) === 1 ? '' : 's' ?></span>
+                <span class="asset-count-badge"><?= count($issuedItems) ?> item<?= count($issuedItems) === 1 ? '' : 's' ?></span>
             </div>
             <div class="card-body p-0">
-                <?php if (empty($items)): ?>
+                <?php if (empty($issuedItems)): ?>
                     <div class="empty-state">
                         <i class="fas fa-box-open d-block"></i>
                         <h5 class="font-weight-bold text-gray-700">No items issued</h5>
@@ -93,7 +104,7 @@ $statusLabels = [
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($items as $row): ?>
+                                <?php foreach ($issuedItems as $row): ?>
                                     <tr>
                                         <td class="font-weight-bold"><?= htmlspecialchars((string) $row['uniform_type']) ?></td>
                                         <td><?= htmlspecialchars((string) $row['size']) ?></td>
@@ -122,7 +133,7 @@ $statusLabels = [
             </div>
         </div>
 
-        <?php if (!empty($reports)): ?>
+        <?php if (!empty($itemReports)): ?>
         <div class="card asset-list-card shadow mb-4">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h6><i class="fas fa-history"></i>My Reports</h6>
@@ -141,7 +152,7 @@ $statusLabels = [
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($reports as $r):
+                            <?php foreach ($itemReports as $r):
                                 [$label, $color] = $statusLabels[$r['status']] ?? [$r['status'], 'secondary'];
                             ?>
                                 <tr>
@@ -169,7 +180,7 @@ $statusLabels = [
 <div class="modal fade" id="reportItemModal" tabindex="-1" role="dialog" aria-labelledby="reportItemModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <form method="POST" action="<?= htmlspecialchars($base) ?>/employee/items/report">
+            <form method="POST" action="<?= htmlspecialchars($itemsUrl) ?>/report">
                 <div class="modal-header bg-warning">
                     <h5 class="modal-title" id="reportItemModalLabel"><i class="fas fa-exclamation-triangle mr-1"></i> Report Item</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>

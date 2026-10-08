@@ -42,6 +42,20 @@ $base = rtrim(BASE_URL, '/');
         </a>
     </li>
 
+    <li class="nav-item <?= ($activePage === 'item-reports') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/hr/uniforms/reports">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Lost / Damaged Reports</span>
+        </a>
+    </li>
+
+    <li class="nav-item <?= ($activePage === 'items') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/hr/items">
+            <i class="fas fa-tshirt"></i>
+            <span>My Issued Items</span>
+        </a>
+    </li>
+
     <li class="nav-item <?= ($activePage === 'tickets') ? 'active' : '' ?>">
         <a class="nav-link" href="<?= htmlspecialchars($base) ?>/hr/tickets">
             <i class="fas fa-ticket-alt"></i>

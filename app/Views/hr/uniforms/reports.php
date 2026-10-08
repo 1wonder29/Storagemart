@@ -27,7 +27,7 @@ $filters = ['PENDING' => 'Pending', 'CONFIRMED' => 'Confirmed', 'ITEM_OK' => 'It
 <body id="page-top">
     <div id="wrapper">
     <?php
-    $activePage = 'uniforms';
+    $activePage = 'item-reports';
     require_once dirname(dirname(__DIR__)) . '/partials/uniform_sidebar_topbar.php';
     ?>
         <div class="container-fluid hr-dashboard-page hr-uniform-page">
@@ -122,24 +122,7 @@ $filters = ['PENDING' => 'Pending', 'CONFIRMED' => 'Confirmed', 'ITEM_OK' => 'It
                                             </td>
                                             <td><span class="badge badge-<?= $color ?>"><?= htmlspecialchars($label) ?></span></td>
                                             <td class="text-nowrap">
-                                                <?php if ($r['status'] === 'PENDING'): ?>
-                                                    <button type="button" class="btn btn-sm btn-danger btn-resolve"
-                                                            data-report-id="<?= (int) $r['report_id'] ?>" data-decision="CONFIRMED"
-                                                            data-title="Confirm <?= htmlspecialchars(strtolower((string) $r['report_type'])) ?> report"
-                                                            data-text="<?= (int) $r['quantity'] ?> × <?= htmlspecialchars($item) ?> will be recorded as <?= htmlspecialchars(strtolower((string) $r['report_type'])) ?> and removed from <?= htmlspecialchars((string) $r['employee_name']) ?>'s issued items.">
-                                                        <i class="fas fa-check"></i> Confirm
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-success btn-resolve"
-                                                            data-report-id="<?= (int) $r['report_id'] ?>" data-decision="ITEM_OK"
-                                                            data-title="Mark item OK"
-                                                            data-text="The item stays active with <?= htmlspecialchars((string) $r['employee_name']) ?> and inventory is not changed.">
-                                                        <i class="fas fa-thumbs-up"></i> Item OK
-                                                    </button>
-                                                <?php else: ?>
-                                                    <span class="text-muted small">
-                                                        <?= $r['reviewed_at'] ? htmlspecialchars(date('M j, Y', strtotime((string) $r['reviewed_at']))) : '' ?>
-                                                    </span>
-                                                <?php endif; ?>
+                                                <?php require dirname(__DIR__, 2) . '/partials/hr/item_report_actions.php'; ?>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -155,49 +138,9 @@ $filters = ['PENDING' => 'Pending', 'CONFIRMED' => 'Confirmed', 'ITEM_OK' => 'It
             </div>
         </div>
 
-    <div class="modal fade" id="resolveReportModal" tabindex="-1" role="dialog" aria-labelledby="resolveReportTitle" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form method="POST" action="<?= htmlspecialchars($base) ?>/hr/uniforms/reports/resolve">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="resolveReportTitle"></h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
-                        <input type="hidden" name="report_id" id="resolveReportId">
-                        <input type="hidden" name="decision" id="resolveDecision">
-                        <p id="resolveReportText"></p>
-                        <div class="form-group mb-0">
-                            <label for="resolveRemarks" class="font-weight-bold">Remarks for the employee (optional)</label>
-                            <textarea class="form-control" id="resolveRemarks" name="hr_remarks" rows="3" maxlength="500"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="resolveSubmit">Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/storagemart.min.js"></script>
-    <script>
-        $(document).on('click', '.btn-resolve', function () {
-            var $b = $(this);
-            var confirmDecision = $b.data('decision') === 'CONFIRMED';
-            $('#resolveReportId').val($b.data('report-id'));
-            $('#resolveDecision').val($b.data('decision'));
-            $('#resolveReportTitle').text($b.data('title'));
-            $('#resolveReportText').text($b.data('text'));
-            $('#resolveRemarks').val('');
-            $('#resolveSubmit').toggleClass('btn-danger', confirmDecision).toggleClass('btn-success', !confirmDecision)
-                .text(confirmDecision ? 'Confirm Report' : 'Mark Item OK');
-            $('#resolveReportModal').modal('show');
-        });
-    </script>
+    <?php require dirname(__DIR__, 2) . '/partials/hr/item_report_review_modal.php'; ?>
 </body>
 </html>

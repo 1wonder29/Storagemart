@@ -604,6 +604,14 @@ class AdminController extends AuthController
         $assets = method_exists($accountModel, 'fetchAssetsByEmployeeId')
             ? $accountModel->fetchAssetsByEmployeeId($employee_id)
             : [];
+
+        // Uniforms / IDs issued by HR and any lost or damaged reports, so the admin sees the full picture.
+        require_once __DIR__ . '/../../Models/hr/UniformReportModel.php';
+        require_once __DIR__ . '/../../Helpers/SuperUser.php';
+        $reportModel = new UniformReportModel();
+        $issuedItems = $reportModel->getActiveIssuancesForEmployee($employee_id);
+        $itemReports = $reportModel->getReports(null, null, $employee_id);
+        $canReviewItemReports = SuperUser::isCurrent();
         // Build the usual layout context
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];

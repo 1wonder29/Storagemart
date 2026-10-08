@@ -169,6 +169,7 @@ function admin_can_transfer_asset(string $status): bool
                                     <th>Asset #</th>
                                     <th>Serial</th>
                                     <th>Branch</th>
+                                    <th>Year</th>
                                     <th>Status</th>
                                     <th>Employee</th>
                                     <th>Transfer</th>
@@ -197,6 +198,7 @@ function admin_can_transfer_asset(string $status): bool
                                                 <span class="text-muted">—</span>
                                             <?php endif; ?>
                                         </td>
+                                        <td><?= htmlspecialchars((string) ($row['year_purchased'] ?? '') !== '' ? (string) $row['year_purchased'] : '—') ?></td>
                                         <td>
                                             <?php if ($status !== ''): ?>
                                                 <span class="status-badge <?= admin_asset_status_class($status) ?>">
@@ -306,7 +308,7 @@ function admin_can_transfer_asset(string $status): bool
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-asset-inventory.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-asset-inventory.js?v=20261007"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 

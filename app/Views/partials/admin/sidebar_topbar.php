@@ -15,6 +15,7 @@ if (SuperUser::isCurrent()) {
             ['/hr/employees', 'Employees', 'fa-users'],
             ['/hr/uniforms', 'Inventory', 'fa-archive'],
             ['/hr/uniforms/assignments', 'Item Assignments', 'fa-user-tag'],
+            ['/hr/uniforms/reports', 'Lost / Damaged Reports', 'fa-exclamation-triangle'],
             ['/hr/tickets', 'HR Tickets', 'fa-ticket-alt'],
         ]],
         'It' => ['IT', 'fa-laptop-code', [
@@ -45,14 +46,16 @@ if (SuperUser::isCurrent()) {
 
     // Highlight the most specific link that matches the current page.
     $activeFullAccessPath = '';
-    foreach ($fullAccessGroups as [, , $items]) {
-        foreach ($items as [$path]) {
-            $area = dirname($path);
-            $matches = $requestPath === $path
-                || strpos($requestPath, $path . '/') === 0
-                || (substr($path, -10) === '/dashboard' && $requestPath === $area);
-            if ($matches && strlen($path) > strlen($activeFullAccessPath)) {
-                $activeFullAccessPath = $path;
+    // Prefixed names: this partial runs in the including view's scope, so a plain $items
+    // here used to overwrite the view's own $items (e.g. the asset item and defective lists).
+    foreach ($fullAccessGroups as [, , $faGroupItems]) {
+        foreach ($faGroupItems as [$faPath]) {
+            $faArea = dirname($faPath);
+            $faMatches = $requestPath === $faPath
+                || strpos($requestPath, $faPath . '/') === 0
+                || (substr($faPath, -10) === '/dashboard' && $requestPath === $faArea);
+            if ($faMatches && strlen($faPath) > strlen($activeFullAccessPath)) {
+                $activeFullAccessPath = $faPath;
             }
         }
     }
@@ -149,6 +152,13 @@ if (SuperUser::isCurrent()) {
                     </div>
                 </div>
             </li>
+            <!-- Nav Item - My Issued Items (the admin's own uniforms / IDs from HR) -->
+            <li class="nav-item <?= ($adminActivePage === 'items') ? 'active' : '' ?>">
+                <a class="nav-link" href="<?= htmlspecialchars($base) ?>/admin/items">
+                    <i class="fas fa-fw fa-tshirt"></i>
+                    <span>My Issued Items</span></a>
+            </li>
+
             <!-- Divider -->
             <hr class="sidebar-divider">
 

@@ -702,7 +702,7 @@ class UniformController extends AuthController {
                     'HR issued you: ' . implode(', ', $issuedLabels) . '.',
                     'fa-tshirt',
                     'info',
-                    '/employee/items',
+                    UniformReportModel::itemsPathForUsertype($employee['usertype'] ?? null),
                     $employeeId
                 );
             }
@@ -792,6 +792,13 @@ class UniformController extends AuthController {
                 $this->redirect('/hr/employees');
             }
 
+            // A pending lost/damaged report covers some of these units; settle it first so they aren't counted twice.
+            if ((new UniformReportModel())->hasPendingReport($assignmentId)) {
+                $_SESSION['errorMessage'] = 'This item has a pending lost/damaged report. Review that report first '
+                    . '(Confirm records it, Item OK keeps it active), then process any remaining return.';
+                $this->redirect('/hr/employees/detail/' . (int) $assignment['employee_id']);
+            }
+
             $notifications = $this->notificationModel->getLatest($_SESSION['account_id'] ?? 0, 10);
             require __DIR__ . '/../../Views/hr/uniforms/return_confirm.php';
         } catch (\Throwable $e) {
@@ -818,6 +825,13 @@ class UniformController extends AuthController {
             if (!$assignment) {
                 $_SESSION['errorMessage'] = 'Assignment not found.';
                 $this->redirect('/hr/employees');
+            }
+
+            // A pending lost/damaged report covers some of these units; settle it first so they aren't counted twice.
+            if ((new UniformReportModel())->hasPendingReport($assignmentId)) {
+                $_SESSION['errorMessage'] = 'This item has a pending lost/damaged report. Review that report first '
+                    . '(Confirm records it, Item OK keeps it active), then process any remaining return.';
+                $this->redirect('/hr/employees/detail/' . (int) $assignment['employee_id']);
             }
 
             // Capture return quantity breakdown by condition
@@ -902,6 +916,7 @@ class UniformController extends AuthController {
         }
         $reports = $reportModel->getReports($statusFilter === 'ALL' ? null : $statusFilter);
         $pendingItemReports = $reportModel->countPendingReports();
+        $replacementStock = $reportModel->getReplacementStock();
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
@@ -913,53 +928,126 @@ class UniformController extends AuthController {
 
     /**
      * POST /hr/uniforms/reports/resolve — HR confirms the report or marks the item OK.
+     * On confirm HR may also issue a replacement right away. The reporter is notified
+     * in the app and by email.
      */
     public function resolveReport() {
         $this->requireHR();
 
+        // Allow returning to the employee's HR profile when the review was done from there.
+        $returnTo = (string) ($_POST['return_to'] ?? '');
+        $returnPath = preg_match('#^/hr/employees/detail/\d+$#', $returnTo) ? $returnTo : '/hr/uniforms/reports';
+
         if (empty($_POST['csrf_token']) || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), (string) $_POST['csrf_token'])) {
             $_SESSION['errorMessage'] = 'Invalid form token. Please try again.';
-            $this->redirect('/hr/uniforms/reports');
+            $this->redirect($returnPath);
         }
 
         $reportId = (int) ($_POST['report_id'] ?? 0);
         $decision = strtoupper((string) ($_POST['decision'] ?? ''));
         $remarks = trim((string) ($_POST['hr_remarks'] ?? ''));
+        $replaceUniformId = (int) ($_POST['replacement_uniform_id'] ?? 0);
+        $replaceQuantity = (int) ($_POST['replacement_quantity'] ?? 0);
+        $hrAccountId = (int) $_SESSION['account_id'];
 
         $reportModel = new UniformReportModel();
         $report = $reportModel->getReportById($reportId);
-        [$ok, $message] = $reportModel->resolveReport($reportId, $decision, $remarks, (int) $_SESSION['account_id']);
+        [$ok, $message, $appliedQty] = $reportModel->resolveReport($reportId, $decision, $remarks, $hrAccountId);
+        if ($report && $appliedQty > 0) {
+            $report['quantity'] = $appliedQty; // what was actually written off
+        }
+
+        $replacement = null;
+        if ($ok && $report && $decision === 'CONFIRMED' && $replaceUniformId > 0) {
+            [$replaced, $detail] = $reportModel->issueReplacement($report, $replaceUniformId, $replaceQuantity, $hrAccountId);
+            if ($replaced) {
+                $replacement = $detail;
+                $message .= ' Replacement issued: ' . $detail . '.';
+            } else {
+                $_SESSION['errorMessage'] = 'Report confirmed, but the replacement was not issued: ' . $detail
+                    . '. You can issue it from Assign Item.';
+            }
+        }
 
         if ($ok && $report) {
             $item = trim($report['uniform_type'] . ' (' . $report['size'] . ')');
             $what = strtolower((string) $report['report_type']);
+            $alreadyReturned = !empty($report['date_returned']);
             $text = $decision === 'CONFIRMED'
                 ? "HR confirmed your report: {$report['quantity']} x {$item} recorded as {$what}."
-                : "HR reviewed your report for {$item}: the item is OK and remains active with you.";
+                : ($alreadyReturned
+                    ? "HR closed your report for {$item}: this item was already returned."
+                    : "HR reviewed your report for {$item}: the item is OK and remains active with you.");
+            if ($replacement !== null) {
+                $text .= " Replacement issued: {$replacement}.";
+            }
             if ($remarks !== '') {
                 $text .= ' Remarks: ' . $remarks;
             }
+            $itemsPath = UniformReportModel::itemsPathForUsertype($report['employee_usertype'] ?? null);
             if (!empty($report['employee_account_id'])) {
                 $this->notificationModel->create(
                     (int) $report['employee_account_id'],
                     $text,
                     $decision === 'CONFIRMED' ? 'fa-clipboard-check' : 'fa-check-circle',
                     $decision === 'CONFIRMED' ? 'danger' : 'success',
-                    '/employee/items',
+                    $itemsPath,
                     $reportId
                 );
             }
+            $this->emailReportDecision($report, $decision, $remarks, $replacement, $itemsPath);
 
             ActivityLogger::update('HR - Uniforms', (string) $reportId,
-                ($decision === 'CONFIRMED' ? 'Confirmed' : 'Closed as OK') . " {$what} report for {$item} ({$report['employee_name']})",
+                ($decision === 'CONFIRMED' ? 'Confirmed' : 'Closed as OK') . " {$what} report for {$item} ({$report['employee_name']})"
+                    . ($replacement !== null ? "; replacement issued: {$replacement}" : ''),
                 $_SESSION['username'] ?? 'system', [
                     'report_id' => $reportId,
                     'decision' => $decision,
                     'quantity' => (int) $report['quantity'],
+                    'replacement' => $replacement,
                 ]);
         }
 
         $_SESSION[$ok ? 'successMessage' : 'errorMessage'] = $message;
-        $this->redirect('/hr/uniforms/reports');
+        $this->redirect($returnPath);
+    }
+
+    /** Email the reporter the outcome. Mail problems never block the review (MailService logs them). */
+    private function emailReportDecision(array $report, string $decision, string $remarks, ?string $replacement, string $itemsPath): void
+    {
+        $to = trim((string) ($report['employee_email'] ?? ''));
+        if ($to === '') {
+            return;
+        }
+        require_once __DIR__ . '/../../Services/MailService.php';
+
+        $e = static fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+        $item = trim($report['uniform_type'] . ' (' . $report['size'] . ')');
+        $confirmed = $decision === 'CONFIRMED';
+        $subject = $confirmed
+            ? "Your {$item} report was confirmed"
+            : "Your {$item} report was reviewed";
+        if ($confirmed) {
+            $outcome = 'HR confirmed your report. ' . (int) $report['quantity'] . ' x ' . $e($item)
+                . ' has been recorded as <strong>' . $e(strtolower((string) $report['report_type'])) . '</strong> and removed from your issued items.';
+        } elseif (!empty($report['date_returned'])) {
+            $outcome = 'HR closed your report. ' . $e($item) . ' was already returned on '
+                . $e(date('F j, Y', strtotime((string) $report['date_returned']))) . ', so nothing else changes.';
+        } else {
+            $outcome = 'HR reviewed your report and found the item OK. ' . $e($item) . ' remains <strong>active</strong> and issued to you.';
+        }
+
+        $body = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#222;line-height:1.5">'
+            . '<p>Hi ' . $e($report['employee_name'] ?? '') . ',</p>'
+            . '<p>' . $outcome . '</p>'
+            . ($replacement !== null ? '<p>A replacement was issued to you: <strong>' . $e($replacement) . '</strong>.</p>' : '')
+            . ($remarks !== '' ? '<p><strong>HR remarks:</strong> ' . nl2br($e($remarks)) . '</p>' : '')
+            . '<p>Your report: ' . (int) $report['quantity'] . ' x ' . $e($item) . ' reported as '
+            . $e(strtolower((string) $report['report_type'])) . ' on ' . $e(date('F j, Y', strtotime((string) $report['created_at']))) . '.</p>'
+            . '<p><a href="' . $e(MailService::siteUrl() . $itemsPath) . '">View My Issued Items</a></p>'
+            . '<p style="color:#777;font-size:12px">Storage Mart TMS — automated message, please do not reply.</p>'
+            . '</div>';
+
+        MailService::send($to, $subject, $body);
     }
 }

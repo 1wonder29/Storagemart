@@ -53,6 +53,13 @@ $base = rtrim(BASE_URL, '/');
         </a>
     </li>
 
+    <li class="nav-item <?= ($activePage === 'items') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/head/items">
+            <i class="fas fa-tshirt"></i>
+            <span>My Issued Items</span>
+        </a>
+    </li>
+
     <hr class="sidebar-divider d-none d-md-block">
 
     <div class="sidebar-heading">My Department</div>
