@@ -126,6 +126,9 @@ ksort($categories);
                         <i class="fas fa-boxes mr-1"></i> Asset Groups
                     </h6>
                     <div class="card-header-actions">
+                        <a href="<?= htmlspecialchars($base) ?>/admin/assets/import" class="btn btn-sm btn-outline-primary mr-2">
+                            <i class="fas fa-file-import mr-1"></i> Import from Excel
+                        </a>
                         <a href="<?= htmlspecialchars($base) ?>/admin/assets/replacement" class="btn btn-sm btn-outline-warning mr-2">
                             <i class="fas fa-history mr-1"></i> For replacement (<?= (int) array_sum(array_column($assets, 'dueReplacement')) ?>)
                         </a>

@@ -243,6 +243,7 @@ if (strpos($uri, '/admin') === 0) {
         'manuals' => 'manuals',
         'themes' => 'themes',
         'assets/replacement' => 'assetReplacement',
+        'assets/import' => 'assetImport',
         'service-status' => 'serviceStatus',
     ];
     if (isset($systemRoutes[$sub])) {

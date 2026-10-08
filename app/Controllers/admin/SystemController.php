@@ -375,6 +375,172 @@ class SystemController extends AuthController
         $this->renderAdmin('system/asset_replacement.php', compact('role', 'home', 'items', 'years'));
     }
 
+    /**
+     * /admin/assets/import: upload the IT inventory sheet, preview what changes, then apply.
+     * POST step=preview|apply|cancel; GET ?template=1 downloads the template.
+     */
+    public function assetImport(): void
+    {
+        $this->requireAdmin();
+        global $pdo;
+        require_once __DIR__ . '/../../Services/AssetImportService.php';
+        require_once __DIR__ . '/../../Models/admin/Asset.php';
+        $home = '/admin/assets/import';
+
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET['template'])) {
+            $csv = AssetImportService::templateCsv();
+            header('Content-Type: text/csv; charset=UTF-8');
+            header('Content-Disposition: attachment; filename="asset_import_template.csv"');
+            echo $csv;
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireCsrf($home);
+            $step = (string) ($_POST['step'] ?? '');
+            if ($step === 'cancel') {
+                unset($_SESSION['asset_import']);
+            } elseif ($step === 'preview') {
+                unset($_SESSION['asset_import']);
+                $file = $_FILES['import_file'] ?? null;
+                $ext = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+                if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                    $_SESSION['flash_error'] = 'Please choose an .xlsx or .csv file.';
+                } elseif ($file['size'] > 5 * 1024 * 1024) {
+                    $_SESSION['flash_error'] = 'The file is larger than 5 MB.';
+                } elseif (!in_array($ext, ['xlsx', 'csv', 'txt'], true)) {
+                    $_SESSION['flash_error'] = 'Only .xlsx and .csv files can be imported (in Google Sheets: File > Download > .xlsx).';
+                } else {
+                    try {
+                        $result = AssetImportService::parse((string) $file['tmp_name'], (string) $file['name'], $this->assetLookups($pdo));
+                        $_SESSION['asset_import'] = [
+                            'token' => bin2hex(random_bytes(16)),
+                            'filename' => basename((string) $file['name']),
+                        ] + $result;
+                    } catch (Throwable $e) {
+                        $_SESSION['flash_error'] = $e->getMessage();
+                    }
+                }
+            } elseif ($step === 'apply') {
+                $import = $_SESSION['asset_import'] ?? null;
+                if (!$import || !hash_equals($import['token'], (string) ($_POST['import_token'] ?? ''))) {
+                    $_SESSION['flash_error'] = 'This preview has expired. Please upload the file again.';
+                } else {
+                    $summary = $this->applyAssetImport($pdo, $import['rows']);
+                    unset($_SESSION['asset_import']);
+                    ActivityLogger::create('Admin - Assets', 'import',
+                        "Imported assets from {$import['filename']}: {$summary['created']} new, {$summary['updated']} updated"
+                            . ($summary['groups'] ? ", {$summary['groups']} new model(s)" : ''),
+                        $_SESSION['username'] ?? 'Unknown', ['failed' => $summary['failed']]);
+                    $_SESSION['flash_success'] = "Asset import done: {$summary['created']} new item(s), {$summary['updated']} updated"
+                        . ($summary['groups'] ? ", {$summary['groups']} new model(s)" : '')
+                        . ($summary['failed'] ? '. ' . count($summary['failed']) . ' row(s) failed: rows ' . implode(', ', $summary['failed']) : '.');
+                    $this->redirect('/admin/assets');
+                    return;
+                }
+            }
+            $this->redirect($home);
+            return;
+        }
+
+        $import = $_SESSION['asset_import'] ?? null;
+        $this->renderAdmin('admin/asset/import.php', compact('import'));
+    }
+
+    private function assetLookups(PDO $pdo): array
+    {
+        $lookups = ['groups' => [], 'categories' => [], 'branches' => [], 'byAsset' => [], 'bySerial' => []];
+        foreach ($pdo->query('SELECT group_id, groupName, category_id FROM tblassets_group')->fetchAll(PDO::FETCH_ASSOC) as $g) {
+            $lookups['groups'][mb_strtolower(trim($g['groupName']))] = $g;
+        }
+        foreach ($pdo->query('SELECT category_id, ic_code, categoryName FROM tblassets_category')->fetchAll(PDO::FETCH_ASSOC) as $c) {
+            $lookups['categories'][mb_strtolower(trim($c['categoryName']))] = $c;
+        }
+        foreach ($pdo->query('SELECT branch_id, branchCode, branchName FROM tblbranch')->fetchAll(PDO::FETCH_ASSOC) as $b) {
+            $lookups['branches'][mb_strtolower(trim($b['branchCode']))] = (int) $b['branch_id'];
+            $lookups['branches'][mb_strtolower(trim($b['branchName']))] = (int) $b['branch_id'];
+        }
+        $serialCount = [];
+        $items = $pdo->query('SELECT i.inventory_id, i.assetNumber, i.serialNumber, i.itemInfo, i.year_purchased, i.branch_id, i.status,
+                    g.groupName FROM tblassets_inventory i JOIN tblassets_group g ON g.group_id = i.group_id')->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($items as $item) {
+            $lookups['byAsset'][strtoupper(trim($item['assetNumber']))] = $item;
+            $key = AssetImportService::serialKey((string) $item['serialNumber']);
+            if ($key !== '') {
+                $serialCount[$key] = ($serialCount[$key] ?? 0) + 1;
+                $lookups['bySerial'][$key] = $item;
+            }
+        }
+        // A serial number used by two items in the system cannot identify one of them.
+        foreach ($serialCount as $key => $count) {
+            if ($count > 1) {
+                unset($lookups['bySerial'][$key]);
+            }
+        }
+        return $lookups;
+    }
+
+    /** @return array{created: int, updated: int, groups: int, failed: int[]} */
+    private function applyAssetImport(PDO $pdo, array $rows): array
+    {
+        $asset = new Asset();
+        $by = $_SESSION['username'] ?? 'import';
+        $summary = ['created' => 0, 'updated' => 0, 'groups' => 0, 'failed' => []];
+        $lookups = $this->assetLookups($pdo);
+        $allowed = ['itemInfo', 'serialNumber', 'year_purchased', 'branch_id'];
+
+        foreach ($rows as $row) {
+            try {
+                if ($row['action'] === 'update') {
+                    $sets = [];
+                    $params = [];
+                    foreach ($row['changes'] as $column => $value) {
+                        if (in_array($column, $allowed, true)) {
+                            $sets[] = "{$column} = ?";
+                            $params[] = $value;
+                        }
+                    }
+                    if ($sets) {
+                        $params[] = (int) $row['inventory_id'];
+                        $pdo->prepare('UPDATE tblassets_inventory SET ' . implode(', ', $sets) . ' WHERE inventory_id = ?')->execute($params);
+                        $summary['updated']++;
+                    }
+                } elseif ($row['action'] === 'new') {
+                    $groupId = (int) ($row['group_id'] ?? 0);
+                    $modelKey = mb_strtolower(trim($row['model']));
+                    if ($groupId <= 0 && isset($lookups['groups'][$modelKey])) {
+                        $groupId = (int) $lookups['groups'][$modelKey]['group_id']; // created by an earlier row
+                    }
+                    if ($groupId <= 0) {
+                        $category = $lookups['categories'][mb_strtolower(trim($row['category']))] ?? null;
+                        if (!$category) {
+                            $summary['failed'][] = $row['excel_row'];
+                            continue;
+                        }
+                        $groupId = (int) $asset->addGroup($row['model'], 'Added by asset import', (int) $category['category_id'],
+                            (string) $category['ic_code'], $by);
+                        if ($groupId <= 0) {
+                            $summary['failed'][] = $row['excel_row'];
+                            continue;
+                        }
+                        $lookups['groups'][$modelKey] = ['group_id' => $groupId];
+                        $summary['groups']++;
+                    }
+                    $newId = $asset->addItem($groupId, $row['serial'], $row['info'], $row['year'], $by, $row['branch_id'] ?? null);
+                    if ($newId) {
+                        $summary['created']++;
+                    } else {
+                        $summary['failed'][] = $row['excel_row'];
+                    }
+                }
+            } catch (Throwable $e) {
+                error_log('Asset import row ' . $row['excel_row'] . ' failed: ' . $e->getMessage());
+                $summary['failed'][] = $row['excel_row'];
+            }
+        }
+        return $summary;
+    }
+
     /** GET /it/service-status (JSON): DNS / mail / website check for email tickets. */
     public function serviceStatus(): void
     {
