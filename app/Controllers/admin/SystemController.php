@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../Helpers/AppSettings.php';
 require_once __DIR__ . '/../../Helpers/TicketAssigner.php';
 require_once __DIR__ . '/../../Helpers/TicketManuals.php';
 require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
+require_once __DIR__ . '/../../Helpers/SeasonalThemes.php';
 
 /**
  * Admin pages added with the Oct 2026 update: ticket auto-assignment (zones, IT
@@ -266,6 +267,79 @@ class SystemController extends AuthController
         $this->renderAdmin('system/manuals.php', compact(
             'role', 'home', 'manuals', 'setupMissing', 'editing', 'old', 'allCategories', 'testCategory', 'testText', 'testResult'
         ));
+    }
+
+    /**
+     * Admin > System > Seasonal Themes: preview a theme in your own browser, schedule its
+     * release (start / end date and time), turn schedules off or delete them.
+     */
+    public function themes(): void
+    {
+        $this->requireAdmin();
+        global $pdo;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireCsrf('/admin/themes');
+            $action = (string) ($_POST['action'] ?? 'schedule');
+            $scheduleId = (int) ($_POST['schedule_id'] ?? 0);
+            try {
+                if ($action === 'delete') {
+                    $pdo->prepare('DELETE FROM tblthemes_schedule WHERE schedule_id = ?')->execute([$scheduleId]);
+                    $_SESSION['flash_success'] = 'Schedule deleted.';
+                } elseif ($action === 'toggle') {
+                    $pdo->prepare('UPDATE tblthemes_schedule SET is_active = 1 - is_active WHERE schedule_id = ?')->execute([$scheduleId]);
+                    $_SESSION['flash_success'] = 'Schedule updated.';
+                } elseif ($action === 'stop') {
+                    $pdo->prepare('UPDATE tblthemes_schedule SET ends_at = NOW() WHERE schedule_id = ? AND ends_at > NOW()')->execute([$scheduleId]);
+                    $_SESSION['flash_success'] = 'Theme ended now.';
+                } else {
+                    $key = (string) ($_POST['theme_key'] ?? '');
+                    $startsAt = strtotime(str_replace('T', ' ', (string) ($_POST['starts_at'] ?? '')));
+                    $endsAt = strtotime(str_replace('T', ' ', (string) ($_POST['ends_at'] ?? '')));
+                    $message = trim((string) ($_POST['message'] ?? ''));
+                    if ($action === 'now') {
+                        $startsAt = time();
+                        $endsAt = time() + max(1, min(60, (int) ($_POST['days'] ?? 7))) * 86400;
+                    }
+                    if (!SeasonalThemes::exists($key)) {
+                        $_SESSION['flash_error'] = 'Choose a theme.';
+                    } elseif (!$startsAt || !$endsAt || $endsAt <= $startsAt) {
+                        $_SESSION['flash_error'] = 'Set a release date / time and an end after it.';
+                    } elseif (mb_strlen($message) > 200) {
+                        $_SESSION['flash_error'] = 'The greeting is too long (max 200 characters).';
+                    } else {
+                        $overlap = $pdo->prepare('SELECT COUNT(*) FROM tblthemes_schedule
+                                WHERE is_active = 1 AND starts_at < ? AND ends_at > ?');
+                        $overlap->execute([date('Y-m-d H:i:s', $endsAt), date('Y-m-d H:i:s', $startsAt)]);
+                        $pdo->prepare('INSERT INTO tblthemes_schedule (theme_key, title, message, starts_at, ends_at, is_active, created_by, created_at)
+                                VALUES (?, ?, ?, ?, ?, 1, ?, NOW())')
+                            ->execute([$key, SeasonalThemes::CATALOG[$key]['name'], $message !== '' ? $message : null,
+                                date('Y-m-d H:i:s', $startsAt), date('Y-m-d H:i:s', $endsAt), (int) $_SESSION['account_id']]);
+                        ActivityLogger::update('Admin - Themes', $key, 'Scheduled theme ' . SeasonalThemes::CATALOG[$key]['name'],
+                            $_SESSION['username'] ?? 'Unknown', ['from' => date('Y-m-d H:i', $startsAt), 'to' => date('Y-m-d H:i', $endsAt)]);
+                        $_SESSION['flash_success'] = SeasonalThemes::CATALOG[$key]['name'] . ' theme scheduled.'
+                            . ((int) $overlap->fetchColumn() > 0 ? ' It overlaps another schedule; the one that started last is shown.' : '');
+                    }
+                }
+            } catch (Throwable $e) {
+                error_log('SystemController::themes failed: ' . $e->getMessage());
+                $_SESSION['flash_error'] = 'Could not save. Please run the database update first.';
+            }
+            $this->redirect('/admin/themes');
+            return;
+        }
+
+        $schedules = [];
+        $setupMissing = false;
+        try {
+            $schedules = $pdo->query('SELECT s.*, (s.is_active = 1 AND s.starts_at <= NOW() AND s.ends_at > NOW()) AS is_live,
+                        (s.starts_at > NOW()) AS is_upcoming
+                    FROM tblthemes_schedule s ORDER BY s.ends_at < NOW(), s.starts_at')->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {
+            $setupMissing = true;
+        }
+        $current = SeasonalThemes::current($pdo);
+        $this->renderAdmin('admin/system/themes.php', compact('schedules', 'setupMissing', 'current'));
     }
 
     /** GET /it/service-status (JSON): DNS / mail / website check for email tickets. */

@@ -241,6 +241,7 @@ if (strpos($uri, '/admin') === 0) {
     $systemRoutes = [
         'ticket-assignment' => 'ticketAssignment',
         'manuals' => 'manuals',
+        'themes' => 'themes',
         'service-status' => 'serviceStatus',
     ];
     if (isset($systemRoutes[$sub])) {

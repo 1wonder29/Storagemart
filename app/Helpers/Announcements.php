@@ -30,13 +30,13 @@ class Announcements
         [$where, $params] = self::visibleWhere(self::departmentOf($pdo, $accountId));
         $stmt = $pdo->prepare("SELECT a.announcement_id, a.title, a.body, a.audience, a.department, a.importance,
                     a.starts_at, a.created_by_name, a.created_by_role,
-                    (r.account_id IS NOT NULL) AS is_read
+                    (r.account_id IS NOT NULL OR a.created_by = ?) AS is_read
                 FROM tblannouncements a
                 LEFT JOIN tblannouncement_reads r ON r.announcement_id = a.announcement_id AND r.account_id = ?
                 WHERE {$where}
                 ORDER BY a.importance = 'important' DESC, a.starts_at DESC
                 LIMIT " . max(1, min(50, $limit)));
-        $stmt->execute(array_merge([$accountId], $params));
+        $stmt->execute(array_merge([$accountId, $accountId], $params));
         return array_map(static function (array $row): array {
             $row['announcement_id'] = (int) $row['announcement_id'];
             $row['is_read'] = (bool) $row['is_read'];

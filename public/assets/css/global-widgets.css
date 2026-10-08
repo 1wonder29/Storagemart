@@ -6,7 +6,7 @@
 .tmsw-header-btn:hover, .tmsw-header-btn:focus { color: #4e73df; }
 .tmsw-bday-btn { color: #e74a3b; animation: tmsw-wiggle 1.6s ease-in-out infinite; }
 .tmsw-theme-btn { color: var(--tms-theme-main, #f26522); }
-.tmsw-badge { position: absolute; top: 2px; right: 0; font-size: 0.6rem; }
+.tmsw-badge { position: absolute; top: 6px; right: 2px; margin-top: 0; font-size: 0.6rem; }
 .tmsw-badge[hidden] { display: none; }
 
 /* Announcement popup */
@@ -57,6 +57,11 @@
 .tmsw-bday-card h4 { font-weight: 800; margin: 12px 0 6px; color: #f26522; }
 .tmsw-bday-card p { color: #6b7280; }
 
+/* Personal details on profile pages */
+.tmsw-personal-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #858796; }
+.tmsw-personal-value { font-size: 0.95rem; font-weight: 600; color: #3a3b45; }
+html.it-dark .tmsw-personal-value { color: #e5e7eb; }
+
 /* Seasonal theme */
 html.tms-theme .app-topbar { border-bottom: 4px solid var(--tms-theme-main); }
 html.tms-theme .sidebar-user-card { box-shadow: inset 0 3px 0 var(--tms-theme-main); }
@@ -67,7 +72,7 @@ html.tms-theme .sidebar-user-card { box-shadow: inset 0 3px 0 var(--tms-theme-ma
   background: linear-gradient(90deg, var(--tms-theme-main), var(--tms-theme-accent));
 }
 .tmsw-ribbon .tmsw-x { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #fff; }
-.tmsw-ribbon-items { letter-spacing: 2px; }
+.tmsw-ribbon-items { letter-spacing: 2px; white-space: nowrap; }
 
 /* Effects */
 .tmsw-fx { position: fixed; inset: 0; z-index: 1095; pointer-events: none; overflow: hidden; }

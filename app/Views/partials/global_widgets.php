@@ -48,7 +48,61 @@ if ($widgetRealRole === 'ADMIN') {
         $widgetConfig['preview'] = true;
     }
 }
+
+// Personal details from the HR list on profile pages (own profile, or HR > employee detail).
+$widgetPersonal = null;
+$widgetPath = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+$widgetBasePath = (string) parse_url($realtimeBase, PHP_URL_PATH);
+if ($widgetBasePath !== '' && strpos($widgetPath, $widgetBasePath) === 0) {
+    $widgetPath = substr($widgetPath, strlen($widgetBasePath));
+}
+try {
+    if (preg_match('#^/(admin|aom|employee|head|hom|om|it)/profile/?$#', $widgetPath)) {
+        $stmt = $pdo->prepare('SELECT birthdate, gender, date_hired, phone FROM tblemployee WHERE account_id = ? LIMIT 1');
+        $stmt->execute([$widgetConfig['accountId']]);
+        $widgetPersonal = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    } elseif (preg_match('#^/hr/employees/detail/(\d+)/?$#', $widgetPath, $widgetMatch)) {
+        $stmt = $pdo->prepare('SELECT birthdate, gender, date_hired, phone FROM tblemployee WHERE employee_id = ? LIMIT 1');
+        $stmt->execute([(int) $widgetMatch[1]]);
+        $widgetPersonal = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+} catch (Throwable $e) {
+    $widgetPersonal = null; // columns not added yet
+}
 ?>
+<?php if ($widgetPersonal !== null):
+    $pd = static function ($value, string $format): string {
+        return !empty($value) ? date($format, strtotime((string) $value)) : '—';
+    };
+    $serviceYears = !empty($widgetPersonal['date_hired'])
+        ? (int) floor((time() - strtotime((string) $widgetPersonal['date_hired'])) / 31557600) : null;
+    $personalFields = [
+        ['fa-birthday-cake', 'Birthday', $pd($widgetPersonal['birthdate'], 'F j, Y')],
+        ['fa-venus-mars', 'Gender', $widgetPersonal['gender'] ?: '—'],
+        ['fa-briefcase', 'Date hired', $pd($widgetPersonal['date_hired'], 'F j, Y')
+            . ($serviceYears === null ? '' : ($serviceYears < 1 ? ' (under 1 yr of service)' : ' (' . $serviceYears . ' yr' . ($serviceYears === 1 ? '' : 's') . ' of service)'))],
+        ['fa-phone', 'Phone', $widgetPersonal['phone'] ?: '—'],
+    ];
+?>
+<template id="tmswPersonalDetails">
+    <div class="card shadow mb-4 tmsw-personal">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-id-card mr-1"></i>Personal Details</h6>
+            <span class="small text-muted">From the HR employee list</span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <?php foreach ($personalFields as $field): ?>
+                    <div class="col-sm-6 col-xl-3 mb-2">
+                        <div class="tmsw-personal-label"><i class="fas <?= $field[0] ?> mr-1"></i><?= htmlspecialchars($field[1]) ?></div>
+                        <div class="tmsw-personal-value"><?= htmlspecialchars($field[2]) ?></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+</template>
+<?php endif; ?>
 <link href="<?= htmlspecialchars($realtimeAsset('/assets/css/global-widgets.css')) ?>" rel="stylesheet">
 <script>window.TMS_WIDGETS = <?= json_encode($widgetConfig, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;</script>
 <script src="<?= htmlspecialchars($realtimeAsset('/assets/js/global-widgets.js')) ?>" defer></script>

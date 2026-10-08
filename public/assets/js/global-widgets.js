@@ -84,6 +84,7 @@
 
   // ---------- announcements ----------
   var ann = { items: [], btn: null, badge: null, panel: null };
+  var birthdayPending = false;
 
   function annBadge() {
     if (!ann.badge) return;
@@ -112,6 +113,11 @@
 
   function showAnnouncementModal(queue) {
     if (!queue.length || document.querySelector('.tmsw-modal')) return;
+    // Let the birthday greeting finish first.
+    if (birthdayPending || document.querySelector('.tmsw-bday')) {
+      setTimeout(function () { showAnnouncementModal(queue); }, 800);
+      return;
+    }
     var item = queue.shift();
     var overlay = el('div', 'tmsw-modal');
     overlay.setAttribute('role', 'dialog');
@@ -237,7 +243,8 @@
     var key = 'tmsw_bday_' + cfg.accountId + '_' + b.date;
     if (cfg.preview || !store(key)) {
       store(key, '1');
-      setTimeout(function () { playBirthday(b.name); }, 600);
+      birthdayPending = true;
+      setTimeout(function () { birthdayPending = false; playBirthday(b.name); }, 600);
     }
   }
 
@@ -273,7 +280,16 @@
     }
   }
 
+  // Personal details card (rendered by the server as a <template> on profile pages).
+  function initPersonalDetails() {
+    var tpl = document.getElementById('tmswPersonalDetails');
+    var page = document.querySelector('#content .container-fluid');
+    if (!tpl || !page || !tpl.content) return;
+    page.appendChild(tpl.content.cloneNode(true));
+  }
+
   function start() {
+    initPersonalDetails();
     initTheme();
     initBirthday();
     initAnnouncements();
