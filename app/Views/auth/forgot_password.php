@@ -12,7 +12,7 @@ $base = rtrim(BASE_URL, '/');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png">
-    <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/auth-login.css?v=20261011">
+    <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/auth-login.css?v=20261012">
     <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/ui-readonly-interaction.css?v=2">
 </head>
 
@@ -98,7 +98,7 @@ $base = rtrim(BASE_URL, '/');
         </main>
     </div>
 
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/auth-login.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/auth-login.js?v=20261012"></script>
     <?php require_once __DIR__ . '/../partials/dev_livereload.php'; ?>
 </body>
 </html>

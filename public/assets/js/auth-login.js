@@ -4,15 +4,13 @@
     const passwordInput = document.getElementById(inputId);
     if (!passwordInput) return;
 
-    const eyeOpen = toggleBtn.querySelector('.icon-eye');
-    const eyeClosed = toggleBtn.querySelector('.icon-eye-off');
-
+    // One icon at a time: the eye while the password is hidden, the crossed eye while it shows
+    // (auth-login.css, .auth-toggle-pw.is-showing).
     toggleBtn.addEventListener('click', function () {
       const isHidden = passwordInput.type === 'password';
       passwordInput.type = isHidden ? 'text' : 'password';
       toggleBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-      if (eyeOpen) eyeOpen.hidden = !isHidden;
-      if (eyeClosed) eyeClosed.hidden = isHidden;
+      toggleBtn.classList.toggle('is-showing', isHidden);
     });
   });
 })();

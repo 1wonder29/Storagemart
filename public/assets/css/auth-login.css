@@ -577,6 +577,16 @@ a.auth-submit--link {
   height: 18px;
 }
 
+/* One eye at a time (auth-login.js adds "is-showing" while the password is visible). */
+.auth-toggle-pw .icon-eye-off,
+.auth-toggle-pw.is-showing .icon-eye {
+  display: none;
+}
+
+.auth-toggle-pw.is-showing .icon-eye-off {
+  display: block;
+}
+
 .auth-submit {
   position: relative;
   margin-top: 8px;
