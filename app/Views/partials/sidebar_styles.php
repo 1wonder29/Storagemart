@@ -9,7 +9,7 @@ $base = rtrim(BASE_URL, '/');
 <link href="<?= htmlspecialchars($base) ?>/assets/css/it-dark-mode.css" rel="stylesheet">
 <link href="<?= htmlspecialchars($base) ?>/assets/css/app-dark-pages.css?v=20261009" rel="stylesheet">
 <?php /* StorageMart navy / blue / orange for every role (www.storagemart.com.ph and the logo); loaded last. */ ?>
-<link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart-brand.css?v=20261010" rel="stylesheet">
+<link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart-brand.css?v=20261011" rel="stylesheet">
 <script>
 (function () {
     try {

@@ -933,3 +933,10 @@ textarea:not([readonly]):not([disabled]),
   -moz-user-select: none !important;
   user-select: none !important;
 }
+
+/* Microsoft Edge adds its own "show password" eye to password boxes; the TMS has its own
+   eye button, so hide Edge's to avoid two overlapping icons. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

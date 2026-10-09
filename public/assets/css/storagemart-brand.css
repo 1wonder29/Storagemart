@@ -145,3 +145,7 @@ html.it-dark a { color: #8fb0ff; }
 html.it-dark .text-primary { color: #8fb0ff !important; }
 html.it-dark .btn-outline-primary { color: #8fb0ff; border-color: #8fb0ff; }
 html.it-dark .btn-outline-primary:hover { color: #fff; }
+
+/* Password boxes have their own eye button; hide the extra one Microsoft Edge adds. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear { display: none; }
