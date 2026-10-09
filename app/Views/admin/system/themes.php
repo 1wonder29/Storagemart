@@ -398,7 +398,8 @@ foreach ($themes as $key => $theme) {
     <script>
     (function () {
         var THEMES = <?= json_encode($effectsJs, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
-        function play(keys, theme) {
+        function play(keys, theme, btn) {
+            if (btn && window.TMSCooldown && !window.TMSCooldown.start(btn, 6)) return;
             if (window.TMSEffects) window.TMSEffects.play(keys, theme, 8);
         }
 
@@ -420,7 +421,7 @@ foreach ($themes as $key => $theme) {
         // Test one effect of a theme.
         document.querySelectorAll('.js-fx').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                play([btn.getAttribute('data-effect')], THEMES[btn.getAttribute('data-theme')] || {});
+                play([btn.getAttribute('data-effect')], THEMES[btn.getAttribute('data-theme')] || {}, btn);
             });
         });
 
@@ -442,11 +443,11 @@ foreach ($themes as $key => $theme) {
             ['f_items', 'f_main', 'f_accent', 'f_message'].forEach(function (id) { document.getElementById(id).addEventListener('input', paint); });
             paint();
             form.querySelectorAll('.js-fx-form').forEach(function (btn) {
-                btn.addEventListener('click', function () { play([btn.getAttribute('data-effect')], formTheme()); });
+                btn.addEventListener('click', function () { play([btn.getAttribute('data-effect')], formTheme(), btn); });
             });
             document.getElementById('tf-test').addEventListener('click', function () {
                 var keys = Array.prototype.map.call(form.querySelectorAll('input[name="effects[]"]:checked'), function (c) { return c.value; });
-                play(keys, formTheme());
+                play(keys, formTheme(), document.getElementById('tf-test'));
             });
             setTimeout(function () { document.getElementById('theme-form').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
         }
@@ -526,8 +527,24 @@ foreach ($themes as $key => $theme) {
         try { resume = sessionStorage.getItem('tms_theme_tour_step'); sessionStorage.removeItem('tms_theme_tour_step'); } catch (e) {}
         var seen = false;
         try { seen = localStorage.getItem(TOUR_KEY) === '1'; } catch (e) {}
-        if (resume !== null && form) show(parseInt(resume, 10) || 1);
-        else if (form && !seen && !document.getElementById('f_key').value) show(1);
+        // Wait until the sign-in popups (announcements, birthdays) are closed.
+        var afterPopups = function (fn) {
+            var started = false;
+            // Then also wait for the birthday greeting and the first-time guide to be closed.
+            var run = function () {
+                if (started) return;
+                if (document.querySelector('.tmsw-modal, .tmsw-bday')) { setTimeout(run, 800); return; }
+                started = true;
+                setTimeout(fn, 400);
+            };
+            // The birthday greeting and the guide open a moment after the announcements close.
+            var later = function () { setTimeout(run, 1200); };
+            if (window.__tmsAnnDone) { later(); return; }
+            document.addEventListener('tms:announcements-done', later);
+            setTimeout(function () { if (!document.querySelector('.tmsw-ann-modal')) run(); }, 15000);
+        };
+        if (resume !== null && form) afterPopups(function () { show(parseInt(resume, 10) || 1); });
+        else if (form && !seen && !document.getElementById('f_key').value) afterPopups(function () { show(1); });
     })();
     </script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>

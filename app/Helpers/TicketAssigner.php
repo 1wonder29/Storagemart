@@ -10,7 +10,10 @@ require_once __DIR__ . '/TicketStatus.php';
  *  - Head Office and branches without a zone go to a random available IT person
  *    (the least busy ones first);
  *  - a ticket the assignee has not opened within the set minutes, or whose assignee
- *    went away, moves to the next available IT person (each person at most once).
+ *    went away, moves to the next available IT person (each person at most once);
+ *  - on Saturdays, every new ticket goes to the IT person on Saturday duty (a monthly rotation,
+ *    with optional changes for one Saturday), and unopened tickets move to them as well.
+ *    When that person is marked away, the normal rules above are used.
  * When nobody is available the ticket stays Open for the admin to assign by hand.
  */
 class TicketAssigner
@@ -36,7 +39,11 @@ class TicketAssigner
             $zone = trim((string) ($ticket['zone'] ?? ''));
             $chosen = null;
             $reason = '';
-            if ($zone !== '') {
+            $duty = self::saturdayDutyFor(date('Y-m-d'));
+            if ($duty !== null && isset($candidates[$duty])) {
+                $chosen = $duty;
+                $reason = 'Saturday duty';
+            } elseif ($zone !== '') {
                 $zoneStaff = self::zoneStaff($pdo, $zone);
                 if ($zoneStaff && isset($candidates[$zoneStaff])) {
                     $chosen = $zoneStaff;
@@ -93,6 +100,7 @@ class TicketAssigner
             AppSettings::set('reassign_last_run', (string) time());
 
             $minutes = max(5, AppSettings::getInt('reassign_after_minutes', 30));
+            $duty = self::saturdayDutyFor(date('Y-m-d'));
             $stmt = $pdo->prepare("SELECT t.ticket_id, t.ticket_number, t.assigned_to, t.employee_id, t.reassign_count,
                         t.created_by, t.auto_assigned_at, COALESCE(av.is_away, 0) AS assignee_away
                     FROM tbltickets t
@@ -110,11 +118,23 @@ class TicketAssigner
                 }
                 $current = (int) $row['assigned_to'];
                 $candidates = self::availableStaff($pdo, [$current, (int) ($ticket['filer_employee_id'] ?? 0), (int) $ticket['employee_id']]);
-                // Each other IT person gets one turn; after that the ticket stays put.
-                if (!$candidates || (int) $row['reassign_count'] >= count($candidates)) {
-                    continue;
+                $next = null;
+                if ($duty !== null) {
+                    // Saturday: the person on duty keeps their tickets, and unopened ones move to them.
+                    if ($current === $duty && (int) $row['assignee_away'] !== 1) {
+                        continue;
+                    }
+                    if (isset($candidates[$duty])) {
+                        $next = $duty;
+                    }
                 }
-                $next = self::pickBalanced($candidates);
+                if ($next === null) {
+                    // Each other IT person gets one turn; after that the ticket stays put.
+                    if (!$candidates || (int) $row['reassign_count'] >= count($candidates)) {
+                        continue;
+                    }
+                    $next = self::pickBalanced($candidates);
+                }
                 $upd = $pdo->prepare("UPDATE tbltickets
                         SET assigned_to = :next, auto_assigned_at = NOW(), assignee_seen_at = NULL,
                             reassign_count = reassign_count + 1, last_updated = NOW()
@@ -124,6 +144,9 @@ class TicketAssigner
                     continue;
                 }
                 $why = (int) $row['assignee_away'] === 1 ? 'previous IT is away' : 'not opened within ' . $minutes . ' minutes';
+                if ($next === $duty) {
+                    $why .= ', Saturday duty';
+                }
                 $previousName = self::staffName($pdo, $current);
                 self::history($pdo, (int) $row['ticket_id'],
                     'Reassigned from ' . $previousName . ' to ' . $candidates[$next]['name'] . ' (' . $why . ')',
@@ -143,6 +166,48 @@ class TicketAssigner
             error_log('TicketAssigner::reassignStale failed: ' . $e->getMessage());
             return 0;
         }
+    }
+
+    /** @return array<string, int> month ("2026-10") => IT employee_id on Saturday duty that month */
+    public static function saturdayDutyMonths(): array
+    {
+        $raw = json_decode((string) AppSettings::get('saturday_duty', ''), true);
+        $out = [];
+        foreach (is_array($raw) ? $raw : [] as $month => $id) {
+            if (preg_match('/^\d{4}-\d{2}$/', (string) $month) && (int) $id > 0) {
+                $out[(string) $month] = (int) $id;
+            }
+        }
+        ksort($out);
+        return $out;
+    }
+
+    /** @return array<string, int> Saturday ("2026-10-17") => IT employee_id, or 0 = nobody (normal rules) that day */
+    public static function saturdayDutyDates(): array
+    {
+        $raw = json_decode((string) AppSettings::get('saturday_duty_dates', ''), true);
+        $out = [];
+        foreach (is_array($raw) ? $raw : [] as $date => $id) {
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $date) && (int) $id >= 0) {
+                $out[(string) $date] = (int) $id;
+            }
+        }
+        ksort($out);
+        return $out;
+    }
+
+    /** IT employee_id on duty on that date (a Saturday), or null (not a Saturday / nobody set). */
+    public static function saturdayDutyFor(string $date): ?int
+    {
+        $time = strtotime($date);
+        if ($time === false || date('N', $time) !== '6') {
+            return null;
+        }
+        $dates = self::saturdayDutyDates();
+        if (array_key_exists(date('Y-m-d', $time), $dates)) {
+            return $dates[date('Y-m-d', $time)] ?: null;
+        }
+        return self::saturdayDutyMonths()[date('Y-m', $time)] ?? null;
     }
 
     /** The assignee opened the ticket: it is theirs now and will not be moved. */

@@ -60,6 +60,7 @@ class SystemController extends AuthController
                     ]);
                 }
                 $pdo->commit();
+                $this->saveSaturdayDuty($pdo);
                 ActivityLogger::update('Admin - Tickets', 'auto-assignment', 'Ticket auto-assignment settings saved',
                     $_SESSION['username'] ?? 'Unknown', ['reassign_after_minutes' => $minutes]);
                 $_SESSION['flash_success'] = 'Ticket auto-assignment settings saved.';
@@ -97,9 +98,74 @@ class SystemController extends AuthController
         $autoAssignEnabled = AppSettings::get('auto_assign_enabled', '1') === '1';
         $reassignMinutes = AppSettings::getInt('reassign_after_minutes', 30);
 
+        // Saturday duty: this month and the next 5, each with its Saturdays.
+        require_once __DIR__ . '/../../Helpers/TicketAssigner.php';
+        $dutyMonths = TicketAssigner::saturdayDutyMonths();
+        $dutyDates = TicketAssigner::saturdayDutyDates();
+        $saturdayMonths = [];
+        $first = strtotime(date('Y-m-01'));
+        for ($i = 0; $i < 6; $i++) {
+            $monthStart = strtotime('+' . $i . ' month', $first);
+            $month = date('Y-m', $monthStart);
+            $saturdays = [];
+            $day = strtotime('saturday', $monthStart); // first Saturday on or after the 1st
+            while (date('Y-m', $day) === $month) {
+                $saturdays[] = date('Y-m-d', $day);
+                $day = strtotime('+7 day', $day);
+            }
+            $saturdayMonths[$month] = $saturdays;
+        }
+        $nextSaturday = date('Y-m-d', strtotime(date('N') === '6' ? 'today' : 'next saturday'));
+        $dutyNext = TicketAssigner::saturdayDutyFor($nextSaturday);
+        $dutyIsToday = date('N') === '6';
+
         $this->renderAdmin('admin/system/ticket_assignment.php', compact(
-            'zones', 'branches', 'staff', 'setupMissing', 'autoAssignEnabled', 'reassignMinutes'
+            'zones', 'branches', 'staff', 'setupMissing', 'autoAssignEnabled', 'reassignMinutes',
+            'dutyMonths', 'dutyDates', 'saturdayMonths', 'nextSaturday', 'dutyNext', 'dutyIsToday'
         ));
+    }
+
+    /** Saturday duty from the settings form: saturday_duty[2026-10] and saturday_duty_date[2026-10-17]. */
+    private function saveSaturdayDuty(PDO $pdo): void
+    {
+        require_once __DIR__ . '/../../Helpers/TicketAssigner.php';
+        $itStaff = array_map('intval', $pdo->query("SELECT e.employee_id FROM tblaccounts a
+                JOIN tblemployee e ON e.account_id = a.account_id WHERE a.usertype = 'IT'")->fetchAll(PDO::FETCH_COLUMN) ?: []);
+        $months = TicketAssigner::saturdayDutyMonths();
+        foreach ((array) ($_POST['saturday_duty'] ?? []) as $month => $employeeId) {
+            if (!preg_match('/^\d{4}-\d{2}$/', (string) $month)) {
+                continue;
+            }
+            if ((int) $employeeId > 0 && in_array((int) $employeeId, $itStaff, true)) {
+                $months[(string) $month] = (int) $employeeId;
+            } else {
+                unset($months[(string) $month]);
+            }
+        }
+        $dates = TicketAssigner::saturdayDutyDates();
+        foreach ((array) ($_POST['saturday_duty_date'] ?? []) as $date => $value) {
+            $time = strtotime((string) $date);
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $date) || $time === false || date('N', $time) !== '6') {
+                continue;
+            }
+            if ($value === 'none') {
+                $dates[(string) $date] = 0;
+            } elseif ((int) $value > 0 && in_array((int) $value, $itStaff, true)) {
+                $dates[(string) $date] = (int) $value;
+            } else {
+                unset($dates[(string) $date]);
+            }
+        }
+        // Keep one year of history.
+        $oldest = date('Y-m', strtotime('-12 month'));
+        $months = array_filter($months, static function (string $month) use ($oldest): bool {
+            return $month >= $oldest;
+        }, ARRAY_FILTER_USE_KEY);
+        $dates = array_filter($dates, static function (string $date) use ($oldest): bool {
+            return substr($date, 0, 7) >= $oldest;
+        }, ARRAY_FILTER_USE_KEY);
+        AppSettings::set('saturday_duty', $months ? json_encode($months) : null);
+        AppSettings::set('saturday_duty_dates', $dates ? json_encode($dates) : null);
     }
 
     /** POST /it/availability — IT marks themselves away / available. */
@@ -198,6 +264,13 @@ class SystemController extends AuthController
                 $note = $text('note');
                 $group = mb_substr(trim((string) ($_POST['manual_group'] ?? '')), 0, 100);
                 $itOnly = !empty($_POST['it_only']) ? 1 : 0;
+                // Who can open it: everyone, some roles, or IT and Admin only.
+                $audienceMode = (string) ($_POST['audience_mode'] ?? ($itOnly ? 'it' : 'all'));
+                $audience = array_values(array_intersect(array_keys(TicketManuals::AUDIENCE_ROLES), (array) ($_POST['audience'] ?? [])));
+                $itOnly = $audienceMode === 'it' ? 1 : 0;
+                if ($audienceMode !== 'some' || count($audience) === count(TicketManuals::AUDIENCE_ROLES)) {
+                    $audience = [];
+                }
                 $categories = array_values(array_intersect(
                     (array) ($_POST['categories'] ?? []),
                     array_merge(TicketFormFields::HEAD_OFFICE_CATEGORIES, TicketFormFields::BRANCH_CATEGORIES)
@@ -256,6 +329,7 @@ class SystemController extends AuthController
                     ':note' => $null($note),
                     ':manual_group' => $null($group),
                     ':it_only' => $makeDefault ? 0 : $itOnly,
+                    ':audience' => $makeDefault || !$audience ? null : implode(',', $audience),
                     ':by' => (int) $_SESSION['account_id'],
                 ];
                 $pdo->beginTransaction();
@@ -264,13 +338,13 @@ class SystemController extends AuthController
                     $pdo->prepare('UPDATE tblit_manuals SET title = :title, url = :url, description = :description, steps = :steps,
                             categories = :categories, keywords = :keywords, intro = :intro, main_issue = :main_issue, factors = :factors,
                             action_text = :action_text, solution = :solution, note = :note, manual_group = :manual_group, it_only = :it_only,
-                            updated_by = :by, updated_at = NOW()
+                            audience = :audience, updated_by = :by, updated_at = NOW()
                             WHERE manual_id = :id')->execute($params);
                 } else {
                     $pdo->prepare('INSERT INTO tblit_manuals (title, url, description, steps, categories, keywords, intro, main_issue, factors,
-                                action_text, solution, note, manual_group, it_only, is_default, created_by, created_at)
+                                action_text, solution, note, manual_group, it_only, audience, is_default, created_by, created_at)
                             VALUES (:title, :url, :description, :steps, :categories, :keywords, :intro, :main_issue, :factors,
-                                :action_text, :solution, :note, :manual_group, :it_only, 0, :by, NOW())')->execute($params);
+                                :action_text, :solution, :note, :manual_group, :it_only, :audience, 0, :by, NOW())')->execute($params);
                     $manualId = (int) $pdo->lastInsertId();
                 }
                 if ($makeDefault) {
@@ -319,6 +393,21 @@ class SystemController extends AuthController
                     }
                     unset($photos[$index]);
                 };
+                if (isset($_POST['step_photo_map'])) {
+                    $map = json_decode((string) $_POST['step_photo_map'], true);
+                    $kept = [];
+                    foreach (is_array($map) ? $map : [] as $newIndex => $oldIndex) {
+                        if ((int) $newIndex > 0 && isset($photos[(int) $oldIndex])) {
+                            $kept[(int) $newIndex] = $photos[(int) $oldIndex];
+                        }
+                    }
+                    foreach ($photos as $file) {
+                        if (!in_array($file, $kept, true) && ($path = TicketManuals::stepPhotoPath($file)) !== null) {
+                            @unlink($path);
+                        }
+                    }
+                    $photos = $kept;
+                }
                 foreach (array_keys((array) ($_POST['remove_step_photo'] ?? [])) as $index) {
                     $drop((int) $index);
                 }

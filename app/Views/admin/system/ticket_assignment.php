@@ -31,6 +31,15 @@ foreach ($branches as $branch) {
         .rule-list li { margin-bottom:.35rem; }
         .branch-zone-select { max-width:160px; }
         .away-switch .custom-control-label { cursor:pointer; }
+        .duty-now { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 14px; border-radius:10px; background:#fff4ec; color:#9a3412; font-weight:600; margin-bottom:14px; }
+        .duty-now.on { background:#e8f6ee; color:#13633f; }
+        .duty-table td, .duty-table th { vertical-align:middle; }
+        .duty-sat { display:inline-block; padding:1px 8px; margin:0 4px 4px 0; border-radius:999px; background:#eef2ff; color:#19398a; font-size:.75rem; font-weight:700; }
+        .duty-sat.changed { background:#fff1e8; color:#c2410c; }
+        .duty-days { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px 16px; padding:8px 0 4px; }
+        .duty-days label { font-size:.78rem; font-weight:700; margin-bottom:2px; }
+        html.it-dark .duty-now { background:#3a2a1f; color:#fdba74; }
+        html.it-dark .duty-now.on { background:#1f3a2c; color:#86efac; }
     </style>
 </head>
 
@@ -98,6 +107,83 @@ foreach ($branches as $branch) {
                         </div>
                     </div>
 
+                </div>
+
+                <div class="card form-card shadow mb-4" id="saturday-duty">
+                    <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-calendar-week mr-1"></i> Saturday duty (monthly rotation)</h6>
+                        <span class="small text-muted">On Saturdays every new ticket goes to this IT person</span>
+                    </div>
+                    <div class="card-body">
+                        <?php
+                        $dutyName = static function (?int $id) use ($staffNames): string {
+                            return $id ? ($staffNames[$id] ?? 'an IT person who is not active') : '';
+                        };
+                        $satLabel = $dutyIsToday ? 'Today (Saturday)' : 'Next Saturday (' . date('M j', strtotime($nextSaturday)) . ')';
+                        ?>
+                        <?php if ($dutyNext): ?>
+                            <div class="duty-now on"><i class="fas fa-user-clock"></i> <?= htmlspecialchars($satLabel) ?>: every new ticket goes to <?= htmlspecialchars($dutyName($dutyNext)) ?>.</div>
+                        <?php else: ?>
+                            <div class="duty-now"><i class="fas fa-info-circle"></i> <?= htmlspecialchars($satLabel) ?>: nobody is set, so the zone rules are used.</div>
+                        <?php endif; ?>
+                        <div class="table-responsive">
+                            <table class="table table-sm duty-table mb-2">
+                                <thead><tr><th>Month</th><th>Saturdays</th><th style="min-width:230px">IT person on duty</th></tr></thead>
+                                <tbody>
+                                <?php foreach ($saturdayMonths as $month => $saturdays):
+                                    $monthDuty = $dutyMonths[$month] ?? 0;
+                                    $monthName = date('F Y', strtotime($month . '-01'));
+                                ?>
+                                    <tr>
+                                        <td class="font-weight-bold text-nowrap"><?= htmlspecialchars($monthName) ?></td>
+                                        <td>
+                                            <?php foreach ($saturdays as $sat):
+                                                $changed = array_key_exists($sat, $dutyDates);
+                                                $changeText = $changed ? 'Changed: ' . ($dutyDates[$sat] ? $dutyName($dutyDates[$sat]) : 'normal zone rules') : '';
+                                            ?>
+                                                <span class="duty-sat<?= $changed ? ' changed' : '' ?>" title="<?= htmlspecialchars($changeText) ?>"><?= date('M j', strtotime($sat)) ?><?= $changed ? ' *' : '' ?></span>
+                                            <?php endforeach; ?>
+                                        </td>
+                                        <td>
+                                            <select class="custom-select custom-select-sm" name="saturday_duty[<?= htmlspecialchars($month) ?>]"
+                                                    aria-label="IT person on Saturday duty in <?= htmlspecialchars($monthName) ?>">
+                                                <option value="0">-- Nobody (normal zone rules) --</option>
+                                                <?php foreach ($staff as $member): ?>
+                                                    <option value="<?= (int) $member['employee_id'] ?>" <?= (int) $member['employee_id'] === $monthDuty ? 'selected' : '' ?>><?= htmlspecialchars($member['name']) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <details class="mt-1">
+                                                <summary class="small text-primary">Change one Saturday</summary>
+                                                <div class="duty-days">
+                                                    <?php foreach ($saturdays as $sat):
+                                                        $dayValue = array_key_exists($sat, $dutyDates) ? ($dutyDates[$sat] ? (string) $dutyDates[$sat] : 'none') : '';
+                                                    ?>
+                                                        <div>
+                                                            <label for="duty_<?= htmlspecialchars($sat) ?>"><?= date('l, M j', strtotime($sat)) ?></label>
+                                                            <select class="custom-select custom-select-sm" id="duty_<?= htmlspecialchars($sat) ?>" name="saturday_duty_date[<?= htmlspecialchars($sat) ?>]">
+                                                                <option value="">Same as the month</option>
+                                                                <?php foreach ($staff as $member): ?>
+                                                                    <option value="<?= (int) $member['employee_id'] ?>" <?= $dayValue === (string) (int) $member['employee_id'] ? 'selected' : '' ?>><?= htmlspecialchars($member['name']) ?></option>
+                                                                <?php endforeach; ?>
+                                                                <option value="none" <?= $dayValue === 'none' ? 'selected' : '' ?>>Nobody (normal zone rules)</option>
+                                                            </select>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </details>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <ul class="small text-muted rule-list mb-0 pl-3">
+                            <li>On a Saturday, every new ticket (all branches and Head Office) goes to the person on duty, and tickets not opened in time move to them too.</li>
+                            <li>The person on duty keeps their tickets that day. If they are marked <strong>Away</strong>, the normal zone rules are used.</li>
+                            <li>Use "Change one Saturday" for swaps, for example when the person on duty is on leave that day.</li>
+                            <li>Press <strong>Save Settings</strong> at the bottom of the page.</li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="card form-card shadow mb-4">

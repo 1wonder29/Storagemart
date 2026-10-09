@@ -2,11 +2,14 @@
  * Site-wide widgets for signed-in pages (config in window.TMS_WIDGETS, see partials/global_widgets.php):
  *  - Announcements: pop up first after signing in (important ones can be closed after 5 seconds),
  *    megaphone with unread count in the header.
- *  - Birthday: greeting for the celebrant (with the colleagues' greetings), and on the dashboards
- *    a panel on the right with today's birthdays (Greet button) and a countdown 3 days before.
+ *  - Birthdays are part of the announcements: a "Birthday today" card pops up after the
+ *    announcements (Greet button), and the megaphone panel lists today's birthdays and the ones
+ *    in the next 3 days with a countdown. The celebrant gets a greeting with the colleagues' wishes.
  *  - Seasonal theme scheduled by Admin: colors, greeting ribbon and its screen effects (theme-effects.js).
- *  - Employees' first-time guide ("How to use the TMS").
- * Popups come one at a time: announcements, then the birthday greeting, then the guide.
+ *  - "How to use the TMS" guide for the user's role (first sign-in, and the "?" button).
+ *  - Anti-spam: buttons that play screen effects rest for a few seconds after a click
+ *    (window.TMSCooldown), and a normal form cannot be sent twice by double-clicking.
+ * Popups come one at a time: announcements, then birthdays, then the birthday greeting, then the guide.
  */
 (function () {
   'use strict';
@@ -68,6 +71,73 @@
     return String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(function (p) { return p.charAt(0).toUpperCase(); }).join('');
   }
 
+  // ---------- anti-spam ----------
+  // After a click the button rests for `seconds` (a small countdown shows on it); clicks in
+  // between do nothing. Used for everything that plays screen effects.
+  function cooldown(btn, seconds) {
+    if (!btn || btn.__tmsCooling) return false;
+    btn.__tmsCooling = true;
+    var left = seconds;
+    var label = btn.title;
+    var tag = el('span', 'tmsw-cool', String(left));
+    tag.setAttribute('aria-hidden', 'true');
+    btn.classList.add('tmsw-cooling');
+    btn.setAttribute('aria-disabled', 'true');
+    btn.appendChild(tag);
+    btn.title = 'Please wait ' + left + ' s';
+    var timer = setInterval(function () {
+      left--;
+      if (left > 0) {
+        tag.textContent = String(left);
+        btn.title = 'Please wait ' + left + ' s';
+        return;
+      }
+      clearInterval(timer);
+      tag.remove();
+      btn.title = label;
+      btn.classList.remove('tmsw-cooling');
+      btn.removeAttribute('aria-disabled');
+      btn.__tmsCooling = false;
+    }, 1000);
+    return true;
+  }
+  function guardedClick(btn, seconds, fn) {
+    if (!btn) return;
+    btn.addEventListener('click', function (e) {
+      if (btn.__tmsCooling) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+      cooldown(btn, seconds);
+      fn(e);
+    });
+  }
+
+  // A normal form (one that really leaves the page) cannot be sent twice: its submit
+  // buttons are disabled for a few seconds. Forms handled by scripts are left alone.
+  function initDoubleSubmitGuard() {
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (e.defaultPrevented || !form || form.hasAttribute('data-allow-resubmit') || form.target === '_blank') return;
+      if (form.__tmsSentAt && Date.now() - form.__tmsSentAt < 4000) { e.preventDefault(); return; }
+      form.__tmsSentAt = Date.now();
+      var buttons = form.querySelectorAll('button[type="submit"], button:not([type]), input[type="submit"]');
+      setTimeout(function () {
+        // Disabled after the browser has read the clicked button's name/value.
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+      }, 0);
+      setTimeout(function () {
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+        form.__tmsSentAt = 0;
+      }, 8000);
+    });
+    // Coming back with the browser's Back button: enable the buttons again.
+    window.addEventListener('pageshow', function (e) {
+      if (!e.persisted) return;
+      Array.prototype.forEach.call(document.querySelectorAll('form'), function (form) {
+        form.__tmsSentAt = 0;
+        Array.prototype.forEach.call(form.querySelectorAll('button, input[type="submit"]'), function (b) { b.disabled = false; });
+      });
+    });
+  }
+
   // ---------- popups one at a time: announcements first ----------
   var annDone = false;
   var annWaiters = [];
@@ -83,7 +153,14 @@
   }
 
   // ---------- confetti / balloons (birthday) ----------
+  var lastFx = 0;
   function playEffect(kind, items, colors, seconds) {
+    // Anti-spam: never more than one birthday effect on the screen.
+    if (Date.now() - lastFx < 1500) return;
+    lastFx = Date.now();
+    if (kind === 'confetti') {
+      Array.prototype.forEach.call(document.querySelectorAll('.tmsw-fx'), function (n) { n.remove(); });
+    }
     var layer = el('div', 'tmsw-fx');
     layer.setAttribute('aria-hidden', 'true');
     document.body.appendChild(layer);
@@ -108,16 +185,178 @@
     }
     setTimeout(function () { layer.remove(); }, (seconds + 9) * 1000);
   }
+  function celebrate(seconds) {
+    playEffect('confetti', [], ['#f85f00', '#19398a', '#f6c23e', '#2661d4', '#1cc88a'], seconds);
+    lastFx = 0;
+    playEffect('rise', ['🎈', '🎈', '🎉', '🎁'], [], seconds);
+  }
+
+  // ---------- birthdays (data shared by the popup and the megaphone panel) ----------
+  var bd = { today: [], upcoming: [], offset: 0, timers: [] };
+  var BD_SEEN_KEY = 'tmsw_bd_seen_' + cfg.accountId + '_' + today;
+
+  function othersToday() {
+    return bd.today.filter(function (p) { return !p.is_me; });
+  }
+  function bdUnseen() {
+    if (store(BD_SEEN_KEY) === '1') return 0;
+    return othersToday().filter(function (p) { return !p.greeted; }).length;
+  }
+  function countdown(target) {
+    var ms = Math.max(0, new Date(target).getTime() - (Date.now() + bd.offset));
+    var s = Math.floor(ms / 1000);
+    var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+    var pad = function (n) { return ('0' + n).slice(-2); };
+    return (d ? d + 'd ' : '') + pad(h) + ':' + pad(m) + ':' + pad(sec);
+  }
+
+  // One person with a birthday today: name, department / branch, Greet (or "It's your birthday").
+  function todayRow(p) {
+    var wrap = el('div', 'tmsw-bdp-today-wrap');
+    var row = el('div', 'tmsw-bdp-row tmsw-bdp-today');
+    row.appendChild(el('span', 'tmsw-bdp-avatar', initials(p.name)));
+    var info = el('div', 'tmsw-bdp-info');
+    info.appendChild(el('strong', null, p.is_me ? 'It\'s your birthday! 🎉' : p.name));
+    info.appendChild(el('span', null, p.is_me ? (p.greet_count + (p.greet_count === 1 ? ' greeting' : ' greetings') + ' from colleagues')
+      : [p.department, p.branch].filter(Boolean).join(' · ')));
+    row.appendChild(info);
+    wrap.appendChild(row);
+    if (p.is_me) {
+      var see = el('button', 'btn btn-sm btn-outline-primary tmsw-bdp-btn', 'See');
+      see.type = 'button';
+      guardedClick(see, 12, function () { playBirthday(cfg.birthday ? cfg.birthday.name : ''); });
+      row.appendChild(see);
+      return wrap;
+    }
+    var status = el('span', 'tmsw-bdp-greeted', '✓ Greeted');
+    status.hidden = !p.greeted;
+    var greet = el('button', 'btn btn-sm btn-warning tmsw-bdp-btn', 'Greet');
+    greet.type = 'button';
+    greet.hidden = !!p.greeted;
+    row.appendChild(status);
+    row.appendChild(greet);
+    var form = el('form', 'tmsw-bdp-form');
+    form.hidden = true;
+    form.setAttribute('data-allow-resubmit', '1');
+    var input = el('input', 'form-control form-control-sm');
+    input.maxLength = 200;
+    input.value = 'Happy birthday, ' + (p.firstname || p.name) + '! 🎂';
+    input.setAttribute('aria-label', 'Birthday greeting for ' + p.name);
+    var send = el('button', 'btn btn-sm btn-primary', 'Send');
+    send.type = 'submit';
+    form.appendChild(input);
+    form.appendChild(send);
+    wrap.appendChild(form);
+    greet.addEventListener('click', function (e) { e.stopPropagation(); form.hidden = false; greet.hidden = true; input.focus(); input.select(); });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (send.disabled) return;
+      send.disabled = true;
+      post('/birthdays/greet', { celebrant_id: p.account_id, message: input.value.trim() }).then(function (res) {
+        send.disabled = false;
+        if (!res || !res.success) { window.alert((res && res.message) || 'Could not send the greeting.'); return; }
+        p.greeted = true;
+        form.hidden = true;
+        status.hidden = false;
+        annBadge();
+        playEffect('confetti', [], ['#f85f00', '#19398a', '#f6c23e', '#2661d4'], 4);
+      }).catch(function () { send.disabled = false; });
+    });
+    return wrap;
+  }
+
+  function upcomingRow(p, counters) {
+    var row = el('div', 'tmsw-bdp-row');
+    row.appendChild(el('span', 'tmsw-bdp-avatar tmsw-bdp-soon', initials(p.name)));
+    var info = el('div', 'tmsw-bdp-info');
+    info.appendChild(el('strong', null, p.is_me ? 'Your birthday' : p.name));
+    info.appendChild(el('span', null, [p.department, p.branch].filter(Boolean).join(' · ')));
+    var when = el('span', 'tmsw-bdp-count');
+    info.appendChild(when);
+    counters.push({ node: when, target: p.starts_at, days: p.days_left });
+    row.appendChild(info);
+    return row;
+  }
+
+  // The birthday part of the megaphone panel.
+  function birthdaySection() {
+    if (!bd.today.length && !bd.upcoming.length) return null;
+    var box = el('div', 'tmsw-bd-section');
+    var head = el('div', 'tmsw-bd-head');
+    head.appendChild(el('span', 'tmsw-bdp-cake', '🎂'));
+    head.appendChild(el('strong', null, bd.today.length ? 'Birthday today!' : 'Birthdays coming up'));
+    box.appendChild(head);
+    if (bd.today.length) {
+      box.appendChild(el('div', 'tmsw-bdp-label', 'Today'));
+      bd.today.forEach(function (p) { box.appendChild(todayRow(p)); });
+    }
+    var counters = [];
+    if (bd.upcoming.length) {
+      box.appendChild(el('div', 'tmsw-bdp-label', 'Coming up'));
+      bd.upcoming.forEach(function (p) { box.appendChild(upcomingRow(p, counters)); });
+    }
+    if (counters.length) {
+      var tick = function () {
+        counters.forEach(function (c) {
+          c.node.textContent = (c.days === 1 ? 'Tomorrow' : 'In ' + c.days + ' days') + ' · ' + countdown(c.target);
+        });
+      };
+      tick();
+      bd.timers.push(setInterval(tick, 1000));
+    }
+    return box;
+  }
+
+  // Popup after the announcements: "Birthday today" with a Greet button for each person.
+  function showBirthdayAnnouncement(done) {
+    var people = othersToday();
+    var key = 'tmsw_bd_popup_' + cfg.accountId + '_' + today;
+    if (!people.length || store(key) === '1' || !people.some(function (p) { return !p.greeted; })) { done(); return; }
+    store(key, '1');
+    store(BD_SEEN_KEY, '1');
+    annBadge();
+    var overlay = el('div', 'tmsw-modal tmsw-ann-modal tmsw-bd-modal');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    var card = el('div', 'tmsw-card tmsw-bd-card');
+    var head = el('div', 'tmsw-card-head');
+    head.appendChild(icon('fas fa-birthday-cake'));
+    head.appendChild(el('span', null, 'Announcement · Birthday'));
+    card.appendChild(head);
+    var title = el('h5', 'tmsw-card-title', people.length === 1
+      ? 'Today is ' + people[0].name + '\'s birthday! 🎂'
+      : people.length + ' colleagues celebrate their birthday today! 🎂');
+    title.id = 'tmswBdTitle';
+    overlay.setAttribute('aria-labelledby', title.id);
+    card.appendChild(title);
+    card.appendChild(el('p', 'tmsw-bd-lead', 'Send a greeting. It shows on their screen when they sign in.'));
+    var list = el('div', 'tmsw-bd-list');
+    people.forEach(function (p) { list.appendChild(todayRow(p)); });
+    card.appendChild(list);
+    var actions = el('div', 'tmsw-actions');
+    var ok = el('button', 'btn btn-primary btn-sm', 'Close');
+    ok.type = 'button';
+    actions.appendChild(ok);
+    card.appendChild(actions);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    ok.focus();
+    function close() { overlay.remove(); document.removeEventListener('keydown', onKey); done(); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    document.addEventListener('keydown', onKey);
+    ok.addEventListener('click', close);
+  }
 
   // ---------- announcements ----------
   var ann = { items: [], btn: null, badge: null, panel: null };
 
   function annBadge() {
     if (!ann.badge) return;
-    var unread = ann.items.filter(function (i) { return !i.is_read; }).length;
+    var unread = ann.items.filter(function (i) { return !i.is_read; }).length + bdUnseen();
     ann.badge.hidden = unread === 0;
     ann.badge.textContent = unread > 9 ? '9+' : String(unread);
-    ann.btn.setAttribute('aria-label', unread ? 'Announcements, ' + unread + ' unread' : 'Announcements');
+    ann.btn.setAttribute('aria-label', unread ? 'Announcements and birthdays, ' + unread + ' new' : 'Announcements and birthdays');
+    ann.btn.classList.toggle('tmsw-ann-bday', bd.today.length > 0);
   }
 
   function markRead(item) {
@@ -138,7 +377,7 @@
   }
 
   function showAnnouncementModal(queue) {
-    if (!queue.length) { announcementsDone(); return; }
+    if (!queue.length) { showBirthdayAnnouncement(announcementsDone); return; }
     if (document.querySelector('.tmsw-modal.tmsw-ann-modal')) return;
     var item = queue.shift();
     var important = item.importance === 'important';
@@ -198,7 +437,7 @@
     later.addEventListener('click', function () {
       try { sessionStorage.setItem('tmsw_ann_later', '1'); } catch (e) {}
       close();
-      announcementsDone();
+      showBirthdayAnnouncement(announcementsDone);
     });
     ok.addEventListener('click', function () {
       markRead(item);
@@ -207,11 +446,18 @@
     });
   }
 
+  function closeAnnouncementPanel() {
+    if (!ann.panel) return;
+    ann.panel.remove();
+    ann.panel = null;
+    bd.timers.splice(0).forEach(clearInterval);
+  }
+
   function toggleAnnouncementPanel() {
-    if (ann.panel) { ann.panel.remove(); ann.panel = null; return; }
+    if (ann.panel) { closeAnnouncementPanel(); return; }
     var panel = el('div', 'tmsw-panel');
     panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-label', 'Announcements');
+    panel.setAttribute('aria-label', 'Announcements and birthdays');
     var head = el('div', 'tmsw-panel-head');
     head.appendChild(el('strong', null, 'Announcements'));
     var close = el('button', 'tmsw-x', '×');
@@ -220,7 +466,10 @@
     head.appendChild(close);
     panel.appendChild(head);
     var list = el('div', 'tmsw-panel-list');
-    if (!ann.items.length) list.appendChild(el('div', 'tmsw-empty', 'No announcements right now.'));
+    var birthdays = birthdaySection();
+    if (birthdays) list.appendChild(birthdays);
+    if (birthdays && ann.items.length) list.appendChild(el('div', 'tmsw-bdp-label tmsw-ann-label', 'Announcements'));
+    if (!ann.items.length && !birthdays) list.appendChild(el('div', 'tmsw-empty', 'No announcements right now.'));
     ann.items.forEach(function (item) {
       var row = el('div', 'tmsw-ann' + (item.is_read ? '' : ' tmsw-unread') + (item.importance === 'important' ? ' tmsw-important' : ''));
       row.appendChild(el('div', 'tmsw-ann-title', item.title));
@@ -232,22 +481,32 @@
     panel.appendChild(list);
     document.body.appendChild(panel);
     ann.panel = panel;
+    store(BD_SEEN_KEY, '1');
+    annBadge();
     var rect = ann.btn.getBoundingClientRect();
     panel.style.top = (rect.bottom + 8) + 'px';
     panel.style.right = Math.max(12, window.innerWidth - rect.right - 40) + 'px';
-    close.addEventListener('click', toggleAnnouncementPanel);
+    close.addEventListener('click', closeAnnouncementPanel);
   }
 
   function initAnnouncements() {
-    api('/announcements/feed').then(function (res) {
-      if (!res || !res.success) { announcementsDone(); return; }
-      ann.items = res.items || [];
-      if (!ann.items.length && !cfg.openAnnouncement) { announcementsDone(); return; }
-      ann.btn = headerButton('tmsw-ann-btn', 'fas fa-bullhorn', 'Announcements');
+    var feed = api('/announcements/feed').catch(function () { return null; });
+    var birthdays = api('/birthdays/feed').catch(function () { return null; });
+    Promise.all([feed, birthdays]).then(function (res) {
+      var a = res[0], b = res[1];
+      ann.items = a && a.success ? (a.items || []) : [];
+      if (b && b.success) {
+        bd.today = b.today || [];
+        bd.upcoming = b.upcoming || [];
+        bd.offset = new Date(String(b.server_now)).getTime() - Date.now();
+        if (cfg.birthday) bd.myGreetings = b.my_greetings || [];
+      }
+      if (!ann.items.length && !bd.today.length && !bd.upcoming.length && !cfg.openAnnouncement) { announcementsDone(); return; }
+      ann.btn = headerButton('tmsw-ann-btn', 'fas fa-bullhorn', 'Announcements and birthdays');
       if (ann.btn) {
         ann.badge = el('span', 'badge badge-danger badge-counter tmsw-badge');
         ann.btn.appendChild(ann.badge);
-        ann.btn.addEventListener('click', toggleAnnouncementPanel);
+        ann.btn.addEventListener('click', function (e) { e.stopPropagation(); toggleAnnouncementPanel(); });
         annBadge();
       }
       var queue;
@@ -283,9 +542,9 @@
     document.body.appendChild(overlay);
     ok.focus();
     ok.addEventListener('click', function () { overlay.remove(); });
-    playEffect('confetti', [], ['#f26522', '#1f3a93', '#f6c23e', '#1cc88a', '#e74a3b', '#36b9cc'], 6);
-    playEffect('rise', ['🎈', '🎈', '🎉', '🎁'], [], 6);
+    celebrate(6);
     if (cfg.birthday && cfg.birthday.date !== 'preview') {
+      if (bd.myGreetings) fillWishes(wishes, bd.myGreetings);
       api('/birthdays/feed').then(function (res) { if (res && res.success) fillWishes(wishes, res.my_greetings || []); }).catch(function () {});
     }
   }
@@ -306,147 +565,12 @@
     var b = cfg.birthday;
     if (!b) return;
     var btn = headerButton('tmsw-bday-btn', 'fas fa-birthday-cake', 'Happy birthday! Play the greeting again');
-    if (btn) btn.addEventListener('click', function () { playBirthday(b.name); });
+    guardedClick(btn, 12, function () { playBirthday(b.name); });
     var key = 'tmsw_bday_' + cfg.accountId + '_' + b.date;
     if (cfg.preview || !store(key)) {
       store(key, '1');
       afterAnnouncements(function () { playBirthday(b.name); });
     }
-  }
-
-  // ---------- birthday panel on the dashboards ----------
-  var bd = { offset: 0, panel: null, timer: null };
-
-  function initBirthdayPanel() {
-    if (!cfg.isDashboard) return;
-    api('/birthdays/feed').then(function (res) {
-      if (!res || !res.success || (!res.today.length && !res.upcoming.length)) return;
-      bd.offset = new Date(String(res.server_now)).getTime() - Date.now();
-      renderBirthdayPanel(res);
-    }).catch(function () {});
-  }
-
-  function countdown(target) {
-    var ms = Math.max(0, new Date(target).getTime() - (Date.now() + bd.offset));
-    var s = Math.floor(ms / 1000);
-    var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
-    var pad = function (n) { return ('0' + n).slice(-2); };
-    return (d ? d + 'd ' : '') + pad(h) + ':' + pad(m) + ':' + pad(sec);
-  }
-
-  function renderBirthdayPanel(feed) {
-    if (bd.panel) bd.panel.remove();
-    var minimizedKey = 'tmsw_bdp_min_' + today;
-    var small = window.innerWidth < 768;
-    var panel = el('aside', 'tmsw-bdp');
-    panel.setAttribute('aria-label', 'Birthdays');
-    var head = el('div', 'tmsw-bdp-head');
-    head.appendChild(el('span', 'tmsw-bdp-cake', '🎂'));
-    head.appendChild(el('strong', null, feed.today.length ? 'Birthday today!' : 'Birthdays coming up'));
-    var min = el('button', 'tmsw-x tmsw-bdp-min', '–');
-    min.type = 'button';
-    min.setAttribute('aria-label', 'Minimize');
-    head.appendChild(min);
-    panel.appendChild(head);
-    var body = el('div', 'tmsw-bdp-body');
-    panel.appendChild(body);
-
-    if (feed.today.length) {
-      body.appendChild(el('div', 'tmsw-bdp-label', 'Today'));
-      feed.today.forEach(function (p) { body.appendChild(todayRow(p)); });
-    }
-    var counters = [];
-    if (feed.upcoming.length) {
-      body.appendChild(el('div', 'tmsw-bdp-label', 'Coming up'));
-      feed.upcoming.forEach(function (p) {
-        var row = el('div', 'tmsw-bdp-row');
-        row.appendChild(el('span', 'tmsw-bdp-avatar tmsw-bdp-soon', initials(p.name)));
-        var info = el('div', 'tmsw-bdp-info');
-        info.appendChild(el('strong', null, p.is_me ? 'Your birthday' : p.name));
-        info.appendChild(el('span', null, [p.department, p.branch].filter(Boolean).join(' · ')));
-        var when = el('span', 'tmsw-bdp-count');
-        info.appendChild(when);
-        counters.push({ node: when, target: p.starts_at, days: p.days_left });
-        row.appendChild(info);
-        body.appendChild(row);
-      });
-    }
-    function tick() {
-      counters.forEach(function (c) {
-        c.node.textContent = (c.days === 1 ? 'Tomorrow' : 'In ' + c.days + ' days') + ' · ' + countdown(c.target);
-      });
-    }
-    tick();
-    if (counters.length) bd.timer = setInterval(tick, 1000);
-
-    var bubble = el('button', 'tmsw-bdp-bubble');
-    bubble.type = 'button';
-    bubble.setAttribute('aria-label', 'Show birthdays');
-    bubble.appendChild(el('span', null, '🎂'));
-    if (feed.today.length) bubble.appendChild(el('span', 'tmsw-bdp-bubble-n', String(feed.today.length)));
-
-    function setMin(on) {
-      panel.hidden = on;
-      bubble.hidden = !on;
-      store(minimizedKey, on ? '1' : '0');
-    }
-    min.addEventListener('click', function () { setMin(true); });
-    bubble.addEventListener('click', function () { setMin(false); });
-    document.body.appendChild(panel);
-    document.body.appendChild(bubble);
-    var saved = store(minimizedKey);
-    setMin(saved === '1' || (saved === null && small));
-    bd.panel = panel;
-  }
-
-  function todayRow(p) {
-    var row = el('div', 'tmsw-bdp-row tmsw-bdp-today');
-    row.appendChild(el('span', 'tmsw-bdp-avatar', initials(p.name)));
-    var info = el('div', 'tmsw-bdp-info');
-    info.appendChild(el('strong', null, p.is_me ? 'It\'s your birthday! 🎉' : p.name));
-    info.appendChild(el('span', null, p.is_me ? (p.greet_count + (p.greet_count === 1 ? ' greeting' : ' greetings') + ' from colleagues')
-      : [p.department, p.branch].filter(Boolean).join(' · ')));
-    row.appendChild(info);
-    if (p.is_me) {
-      var see = el('button', 'btn btn-sm btn-outline-primary tmsw-bdp-btn', 'See');
-      see.type = 'button';
-      see.addEventListener('click', function () { playBirthday(cfg.birthday ? cfg.birthday.name : ''); });
-      row.appendChild(see);
-      return row;
-    }
-    var status = el('span', 'tmsw-bdp-greeted', '✓ Greeted');
-    status.hidden = !p.greeted;
-    var greet = el('button', 'btn btn-sm btn-warning tmsw-bdp-btn', 'Greet');
-    greet.type = 'button';
-    greet.hidden = p.greeted;
-    row.appendChild(status);
-    row.appendChild(greet);
-    var form = el('form', 'tmsw-bdp-form');
-    form.hidden = true;
-    var input = el('input', 'form-control form-control-sm');
-    input.maxLength = 200;
-    input.value = 'Happy birthday, ' + (p.firstname || p.name) + '! 🎂';
-    input.setAttribute('aria-label', 'Birthday greeting for ' + p.name);
-    var send = el('button', 'btn btn-sm btn-primary', 'Send');
-    send.type = 'submit';
-    form.appendChild(input);
-    form.appendChild(send);
-    var wrap = el('div', 'tmsw-bdp-today-wrap');
-    wrap.appendChild(row);
-    wrap.appendChild(form);
-    greet.addEventListener('click', function () { form.hidden = false; greet.hidden = true; input.focus(); input.select(); });
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      send.disabled = true;
-      post('/birthdays/greet', { celebrant_id: p.account_id, message: input.value.trim() }).then(function (res) {
-        send.disabled = false;
-        if (!res || !res.success) { window.alert((res && res.message) || 'Could not send the greeting.'); return; }
-        form.hidden = true;
-        status.hidden = false;
-        playEffect('confetti', [], ['#f26522', '#1f3a93', '#f6c23e', '#1cc88a'], 4);
-      }).catch(function () { send.disabled = false; });
-    });
-    return wrap;
   }
 
   // ---------- seasonal theme ----------
@@ -462,8 +586,9 @@
       if (window.TMSEffects) window.TMSEffects.play(t.effects, t, 10);
       else playEffect('fall', t.items, t.colors.concat(['#ffffff']), 8);
     };
+    // Anti-spam: the effects play for about 10 seconds; the button rests for 15.
     var btn = headerButton('tmsw-theme-btn', 'fas fa-magic', t.name + ': play the effects');
-    if (btn) btn.addEventListener('click', effect);
+    guardedClick(btn, 15, effect);
 
     var ribbonKey = 'tmsw_theme_' + t.key + '_' + today;
     var topbar = document.querySelector('.app-topbar');
@@ -480,31 +605,42 @@
     }
     if (cfg.preview || !store(ribbonKey)) {
       store(ribbonKey, '1');
-      setTimeout(effect, 500);
+      setTimeout(function () {
+        if (btn) cooldown(btn, 15);
+        effect();
+      }, 500);
     }
   }
 
-  // ---------- employees' first-time guide ----------
+  // ---------- "How to use the TMS" for the user's role ----------
   function showGuide(firstTime) {
     if (document.querySelector('.tmsw-bday') || document.querySelector('.tmsw-ann-modal')) {
       setTimeout(function () { showGuide(firstTime); }, 800);
       return;
     }
     if (document.querySelector('.tmsw-guide')) return;
+    var label = cfg.guideTitle || 'How to use the TMS';
     var overlay = el('div', 'tmsw-modal tmsw-guide');
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-label', 'How to use the TMS');
+    overlay.setAttribute('aria-label', label);
     var box = el('div', 'tmsw-guide-box');
     var head = el('div', 'tmsw-guide-head');
-    head.appendChild(el('strong', null, firstTime ? 'Welcome to the StorageMart TMS!' : 'How to use the TMS'));
+    head.appendChild(el('strong', null, firstTime ? 'Welcome to the StorageMart TMS!' : label));
+    var right = el('div', 'tmsw-guide-tools');
+    var open = el('a', 'btn btn-sm btn-outline-light', 'Open in a new tab');
+    open.href = BASE + '/guide';
+    open.target = '_blank';
+    open.rel = 'noopener';
     var skip = el('button', 'btn btn-sm btn-light', firstTime ? 'Skip for now' : 'Close');
     skip.type = 'button';
-    head.appendChild(skip);
+    right.appendChild(open);
+    right.appendChild(skip);
+    head.appendChild(right);
     box.appendChild(head);
     var frame = el('iframe', 'tmsw-guide-frame');
     frame.src = BASE + '/guide?embed=1';
-    frame.title = 'How to use the TMS';
+    frame.title = label;
     box.appendChild(frame);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
@@ -521,8 +657,8 @@
   }
 
   function initGuide() {
-    if (!cfg.isEmployee) return;
-    var btn = headerButton('tmsw-guide-btn', 'fas fa-question-circle', 'How to use the TMS');
+    if (!cfg.guide) return;
+    var btn = headerButton('tmsw-guide-btn', 'fas fa-question-circle', cfg.guideTitle || 'How to use the TMS');
     if (btn) btn.addEventListener('click', function () { showGuide(false); });
     if (cfg.onboarding) afterAnnouncements(function () { showGuide(true); });
   }
@@ -536,16 +672,17 @@
   }
 
   function start() {
+    initDoubleSubmitGuard();
     initPersonalDetails();
     initTheme();
     initAnnouncements();
     initBirthday();
-    initBirthdayPanel();
     initGuide();
     document.addEventListener('click', function (e) {
+      // Buttons that replace themselves (Greet) are already gone from the page here.
+      if (!e.target.isConnected) return;
       if (ann.panel && !ann.panel.contains(e.target) && !(ann.btn && ann.btn.contains(e.target))) {
-        ann.panel.remove();
-        ann.panel = null;
+        closeAnnouncementPanel();
       }
     });
   }
@@ -584,6 +721,9 @@
       img.src = url;
     });
   };
+
+  // Anti-spam for other pages (Admin themes page "Test" buttons).
+  window.TMSCooldown = { start: cooldown, click: guardedClick };
 
   // Exposed for the Admin themes page ("Test" buttons) and other scripts.
   window.TMSWidgets = {

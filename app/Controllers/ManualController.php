@@ -25,6 +25,15 @@ class ManualController extends AuthController
         $role = strtoupper((string) ($_SESSION['superuser_real_usertype'] ?? $_SESSION['usertype'] ?? ''));
         $canManage = in_array($role, ['IT', 'ADMIN'], true);
         $manageUrl = $role === 'IT' ? '/it/manuals' : '/admin/manuals';
+        // "How to use the TMS" guides: your own role first; IT and Admin see every role's guide.
+        require_once __DIR__ . '/../Helpers/TmsGuide.php';
+        $myGuideRole = TmsGuide::currentRole();
+        $guideRoles = array_values(array_filter(array_keys(TmsGuide::ROLES), static function (string $key) use ($myGuideRole): bool {
+            return TmsGuide::canOpen($myGuideRole, $key);
+        }));
+        usort($guideRoles, static function (string $a, string $b) use ($myGuideRole): int {
+            return ($b === $myGuideRole) <=> ($a === $myGuideRole);
+        });
         require __DIR__ . '/../Views/manuals/library.php';
     }
 

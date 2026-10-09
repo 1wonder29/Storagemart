@@ -57,14 +57,41 @@ class TicketManuals
         return $group !== '' ? $group : 'General';
     }
 
+    /** Roles a guide can be limited to ("Who can open it"); IT and Admin always see every guide. */
+    public const AUDIENCE_ROLES = [
+        'EMPLOYEE' => 'Employees',
+        'HEAD' => 'Department Heads',
+        'HR' => 'HR',
+        'AOM' => 'Area Operations Managers',
+        'OM' => 'Operations Managers',
+        'HOM' => 'Head of Operations',
+    ];
+
+    /** @return string[] roles the guide is limited to; empty = everyone */
+    public static function audience(array $manual): array
+    {
+        $roles = array_map('trim', explode(',', strtoupper((string) ($manual['audience'] ?? ''))));
+        return array_values(array_intersect(array_keys(self::AUDIENCE_ROLES), $roles));
+    }
+
+    /** Whether someone with this role may open (or be sent) the guide. */
+    public static function forRole(array $manual, string $role): bool
+    {
+        $role = strtoupper($role);
+        if (in_array($role, ['IT', 'ADMIN'], true)) {
+            return true;
+        }
+        if (!empty($manual['it_only'])) {
+            return false;
+        }
+        $audience = self::audience($manual);
+        return !$audience || in_array($role, $audience, true);
+    }
+
     /** IT-only guides (setup and maintenance) are for IT and Admin accounts. */
     public static function canView(array $manual): bool
     {
-        if (empty($manual['it_only'])) {
-            return true;
-        }
-        $role = strtoupper((string) ($_SESSION['superuser_real_usertype'] ?? $_SESSION['usertype'] ?? ''));
-        return in_array($role, ['IT', 'ADMIN'], true);
+        return self::forRole($manual, (string) ($_SESSION['superuser_real_usertype'] ?? $_SESSION['usertype'] ?? ''));
     }
 
     /**
@@ -75,7 +102,7 @@ class TicketManuals
      *
      * @return array<int, array{manual_id:int, title:string, url:string, description:string, score:int}>
      */
-    public static function matchesFor(PDO $pdo, string $category, string $text, int $limit = 3): array
+    public static function matchesFor(PDO $pdo, string $category, string $text, int $limit = 3, ?string $forRole = null): array
     {
         $text = strtolower($text);
         $category = strtolower(trim($category));
@@ -83,6 +110,10 @@ class TicketManuals
         $default = null;
         foreach (self::all($pdo) as $manual) {
             if (!empty($manual['it_only'])) {
+                continue;
+            }
+            // Guides limited to some roles are only sent to requesters with those roles.
+            if ($forRole !== null && (int) ($manual['is_default'] ?? 0) !== 1 && !self::forRole($manual, $forRole)) {
                 continue;
             }
             $score = 0;
@@ -180,8 +211,9 @@ class TicketManuals
     public static function postWelcome(PDO $pdo, int $ticketId): bool
     {
         try {
-            $stmt = $pdo->prepare("SELECT t.ticket_number, t.category, t.subject, t.concern_details, e.firstname
+            $stmt = $pdo->prepare("SELECT t.ticket_number, t.category, t.subject, t.concern_details, e.firstname, a.usertype
                     FROM tbltickets t LEFT JOIN tblemployee e ON e.employee_id = t.employee_id
+                    LEFT JOIN tblaccounts a ON a.account_id = e.account_id
                     WHERE t.ticket_id = ? LIMIT 1");
             $stmt->execute([$ticketId]);
             $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -189,7 +221,7 @@ class TicketManuals
                 return false;
             }
             $matches = self::matchesFor($pdo, (string) $ticket['category'],
-                ($ticket['subject'] ?? '') . ' ' . ($ticket['concern_details'] ?? ''), 1);
+                ($ticket['subject'] ?? '') . ' ' . ($ticket['concern_details'] ?? ''), 1, (string) ($ticket['usertype'] ?? 'EMPLOYEE'));
             $manual = $matches[0];
 
             $name = trim((string) ($ticket['firstname'] ?? ''));

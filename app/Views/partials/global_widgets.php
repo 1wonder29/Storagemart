@@ -5,6 +5,7 @@
  * Each piece fails quietly so a missing table never breaks the page.
  */
 require_once __DIR__ . '/../../Helpers/SeasonalThemes.php';
+require_once __DIR__ . '/../../Helpers/TmsGuide.php';
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
@@ -17,8 +18,8 @@ $widgetConfig = [
     'birthday' => null,
     'theme' => null,
     'preview' => false,
-    'isDashboard' => false,
-    'isEmployee' => strtoupper((string) ($_SESSION['usertype'] ?? '')) === 'EMPLOYEE',
+    'guide' => true,
+    'guideTitle' => 'How to use the TMS (' . TmsGuide::ROLES[TmsGuide::currentRole()]['label'] . ')',
     'onboarding' => false,
 ];
 
@@ -42,15 +43,13 @@ try {
 
 $widgetConfig['theme'] = SeasonalThemes::current($pdo);
 
-// Employees see the "How to use the TMS" guide the first time they sign in.
-if ($widgetConfig['isEmployee']) {
-    try {
-        $stmt = $pdo->prepare('SELECT onboarding_done_at FROM tblaccounts WHERE account_id = ? LIMIT 1');
-        $stmt->execute([$widgetConfig['accountId']]);
-        $widgetConfig['onboarding'] = $stmt->fetchColumn() === null;
-    } catch (Throwable $e) {
-        $widgetConfig['onboarding'] = false; // column not added yet
-    }
+// Everyone sees the "How to use the TMS" guide for their role the first time they sign in.
+try {
+    $stmt = $pdo->prepare('SELECT onboarding_done_at FROM tblaccounts WHERE account_id = ? LIMIT 1');
+    $stmt->execute([$widgetConfig['accountId']]);
+    $widgetConfig['onboarding'] = $stmt->fetchColumn() === null;
+} catch (Throwable $e) {
+    $widgetConfig['onboarding'] = false; // column not added yet
 }
 
 // Admin preview (only in the admin's own browser, nothing is saved).
@@ -74,8 +73,6 @@ $widgetBasePath = (string) parse_url($realtimeBase, PHP_URL_PATH);
 if ($widgetBasePath !== '' && strpos($widgetPath, $widgetBasePath) === 0) {
     $widgetPath = substr($widgetPath, strlen($widgetBasePath));
 }
-// Dashboards show the birthday panel on the right.
-$widgetConfig['isDashboard'] = (bool) preg_match('#^/(admin|aom|employee|head|hom|om|it|hr)(/dashboard)?/?$#', $widgetPath);
 try {
     if (preg_match('#^/(admin|aom|employee|head|hom|om|it)/profile/?$#', $widgetPath)) {
         $stmt = $pdo->prepare('SELECT birthdate, gender, date_hired, phone FROM tblemployee WHERE account_id = ? LIMIT 1');

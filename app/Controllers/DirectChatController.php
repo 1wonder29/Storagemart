@@ -3,6 +3,7 @@
 require_once __DIR__ . '/AuthController.php';
 require_once __DIR__ . '/../Helpers/Birthdays.php';
 require_once __DIR__ . '/../Helpers/ActivityLogger.php';
+require_once __DIR__ . '/../Helpers/RateLimit.php';
 
 /**
  * Admin chat requests (direct-chat.js). The Admin starts a chat with any user about a
@@ -93,6 +94,9 @@ class DirectChatController extends AuthController
         if ($userId <= 0 || $userId === $me || $concern === '' || mb_strlen($concern) > 500) {
             $this->json(['success' => false, 'message' => 'Choose a person and write the concern (max 500 characters).'], 400);
         }
+        if (($wait = RateLimit::hit('direct_chat_start', 5, 60)) > 0) {
+            $this->json(['success' => false, 'message' => RateLimit::message($wait)], 429);
+        }
         $exists = $pdo->prepare("SELECT COUNT(*) FROM tblaccounts WHERE account_id = ? AND UPPER(status) = 'ACTIVE'");
         $exists->execute([$userId]);
         if (!(int) $exists->fetchColumn()) {
@@ -180,6 +184,9 @@ class DirectChatController extends AuthController
         $body = trim((string) ($_POST['body'] ?? ''));
         if ($body === '' || mb_strlen($body) > 2000) {
             $this->json(['success' => false, 'message' => 'Write a message (max 2,000 characters).'], 400);
+        }
+        if (($wait = RateLimit::hit('direct_chat_send', 15, 30)) > 0) {
+            $this->json(['success' => false, 'message' => RateLimit::message($wait)], 429);
         }
         $pdo->prepare('INSERT INTO tbldirect_messages (chat_id, account_id, body, created_at) VALUES (?, ?, ?, NOW())')
             ->execute([(int) $chat['chat_id'], $me, $body]);

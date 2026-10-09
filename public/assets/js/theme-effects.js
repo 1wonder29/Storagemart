@@ -3,6 +3,8 @@
  * TMSEffects.play(['rain', 'zombies'], theme, seconds) plays the effects together over the page;
  * theme = { items: [emoji...], colors: [main, accent] }. Plain DOM + CSS animations (theme-effects.css),
  * nothing to click, removed when finished. Lighter (fewer pieces) when the computer asks for less motion.
+ * Anti-spam: effects never pile up. A new play() first clears the ones still running, and a play()
+ * within 3 seconds of the last one is ignored, so pressing the button again and again cannot slow the PC.
  */
 (function () {
   'use strict';
@@ -19,14 +21,25 @@
     if (text) node.textContent = text;
     return node;
   }
+  var running = [];   // layers on the page now
+  var lastPlay = 0;
+  var busyUntil = 0;
+  var MIN_GAP = 3000;  // ms between two plays
+
   function layer(seconds, extra) {
     var node = document.createElement('div');
     node.className = 'tfx-layer';
     node.setAttribute('aria-hidden', 'true');
     document.body.appendChild(node);
+    running.push(node);
     setTimeout(function () { node.classList.add('tfx-out'); }, seconds * 1000);
-    setTimeout(function () { node.remove(); }, (seconds + (extra || 2)) * 1000);
+    setTimeout(function () { drop(node); }, (seconds + (extra || 2)) * 1000);
     return node;
+  }
+  function drop(node) {
+    node.remove();
+    var i = running.indexOf(node);
+    if (i !== -1) running.splice(i, 1);
   }
   // Pieces that keep repeating stop being created after `seconds`; the layer then fades out.
   function anim(node, name, duration, delay, extra) {
@@ -274,7 +287,12 @@
 
   window.TMSEffects = {
     names: Object.keys(EFFECTS),
+    /** Plays the effects; returns false when pressed again too soon (nothing happens). */
     play: function (keys, theme, seconds) {
+      var now = Date.now();
+      if (now - lastPlay < MIN_GAP) return false;
+      lastPlay = now;
+      this.stop();
       seconds = seconds || 10;
       theme = theme || {};
       (keys && keys.length ? keys : ['items']).forEach(function (key) {
@@ -282,6 +300,17 @@
           try { EFFECTS[key](seconds, theme); } catch (e) { /* one effect failing never breaks the page */ }
         }
       });
+      busyUntil = now + (seconds + 2) * 1000;
+      return true;
+    },
+    /** Removes every effect still on the screen. */
+    stop: function () {
+      running.slice().forEach(drop);
+      busyUntil = 0;
+    },
+    /** Seconds until the effects now playing are finished (0 = none). */
+    remaining: function () {
+      return Math.max(0, Math.ceil((busyUntil - Date.now()) / 1000));
     },
   };
 })();

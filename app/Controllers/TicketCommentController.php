@@ -95,6 +95,14 @@ class TicketCommentController extends AuthController
             return;
         }
 
+        // Anti-spam: at most 12 messages per 30 seconds per person.
+        require_once __DIR__ . '/../Helpers/RateLimit.php';
+        if (($wait = RateLimit::hit('ticket_comment', 12, 30)) > 0) {
+            http_response_code(429);
+            echo json_encode(['success' => false, 'message' => RateLimit::message($wait)]);
+            return;
+        }
+
         $accountId = (int) $_SESSION['account_id'];
         $usertype = strtoupper((string) ($_SESSION['usertype'] ?? ''));
         $access = $this->resolveAccess($ticketId, $accountId, $usertype);

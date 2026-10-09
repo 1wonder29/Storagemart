@@ -68,6 +68,18 @@ $total = array_sum(array_map('count', $groups));
         .meta span { display: block; font-size: .76rem; color: #6b7280; margin-top: 4px; }
         .badge { position: absolute; top: 8px; right: 8px; z-index: 2; background: #1F3A93; color: #fff; font-size: .62rem; font-weight: 800; border-radius: 999px; padding: 3px 8px; }
         .empty { display: none; text-align: center; color: #6b7280; padding: 30px 0; }
+        .tms-guides { margin: 0 0 24px; }
+        .tms-guides h2 { display: flex; align-items: center; gap: 10px; font-size: 1.05rem; color: #19398A; margin: 0 0 10px; }
+        .tms-guides h2 .ico { width: 34px; height: 34px; border-radius: 50%; background: #19398A; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: .9rem; }
+        .guide-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+        .guide-card { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 14px; text-decoration: none; color: #fff;
+                      background: linear-gradient(135deg, #0F2563, #19398A 60%, #2661D4); border-bottom: 4px solid #F85F00; box-shadow: 0 4px 14px rgba(25,57,138,.18); }
+        .guide-card:hover, .guide-card:focus { transform: translateY(-2px); outline: none; }
+        .guide-card .gi { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 50%; background: #F85F00; display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem; }
+        .guide-card strong { display: block; font-size: .9rem; }
+        .guide-card span { display: block; font-size: .72rem; opacity: .85; margin-top: 2px; }
+        .guide-card.mine { background: linear-gradient(135deg, #C94A00, #F85F00); border-bottom-color: #19398A; }
+        .guide-card.mine .gi { background: #19398A; }
     </style>
 </head>
 <body>
@@ -84,6 +96,18 @@ $total = array_sum(array_map('count', $groups));
 <div class="wrap">
     <h1>IT Manuals</h1>
     <p class="lead">Step-by-step guides from the IT Department. Open a guide to see its slides, or download it as PowerPoint.</p>
+
+    <section class="tms-guides" aria-label="How to use the TMS">
+        <h2><span class="ico"><i class="fas fa-question"></i></span>How to use the TMS <small style="color:#8a94b8;font-weight:600">TMS user guides</small></h2>
+        <div class="guide-cards">
+            <?php foreach ($guideRoles as $guideRole): $g = TmsGuide::ROLES[$guideRole]; ?>
+                <a class="guide-card<?= $guideRole === $myGuideRole ? ' mine' : '' ?>" href="<?= $h($base) ?>/guide?role=<?= $h($guideRole) ?>">
+                    <span class="gi"><i class="fas <?= $h($g['icon']) ?>"></i></span>
+                    <span><strong><?= $h($g['label']) ?></strong><span><?= $guideRole === $myGuideRole ? 'Your guide · every function, step by step' : 'Guide for this role' ?></span></span>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
 
     <div class="tools">
         <label class="search"><i class="fas fa-search"></i>

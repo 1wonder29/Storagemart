@@ -102,7 +102,7 @@
         start.type = 'button';
         start.appendChild(icon('fas fa-plus mr-1'));
         start.appendChild(document.createTextNode(' New chat'));
-        start.addEventListener('click', function () { togglePanel(true); });
+        start.addEventListener('click', function (e) { e.stopPropagation(); togglePanel(true); });
         panel.appendChild(start);
       }
       var list = el('div', 'tmsw-panel-list');
@@ -300,14 +300,29 @@
       api('/direct-chat/close', fd({ chat_id: chatId })).then(function () { load(); poll(); });
     });
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : sendBtn.click(); } });
+    var sending = false;
+    var noteTimer = null;
+    // A short message under the header (e.g. "Slow down") that goes away by itself.
+    function flashNote(text) {
+      var tip = win.querySelector('.dc-flash') || el('div', 'dc-flash');
+      tip.textContent = text;
+      if (!tip.parentNode) win.insertBefore(tip, body);
+      clearTimeout(noteTimer);
+      noteTimer = setTimeout(function () { tip.remove(); }, 4000);
+    }
+    var lastSent = 0;
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var text = input.value.trim();
-      if (!text) return;
+      // Anti-spam: one message per second, never while the previous one is still sending.
+      if (!text || sending || Date.now() - lastSent < 1000) return;
+      lastSent = Date.now();
+      sending = true;
       sendBtn.disabled = true;
       api('/direct-chat/send', fd({ chat_id: chatId, body: text })).then(function (res) {
+        sending = false;
         sendBtn.disabled = false;
-        if (!res.success) { window.alert(res.message || 'Not sent.'); return; }
+        if (!res.success) { flashNote(res.message || 'Not sent.'); return; }
         input.value = '';
         load();
       });
@@ -390,6 +405,9 @@
   }
 
   document.addEventListener('click', function (e) {
+    // "New chat" and the search results replace themselves when clicked, so the clicked
+    // element is already gone from the page here; that is not a click outside the panel.
+    if (!e.target.isConnected) return;
     if (state.panel && !state.panel.contains(e.target) && !(state.btn && state.btn.contains(e.target))) {
       state.panel.remove();
       state.panel = null;

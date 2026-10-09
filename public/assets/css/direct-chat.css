@@ -59,3 +59,5 @@ html.it-dark .dc-mine .dc-bubble { background: #4e73df; color: #fff; }
 html.it-dark .dc-row:hover, html.it-dark .dc-row.dc-unread, html.it-dark .dc-result:hover { background: #262b3b; }
 html.it-dark .dc-win-end { background: transparent; }
 @media (max-width: 575px) { .dc-win { right: 8px; left: 8px; width: auto; bottom: 8px; } }
+.dc-flash { margin: 6px 10px 0; padding: 6px 10px; border-radius: 8px; background: #fff4ec; color: #9a3412; font-size: .78rem; font-weight: 600; }
+html.it-dark .dc-flash { background: #3a2a1f; color: #fdba74; }

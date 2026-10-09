@@ -70,6 +70,10 @@ class WidgetController extends AuthController
     public function birthdayGreet(): void
     {
         $me = $this->jsonAccount(true);
+        require_once __DIR__ . '/../Helpers/RateLimit.php';
+        if (($wait = RateLimit::hit('birthday_greet', 10, 60)) > 0) {
+            $this->json(['success' => false, 'message' => RateLimit::message($wait)], 429);
+        }
         global $pdo;
         $celebrant = (int) ($_POST['celebrant_id'] ?? 0);
         $message = trim((string) ($_POST['message'] ?? ''));
@@ -121,13 +125,20 @@ class WidgetController extends AuthController
             $this->redirect('/login');
             exit;
         }
+        require_once __DIR__ . '/../Helpers/TmsGuide.php';
         $base = rtrim(BASE_URL, '/');
         $embed = !empty($_GET['embed']);
-        $role = strtoupper((string) ($_SESSION['usertype'] ?? ''));
-        $homes = ['ADMIN' => '/admin', 'EMPLOYEE' => '/employee', 'HEAD' => '/head', 'AOM' => '/aom', 'HR' => '/hr',
-            'IT' => '/it', 'HOM' => '/hom', 'OM' => '/om'];
-        $home = $homes[$role] ?? '/';
-        require __DIR__ . '/../Views/guide/tms_guide.php';
+        // Your own role's guide; IT and Admin can also open the other roles' guides (?role=HR).
+        $viewerRole = TmsGuide::currentRole();
+        $role = strtoupper((string) ($_GET['role'] ?? $viewerRole));
+        if (!TmsGuide::exists($role) || !TmsGuide::canOpen($viewerRole, $role)) {
+            $role = $viewerRole;
+        }
+        $roles = array_values(array_filter(array_keys(TmsGuide::ROLES), static function (string $key) use ($viewerRole): bool {
+            return TmsGuide::canOpen($viewerRole, $key);
+        }));
+        $home = TmsGuide::ROLES[$viewerRole]['home'];
+        require __DIR__ . '/../Views/guide/role_guide.php';
     }
 
     /** Signed-in account id for a JSON call (and the form token for changes). */

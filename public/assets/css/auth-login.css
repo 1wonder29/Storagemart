@@ -1,14 +1,14 @@
 /* Storage Mart TMS — Modern Dynamic Auth Pages */
 
 :root {
-  --auth-page-bg: #012b90;
-  --auth-page-bg-light: #0235a8;
-  --auth-page-bg-dark: #011f6e;
-  --auth-blue: #0046ad;
-  --auth-blue-bright: #006ad4;
-  --auth-blue-dark: #003a8f;
-  --auth-orange: #f37021;
-  --auth-orange-hover: #de6126;
+  --auth-page-bg: #19398a;
+  --auth-page-bg-light: #1d4ab0;
+  --auth-page-bg-dark: #0f2563;
+  --auth-blue: #19398a;
+  --auth-blue-bright: #2661d4;
+  --auth-blue-dark: #0f2563;
+  --auth-orange: #f85f00;
+  --auth-orange-hover: #d94f00;
   --auth-orange-light: #ddb090;
   --auth-orange-glow: rgba(255, 185, 135, 0.14);
   --auth-surface: rgba(255, 255, 255, 0.96);
