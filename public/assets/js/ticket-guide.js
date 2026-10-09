@@ -41,6 +41,16 @@
     'padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.25);font-size:.92rem}',
     '.tg-ask h6{font-weight:800;color:#4e73df;margin:0 0 6px}',
     '.tg-replay{margin-left:8px}',
+    '.tg-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 18px;padding:14px 18px;border-radius:14px;',
+    'background:linear-gradient(135deg,#fff7ed,#eef2ff);border:2px solid #f6c23e;box-shadow:0 4px 14px rgba(246,194,62,.25)}',
+    '.tg-top-icon{width:44px;height:44px;border-radius:50%;background:#f26522;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex:0 0 auto}',
+    '.tg-top-text{flex:1;min-width:200px;color:#1f2937}.tg-top-text strong{display:block;font-size:1rem}.tg-top-text span{font-size:.85rem;color:#4b5563}',
+    '.tg-top-btn{border:0;border-radius:999px;padding:10px 20px;font-weight:800;background:#f26522;color:#fff;cursor:pointer;animation:tgGlow 1.8s infinite}',
+    '.tg-top-btn:hover{filter:brightness(1.05)}',
+    '@keyframes tgGlow{0%{box-shadow:0 0 0 0 rgba(242,101,34,.55)}70%{box-shadow:0 0 0 12px rgba(242,101,34,0)}100%{box-shadow:0 0 0 0 rgba(242,101,34,0)}}',
+    '@media (prefers-reduced-motion: reduce){.tg-top-btn{animation:none}}',
+    'html.it-dark .tg-top{background:linear-gradient(135deg,#3b2a1e,#1f2540);border-color:#b7791f}',
+    'html.it-dark .tg-top-text{color:#f3f4f6}html.it-dark .tg-top-text span{color:#cbd5e1}',
     '.ticket-specific-hint{font-weight:600}',
     'html.it-dark .tg-tip,html.it-dark .tg-ask{background:#1f2937;color:#e5e7eb}',
     'html.it-dark .tg-tip h6,html.it-dark .tg-ask h6{color:#93b4ff}',
@@ -225,6 +235,24 @@
       description.value = saved.description; fire(description);
     }
     updateHint();
+  }
+
+  // Highlighted "How to file a ticket" at the top of the form, so first-time users see it.
+  var ticketForm = subject && subject.form;
+  if (ticketForm) {
+    var top = document.createElement('div');
+    top.className = 'tg-top';
+    top.setAttribute('role', 'note');
+    top.innerHTML = '<div class="tg-top-icon"><i class="fas fa-graduation-cap"></i></div>' +
+      '<div class="tg-top-text"><strong>First time filing a ticket?</strong>' +
+      '<span>Watch a 1-minute step-by-step guide: where to type, what to write and how to send it.</span></div>' +
+      '<button type="button" class="tg-top-btn"><i class="fas fa-play-circle"></i> How to file a ticket</button>';
+    top.querySelector('.tg-top-btn').addEventListener('click', function () {
+      var askBox = document.querySelector('.tg-ask');
+      if (askBox) askBox.remove();
+      start();
+    });
+    ticketForm.insertBefore(top, ticketForm.firstElementChild);
   }
 
   // "How to file a ticket" replay button next to Create / Cancel.

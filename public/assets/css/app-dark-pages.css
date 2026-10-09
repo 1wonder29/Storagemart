@@ -427,7 +427,7 @@ html.it-dark .badge.bg-secondary { color: #fff !important; }
 
 /* Ticket numbers, counts and links in brand colours: lighter shades on dark. */
 html.it-dark .ticket-id,
-html.it-dark .branch-count { color: #93c5fd !important; }
+html.it-dark a.branch-item .branch-count { color: #93c5fd !important; }
 html.it-dark span.ticket-id,
 html.it-dark .rating-stars-count,
 html.it-dark .btn-view-all { color: #86efac !important; }
