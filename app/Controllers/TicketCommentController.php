@@ -178,6 +178,9 @@ class TicketCommentController extends AuthController
         require_once __DIR__ . '/../Helpers/TicketAttachments.php';
         $path = ($comment && !empty($comment['attachment_path'])) ? TicketAttachments::absolutePath((string) $comment['attachment_path']) : null;
         if (!$access || !$access['canView'] || $path === null) {
+            error_log('Chat attachment not served: comment ' . (int) ($_GET['id'] ?? 0) . ', account ' . $accountId
+                . ($comment ? '' : ', no such comment') . ($access && !$access['canView'] ? ', no access' : '')
+                . ($comment && $path === null ? ', file missing: ' . ($comment['attachment_path'] ?? '') : ''));
             http_response_code($accountId > 0 ? 404 : 401);
             echo 'File not found.';
             return;

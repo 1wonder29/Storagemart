@@ -147,6 +147,14 @@ if ($uri === '/ticket-comments/add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// TROUBLESHOOTING GUIDES (slides / PowerPoint for everyone signed in)
+if (in_array($uri, ['/manuals/view', '/manuals/pptx', '/manuals/file'], true) && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Controllers/ManualController.php';
+    $manualController = new ManualController();
+    $uri === '/manuals/view' ? $manualController->view() : ($uri === '/manuals/pptx' ? $manualController->pptx() : $manualController->file());
+    exit;
+}
+
 // TECHNICAL REPORT SIGNING (shared — requester, IT person, Admin)
 if (in_array($uri, ['/tickets/signature', '/tickets/signature/save', '/tickets/signature/remove', '/tickets/signature/pdf'], true)) {
     require_once __DIR__ . '/../app/Controllers/TicketSignatureController.php';

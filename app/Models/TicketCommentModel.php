@@ -31,8 +31,8 @@ class TicketCommentModel extends BaseModel
     public static function presentComment(array $row): array
     {
         $hasFile = !empty($row['attachment_path']);
-        $base = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
-        $row['attachment_url'] = $hasFile ? $base . '/ticket-comments/file?id=' . (int) $row['comment_id'] : null;
+        $basePath = defined('BASE_URL') ? rtrim((string) parse_url(BASE_URL, PHP_URL_PATH), '/') : '';
+        $row['attachment_url'] = $hasFile ? $basePath . '/ticket-comments/file?id=' . (int) $row['comment_id'] : null;
         $row['attachment_is_image'] = $hasFile && in_array((string) $row['attachment_mime'], ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], true);
         $row['attachment_size'] = $hasFile ? (int) $row['attachment_size'] : null;
         unset($row['attachment_path']);

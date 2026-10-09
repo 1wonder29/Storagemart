@@ -84,7 +84,7 @@ $h = static function ($value): string {
                             <?php endif; ?>
                         </div>
                         <div class="card-body">
-                            <form method="POST" action="<?= $h($base . $home) ?>">
+                            <form method="POST" action="<?= $h($base . $home) ?>" enctype="multipart/form-data">
                                 <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
                                 <input type="hidden" name="action" value="save">
                                 <input type="hidden" name="manual_id" value="<?= $formId ?>">
@@ -104,8 +104,24 @@ $h = static function ($value): string {
                                     <textarea class="form-control" id="m_steps" name="steps" rows="6"
                                               placeholder="Turn the printer off and on.&#10;Remove stuck paper.&#10;Print a test page."><?= $h($source['steps'] ?? '') ?></textarea>
                                 </div>
+                                <div class="alert alert-info small py-2">
+                                    <i class="fas fa-magic mr-1"></i> <strong>Slides and a PowerPoint are made automatically</strong>
+                                    from the title and steps, inside the TMS (no Canva login needed).
+                                    You can also upload your own PowerPoint or PDF below.
+                                </div>
                                 <div class="form-group">
-                                    <label for="m_url">Link to the full manual <small class="text-muted">(Canva, Google Drive, PDF...)</small></label>
+                                    <label for="m_file">Your own PowerPoint or PDF <small class="text-muted">(optional, max 25 MB)</small></label>
+                                    <input type="file" class="form-control-file" id="m_file" name="manual_file" accept=".pptx,.ppt,.pdf">
+                                    <small class="form-text text-muted">From Canva: Share &gt; Download &gt; PPTX or PDF, then upload it here.</small>
+                                    <?php if (!empty($editing['file_name'])): ?>
+                                        <div class="custom-control custom-checkbox mt-1">
+                                            <input type="checkbox" class="custom-control-input" id="m_remove_file" name="remove_file" value="1">
+                                            <label class="custom-control-label small" for="m_remove_file">Remove the current file (<?= $h($editing['file_name']) ?>)</label>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="form-group">
+                                    <label for="m_url">Online link <small class="text-muted">(optional; Canva / Google Drive links may ask for a login)</small></label>
                                     <input type="url" class="form-control" id="m_url" name="url" maxlength="500"
                                            value="<?= $h($source['url'] ?? '') ?>" placeholder="https://">
                                 </div>
@@ -207,6 +223,16 @@ $h = static function ($value): string {
                                                         <?php foreach ($steps as $step): ?><li><?= $h($step) ?></li><?php endforeach; ?>
                                                     </ol>
                                                 <?php endif; ?>
+                                                <div class="mt-2">
+                                                    <a class="btn btn-sm btn-primary" href="<?= $h($base) ?>/manuals/view?id=<?= (int) $manual['manual_id'] ?>" target="_blank" rel="noopener">
+                                                        <i class="fas fa-desktop mr-1"></i>View slides</a>
+                                                    <a class="btn btn-sm btn-outline-primary" href="<?= $h($base) ?>/manuals/pptx?id=<?= (int) $manual['manual_id'] ?>">
+                                                        <i class="fas fa-file-powerpoint mr-1"></i>PowerPoint</a>
+                                                    <?php if (!empty($manual['file_name'])): ?>
+                                                        <a class="btn btn-sm btn-outline-secondary" href="<?= $h($base) ?>/manuals/file?id=<?= (int) $manual['manual_id'] ?>" target="_blank" rel="noopener">
+                                                            <i class="fas fa-paperclip mr-1"></i><?= $h($manual['file_name']) ?></a>
+                                                    <?php endif; ?>
+                                                </div>
                                                 <?php if (!empty($manual['url'])): ?>
                                                     <a class="small" href="<?= $h($manual['url']) ?>" target="_blank" rel="noopener noreferrer">
                                                         <i class="fas fa-external-link-alt mr-1"></i><?= $h($manual['url']) ?>

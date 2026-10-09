@@ -130,6 +130,16 @@
       img.alt = c.attachment_name || 'Photo';
       img.loading = 'lazy';
       img.addEventListener('load', function () { if (body) body.scrollTop = body.scrollHeight; });
+      img.addEventListener('error', function () {
+        // Could not load the preview: keep a plain link to open the photo.
+        link.className = 'tc-attach-file';
+        link.textContent = '';
+        link.appendChild(el('i', 'fas fa-image'));
+        var meta = el('span');
+        meta.appendChild(el('strong', null, c.attachment_name || 'Photo'));
+        meta.appendChild(el('small', null, 'Tap to open'));
+        link.appendChild(meta);
+      });
       link.appendChild(img);
     } else {
       link.appendChild(el('i', 'fas fa-file-alt'));
@@ -252,7 +262,7 @@
     input = el('textarea');
     input.rows = 1;
     input.maxLength = 2000;
-    input.placeholder = 'Type a message…';
+    input.placeholder = 'Type a message… (Ctrl+V pastes a screenshot)';
     input.setAttribute('aria-label', 'Message');
     sendBtn = el('button', 'tc-send');
     sendBtn.type = 'submit';
@@ -283,6 +293,30 @@
     input.addEventListener('input', function () {
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 96) + 'px';
+    });
+    // Screenshot in the clipboard (Print Screen / Snipping Tool): Ctrl+V or right-click > Paste attaches it.
+    input.addEventListener('paste', function (e) {
+      var items = (e.clipboardData && e.clipboardData.items) || [];
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].kind === 'file' && /^image\//.test(items[i].type)) {
+          var blob = items[i].getAsFile();
+          if (!blob) continue;
+          e.preventDefault();
+          var d = new Date(), pad2 = function (n) { return (n < 10 ? '0' : '') + n; };
+          var stamp = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + '-' + pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds());
+          var file;
+          try { file = new File([blob], 'screenshot-' + stamp + '.png', { type: blob.type || 'image/png' }); } catch (err) { file = blob; }
+          pick(file);
+          return;
+        }
+      }
+    });
+    // Drag a photo or file onto the chat.
+    panel.addEventListener('dragover', function (e) { if (state.view === 'chat') e.preventDefault(); });
+    panel.addEventListener('drop', function (e) {
+      if (state.view !== 'chat' || !e.dataTransfer || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      pick(e.dataTransfer.files[0]);
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && state.open) setOpen(false);

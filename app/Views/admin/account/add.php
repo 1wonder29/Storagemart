@@ -70,7 +70,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                                 <i class="fas fa-eye"></i>
                                             </span>
                                         </div>
-                                        <small class="form-text text-muted"><?= htmlspecialchars(PasswordPolicy::HINT) ?></small>
+                                        <small class="form-text text-muted"><?= htmlspecialchars(PasswordPolicy::ADMIN_HINT) ?></small>
                                     </div>
                                 </div>
 

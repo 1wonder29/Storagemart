@@ -52,9 +52,7 @@ $guideClosed = in_array((string) ($ticket['status'] ?? ''), ['Resolved', 'Closed
                     foreach ($guide['steps'] as $i => $step) {
                         $guideText .= "\n" . ($i + 1) . '. ' . $step;
                     }
-                    if ($guide['url'] !== '') {
-                        $guideText .= "\n" . $guide['url'];
-                    }
+                    $guideText .= "\nSlides: " . $guide['viewer'];
                 ?>
                     <div class="guide-item">
                         <div class="d-flex justify-content-between align-items-start">
@@ -74,9 +72,11 @@ $guideClosed = in_array((string) ($ticket['status'] ?? ''), ['Resolved', 'Closed
                         <?php if ($guide['steps']): ?>
                             <ol><?php foreach ($guide['steps'] as $step): ?><li><?= htmlspecialchars($step) ?></li><?php endforeach; ?></ol>
                         <?php endif; ?>
-                        <?php if ($guide['url'] !== ''): ?>
-                            <a class="small" href="<?= htmlspecialchars($guide['url']) ?>" target="_blank" rel="noopener noreferrer">
-                                <i class="fas fa-external-link-alt mr-1"></i>Open manual</a>
+                        <a class="small" href="<?= htmlspecialchars($guide['viewer']) ?>" target="_blank" rel="noopener">
+                            <i class="fas fa-desktop mr-1"></i>View slides</a>
+                        <?php if ($guide['manual_id'] > 0): ?>
+                            · <a class="small" href="<?= htmlspecialchars($base) ?>/manuals/pptx?id=<?= (int) $guide['manual_id'] ?>">
+                                <i class="fas fa-file-powerpoint mr-1"></i>PowerPoint</a>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>

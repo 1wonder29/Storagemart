@@ -33,7 +33,7 @@ $sectionId = 'ticketComments_' . $ticketId;
             <div class="form-group mb-2">
                 <label class="small font-weight-bold text-uppercase mb-1" style="color:#64748b;letter-spacing:0.05em;">Add a comment</label>
                 <textarea class="form-control ticket-comment-input" rows="3" maxlength="2000"
-                          placeholder="Type your message here (visible to everyone on this ticket)..."></textarea>
+                          placeholder="Type your message here (visible to everyone on this ticket). Ctrl+V pastes a screenshot."></textarea>
             </div>
             <div class="d-flex flex-wrap align-items-center" style="gap:8px">
                 <button type="submit" class="btn btn-sm ticket-comment-submit">

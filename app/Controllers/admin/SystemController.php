@@ -157,7 +157,7 @@ class SystemController extends AuthController
             $manualId = (int) ($_POST['manual_id'] ?? 0);
             try {
                 if ($action === 'delete') {
-                    $stmt = $pdo->prepare('SELECT title, is_default FROM tblit_manuals WHERE manual_id = ?');
+                    $stmt = $pdo->prepare('SELECT * FROM tblit_manuals WHERE manual_id = ?');
                     $stmt->execute([$manualId]);
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
                     if (!$row) {
@@ -166,6 +166,10 @@ class SystemController extends AuthController
                         $_SESSION['flash_error'] = 'The default manual cannot be deleted. Make another manual the default first.';
                     } else {
                         $pdo->prepare('DELETE FROM tblit_manuals WHERE manual_id = ?')->execute([$manualId]);
+                        $oldFile = !empty($row['file_path']) ? TicketManuals::filePath((string) $row['file_path']) : null;
+                        if ($oldFile !== null) {
+                            @unlink($oldFile);
+                        }
                         ActivityLogger::delete('Troubleshooting Manuals', (string) $manualId, 'Deleted manual: ' . $row['title'],
                             $_SESSION['username'] ?? 'Unknown');
                         $_SESSION['flash_success'] = 'Manual deleted.';
@@ -193,11 +197,16 @@ class SystemController extends AuthController
                 if ($url !== '' && (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('#^https?://#i', $url))) {
                     $errors[] = 'The link must start with http:// or https://.';
                 }
-                if ($url === '' && $steps === '') {
-                    $errors[] = 'Add the steps, a link, or both.';
+                $upload = $_FILES['manual_file'] ?? null;
+                $hasUpload = $upload && ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+                $hadFile = false;
+                if ($manualId > 0) {
+                    $stmt = $pdo->prepare('SELECT file_path FROM tblit_manuals WHERE manual_id = ?');
+                    $stmt->execute([$manualId]);
+                    $hadFile = (string) $stmt->fetchColumn() !== '' && empty($_POST['remove_file']);
                 }
-                if ($makeDefault && $url === '') {
-                    $errors[] = 'The default manual needs a link (it is sent with every ticket).';
+                if ($url === '' && $steps === '' && !$hasUpload && !$hadFile) {
+                    $errors[] = 'Add the steps (slides are made from them), upload a PowerPoint / PDF, or both.';
                 }
                 if ($errors) {
                     $_SESSION['flash_error'] = implode(' ', $errors);
@@ -228,12 +237,40 @@ class SystemController extends AuthController
                 }
                 if ($makeDefault) {
                     $pdo->prepare('UPDATE tblit_manuals SET is_default = (manual_id = ?)')->execute([$manualId]);
-                    AppSettings::set('it_manual_url', $url);
+                    if ($url !== '') {
+                        AppSettings::set('it_manual_url', $url);
+                    }
                 }
                 $pdo->commit();
+
+                // Uploaded PowerPoint / PDF (replaces the previous one), or remove it.
+                $fileNote = '';
+                $current = $pdo->prepare('SELECT file_path FROM tblit_manuals WHERE manual_id = ?');
+                $current->execute([$manualId]);
+                $oldFile = (string) $current->fetchColumn();
+                if ($hasUpload) {
+                    try {
+                        $stored = TicketManuals::storeFile($upload, $manualId);
+                        $pdo->prepare('UPDATE tblit_manuals SET file_path = ?, file_name = ?, file_mime = ?, file_size = ? WHERE manual_id = ?')
+                            ->execute([$stored['path'], $stored['name'], $stored['mime'], $stored['size'], $manualId]);
+                        if ($oldFile !== '' && ($old = TicketManuals::filePath($oldFile)) !== null) {
+                            @unlink($old);
+                        }
+                        $fileNote = ' File uploaded.';
+                    } catch (RuntimeException $e) {
+                        $fileNote = ' The file was not uploaded: ' . $e->getMessage();
+                    }
+                } elseif (!empty($_POST['remove_file']) && $oldFile !== '') {
+                    $pdo->prepare('UPDATE tblit_manuals SET file_path = NULL, file_name = NULL, file_mime = NULL, file_size = NULL WHERE manual_id = ?')
+                        ->execute([$manualId]);
+                    if (($old = TicketManuals::filePath($oldFile)) !== null) {
+                        @unlink($old);
+                    }
+                    $fileNote = ' File removed.';
+                }
                 ActivityLogger::update('Troubleshooting Manuals', (string) $manualId, 'Saved manual: ' . $title,
                     $_SESSION['username'] ?? 'Unknown');
-                $_SESSION['flash_success'] = 'Manual saved.';
+                $_SESSION['flash_success'] = 'Manual saved. Slides and a PowerPoint are made from the steps automatically.' . $fileNote;
             } catch (PDOException $e) {
                 if ($pdo->inTransaction()) {
                     $pdo->rollBack();

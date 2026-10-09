@@ -264,7 +264,7 @@ class AdminController extends AuthController
 
             $rawPw = trim($dataAcc['password']);
             $passwordChanged = $rawPw !== '';
-            if ($passwordChanged && strpos($rawPw, '$2y$') !== 0 && ($problem = PasswordPolicy::problem($rawPw)) !== null) {
+            if ($passwordChanged && strpos($rawPw, '$2y$') !== 0 && ($problem = PasswordPolicy::adminSetProblem($rawPw)) !== null) {
                 $_SESSION['flash_error'] = $problem;
                 $this->redirect('/admin/account/edit?account_id=' . $dataAcc['account_id']);
             }
@@ -439,7 +439,7 @@ class AdminController extends AuthController
                 return;
             }
 
-            if (($problem = PasswordPolicy::problem($password)) !== null) {
+            if (($problem = PasswordPolicy::adminSetProblem($password)) !== null) {
                 $_SESSION['flash_error'] = $problem;
                 $branches = $accountModel->fetchBranches();
                 $departments = $departmentModel->fetchAll();

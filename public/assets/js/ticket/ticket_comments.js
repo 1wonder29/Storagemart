@@ -47,7 +47,8 @@
       const name = escapeHtml(comment.attachment_name || 'File');
       attachment = comment.attachment_is_image
         ? '<a href="' + url + '" target="_blank" rel="noopener" class="ticket-comment-photo d-inline-block mt-1">' +
-            '<img src="' + url + '" alt="' + name + '" loading="lazy" style="max-width:260px;max-height:200px;border-radius:10px;border:1px solid rgba(0,0,0,.1)"></a>'
+            '<img src="' + url + '" alt="' + name + '" loading="lazy" style="max-width:260px;max-height:200px;border-radius:10px;border:1px solid rgba(0,0,0,.1)"' +
+            ' onerror="this.outerHTML=\'<span><i class=&quot;fas fa-image mr-1&quot;></i>Open photo</span>\'"></a>'
         : '<a href="' + url + '" target="_blank" rel="noopener" class="ticket-comment-file-link d-inline-flex align-items-center mt-1">' +
             '<i class="fas fa-file-alt mr-1"></i>' + name + '</a>';
     }
@@ -258,6 +259,25 @@
         $section.data('comment-file', file);
         $section.find('.ticket-comment-file-name').text(file ? 'Attached: ' + file.name : '');
       });
+    });
+    // Paste a screenshot into the comment box (Ctrl+V or right-click > Paste).
+    $section.on('paste.ticketComments', '.ticket-comment-input', function (e) {
+      const items = (e.originalEvent.clipboardData && e.originalEvent.clipboardData.items) || [];
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].kind === 'file' && /^image\//.test(items[i].type)) {
+          const blob = items[i].getAsFile();
+          if (!blob) continue;
+          e.preventDefault();
+          let file = blob;
+          try { file = new File([blob], 'screenshot-' + Date.now() + '.png', { type: blob.type || 'image/png' }); } catch (err) { /* keep blob */ }
+          const shrink = window.TMSShrinkImage ? window.TMSShrinkImage(file) : Promise.resolve(file);
+          shrink.then(function (small) {
+            $section.data('comment-file', small);
+            $section.find('.ticket-comment-file-name').text('Attached: ' + (small.name || 'screenshot.png') + ' (pasted)');
+          });
+          return;
+        }
+      }
     });
     $section.on('submit.ticketComments', '.ticket-comments-form', function (e) {
       e.preventDefault();
