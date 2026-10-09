@@ -38,7 +38,8 @@
   display: block;
   height: 2.3rem;
   width: auto;
-  border-radius: 0.35rem;
+  aspect-ratio: 298 / 74;
+  image-rendering: auto;
 }
 
 .app-topbar .app-topbar-clock {

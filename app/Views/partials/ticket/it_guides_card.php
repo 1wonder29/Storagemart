@@ -48,11 +48,10 @@ $guideClosed = in_array((string) ($ticket['status'] ?? ''), ['Resolved', 'Closed
                         <?= htmlspecialchars(date('M j, g:i A', strtotime((string) $guideTicket['manual_sent_at']))) ?>.</div>
                 <?php endif; ?>
                 <?php foreach ($guideMatches as $guide):
-                    $guideText = $guide['title'] . ':';
-                    foreach ($guide['steps'] as $i => $step) {
-                        $guideText .= "\n" . ($i + 1) . '. ' . $step;
+                    $guideText = implode("\n", TicketManuals::chatLines($guide));
+                    if ($guide['manual_id'] === 0) {
+                        $guideText .= "\nAll IT manuals: " . TicketManuals::libraryUrl();
                     }
-                    $guideText .= "\nSlides: " . $guide['viewer'];
                 ?>
                     <div class="guide-item">
                         <div class="d-flex justify-content-between align-items-start">
@@ -70,7 +69,9 @@ $guideClosed = in_array((string) ($ticket['status'] ?? ''), ['Resolved', 'Closed
                             <?php endif; ?>
                         </div>
                         <?php if ($guide['steps']): ?>
-                            <ol><?php foreach ($guide['steps'] as $step): ?><li><?= htmlspecialchars($step) ?></li><?php endforeach; ?></ol>
+                            <details class="small mt-1"><summary><?= count($guide['steps']) ?> steps</summary>
+                                <ol><?php foreach ($guide['steps'] as $step): ?><li><?= htmlspecialchars($step) ?></li><?php endforeach; ?></ol>
+                            </details>
                         <?php endif; ?>
                         <a class="small" href="<?= htmlspecialchars($guide['viewer']) ?>" target="_blank" rel="noopener">
                             <i class="fas fa-desktop mr-1"></i>View slides</a>

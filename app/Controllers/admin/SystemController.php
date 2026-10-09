@@ -170,6 +170,11 @@ class SystemController extends AuthController
                         if ($oldFile !== null) {
                             @unlink($oldFile);
                         }
+                        foreach (ManualPresentation::stepPhotos($row) as $photo) {
+                            if (($path = TicketManuals::stepPhotoPath($photo)) !== null) {
+                                @unlink($path);
+                            }
+                        }
                         ActivityLogger::delete('Troubleshooting Manuals', (string) $manualId, 'Deleted manual: ' . $row['title'],
                             $_SESSION['username'] ?? 'Unknown');
                         $_SESSION['flash_success'] = 'Manual deleted.';
@@ -178,9 +183,21 @@ class SystemController extends AuthController
                     return;
                 }
 
+                $text = static function (string $name, int $max = 20000): string {
+                    $value = trim(str_replace("\r\n", "\n", (string) ($_POST[$name] ?? '')));
+                    return mb_substr($value, 0, $max);
+                };
                 $title = trim((string) ($_POST['title'] ?? ''));
                 $url = trim((string) ($_POST['url'] ?? ''));
-                $steps = trim(str_replace("\r\n", "\n", (string) ($_POST['steps'] ?? '')));
+                $steps = $text('steps');
+                $intro = $text('intro');
+                $mainIssue = $text('main_issue');
+                $factors = $text('factors');
+                $actionText = $text('action_text');
+                $solution = $text('solution');
+                $note = $text('note');
+                $group = mb_substr(trim((string) ($_POST['manual_group'] ?? '')), 0, 100);
+                $itOnly = !empty($_POST['it_only']) ? 1 : 0;
                 $categories = array_values(array_intersect(
                     (array) ($_POST['categories'] ?? []),
                     array_merge(TicketFormFields::HEAD_OFFICE_CATEGORIES, TicketFormFields::BRANCH_CATEGORIES)
@@ -188,6 +205,12 @@ class SystemController extends AuthController
                 $keywords = implode(', ', array_slice(array_filter(array_map('trim',
                     preg_split('/[,\n;]+/', strtolower((string) ($_POST['keywords'] ?? ''))) ?: []), 'strlen'), 0, 40));
                 $description = trim((string) ($_POST['description'] ?? ''));
+                if ($description === '') {
+                    $description = ManualPresentation::plain($mainIssue !== '' ? $mainIssue : $intro);
+                }
+                if (mb_strlen($description) > 255) {
+                    $description = mb_substr($description, 0, 252) . '...';
+                }
                 $makeDefault = $role === 'ADMIN' && !empty($_POST['is_default']);
 
                 $errors = [];
@@ -205,8 +228,8 @@ class SystemController extends AuthController
                     $stmt->execute([$manualId]);
                     $hadFile = (string) $stmt->fetchColumn() !== '' && empty($_POST['remove_file']);
                 }
-                if ($url === '' && $steps === '' && !$hasUpload && !$hadFile) {
-                    $errors[] = 'Add the steps (slides are made from them), upload a PowerPoint / PDF, or both.';
+                if ($url === '' && $steps === '' && $intro === '' && $mainIssue === '' && $solution === '' && !$hasUpload && !$hadFile) {
+                    $errors[] = 'Add the steps or the other slide texts (slides are made from them), upload a PowerPoint / PDF, or both.';
                 }
                 if ($errors) {
                     $_SESSION['flash_error'] = implode(' ', $errors);
@@ -215,24 +238,39 @@ class SystemController extends AuthController
                     return;
                 }
 
+                $null = static function (string $value): ?string {
+                    return $value !== '' ? $value : null;
+                };
                 $params = [
                     ':title' => $title,
                     ':url' => $url !== '' ? mb_substr($url, 0, 500) : null,
-                    ':description' => $description !== '' ? mb_substr($description, 0, 255) : null,
-                    ':steps' => $steps !== '' ? $steps : null,
+                    ':description' => $null($description),
+                    ':steps' => $null($steps),
                     ':categories' => implode(', ', $categories),
                     ':keywords' => $keywords,
+                    ':intro' => $null($intro),
+                    ':main_issue' => $null($mainIssue),
+                    ':factors' => $null($factors),
+                    ':action_text' => $null($actionText),
+                    ':solution' => $null($solution),
+                    ':note' => $null($note),
+                    ':manual_group' => $null($group),
+                    ':it_only' => $makeDefault ? 0 : $itOnly,
                     ':by' => (int) $_SESSION['account_id'],
                 ];
                 $pdo->beginTransaction();
                 if ($manualId > 0) {
                     $params[':id'] = $manualId;
                     $pdo->prepare('UPDATE tblit_manuals SET title = :title, url = :url, description = :description, steps = :steps,
-                            categories = :categories, keywords = :keywords, updated_by = :by, updated_at = NOW()
+                            categories = :categories, keywords = :keywords, intro = :intro, main_issue = :main_issue, factors = :factors,
+                            action_text = :action_text, solution = :solution, note = :note, manual_group = :manual_group, it_only = :it_only,
+                            updated_by = :by, updated_at = NOW()
                             WHERE manual_id = :id')->execute($params);
                 } else {
-                    $pdo->prepare('INSERT INTO tblit_manuals (title, url, description, steps, categories, keywords, is_default, created_by, created_at)
-                            VALUES (:title, :url, :description, :steps, :categories, :keywords, 0, :by, NOW())')->execute($params);
+                    $pdo->prepare('INSERT INTO tblit_manuals (title, url, description, steps, categories, keywords, intro, main_issue, factors,
+                                action_text, solution, note, manual_group, it_only, is_default, created_by, created_at)
+                            VALUES (:title, :url, :description, :steps, :categories, :keywords, :intro, :main_issue, :factors,
+                                :action_text, :solution, :note, :manual_group, :it_only, 0, :by, NOW())')->execute($params);
                     $manualId = (int) $pdo->lastInsertId();
                 }
                 if ($makeDefault) {
@@ -243,11 +281,13 @@ class SystemController extends AuthController
                 }
                 $pdo->commit();
 
+                $current = $pdo->prepare('SELECT file_path, step_photos FROM tblit_manuals WHERE manual_id = ?');
+                $current->execute([$manualId]);
+                $currentRow = $current->fetch(PDO::FETCH_ASSOC) ?: [];
+
                 // Uploaded PowerPoint / PDF (replaces the previous one), or remove it.
                 $fileNote = '';
-                $current = $pdo->prepare('SELECT file_path FROM tblit_manuals WHERE manual_id = ?');
-                $current->execute([$manualId]);
-                $oldFile = (string) $current->fetchColumn();
+                $oldFile = (string) ($currentRow['file_path'] ?? '');
                 if ($hasUpload) {
                     try {
                         $stored = TicketManuals::storeFile($upload, $manualId);
@@ -268,9 +308,61 @@ class SystemController extends AuthController
                     }
                     $fileNote = ' File removed.';
                 }
+
+                // Step photos: new uploads replace, ticked ones are removed, photos of steps that no longer exist are dropped.
+                $photos = ManualPresentation::stepPhotos($currentRow);
+                $before = $photos;
+                $stepCount = count(ManualPresentation::stepTexts($steps));
+                $drop = static function (int $index) use (&$photos): void {
+                    if (isset($photos[$index]) && ($path = TicketManuals::stepPhotoPath($photos[$index])) !== null) {
+                        @unlink($path);
+                    }
+                    unset($photos[$index]);
+                };
+                foreach (array_keys((array) ($_POST['remove_step_photo'] ?? [])) as $index) {
+                    $drop((int) $index);
+                }
+                $photoErrors = [];
+                $uploads = $_FILES['step_photo'] ?? null;
+                if ($uploads && is_array($uploads['name'] ?? null)) {
+                    foreach ($uploads['name'] as $index => $name) {
+                        $index = (int) $index;
+                        if (($uploads['error'][$index] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE || $index < 1 || $index > $stepCount) {
+                            continue;
+                        }
+                        try {
+                            $stored = TicketManuals::storeStepPhoto([
+                                'name' => $name,
+                                'tmp_name' => $uploads['tmp_name'][$index] ?? '',
+                                'error' => $uploads['error'][$index] ?? UPLOAD_ERR_NO_FILE,
+                                'size' => $uploads['size'][$index] ?? 0,
+                            ], $manualId, $index);
+                            $drop($index);
+                            $photos[$index] = $stored;
+                        } catch (RuntimeException $e) {
+                            $photoErrors[] = $e->getMessage();
+                        }
+                    }
+                }
+                foreach (array_keys($photos) as $index) {
+                    if ($index > $stepCount) {
+                        $drop($index);
+                    }
+                }
+                if ($photos !== $before) {
+                    ksort($photos);
+                    $pdo->prepare('UPDATE tblit_manuals SET step_photos = ? WHERE manual_id = ?')
+                        ->execute([$photos ? json_encode($photos) : null, $manualId]);
+                }
+                if ($photoErrors) {
+                    $fileNote .= ' ' . implode(' ', $photoErrors);
+                }
+
                 ActivityLogger::update('Troubleshooting Manuals', (string) $manualId, 'Saved manual: ' . $title,
                     $_SESSION['username'] ?? 'Unknown');
-                $_SESSION['flash_success'] = 'Manual saved. Slides and a PowerPoint are made from the steps automatically.' . $fileNote;
+                $_SESSION['flash_success'] = 'Guide saved. Its slides and PowerPoint use the IT manual design.' . $fileNote;
+                $this->redirect($home . '?edit=' . $manualId . '#manual-form');
+                return;
             } catch (PDOException $e) {
                 if ($pdo->inTransaction()) {
                     $pdo->rollBack();
@@ -304,11 +396,15 @@ class SystemController extends AuthController
             : null;
 
         $allCategories = array_values(array_unique(array_merge(TicketFormFields::HEAD_OFFICE_CATEGORIES, TicketFormFields::BRANCH_CATEGORIES)));
+        $groupNames = TicketManuals::GROUPS;
+        foreach ($manuals as $manual) {
+            $groupNames[] = TicketManuals::groupOf($manual);
+        }
+        $groupNames = array_values(array_unique($groupNames));
         $this->renderAdmin('system/manuals.php', compact(
-            'role', 'home', 'manuals', 'setupMissing', 'editing', 'old', 'allCategories', 'testCategory', 'testText', 'testResult'
+            'role', 'home', 'manuals', 'setupMissing', 'editing', 'old', 'allCategories', 'testCategory', 'testText', 'testResult', 'groupNames'
         ));
     }
-
     /**
      * Admin > System > Seasonal Themes: preview a theme in your own browser, schedule its
      * release (start / end date and time), turn schedules off or delete them.
@@ -322,6 +418,7 @@ class SystemController extends AuthController
             $this->requireCsrf('/admin/themes');
             $action = (string) ($_POST['action'] ?? 'schedule');
             $scheduleId = (int) ($_POST['schedule_id'] ?? 0);
+            $back = '/admin/themes';
             try {
                 if ($action === 'delete') {
                     $pdo->prepare('DELETE FROM tblthemes_schedule WHERE schedule_id = ?')->execute([$scheduleId]);
@@ -332,8 +429,34 @@ class SystemController extends AuthController
                 } elseif ($action === 'stop') {
                     $pdo->prepare('UPDATE tblthemes_schedule SET ends_at = NOW() WHERE schedule_id = ? AND ends_at > NOW()')->execute([$scheduleId]);
                     $_SESSION['flash_success'] = 'Theme ended now.';
+                } elseif ($action === 'save_theme') {
+                    $back = $this->saveTheme($pdo);
+                } elseif ($action === 'delete_theme') {
+                    $key = (string) ($_POST['theme_key'] ?? '');
+                    $theme = SeasonalThemes::get($pdo, $key);
+                    if (!$theme) {
+                        $_SESSION['flash_error'] = 'Theme not found.';
+                    } else {
+                        $pdo->prepare('DELETE FROM tblthemes_schedule WHERE theme_key = ?')->execute([$key]);
+                        $pdo->prepare('DELETE FROM tblthemes WHERE theme_key = ?')->execute([$key]);
+                        ActivityLogger::delete('Admin - Themes', $key, 'Deleted theme ' . $theme['name'], $_SESSION['username'] ?? 'Unknown');
+                        $_SESSION['flash_success'] = $theme['name'] . ' theme deleted (with its schedules).';
+                    }
+                } elseif ($action === 'restore_builtin') {
+                    $added = 0;
+                    $insert = $pdo->prepare('INSERT IGNORE INTO tblthemes (theme_key, name, icon, items, color_main, color_accent, message,
+                            date_from, date_to, effects, is_builtin, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NOW())');
+                    $order = 10;
+                    foreach (SeasonalThemes::CATALOG as $key => $theme) {
+                        $insert->execute([$key, $theme['name'], $theme['icon'], implode(' ', $theme['items']), $theme['colors'][0], $theme['colors'][1],
+                            $theme['message'], $theme['from'] ?: null, $theme['to'] ?: null, implode(',', $theme['effects']), $order]);
+                        $added += $insert->rowCount();
+                        $order += 10;
+                    }
+                    $_SESSION['flash_success'] = $added ? $added . ' built-in theme(s) restored.' : 'All built-in themes are already in the list.';
                 } else {
                     $key = (string) ($_POST['theme_key'] ?? '');
+                    $theme = SeasonalThemes::get($pdo, $key);
                     $startsAt = strtotime(str_replace('T', ' ', (string) ($_POST['starts_at'] ?? '')));
                     $endsAt = strtotime(str_replace('T', ' ', (string) ($_POST['ends_at'] ?? '')));
                     $message = trim((string) ($_POST['message'] ?? ''));
@@ -341,7 +464,7 @@ class SystemController extends AuthController
                         $startsAt = time();
                         $endsAt = time() + max(1, min(60, (int) ($_POST['days'] ?? 7))) * 86400;
                     }
-                    if (!SeasonalThemes::exists($key)) {
+                    if (!$theme) {
                         $_SESSION['flash_error'] = 'Choose a theme.';
                     } elseif (!$startsAt || !$endsAt || $endsAt <= $startsAt) {
                         $_SESSION['flash_error'] = 'Set a release date / time and an end after it.';
@@ -353,11 +476,11 @@ class SystemController extends AuthController
                         $overlap->execute([date('Y-m-d H:i:s', $endsAt), date('Y-m-d H:i:s', $startsAt)]);
                         $pdo->prepare('INSERT INTO tblthemes_schedule (theme_key, title, message, starts_at, ends_at, is_active, created_by, created_at)
                                 VALUES (?, ?, ?, ?, ?, 1, ?, NOW())')
-                            ->execute([$key, SeasonalThemes::CATALOG[$key]['name'], $message !== '' ? $message : null,
+                            ->execute([$key, $theme['name'], $message !== '' ? $message : null,
                                 date('Y-m-d H:i:s', $startsAt), date('Y-m-d H:i:s', $endsAt), (int) $_SESSION['account_id']]);
-                        ActivityLogger::update('Admin - Themes', $key, 'Scheduled theme ' . SeasonalThemes::CATALOG[$key]['name'],
+                        ActivityLogger::update('Admin - Themes', $key, 'Scheduled theme ' . $theme['name'],
                             $_SESSION['username'] ?? 'Unknown', ['from' => date('Y-m-d H:i', $startsAt), 'to' => date('Y-m-d H:i', $endsAt)]);
-                        $_SESSION['flash_success'] = SeasonalThemes::CATALOG[$key]['name'] . ' theme scheduled.'
+                        $_SESSION['flash_success'] = $theme['name'] . ' theme scheduled.'
                             . ((int) $overlap->fetchColumn() > 0 ? ' It overlaps another schedule; the one that started last is shown.' : '');
                     }
                 }
@@ -365,7 +488,7 @@ class SystemController extends AuthController
                 error_log('SystemController::themes failed: ' . $e->getMessage());
                 $_SESSION['flash_error'] = 'Could not save. Please run the database update first.';
             }
-            $this->redirect('/admin/themes');
+            $this->redirect($back);
             return;
         }
 
@@ -375,13 +498,87 @@ class SystemController extends AuthController
             $schedules = $pdo->query('SELECT s.*, (s.is_active = 1 AND s.starts_at <= NOW() AND s.ends_at > NOW()) AS is_live,
                         (s.starts_at > NOW()) AS is_upcoming
                     FROM tblthemes_schedule s ORDER BY s.ends_at < NOW(), s.starts_at')->fetchAll(PDO::FETCH_ASSOC);
+            $pdo->query('SELECT 1 FROM tblthemes LIMIT 1');
         } catch (Throwable $e) {
             $setupMissing = true;
         }
+        $themes = SeasonalThemes::all($pdo);
         $current = SeasonalThemes::current($pdo);
-        $this->renderAdmin('admin/system/themes.php', compact('schedules', 'setupMissing', 'current'));
+        $editKey = (string) ($_GET['edit_theme'] ?? '');
+        $editTheme = $editKey !== '' ? SeasonalThemes::get($pdo, $editKey) : null;
+        $themeOld = $_SESSION['theme_old_input'] ?? null;
+        unset($_SESSION['theme_old_input']);
+        $this->renderAdmin('admin/system/themes.php', compact('schedules', 'setupMissing', 'current', 'themes', 'editKey', 'editTheme', 'themeOld'));
     }
 
+    /** Add or edit a theme (Admin > Seasonal Themes). Returns the page to go back to. */
+    private function saveTheme(PDO $pdo): string
+    {
+        $key = (string) ($_POST['theme_key'] ?? '');
+        $existing = $key !== '' ? SeasonalThemes::get($pdo, $key) : null;
+        $name = trim((string) ($_POST['name'] ?? ''));
+        $icon = (string) ($_POST['icon'] ?? '');
+        $items = array_slice(array_values(array_filter(preg_split('/[\s,]+/u', trim((string) ($_POST['items'] ?? ''))) ?: [], 'strlen')), 0, 6);
+        $main = strtolower((string) ($_POST['color_main'] ?? ''));
+        $accent = strtolower((string) ($_POST['color_accent'] ?? ''));
+        $message = trim((string) ($_POST['message'] ?? ''));
+        $effects = array_values(array_intersect(array_keys(SeasonalThemes::EFFECTS), (array) ($_POST['effects'] ?? [])));
+        $from = (string) ($_POST['date_from'] ?? '');
+        $to = (string) ($_POST['date_to'] ?? '');
+        $md = static function (string $value): ?string {
+            // <input type="date"> value (any year) -> MM-DD
+            return preg_match('/^\d{4}-(\d{2})-(\d{2})$/', $value, $m) ? $m[1] . '-' . $m[2] : null;
+        };
+
+        $errors = [];
+        if ($name === '' || mb_strlen($name) > 60) {
+            $errors[] = 'Give the theme a name (max 60 characters).';
+        }
+        if (!in_array($icon, SeasonalThemes::ICONS, true)) {
+            $icon = 'fa-palette';
+        }
+        if (!preg_match('/^#[0-9a-f]{6}$/', $main) || !preg_match('/^#[0-9a-f]{6}$/', $accent)) {
+            $errors[] = 'Pick the two theme colors.';
+        }
+        if (mb_strlen(implode(' ', $items)) > 200 || mb_strlen($message) > 200) {
+            $errors[] = 'The icons and the greeting can have up to 200 characters each.';
+        }
+        if (!$effects) {
+            $errors[] = 'Tick at least one effect.';
+        }
+        if (($from === '') !== ($to === '')) {
+            $errors[] = 'Set both suggested dates, or leave both empty.';
+        }
+        if ($key !== '' && !$existing) {
+            $errors[] = 'Theme not found.';
+        }
+        if ($errors) {
+            $_SESSION['flash_error'] = implode(' ', $errors);
+            $_SESSION['theme_old_input'] = $_POST;
+            return '/admin/themes?' . ($key !== '' ? 'edit_theme=' . rawurlencode($key) : 'new_theme=1') . '#theme-form';
+        }
+
+        $values = [$name, $icon, implode(' ', $items), $main, $accent, $message !== '' ? $message : null,
+            $from !== '' ? $md($from) : null, $to !== '' ? $md($to) : null, implode(',', $effects)];
+        if ($existing) {
+            $pdo->prepare('UPDATE tblthemes SET name = ?, icon = ?, items = ?, color_main = ?, color_accent = ?, message = ?,
+                    date_from = ?, date_to = ?, effects = ?, updated_at = NOW() WHERE theme_key = ?')
+                ->execute(array_merge($values, [$key]));
+            $pdo->prepare('UPDATE tblthemes_schedule SET title = ? WHERE theme_key = ?')->execute([$name, $key]);
+            ActivityLogger::update('Admin - Themes', $key, 'Edited theme ' . $name, $_SESSION['username'] ?? 'Unknown');
+            $_SESSION['flash_success'] = $name . ' theme saved.';
+        } else {
+            $key = SeasonalThemes::newKey($pdo, $name);
+            $order = (int) $pdo->query('SELECT COALESCE(MAX(sort_order), 0) + 10 FROM tblthemes')->fetchColumn();
+            $pdo->prepare('INSERT INTO tblthemes (theme_key, name, icon, items, color_main, color_accent, message, date_from, date_to,
+                    effects, is_builtin, sort_order, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NOW())')
+                ->execute(array_merge([$key], $values, [$order, (int) $_SESSION['account_id']]));
+            ActivityLogger::update('Admin - Themes', $key, 'Added theme ' . $name, $_SESSION['username'] ?? 'Unknown');
+            $_SESSION['flash_success'] = $name . ' theme added. Preview it, then schedule its release.';
+        }
+        SeasonalThemes::forget();
+        return '/admin/themes#theme-' . $key;
+    }
     /**
      * /admin/assets/replacement and /it/asset-replacement: every asset purchased the set number
      * of years ago or earlier (TV, CCTV, PC set, laptop... all types). Admin can change the years.

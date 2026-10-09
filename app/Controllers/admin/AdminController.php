@@ -754,7 +754,7 @@ class AdminController extends AuthController
         }
 
         $auditTrail = new AuditTrail();
-        $trail = $auditTrail->getRecordAuditTrail($recordId);
+        $trail = $auditTrail->getRecordAuditTrail($recordId, isset($_GET['module']) ? (string) $_GET['module'] : null);
 
         echo json_encode(['success' => true, 'data' => $trail]);
         exit;

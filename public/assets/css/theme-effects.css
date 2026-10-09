@@ -1,0 +1,107 @@
+/* Seasonal theme effects (theme-effects.js). Everything sits above the page and ignores clicks. */
+.tfx-layer { position: fixed; inset: 0; z-index: 1095; pointer-events: none; overflow: hidden; transition: opacity 1.2s ease; }
+.tfx-layer.tfx-out { opacity: 0; }
+.tfx-layer span { position: absolute; display: block; line-height: 1; will-change: transform; }
+
+/* falling / rising pieces */
+.tfx-fall-outer { top: -60px; }
+.tfx-rise-outer { bottom: -70px; }
+.tfx-layer .tfx-sway { position: relative; animation: tfx-sway 2.4s ease-in-out infinite alternate; }
+.tfx-layer .tfx-spin { animation-name: tfx-sway-spin; }
+.tfx-snow { color: #dbeafe; text-shadow: 0 0 3px rgba(30, 64, 120, 0.55); }
+.tfx-gold { color: #f6c23e; text-shadow: 0 0 4px rgba(160, 110, 0, 0.5); }
+.tfx-layer .tfx-confetti { border-radius: 2px; animation-name: tfx-sway-spin; }
+.tfx-layer .tfx-ghost { opacity: 0.9; }
+.tfx-layer .tfx-bubble {
+  border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.85);
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(120, 200, 255, 0.28) 55%, rgba(120, 200, 255, 0.12));
+  box-shadow: 0 0 6px rgba(40, 120, 200, 0.35);
+}
+.tfx-layer .tfx-flag {
+  border-radius: 2px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(#0038a8 50%, #ce1126 50%);
+  animation-name: tfx-flag-wave;
+}
+.tfx-layer .tfx-flag::before {
+  content: ""; position: absolute; left: 0; top: 0; width: 45%; height: 100%; background: #fff;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+.tfx-layer .tfx-flag::after {
+  content: ""; position: absolute; left: 11%; top: 38%; width: 22%; height: 24%; border-radius: 50%; background: #fcd116;
+}
+
+/* rain */
+.tfx-dim { inset: 0; background: rgba(15, 23, 42, 0.24); animation: tfx-fade-in 1s ease both; }
+.tfx-flash { inset: 0; background: #fff; opacity: 0; animation-name: tfx-lightning; animation-timing-function: linear; animation-fill-mode: both; }
+.tfx-layer .tfx-drop {
+  top: -40px; width: 2px; border-radius: 2px;
+  background: linear-gradient(rgba(120, 150, 200, 0), rgba(70, 100, 160, 0.9));
+}
+
+/* walkers and flyers */
+.tfx-layer .tfx-walker { left: 0; }
+.tfx-layer .tfx-flyer { left: 0; }
+.tfx-layer .tfx-bob { position: relative; animation: tfx-bob 0.9s ease-in-out infinite; transform-origin: 50% 100%; }
+.tfx-layer .tfx-flutter { position: relative; animation: tfx-flutter 0.5s ease-in-out infinite alternate; }
+.tfx-layer .tfx-sleigh { white-space: nowrap; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.25)); }
+.tfx-layer .tfx-trail { color: #f6c23e; font-size: 14px; opacity: 0; }
+
+/* Christmas lights */
+.tfx-layer .tfx-strand {
+  left: 0; right: 0; top: 0; height: 34px;
+  background: radial-gradient(ellipse at 50% -30%, transparent 62%, rgba(40, 60, 40, 0.65) 64%, transparent 67%) 0 0 / 92px 30px repeat-x;
+}
+.tfx-layer .tfx-bulb {
+  width: 11px; height: 16px; margin-left: -5px; border-radius: 50% 50% 45% 45%;
+  box-shadow: 0 0 10px 3px currentColor; animation: tfx-blink 1.05s ease-in-out infinite alternate;
+}
+
+/* fireworks */
+.tfx-layer .tfx-rocket {
+  bottom: 0; width: 3px; height: 16px; margin-left: -1px; border-radius: 2px;
+  background: linear-gradient(#fff, rgba(255, 200, 80, 0));
+}
+.tfx-layer .tfx-spark { width: 5px; height: 5px; margin: -2px 0 0 -2px; border-radius: 50%; box-shadow: 0 0 6px currentColor; opacity: 0; }
+
+/* sparkles, sun, waves */
+.tfx-layer .tfx-sparkle { color: #f6c23e; opacity: 0; text-shadow: 0 0 6px rgba(246, 194, 62, 0.8); }
+.tfx-warm { inset: 0; background: radial-gradient(circle at 100% 0, rgba(255, 196, 0, 0.18), transparent 55%); animation: tfx-fade-in 1.5s ease both; }
+.tfx-layer .tfx-sun { right: -50px; top: 30px; width: 230px; height: 230px; animation: tfx-fade-in 1.5s ease both; }
+.tfx-layer .tfx-sun-rays {
+  inset: 0; border-radius: 50%;
+  background: repeating-conic-gradient(rgba(255, 210, 63, 0.55) 0 8deg, rgba(255, 210, 63, 0) 8deg 20deg);
+  -webkit-mask: radial-gradient(circle, #000 45%, transparent 71%); mask: radial-gradient(circle, #000 45%, transparent 71%);
+  animation: tfx-turn 14s linear infinite;
+}
+.tfx-layer .tfx-sun-core {
+  left: 50%; top: 50%; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #fff6b0, #ffd23f 55%, #ffb000);
+  box-shadow: 0 0 40px 12px rgba(255, 196, 0, 0.55);
+}
+.tfx-layer .tfx-wave { left: 0; bottom: -4px; width: 200%; height: 70px; opacity: 0.55; animation: tfx-wave 7s linear infinite; }
+.tfx-layer .tfx-wave-back { height: 92px; opacity: 0.28; animation-duration: 11s; animation-direction: reverse; }
+.tfx-layer .tfx-wave svg { display: inline-block; width: 50%; height: 100%; vertical-align: bottom; }
+
+@keyframes tfx-fall { from { transform: translateY(0); } to { transform: translateY(calc(100vh + 120px)); } }
+@keyframes tfx-rise { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(calc(-100vh - 140px)); opacity: 0; } }
+@keyframes tfx-sway { from { transform: translateX(-18px) rotate(-8deg); } to { transform: translateX(18px) rotate(8deg); } }
+@keyframes tfx-sway-spin { from { transform: translateX(-16px) rotate(0deg); } to { transform: translateX(16px) rotate(320deg); } }
+@keyframes tfx-flag-wave { from { transform: translateX(-14px) rotate(-14deg) skewY(-4deg); } to { transform: translateX(14px) rotate(14deg) skewY(4deg); } }
+@keyframes tfx-rain { from { transform: translate(0, 0); } to { transform: translate(-60px, calc(100vh + 60px)); } }
+@keyframes tfx-lightning { 0%, 27%, 29.5%, 31%, 69%, 70.5%, 100% { opacity: 0; } 28%, 30% { opacity: 0.75; } 70% { opacity: 0.55; } }
+@keyframes tfx-walk-left { from { transform: translateX(105vw); } to { transform: translateX(-140px); } }
+@keyframes tfx-cross-left { from { transform: translateX(105vw); } to { transform: translateX(-260px); } }
+@keyframes tfx-cross-right { from { transform: translateX(-80px); } to { transform: translateX(105vw); } }
+@keyframes tfx-bob { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-8px) rotate(5deg); } }
+@keyframes tfx-flutter { from { top: -26px; } to { top: 26px; } }
+@keyframes tfx-blink { from { opacity: 0.35; box-shadow: 0 0 2px 0 currentColor; } to { opacity: 1; box-shadow: 0 0 12px 4px currentColor; } }
+@keyframes tfx-launch { from { transform: translateY(0); opacity: 1; } to { transform: translateY(calc(-100vh + var(--tfx-y))); opacity: 0; } }
+@keyframes tfx-burst {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translate(var(--tfx-dx), calc(var(--tfx-dy) + 40px)) scale(0.4); opacity: 0; }
+}
+@keyframes tfx-twinkle { 0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(90deg); } }
+@keyframes tfx-turn { to { transform: rotate(360deg); } }
+@keyframes tfx-wave { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes tfx-fade-in { from { opacity: 0; } to { opacity: 1; } }

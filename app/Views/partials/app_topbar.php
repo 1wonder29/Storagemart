@@ -22,7 +22,7 @@ $shellDisplayName = $shellUser['fullname'] !== '' ? $shellUser['fullname'] : (st
     </button>
 
     <a class="app-topbar-brand" href="<?= htmlspecialchars($shellHomeUrl) ?>" title="Storage Mart TMS">
-        <img src="<?= htmlspecialchars($base) ?>/assets/img/storagemart-logo.png" alt="Storage Mart TMS">
+        <img src="<?= htmlspecialchars($base) ?>/assets/img/storagemart-logo-header.png" alt="Storage Mart TMS" width="149" height="37">
     </a>
 
     <ul class="navbar-nav ml-auto align-items-center">

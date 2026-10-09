@@ -4,9 +4,42 @@ $h = static function ($value): string {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
 $schedules = $schedules ?? [];
+$themes = $themes ?? [];
 $fmt = static function (string $value): string {
     return date('M j, Y g:i A', strtotime($value));
 };
+// Theme form: editing a theme, re-showing a form with errors, or a new theme.
+$formOpen = $editTheme !== null || !empty($themeOld) || !empty($_GET['new_theme']);
+$form = [
+    'key' => $editKey !== '' && $editTheme ? $editKey : '',
+    'name' => $editTheme['name'] ?? '',
+    'icon' => $editTheme['icon'] ?? 'fa-star',
+    'items' => implode(' ', $editTheme['items'] ?? []),
+    'main' => $editTheme['colors'][0] ?? '#f26522',
+    'accent' => $editTheme['colors'][1] ?? '#1f3a93',
+    'message' => $editTheme['message'] ?? '',
+    'from' => !empty($editTheme['from']) ? date('Y') . '-' . $editTheme['from'] : '',
+    'to' => !empty($editTheme['to']) ? date('Y') . '-' . $editTheme['to'] : '',
+    'effects' => $editTheme['effects'] ?? ['confetti'],
+];
+if (!empty($themeOld)) {
+    $form = [
+        'key' => (string) ($themeOld['theme_key'] ?? ''),
+        'name' => (string) ($themeOld['name'] ?? ''),
+        'icon' => (string) ($themeOld['icon'] ?? 'fa-star'),
+        'items' => (string) ($themeOld['items'] ?? ''),
+        'main' => (string) ($themeOld['color_main'] ?? '#f26522'),
+        'accent' => (string) ($themeOld['color_accent'] ?? '#1f3a93'),
+        'message' => (string) ($themeOld['message'] ?? ''),
+        'from' => (string) ($themeOld['date_from'] ?? ''),
+        'to' => (string) ($themeOld['date_to'] ?? ''),
+        'effects' => (array) ($themeOld['effects'] ?? []),
+    ];
+}
+$effectsJs = [];
+foreach ($themes as $key => $theme) {
+    $effectsJs[$key] = ['items' => $theme['items'], 'colors' => $theme['colors'], 'effects' => $theme['effects']];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,9 +59,31 @@ $fmt = static function (string $value): string {
         .theme-swatch { height:86px; display:flex; align-items:center; justify-content:center; gap:10px; font-size:1.9rem; color:#fff; }
         .theme-card .card-body { display:flex; flex-direction:column; }
         .theme-live { position:absolute; top:8px; right:8px; background:#1cc88a; color:#fff; font-size:.7rem; font-weight:800; padding:2px 8px; border-radius:999px; }
+        .theme-own { position:absolute; top:8px; left:8px; background:rgba(0,0,0,.35); color:#fff; font-size:.65rem; font-weight:800; padding:2px 8px; border-radius:999px; }
+        .fx-list { list-style:none; counter-reset:fx; padding:0; margin:0 0 10px; }
+        .fx-list li { counter-increment:fx; display:flex; align-items:center; gap:6px; font-size:.8rem; padding:2px 0; }
+        .fx-list li::before { content:counter(fx) "."; font-weight:800; color:#f26522; min-width:16px; }
+        .fx-play { border:0; background:#eef2ff; color:#4e73df; border-radius:999px; width:22px; height:22px; font-size:.6rem; line-height:22px; padding:0; margin-left:auto; }
+        .fx-play:hover { background:#4e73df; color:#fff; }
+        .fx-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:4px 14px; }
+        .fx-grid .custom-control { display:flex; align-items:center; }
+        .fx-grid .fx-play { margin-left:6px; }
         .sched-badge { display:inline-block; padding:1px 8px; border-radius:999px; font-size:.7rem; font-weight:700; }
         .sched-badge.live { background:#d1fae5; color:#047857; } .sched-badge.up { background:#e0e7ff; color:#3730a3; }
         .sched-badge.past { background:#f3f4f6; color:#6b7280; } .sched-badge.off { background:#fee2e2; color:#b91c1c; }
+        .btn-howto { background:#f26522; color:#fff; font-weight:800; border-radius:999px; animation:howtoGlow 1.8s infinite; }
+        .btn-howto:hover { color:#fff; filter:brightness(1.06); }
+        @keyframes howtoGlow { 0% { box-shadow:0 0 0 0 rgba(242,101,34,.55); } 70% { box-shadow:0 0 0 10px rgba(242,101,34,0); } 100% { box-shadow:0 0 0 0 rgba(242,101,34,0); } }
+        .theme-preview-strip { height:64px; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:10px; font-size:1.3rem; font-weight:700; color:#fff; padding:0 12px; text-align:center; }
+        /* step-by-step tutorial */
+        .tour-ring { position:absolute; z-index:1070; border:3px solid #f26522; border-radius:10px; box-shadow:0 0 0 4000px rgba(17,24,39,.45); pointer-events:none; transition:all .25s ease; }
+        .tour-tip { position:absolute; z-index:1071; width:320px; max-width:calc(100vw - 24px); background:#fff; color:#1f2937; border-radius:12px; padding:14px 16px;
+                    box-shadow:0 14px 40px rgba(0,0,0,.3); border-top:5px solid #f26522; }
+        .tour-tip h6 { font-weight:800; color:#f26522; margin:0 0 6px; }
+        .tour-tip p { font-size:.86rem; margin:0 0 10px; }
+        .tour-tip .tour-n { font-size:.72rem; color:#6b7280; }
+        html.it-dark .tour-tip { background:#1e2230; color:#e5e7eb; }
+        html.it-dark .fx-play { background:#262b3b; }
     </style>
 </head>
 
@@ -47,8 +102,8 @@ $fmt = static function (string $value): string {
                 <div class="row align-items-center">
                     <div class="col-lg-8">
                         <h1><i class="fas fa-palette mr-2"></i>Seasonal Themes</h1>
-                        <p>Give the whole system a seasonal look (Halloween, Christmas, summer...). Preview a theme here first;
-                            only you see the preview. Then set its release date and time.</p>
+                        <p>Give the whole system a seasonal look (Halloween, Christmas, summer...) with its own screen effects.
+                            Add your own themes, preview them here (only you see the preview), then set the release date and time.</p>
                     </div>
                     <div class="col-lg-4">
                         <div class="hero-stat mt-3 mt-lg-0">
@@ -64,25 +119,38 @@ $fmt = static function (string $value): string {
                     The database update has not been run yet. Import the update SQL in phpMyAdmin first.</div>
             <?php endif; ?>
 
-            <div class="d-flex flex-wrap align-items-center mb-3">
-                <h5 class="mb-0 mr-3 font-weight-bold text-gray-800">Theme list</h5>
+            <div class="d-flex flex-wrap align-items-center mb-3" style="gap:8px">
+                <h5 class="mb-0 mr-2 font-weight-bold text-gray-800">Theme list</h5>
+                <a class="btn btn-sm btn-primary" id="addThemeBtn" href="<?= $h($base) ?>/admin/themes?new_theme=1#theme-form">
+                    <i class="fas fa-plus mr-1"></i>Add a theme</a>
+                <button type="button" class="btn btn-sm btn-howto" id="tourBtn"><i class="fas fa-play-circle mr-1"></i>How to add a theme</button>
                 <a class="btn btn-sm btn-outline-danger ml-auto" href="<?= $h($base) ?>/admin/themes?birthday_preview=1">
                     <i class="fas fa-birthday-cake mr-1"></i>Test the birthday greeting</a>
             </div>
-            <div class="row">
-                <?php foreach (SeasonalThemes::CATALOG as $key => $theme):
-                    $range = SeasonalThemes::suggestedRange($key);
+            <div class="row" id="themeList">
+                <?php foreach ($themes as $key => $theme):
+                    $range = SeasonalThemes::suggestedRange($theme);
                     $isLive = ($current['key'] ?? '') === $key;
                 ?>
-                    <div class="col-md-6 col-xl-3 mb-4">
+                    <div class="col-md-6 col-xl-3 mb-4" id="theme-<?= $h($key) ?>">
                         <div class="card shadow theme-card position-relative">
                             <div class="theme-swatch" style="background:linear-gradient(135deg, <?= $h($theme['colors'][0]) ?>, <?= $h($theme['colors'][1]) ?>)">
                                 <?php foreach (array_slice($theme['items'], 0, 3) as $item): ?><span aria-hidden="true"><?= $h($item) ?></span><?php endforeach; ?>
                             </div>
                             <?php if ($isLive): ?><span class="theme-live">LIVE</span><?php endif; ?>
+                            <?php if (empty($theme['builtin'])): ?><span class="theme-own">Added by Admin</span><?php endif; ?>
                             <div class="card-body">
                                 <h6 class="font-weight-bold mb-1"><i class="fas <?= $h($theme['icon']) ?> mr-1"></i><?= $h($theme['name']) ?></h6>
                                 <p class="small text-muted mb-2"><?= $h($theme['message']) ?></p>
+                                <div class="small font-weight-bold text-gray-700 mb-1">Effects</div>
+                                <ol class="fx-list">
+                                    <?php foreach ($theme['effects'] as $effect): ?>
+                                        <li><?= $h(SeasonalThemes::EFFECTS[$effect][0] ?? $effect) ?>
+                                            <button type="button" class="fx-play js-fx" data-theme="<?= $h($key) ?>" data-effect="<?= $h($effect) ?>"
+                                                    title="Test: <?= $h(SeasonalThemes::EFFECTS[$effect][1] ?? '') ?>" aria-label="Test the <?= $h(SeasonalThemes::EFFECTS[$effect][0] ?? $effect) ?> effect">
+                                                <i class="fas fa-play"></i></button></li>
+                                    <?php endforeach; ?>
+                                </ol>
                                 <p class="small mb-3">
                                     <?php if ($range): ?>
                                         Suggested: <strong><?= $h(date('M j', strtotime($range['from']))) ?> – <?= $h(date('M j, Y', strtotime($range['to']))) ?></strong>
@@ -97,12 +165,102 @@ $fmt = static function (string $value): string {
                                             data-key="<?= $h($key) ?>"
                                             data-from="<?= $h($range['from'] ?? '') ?>" data-to="<?= $h($range['to'] ?? '') ?>">
                                         <i class="fas fa-calendar-plus mr-1"></i>Schedule</button>
+                                    <a class="btn btn-sm btn-outline-secondary" href="<?= $h($base) ?>/admin/themes?edit_theme=<?= $h($key) ?>#theme-form" title="Edit">
+                                        <i class="fas fa-edit"></i></a>
+                                    <form method="POST" action="<?= $h($base) ?>/admin/themes" class="d-inline js-delete-theme" data-name="<?= $h($theme['name']) ?>">
+                                        <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
+                                        <input type="hidden" name="action" value="delete_theme">
+                                        <input type="hidden" name="theme_key" value="<?= $h($key) ?>">
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
+                <?php if (!$themes): ?>
+                    <div class="col-12"><p class="text-muted">No themes. Add one, or restore the built-in themes below.</p></div>
+                <?php endif; ?>
             </div>
+
+            <?php if ($formOpen): ?>
+                <div class="card form-card shadow mb-4" id="theme-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas <?= $form['key'] ? 'fa-edit' : 'fa-plus' ?> mr-1"></i>
+                            <?= $form['key'] ? 'Edit theme: ' . $h($form['name']) : 'Add a theme' ?></h6>
+                        <a href="<?= $h($base) ?>/admin/themes" class="btn btn-sm btn-light">Cancel</a>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="<?= $h($base) ?>/admin/themes" id="themeForm">
+                            <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
+                            <input type="hidden" name="action" value="save_theme">
+                            <input type="hidden" name="theme_key" id="f_key" value="<?= $h($form['key']) ?>">
+                            <div class="form-row">
+                                <div class="form-group col-md-5" id="tf-name">
+                                    <label for="f_name">1. Theme name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="f_name" name="name" maxlength="60" required value="<?= $h($form['name']) ?>"
+                                           placeholder="e.g. Chinese New Year">
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label for="f_icon">Icon</label>
+                                    <select class="form-control" id="f_icon" name="icon">
+                                        <?php foreach (SeasonalThemes::ICONS as $iconName): ?>
+                                            <option value="<?= $h($iconName) ?>" <?= $form['icon'] === $iconName ? 'selected' : '' ?>><?= $h(str_replace('fa-', '', $iconName)) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-4" id="tf-items">
+                                    <label for="f_items">2. Emoji <small class="text-muted">(up to 6, with spaces)</small></label>
+                                    <input type="text" class="form-control" id="f_items" name="items" maxlength="200" value="<?= $h($form['items']) ?>" placeholder="🧧 🐉 🏮 🎆">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-2" id="tf-colors">
+                                    <label for="f_main">3. Main color</label>
+                                    <input type="color" class="form-control" id="f_main" name="color_main" value="<?= $h($form['main']) ?>">
+                                </div>
+                                <div class="form-group col-md-2">
+                                    <label for="f_accent">Second color</label>
+                                    <input type="color" class="form-control" id="f_accent" name="color_accent" value="<?= $h($form['accent']) ?>">
+                                </div>
+                                <div class="form-group col-md-8" id="tf-message">
+                                    <label for="f_message">4. Greeting <small class="text-muted">(shown in a ribbon under the header)</small></label>
+                                    <input type="text" class="form-control" id="f_message" name="message" maxlength="200" value="<?= $h($form['message']) ?>"
+                                           placeholder="e.g. Kung Hei Fat Choi from StorageMart! 🧧">
+                                </div>
+                            </div>
+                            <div class="theme-preview-strip mb-3" id="f_strip" aria-hidden="true"></div>
+                            <div class="form-group" id="tf-effects">
+                                <label class="d-block">5. Effects <small class="text-muted">(tick one or more; press <i class="fas fa-play"></i> to see each one)</small></label>
+                                <div class="fx-grid">
+                                    <?php foreach (SeasonalThemes::EFFECTS as $effect => [$label, $desc]): ?>
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="fx_<?= $h($effect) ?>" name="effects[]" value="<?= $h($effect) ?>"
+                                                <?= in_array($effect, $form['effects'], true) ? 'checked' : '' ?>>
+                                            <label class="custom-control-label small" for="fx_<?= $h($effect) ?>" title="<?= $h($desc) ?>"><?= $h($label) ?></label>
+                                            <button type="button" class="fx-play js-fx-form" data-effect="<?= $h($effect) ?>" aria-label="Test the <?= $h($label) ?> effect"><i class="fas fa-play"></i></button>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                            <div class="form-row" id="tf-dates">
+                                <div class="form-group col-sm-4">
+                                    <label for="f_from">6. Suggested start <small class="text-muted">(optional, any year)</small></label>
+                                    <input type="date" class="form-control" id="f_from" name="date_from" value="<?= $h($form['from']) ?>">
+                                </div>
+                                <div class="form-group col-sm-4">
+                                    <label for="f_to">Suggested end</label>
+                                    <input type="date" class="form-control" id="f_to" name="date_to" value="<?= $h($form['to']) ?>">
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap" style="gap:8px">
+                                <button type="submit" class="btn btn-primary" id="tf-save"><i class="fas fa-save mr-1"></i>7. Save theme</button>
+                                <button type="button" class="btn btn-outline-primary" id="tf-test"><i class="fas fa-magic mr-1"></i>Test all ticked effects</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <div class="row">
                 <div class="col-xl-5">
@@ -117,7 +275,7 @@ $fmt = static function (string $value): string {
                                 <div class="form-group">
                                     <label for="t_key">Theme</label>
                                     <select class="form-control" id="t_key" name="theme_key" required>
-                                        <?php foreach (SeasonalThemes::CATALOG as $key => $theme): ?>
+                                        <?php foreach ($themes as $key => $theme): ?>
                                             <option value="<?= $h($key) ?>"><?= $h($theme['name']) ?></option>
                                         <?php endforeach; ?>
                                     </select>
@@ -133,7 +291,7 @@ $fmt = static function (string $value): string {
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="t_msg">Greeting <small class="text-muted">(optional; default greeting when empty)</small></label>
+                                    <label for="t_msg">Greeting <small class="text-muted">(optional; the theme's greeting when empty)</small></label>
                                     <input type="text" class="form-control" id="t_msg" name="message" maxlength="200" placeholder="e.g. Happy Halloween, team!">
                                 </div>
                                 <div class="d-flex flex-wrap align-items-center" style="gap:8px">
@@ -150,6 +308,12 @@ $fmt = static function (string $value): string {
                                         </div>
                                     </div>
                                 </div>
+                            </form>
+                            <hr>
+                            <form method="POST" action="<?= $h($base) ?>/admin/themes" onsubmit="return confirm('Add back any built-in theme that was deleted?');">
+                                <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
+                                <input type="hidden" name="action" value="restore_builtin">
+                                <button class="btn btn-sm btn-link px-0"><i class="fas fa-undo mr-1"></i>Restore the built-in themes</button>
                             </form>
                         </div>
                     </div>
@@ -169,7 +333,7 @@ $fmt = static function (string $value): string {
                                         <thead><tr><th>Theme</th><th>From</th><th>To</th><th>Status</th><th></th></tr></thead>
                                         <tbody>
                                             <?php foreach ($schedules as $s):
-                                                $name = SeasonalThemes::CATALOG[$s['theme_key']]['name'] ?? $s['theme_key'];
+                                                $name = $themes[$s['theme_key']]['name'] ?? ($s['title'] ?: $s['theme_key']);
                                                 if ((int) $s['is_active'] !== 1) {
                                                     $status = ['off', 'Off'];
                                                 } elseif ((int) $s['is_live'] === 1) {
@@ -232,16 +396,139 @@ $fmt = static function (string $value): string {
     <script src="<?= $h($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?= $h($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script>
+    (function () {
+        var THEMES = <?= json_encode($effectsJs, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
+        function play(keys, theme) {
+            if (window.TMSEffects) window.TMSEffects.play(keys, theme, 8);
+        }
+
+        // Schedule buttons on the theme cards.
         document.querySelectorAll('.js-schedule').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 document.getElementById('t_key').value = btn.getAttribute('data-key');
                 document.getElementById('t_from').value = btn.getAttribute('data-from');
                 document.getElementById('t_to').value = btn.getAttribute('data-to');
-                var form = document.getElementById('schedule-form');
-                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                document.getElementById('schedule-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
                 document.getElementById('t_from').focus();
             });
         });
+        document.querySelectorAll('.js-delete-theme').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                if (!window.confirm('Delete the ' + form.getAttribute('data-name') + ' theme and its schedules?')) e.preventDefault();
+            });
+        });
+        // Test one effect of a theme.
+        document.querySelectorAll('.js-fx').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                play([btn.getAttribute('data-effect')], THEMES[btn.getAttribute('data-theme')] || {});
+            });
+        });
+
+        // Theme form: live preview strip and effect tests with the colors / emoji typed in.
+        var form = document.getElementById('themeForm');
+        if (form) {
+            var strip = document.getElementById('f_strip');
+            var formTheme = function () {
+                return {
+                    items: document.getElementById('f_items').value.trim().split(/[\s,]+/).filter(Boolean),
+                    colors: [document.getElementById('f_main').value, document.getElementById('f_accent').value],
+                };
+            };
+            var paint = function () {
+                var t = formTheme();
+                strip.style.background = 'linear-gradient(135deg, ' + t.colors[0] + ', ' + t.colors[1] + ')';
+                strip.textContent = (t.items.slice(0, 4).join('  ') || '✨') + '   ' + (document.getElementById('f_message').value || '');
+            };
+            ['f_items', 'f_main', 'f_accent', 'f_message'].forEach(function (id) { document.getElementById(id).addEventListener('input', paint); });
+            paint();
+            form.querySelectorAll('.js-fx-form').forEach(function (btn) {
+                btn.addEventListener('click', function () { play([btn.getAttribute('data-effect')], formTheme()); });
+            });
+            document.getElementById('tf-test').addEventListener('click', function () {
+                var keys = Array.prototype.map.call(form.querySelectorAll('input[name="effects[]"]:checked'), function (c) { return c.value; });
+                play(keys, formTheme());
+            });
+            setTimeout(function () { document.getElementById('theme-form').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
+        }
+
+        // ---------- "How to add a theme" step by step ----------
+        var steps = [
+            { el: '#addThemeBtn', title: 'Add a theme', text: 'Click "Add a theme" to open the form. You can also edit (pencil) or delete (trash) any theme in the list.' },
+            { el: '#tf-name', title: '1. Name', text: 'Give the theme a name, for example "Chinese New Year". The icon next to it shows on its card.' },
+            { el: '#tf-items', title: '2. Emoji', text: 'Type up to 6 emoji with spaces between them. They show on the card, in the greeting ribbon and in the "Theme icons" effect.' },
+            { el: '#tf-colors', title: '3. Colors', text: 'Pick the main and the second color. The header line and the greeting ribbon use them. The strip below shows how they look.' },
+            { el: '#tf-message', title: '4. Greeting', text: 'Write the greeting everyone sees under the header while the theme is live.' },
+            { el: '#tf-effects', title: '5. Effects', text: 'Tick the effects to play (for example Rain and Zombies for Halloween). Press the small play button to see each one first.' },
+            { el: '#tf-dates', title: '6. Suggested dates', text: 'Optional: the usual dates of the event. They fill in the schedule form when you press Schedule on the card.' },
+            { el: '#tf-save', title: '7. Save', text: 'Save the theme. It is added to the theme list. Nobody sees it yet.' },
+            { el: '#themeList', title: 'Preview', text: 'On the theme card, press Preview to see the whole look with its effects. Only you see the preview.' },
+            { el: '#schedule-form', title: 'Release it', text: 'Press Schedule on the card (or choose the theme here), set the release date and time and the end, then Save schedule. Everyone sees it during that time.' },
+        ];
+        var TOUR_KEY = 'tms_theme_tour_seen';
+        var ring = null, tip = null, index = 0;
+        function stopTour() {
+            if (ring) ring.remove();
+            if (tip) tip.remove();
+            ring = tip = null;
+            window.removeEventListener('resize', place);
+            try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) {}
+        }
+        function place() {
+            var target = document.querySelector(steps[index].el);
+            if (!target || !ring) return;
+            var r = target.getBoundingClientRect(), sx = window.pageXOffset, sy = window.pageYOffset;
+            ring.style.left = (r.left + sx - 6) + 'px';
+            ring.style.top = (r.top + sy - 6) + 'px';
+            ring.style.width = (r.width + 12) + 'px';
+            ring.style.height = Math.min(r.height + 12, 520) + 'px';
+            var tipTop = r.bottom + sy + 14;
+            if (r.bottom + tip.offsetHeight + 30 > window.innerHeight && r.top > tip.offsetHeight + 30) tipTop = r.top + sy - tip.offsetHeight - 14;
+            tip.style.top = tipTop + 'px';
+            tip.style.left = Math.max(12, Math.min(r.left + sx, sx + document.documentElement.clientWidth - tip.offsetWidth - 12)) + 'px';
+        }
+        function show(i) {
+            index = i;
+            var step = steps[i];
+            var target = document.querySelector(step.el);
+            if (!target) {
+                // The form steps need the form: open "Add a theme" and continue there.
+                try { sessionStorage.setItem('tms_theme_tour_step', String(i)); } catch (e) {}
+                window.location.href = <?= json_encode($base . '/admin/themes?new_theme=1#theme-form') ?>;
+                return;
+            }
+            if (!ring) {
+                ring = document.createElement('div'); ring.className = 'tour-ring'; document.body.appendChild(ring);
+                tip = document.createElement('div'); tip.className = 'tour-tip'; tip.setAttribute('role', 'dialog'); document.body.appendChild(tip);
+                window.addEventListener('resize', place);
+            }
+            tip.textContent = '';
+            var h6 = document.createElement('h6'); h6.textContent = step.title;
+            var p = document.createElement('p'); p.textContent = step.text;
+            var bar = document.createElement('div'); bar.className = 'd-flex align-items-center';
+            var n = document.createElement('span'); n.className = 'tour-n mr-auto'; n.textContent = (i + 1) + ' of ' + steps.length;
+            var close = document.createElement('button'); close.type = 'button'; close.className = 'btn btn-sm btn-light mr-1'; close.textContent = 'Close';
+            var back = document.createElement('button'); back.type = 'button'; back.className = 'btn btn-sm btn-outline-primary mr-1'; back.textContent = 'Back';
+            var next = document.createElement('button'); next.type = 'button'; next.className = 'btn btn-sm btn-primary';
+            next.textContent = i === steps.length - 1 ? 'Done' : 'Next';
+            back.disabled = i === 0;
+            close.onclick = stopTour;
+            back.onclick = function () { show(i - 1); };
+            next.onclick = function () { if (i === steps.length - 1) stopTour(); else show(i + 1); };
+            bar.appendChild(n); bar.appendChild(close); bar.appendChild(back); bar.appendChild(next);
+            tip.appendChild(h6); tip.appendChild(p); tip.appendChild(bar);
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(place, 400);
+            next.focus({ preventScroll: true });
+        }
+        document.getElementById('tourBtn').addEventListener('click', function () { show(0); });
+        // Continue after the form opened, or start the first time an Admin opens "Add a theme".
+        var resume = null;
+        try { resume = sessionStorage.getItem('tms_theme_tour_step'); sessionStorage.removeItem('tms_theme_tour_step'); } catch (e) {}
+        var seen = false;
+        try { seen = localStorage.getItem(TOUR_KEY) === '1'; } catch (e) {}
+        if (resume !== null && form) show(parseInt(resume, 10) || 1);
+        else if (form && !seen && !document.getElementById('f_key').value) show(1);
+    })();
     </script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>

@@ -6,13 +6,20 @@
  */
 require_once __DIR__ . '/../../Helpers/SeasonalThemes.php';
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+}
 $widgetConfig = [
     'base' => $realtimeBase,
     'accountId' => (int) ($_SESSION['account_id'] ?? 0),
+    'csrf' => (string) $_SESSION['csrf_token'],
     'openAnnouncement' => (int) ($_GET['announcement'] ?? 0),
     'birthday' => null,
     'theme' => null,
     'preview' => false,
+    'isDashboard' => false,
+    'isEmployee' => strtoupper((string) ($_SESSION['usertype'] ?? '')) === 'EMPLOYEE',
+    'onboarding' => false,
 ];
 
 global $pdo;
@@ -35,12 +42,23 @@ try {
 
 $widgetConfig['theme'] = SeasonalThemes::current($pdo);
 
+// Employees see the "How to use the TMS" guide the first time they sign in.
+if ($widgetConfig['isEmployee']) {
+    try {
+        $stmt = $pdo->prepare('SELECT onboarding_done_at FROM tblaccounts WHERE account_id = ? LIMIT 1');
+        $stmt->execute([$widgetConfig['accountId']]);
+        $widgetConfig['onboarding'] = $stmt->fetchColumn() === null;
+    } catch (Throwable $e) {
+        $widgetConfig['onboarding'] = false; // column not added yet
+    }
+}
+
 // Admin preview (only in the admin's own browser, nothing is saved).
 $widgetRealRole = strtoupper((string) ($_SESSION['superuser_real_usertype'] ?? $_SESSION['usertype'] ?? ''));
 if ($widgetRealRole === 'ADMIN') {
     $previewKey = (string) ($_GET['theme_preview'] ?? '');
-    if ($previewKey !== '' && SeasonalThemes::exists($previewKey)) {
-        $widgetConfig['theme'] = SeasonalThemes::forBrowser($previewKey);
+    if ($previewKey !== '' && SeasonalThemes::exists($pdo, $previewKey)) {
+        $widgetConfig['theme'] = SeasonalThemes::forBrowser($pdo, $previewKey);
         $widgetConfig['preview'] = true;
     }
     if (!empty($_GET['birthday_preview'])) {
@@ -56,6 +74,8 @@ $widgetBasePath = (string) parse_url($realtimeBase, PHP_URL_PATH);
 if ($widgetBasePath !== '' && strpos($widgetPath, $widgetBasePath) === 0) {
     $widgetPath = substr($widgetPath, strlen($widgetBasePath));
 }
+// Dashboards show the birthday panel on the right.
+$widgetConfig['isDashboard'] = (bool) preg_match('#^/(admin|aom|employee|head|hom|om|it|hr)(/dashboard)?/?$#', $widgetPath);
 try {
     if (preg_match('#^/(admin|aom|employee|head|hom|om|it)/profile/?$#', $widgetPath)) {
         $stmt = $pdo->prepare('SELECT birthdate, gender, date_hired, phone FROM tblemployee WHERE account_id = ? LIMIT 1');
@@ -104,5 +124,9 @@ try {
 </template>
 <?php endif; ?>
 <link href="<?= htmlspecialchars($realtimeAsset('/assets/css/global-widgets.css')) ?>" rel="stylesheet">
+<link href="<?= htmlspecialchars($realtimeAsset('/assets/css/theme-effects.css')) ?>" rel="stylesheet">
+<link href="<?= htmlspecialchars($realtimeAsset('/assets/css/direct-chat.css')) ?>" rel="stylesheet">
 <script>window.TMS_WIDGETS = <?= json_encode($widgetConfig, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;</script>
+<script src="<?= htmlspecialchars($realtimeAsset('/assets/js/theme-effects.js')) ?>" defer></script>
 <script src="<?= htmlspecialchars($realtimeAsset('/assets/js/global-widgets.js')) ?>" defer></script>
+<script src="<?= htmlspecialchars($realtimeAsset('/assets/js/direct-chat.js')) ?>" defer></script>

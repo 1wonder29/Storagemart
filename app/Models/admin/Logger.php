@@ -214,11 +214,13 @@ class Logger {
      * @param string $recordId
      * @return array
      */
-    public function getRecordAuditTrail($recordId) {
+    public function getRecordAuditTrail($recordId, $module = null) {
         if ($this->pdo) {
-            $sql = "SELECT * FROM {$this->table} WHERE ID = ? ORDER BY datelog DESC, timelog DESC";
+            // The same record number is used by different modules (ticket 3, announcement 3...).
+            $sql = "SELECT * FROM {$this->table} WHERE ID = ?" . ($module !== null && $module !== '' ? ' AND module = ?' : '')
+                . " ORDER BY datelog DESC, timelog DESC";
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$recordId]);
+            $stmt->execute($module !== null && $module !== '' ? [$recordId, $module] : [$recordId]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
         return [];

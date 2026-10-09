@@ -72,7 +72,7 @@ foreach ($branches as $branch) {
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
 
                 <div class="row">
-                    <div class="col-lg-6">
+                    <div class="col-12">
                         <div class="card form-card shadow mb-4">
                             <div class="card-header">
                                 <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-sliders-h mr-1"></i> Rules</h6>
@@ -98,31 +98,6 @@ foreach ($branches as $branch) {
                         </div>
                     </div>
 
-                    <div class="col-lg-6">
-                        <div class="card form-card shadow mb-4">
-                            <div class="card-header">
-                                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-check mr-1"></i> IT Staff Availability</h6>
-                            </div>
-                            <div class="card-body">
-                                <?php if (!$staff): ?>
-                                    <p class="text-muted mb-0">No active IT accounts.</p>
-                                <?php endif; ?>
-                                <?php foreach ($staff as $member): $eid = (int) $member['employee_id']; ?>
-                                    <input type="hidden" name="it_staff[]" value="<?= $eid ?>">
-                                    <div class="d-flex align-items-center justify-content-between border-bottom py-2">
-                                        <div>
-                                            <strong><?= htmlspecialchars($member['name']) ?></strong>
-                                            <div class="small text-muted"><?= (int) $member['active_load'] ?> active ticket<?= (int) $member['active_load'] === 1 ? '' : 's' ?></div>
-                                        </div>
-                                        <div class="custom-control custom-switch away-switch">
-                                            <input type="checkbox" class="custom-control-input" id="away_<?= $eid ?>" name="it_away[<?= $eid ?>]" value="1" <?= (int) $member['is_away'] === 1 ? 'checked' : '' ?>>
-                                            <label class="custom-control-label" for="away_<?= $eid ?>">Away</label>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="card form-card shadow mb-4">
@@ -205,6 +180,35 @@ foreach ($branches as $branch) {
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card form-card shadow mb-4" id="it-availability">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-check mr-1"></i> IT Staff Availability</h6>
+                        <span class="small text-muted">Away = no new tickets; unopened ones move to another IT person</span>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!$staff): ?>
+                            <p class="text-muted mb-0">No active IT accounts.</p>
+                        <?php endif; ?>
+                        <div class="row">
+                            <?php foreach ($staff as $member): $eid = (int) $member['employee_id']; ?>
+                                <div class="col-md-6 col-xl-4">
+                                    <input type="hidden" name="it_staff[]" value="<?= $eid ?>">
+                                    <div class="d-flex align-items-center justify-content-between border-bottom py-2">
+                                        <div>
+                                            <strong><?= htmlspecialchars($member['name']) ?></strong>
+                                            <div class="small text-muted"><?= (int) $member['active_load'] ?> active ticket<?= (int) $member['active_load'] === 1 ? '' : 's' ?></div>
+                                        </div>
+                                        <div class="custom-control custom-switch away-switch">
+                                            <input type="checkbox" class="custom-control-input" id="away_<?= $eid ?>" name="it_away[<?= $eid ?>]" value="1" <?= (int) $member['is_away'] === 1 ? 'checked' : '' ?>>
+                                            <label class="custom-control-label" for="away_<?= $eid ?>">Away</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                 </div>

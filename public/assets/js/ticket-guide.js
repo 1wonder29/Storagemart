@@ -260,19 +260,10 @@
     }
   }
 
-  // "How to file a ticket" replay button next to Create / Cancel.
-  var actions = document.querySelector('.ticket-form-actions');
-  if (actions) {
-    var replay = document.createElement('button');
-    replay.type = 'button';
-    replay.className = 'btn btn-outline-info tg-replay';
-    replay.innerHTML = '<i class="fas fa-question-circle"></i> How to file a ticket';
-    replay.addEventListener('click', start);
-    actions.appendChild(replay);
-  }
 
-  // First visit: ask whether they want the guide.
-  if (!storageGet(STORAGE_KEY)) {
+  // First visit: ask whether they want the guide (after any announcement popup is closed).
+  function askOnce() {
+    if (storageGet(STORAGE_KEY) || document.querySelector('.tg-ask')) return;
     var ask = document.createElement('div');
     ask.className = 'tg-ask';
     ask.innerHTML = '<h6><i class="fas fa-hands-helping"></i> New here?</h6>' +
@@ -283,6 +274,12 @@
     document.body.appendChild(ask);
     ask.querySelector('.tg-no').onclick = function () { storageSet(STORAGE_KEY, '1'); ask.remove(); };
     ask.querySelector('.tg-yes').onclick = function () { ask.remove(); start(); };
+  }
+  if (window.TMS_WIDGETS && !window.__tmsAnnDone) {
+    document.addEventListener('tms:announcements-done', askOnce);
+    setTimeout(askOnce, 15000); // in case the announcement script is not on this page
+  } else {
+    askOnce();
   }
 
   updateHint();
