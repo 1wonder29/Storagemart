@@ -74,6 +74,12 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                             <i class="fas fa-file-word"></i> Report Word
                         </a>
                     <?php endif; ?>
+                    <?php if (in_array(strtolower($status), ['resolved', 'closed'], true)): ?>
+                        <a href="<?= htmlspecialchars($detailBase) ?>/tickets/signature?id=<?= $ticketId ?>"
+                           class="btn btn-primary btn-sm" title="Sign the technical report without printing, or print it">
+                            <i class="fas fa-signature"></i> Sign report
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="card-body">

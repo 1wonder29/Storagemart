@@ -363,7 +363,7 @@ $todayLabel = date('l, F j, Y');
         });
     });
     </script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261009"></script>
 
 </body>
 </html>

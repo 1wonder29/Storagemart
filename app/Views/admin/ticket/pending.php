@@ -412,7 +412,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     window.BASE_URL = "<?= htmlspecialchars($base) ?>";
     </script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-pendings.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261009"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 

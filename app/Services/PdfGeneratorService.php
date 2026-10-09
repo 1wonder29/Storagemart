@@ -164,7 +164,8 @@ class PdfGeneratorService
             $options->set('defaultFont', 'DejaVu Sans');
             $options->set('tempDir', $this->outputPath);
             $dompdf = new \Dompdf\Dompdf($options);
-            $dompdf->loadHtml($this->buildTechnicalRecordHtml($ticketData), 'UTF-8');
+            require_once __DIR__ . '/../Helpers/TicketSignatures.php';
+            $dompdf->loadHtml($this->buildTechnicalRecordHtml($ticketData, TicketSignatures::forTicket($this->db, (int) $ticketId)), 'UTF-8');
             $dompdf->setPaper('A4', 'portrait');
             $dompdf->render();
 
@@ -189,8 +190,81 @@ class PdfGeneratorService
         }
     }
 
+    /**
+     * Report data plus its CSS and body, for the on-screen signing page.
+     * @return array{data: array, css: string, body: string}|null
+     */
+    public function renderTechnicalRecord(int $ticketId): ?array
+    {
+        $data = $this->getTicketData($ticketId);
+        if (!$data) {
+            return null;
+        }
+        require_once __DIR__ . '/../Helpers/TicketSignatures.php';
+        $signatures = TicketSignatures::forTicket($this->db, $ticketId);
+        return [
+            'data' => $data,
+            'css' => $this->technicalRecordCss(),
+            'body' => $this->technicalRecordBody($data, $signatures),
+            'signatures' => $signatures,
+        ];
+    }
+
+    /** PDF of the report with the digital signatures (access is checked by the caller). */
+    public function generateSignedPdf(int $ticketId)
+    {
+        $data = $this->getTicketData($ticketId);
+        if (!$data) {
+            return false;
+        }
+        try {
+            require_once __DIR__ . '/../Libraries/dompdf/autoload.php';
+            require_once __DIR__ . '/../Helpers/TicketSignatures.php';
+            $options = new \Dompdf\Options();
+            $options->set('isRemoteEnabled', false);
+            $options->set('defaultFont', 'DejaVu Sans');
+            $options->set('tempDir', $this->outputPath);
+            $dompdf = new \Dompdf\Dompdf($options);
+            $dompdf->loadHtml($this->buildTechnicalRecordHtml($data, TicketSignatures::forTicket($this->db, $ticketId)), 'UTF-8');
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+            $number = preg_replace('/[^A-Za-z0-9_-]/', '', (string) $data['ticket_number']);
+            return ['filename' => "technical_report_{$number}_signed.pdf", 'content' => $dompdf->output()];
+        } catch (\Throwable $e) {
+            $this->logError('Exception in generateSignedPdf: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     /** HTML version of template_technical.docx for the PDF output. */
-    private function buildTechnicalRecordHtml(array $data): string
+    private function buildTechnicalRecordHtml(array $data, array $signatures = []): string
+    {
+        return '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' . $this->technicalRecordCss()
+            . '</style></head><body>' . $this->technicalRecordBody($data, $signatures) . '</body></html>';
+    }
+
+    private function technicalRecordCss(): string
+    {
+        return '
+            @page { margin: 28px 48px 40px; }
+            body { font-family: "DejaVu Sans", sans-serif; font-size: 11px; color: #222; line-height: 1.5; }
+            .banner { width: 100%; margin-bottom: 18px; }
+            h1 { text-align: center; font-size: 16px; letter-spacing: 1px; margin: 6px 0 4px; color: #1f3a93; }
+            .date { text-align: right; margin-bottom: 14px; }
+            .label { font-weight: bold; margin-top: 14px; }
+            .box { border: 1px solid #c9ced8; padding: 8px 10px; margin-top: 4px; min-height: 30px; }
+            .hint { font-size: 9.5px; color: #666; }
+            table.sign { width: 100%; margin-top: 26px; border-collapse: collapse; }
+            table.sign td { width: 33%; vertical-align: bottom; padding: 0 8px; text-align: center; }
+            .sign-label { text-align: left; font-weight: bold; }
+            .sign-area { width: 200px; height: 64px; margin: 4px auto 0; overflow: hidden; text-align: left; }
+            .sign-name { border-top: 1px solid #333; padding-top: 4px; font-weight: bold; }
+            .sign-role { font-size: 9.5px; color: #555; }
+            .sign-date { font-size: 9px; color: #555; }
+            .note { margin-top: 18px; font-size: 9.5px; font-style: italic; }';
+    }
+
+    private function technicalRecordBody(array $data, array $signatures): string
     {
         // Empty strings (not just NULLs) fall back to N/A so sentences never end in a blank.
         $h = static fn($v) => nl2br(htmlspecialchars(trim((string) $v) !== '' ? (string) $v : 'N/A', ENT_QUOTES, 'UTF-8'));
@@ -212,23 +286,15 @@ class PdfGeneratorService
             }
         }
 
-        return '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-            @page { margin: 28px 48px 40px; }
-            body { font-family: "DejaVu Sans", sans-serif; font-size: 11px; color: #222; line-height: 1.5; }
-            .banner { width: 100%; margin-bottom: 18px; }
-            h1 { text-align: center; font-size: 16px; letter-spacing: 1px; margin: 6px 0 4px; color: #1f3a93; }
-            .date { text-align: right; margin-bottom: 14px; }
-            .label { font-weight: bold; margin-top: 14px; }
-            .box { border: 1px solid #c9ced8; padding: 8px 10px; margin-top: 4px; min-height: 30px; }
-            .hint { font-size: 9.5px; color: #666; }
-            table.sign { width: 100%; margin-top: 34px; border-collapse: collapse; }
-            table.sign td { width: 33%; vertical-align: bottom; padding: 0 8px; text-align: center; }
-            .sign-label { text-align: left; font-weight: bold; padding-bottom: 34px; }
-            .sign-name { border-top: 1px solid #333; padding-top: 4px; font-weight: bold; }
-            .sign-role { font-size: 9.5px; color: #555; }
-            .note { margin-top: 18px; font-size: 9.5px; font-style: italic; }
-        </style></head><body>'
-            . $banner
+        require_once __DIR__ . '/../Helpers/TicketSignatures.php';
+        $signCell = static function (string $slot, string $name, string $role) use ($signatures, $h): string {
+            $sig = $signatures[$slot] ?? null;
+            return '<td data-slot="' . $slot . '"><div class="sign-area">' . TicketSignatures::imageHtml($sig) . '</div>'
+                . '<div class="sign-name">' . $h($sig['signer_name'] ?? $name) . '</div><div class="sign-role">' . $role . '</div>'
+                . '<div class="sign-date">' . ($sig ? 'Signed ' . date('M j, Y g:i A', strtotime((string) $sig['signed_at'])) : '&nbsp;') . '</div></td>';
+        };
+
+        return $banner
             . '<h1>TECHNICAL SUMMARY REPORT</h1>'
             . '<div class="date">' . $h($dateFiled) . '</div>'
             . '<p>I, <strong>' . $h($fullname) . '</strong>, under StorageMart <strong>' . $h($data['branchName']) . '</strong> Branch hereby acknowledge that I have requested technical assistance which was assisted by <strong>' . $h($performedby) . '</strong>. This concern was classified under <strong>' . $h($data['technical_purpose'] ?? 'N/A') . '</strong>.</p>'
@@ -242,11 +308,10 @@ class PdfGeneratorService
             . '<table class="sign"><tr>'
             . '<td class="sign-label">Acknowledge By :</td><td class="sign-label">Reported By :</td><td class="sign-label">Verified By :</td>'
             . '</tr><tr>'
-            . '<td><div class="sign-name">' . $h($fullname) . '</div><div class="sign-role">Customer Name</div></td>'
-            . '<td><div class="sign-name">' . $h($performedby) . '</div><div class="sign-role">IT Person In Charge</div></td>'
-            . '<td><div class="sign-name">Kenneth Dador</div><div class="sign-role">IT Officer</div></td>'
-            . '</tr></table>'
-            . '</body></html>';
+            . $signCell('ACKNOWLEDGED', $fullname, 'Customer Name')
+            . $signCell('REPORTED', $performedby, 'IT Person In Charge')
+            . $signCell('VERIFIED', 'Kenneth Dador', 'IT Officer')
+            . '</tr></table>';
     }
 
     /**

@@ -301,6 +301,41 @@
     });
   }
 
+  // Phone photos are several MB; shrink them (max 1600 px, JPEG) before uploading.
+  window.TMSShrinkImage = function (file, maxSide, quality) {
+    maxSide = maxSide || 1600;
+    quality = quality || 0.85;
+    return new Promise(function (resolve) {
+      if (!file || !/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 400 * 1024 || !window.URL || !URL.createObjectURL) {
+        resolve(file);
+        return;
+      }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function (blob) {
+          URL.revokeObjectURL(url);
+          if (!blob || blob.size >= file.size) { resolve(file); return; }
+          try {
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
+          } catch (e) {
+            resolve(file);
+          }
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  };
+
   // Exposed for the Admin themes page ("Test" buttons).
   window.TMSWidgets = {
     playEffect: playEffect,

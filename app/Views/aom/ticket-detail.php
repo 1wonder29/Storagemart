@@ -218,7 +218,7 @@ require_once __DIR__ . '/../partials/aom/sidebar_topbar.php';
         });
     });
 </script>
-<script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261009"></script>
 <?php require __DIR__ . '/../partials/ticket/cancel_ticket_modal.php'; ?>
 </body>
 </html>

@@ -214,6 +214,23 @@ html.it-dark {
   .tc-head, .tc-head:hover { transition: none; transform: none; }
 }
 
+/* Files and photos in the chat */
+.tc-tool { flex: 0 0 auto; border: 0; background: transparent; color: var(--tc-muted); width: 30px; height: 36px; border-radius: 8px; cursor: pointer; }
+.tc-tool:hover, .tc-tool:focus { color: var(--tc-blue-2); background: var(--tc-surface-2); }
+.tc-attach-chip { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-top: 1px solid var(--tc-border); background: var(--tc-surface-2); font-size: 0.78rem; color: var(--tc-text); }
+.tc-attach-chip[hidden] { display: none; }
+.tc-attach-chip img { width: 38px; height: 38px; object-fit: cover; border-radius: 6px; }
+.tc-attach-chip span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-attach-chip .tc-icon-btn { color: var(--tc-muted); }
+.tc-attach-img { display: block; margin: 2px 0 4px; }
+.tc-attach-img img { display: block; max-width: 220px; max-height: 220px; border-radius: 12px; border: 1px solid var(--tc-border); }
+.tc-attach-file { display: flex; align-items: center; gap: 10px; margin: 2px 0 4px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--tc-border); background: var(--tc-surface); color: var(--tc-text); text-decoration: none; max-width: 240px; }
+.tc-attach-file i { font-size: 1.3rem; color: var(--tc-blue-2); }
+.tc-attach-file span { display: flex; flex-direction: column; min-width: 0; }
+.tc-attach-file strong { font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-attach-file small { color: var(--tc-muted); font-size: 0.7rem; }
+.tc-attach-file:hover { text-decoration: none; border-color: var(--tc-blue-2); }
+
 /* Troubleshooting guide message, "Need help from IT personnel" bar, "Are you there?" popup */
 .tc-msg.tc-system { align-self: stretch; max-width: 100%; }
 .tc-msg.tc-system .tc-bubble { background: #fff7ed; color: #7c2d12; border: 1px solid #fed7aa; border-radius: 12px; }

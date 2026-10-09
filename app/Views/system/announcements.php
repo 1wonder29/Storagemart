@@ -33,6 +33,10 @@ $now = date('Y-m-d H:i:s');
         .ann-badge.all { background:#eef2ff; color:#4e73df; } .ann-badge.dept { background:#ecfdf5; color:#047857; }
         .ann-badge.imp { background:#fee2e2; color:#b91c1c; } .ann-badge.sched { background:#fff7ed; color:#c2410c; }
         .ann-badge.off { background:#f3f4f6; color:#6b7280; }
+        .ann-badge.wait { background:#fef3c7; color:#92400e; } .ann-badge.rej { background:#fee2e2; color:#991b1b; }
+        .ann-item.pending { border-left-color:#f6c23e; background:#fffdf5; }
+        html.it-dark .ann-item.pending { background:#2d2a1e; }
+        html.it-dark .ann-body, html.it-dark .ann-meta { color:#cbd5e1; }
     </style>
 </head>
 
@@ -64,7 +68,7 @@ $now = date('Y-m-d H:i:s');
                             <?php if ($isAdmin): ?>
                                 Post a message to every user, or to one department. It pops up once for each person and stays under the megaphone in the header.
                             <?php else: ?>
-                                Post a message to your department (<strong><?= $h($department ?: 'none') ?></strong>). It pops up once for each member and stays under the megaphone in the header.
+                                Post a message to your department (<strong><?= $h($department ?: 'none') ?></strong>). Admin approves it first; then it pops up once for each member and stays under the megaphone in the header.
                             <?php endif; ?>
                         </p>
                     </div>
@@ -159,10 +163,11 @@ $now = date('Y-m-d H:i:s');
                             <?php endif; ?>
                             <div class="list-group list-group-flush">
                                 <?php foreach ($items as $item):
-                                    $live = (int) $item['is_active'] === 1 && $item['starts_at'] <= $now && (empty($item['ends_at']) || $item['ends_at'] > $now);
-                                    $scheduled = (int) $item['is_active'] === 1 && $item['starts_at'] > $now;
+                                    $approval = (string) ($item['approval_status'] ?? 'APPROVED');
+                                    $live = $approval === 'APPROVED' && (int) $item['is_active'] === 1 && $item['starts_at'] <= $now && (empty($item['ends_at']) || $item['ends_at'] > $now);
+                                    $scheduled = $approval === 'APPROVED' && (int) $item['is_active'] === 1 && $item['starts_at'] > $now;
                                 ?>
-                                    <div class="list-group-item ann-item <?= $item['importance'] === 'important' ? 'important' : '' ?> <?= (int) $item['is_active'] === 1 ? '' : 'inactive' ?>">
+                                    <div class="list-group-item ann-item <?= $item['importance'] === 'important' ? 'important' : '' ?> <?= (int) $item['is_active'] === 1 ? '' : 'inactive' ?> <?= $approval === 'PENDING' ? 'pending' : '' ?>">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div class="pr-3">
                                                 <div class="mb-1">
@@ -172,9 +177,13 @@ $now = date('Y-m-d H:i:s');
                                                         <span class="ann-badge dept"><?= $h($item['department']) ?></span>
                                                     <?php endif; ?>
                                                     <?php if ($item['importance'] === 'important'): ?><span class="ann-badge imp">Important</span><?php endif; ?>
-                                                    <?php if ($scheduled): ?><span class="ann-badge sched">Scheduled</span><?php endif; ?>
-                                                    <?php if ((int) $item['is_active'] !== 1): ?><span class="ann-badge off">Hidden</span>
-                                                    <?php elseif (!$live && !$scheduled): ?><span class="ann-badge off">Ended</span><?php endif; ?>
+                                                    <?php if ($approval === 'PENDING'): ?><span class="ann-badge wait">Waiting for Admin approval</span>
+                                                    <?php elseif ($approval === 'REJECTED'): ?><span class="ann-badge rej">Not approved</span>
+                                                    <?php else: ?>
+                                                        <?php if ($scheduled): ?><span class="ann-badge sched">Scheduled</span><?php endif; ?>
+                                                        <?php if ((int) $item['is_active'] !== 1): ?><span class="ann-badge off">Hidden</span>
+                                                        <?php elseif (!$live && !$scheduled): ?><span class="ann-badge off">Ended</span><?php endif; ?>
+                                                    <?php endif; ?>
                                                 </div>
                                                 <h6 class="font-weight-bold mb-1"><?= $h($item['title']) ?></h6>
                                                 <div class="ann-body"><?= $h($item['body']) ?></div>
@@ -184,6 +193,28 @@ $now = date('Y-m-d H:i:s');
                                                     <?= !empty($item['ends_at']) ? ' to ' . $h(date('M j, Y g:i A', strtotime($item['ends_at']))) : '' ?>
                                                     · <i class="fas fa-eye"></i> <?= (int) $item['read_count'] ?> read
                                                 </div>
+                                                <?php if ($approval === 'REJECTED' && !empty($item['review_note'])): ?>
+                                                    <div class="small text-danger mt-1"><i class="fas fa-comment-dots mr-1"></i>Admin: <?= $h($item['review_note']) ?>
+                                                        <?= $isAdmin ? '' : ' — edit it and save to send it again.' ?></div>
+                                                <?php endif; ?>
+                                                <?php if ($isAdmin && $approval === 'PENDING'): ?>
+                                                    <div class="d-flex flex-wrap align-items-start mt-2" style="gap:6px">
+                                                        <form method="POST" action="<?= $h($base . $home) ?>" class="d-inline">
+                                                            <input type="hidden" name="csrf_token" value="<?= $h($csrf_token) ?>">
+                                                            <input type="hidden" name="action" value="approve">
+                                                            <input type="hidden" name="announcement_id" value="<?= (int) $item['announcement_id'] ?>">
+                                                            <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check mr-1"></i>Approve &amp; post</button>
+                                                        </form>
+                                                        <form method="POST" action="<?= $h($base . $home) ?>" class="d-flex" style="gap:6px">
+                                                            <input type="hidden" name="csrf_token" value="<?= $h($csrf_token) ?>">
+                                                            <input type="hidden" name="action" value="reject">
+                                                            <input type="hidden" name="announcement_id" value="<?= (int) $item['announcement_id'] ?>">
+                                                            <input type="text" name="review_note" class="form-control form-control-sm" maxlength="255"
+                                                                   placeholder="Reason (required to reject)" aria-label="Reason for rejecting" style="min-width:220px">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                                                        </form>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
                                             <div class="text-nowrap">
                                                 <a href="<?= $h($base . $home) ?>?edit=<?= (int) $item['announcement_id'] ?>#announcement-form"

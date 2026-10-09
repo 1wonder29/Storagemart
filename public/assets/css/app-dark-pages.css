@@ -395,3 +395,43 @@ html.it-dark .logout-modal-title {
 html.it-dark .logout-modal-text {
   color: var(--it-text-muted) !important;
 }
+
+/* ---- Readability pass (Oct 2026): text that stayed dark on dark cards, and brand-coloured
+   text / badges that were too dark or too light to read in dark mode. ---- */
+html.it-dark .email-text,
+html.it-dark .position-text,
+html.it-dark .detail-value,
+html.it-dark .info-value,
+html.it-dark .branch-name,
+html.it-dark .instruction-list li,
+html.it-dark .manual-steps li {
+  color: #cbd2dc !important;
+}
+
+html.it-dark .detail-value .badge.bg-primary,
+html.it-dark .card-header.text-white h6,
+html.it-dark .ticket-header-personal h6,
+html.it-dark .btn-primary.btn-view,
+html.it-dark .btn-primary.btn-apply {
+  color: #fff !important;
+}
+
+/* Bright badges and the yellow button read better with dark text. */
+html.it-dark .badge-success, html.it-dark .badge.bg-success,
+html.it-dark .badge-info, html.it-dark .badge.bg-info,
+html.it-dark .badge-warning, html.it-dark .badge.bg-warning,
+html.it-dark .btn-warning {
+  color: #111827 !important;
+}
+html.it-dark .badge.bg-secondary { color: #fff !important; }
+
+/* Ticket numbers, counts and links in brand colours: lighter shades on dark. */
+html.it-dark .ticket-id,
+html.it-dark .branch-count { color: #93c5fd !important; }
+html.it-dark span.ticket-id,
+html.it-dark .rating-stars-count,
+html.it-dark .btn-view-all { color: #86efac !important; }
+html.it-dark .hr-dashboard-page .btn-view-all,
+html.it-dark .total-badge { color: #f9a8d4 !important; }
+html.it-dark .asset-number { color: #7dd3fc !important; }
+html.it-dark .page-badge { color: #a5b4fc !important; }

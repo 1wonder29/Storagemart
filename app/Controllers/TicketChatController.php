@@ -94,7 +94,9 @@ class TicketChatController extends AuthController
                 'other_name'      => $otherName,
                 'other_role'      => $iAmRequester ? ($r['it_name'] !== '' ? 'IT Support' : 'Waiting for IT assignment') : 'Requester',
                 'last_comment_id' => (int) ($r['last_comment_id'] ?? 0),
-                'last_text'       => $r['last_text'] !== null ? mb_substr((string) $r['last_text'], 0, 120) : '',
+                'last_text'       => $r['last_text'] !== null
+                    ? (trim((string) $r['last_text']) !== '' ? mb_substr((string) $r['last_text'], 0, 120) : 'Sent an attachment')
+                    : '',
                 'last_author'     => (string) ($r['last_author'] ?? ''),
                 'last_is_mine'    => (int) ($r['last_account_id'] ?? 0) === $accountId,
                 'last_activity'   => (string) $r['last_activity'],

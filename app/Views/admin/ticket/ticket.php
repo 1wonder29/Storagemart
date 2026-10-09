@@ -547,7 +547,7 @@ $summaryActiveFilter = $activeTicketFilter;
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket-status-filter.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-tickets.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/fetch_ticket_history.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261009"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/edit_ticket_action.js"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>

@@ -30,7 +30,7 @@
     'transition:all .3s ease;pointer-events:none}',
     '.tg-ring{position:absolute;border:3px solid #f6c23e;border-radius:14px;animation:tgPulse 1.2s infinite;pointer-events:none}',
     '@keyframes tgPulse{0%{box-shadow:0 0 0 0 rgba(246,194,62,.7)}70%{box-shadow:0 0 0 14px rgba(246,194,62,0)}100%{box-shadow:0 0 0 0 rgba(246,194,62,0)}}',
-    '.tg-tip{position:absolute;max-width:340px;background:#fff;color:#1f2937;border-radius:12px;padding:14px 16px;',
+    '.tg-tip{position:fixed;max-width:340px;background:#fff;color:#1f2937;border-radius:12px;padding:14px 16px;',
     'box-shadow:0 12px 30px rgba(0,0,0,.25);pointer-events:auto;font-size:.92rem;z-index:2001}',
     '.tg-tip h6{margin:0 0 6px;font-weight:800;color:#4e73df}',
     '.tg-tip .tg-step{font-size:.75rem;color:#6b7280;margin-bottom:4px}',
@@ -42,7 +42,10 @@
     '.tg-ask h6{font-weight:800;color:#4e73df;margin:0 0 6px}',
     '.tg-replay{margin-left:8px}',
     '.ticket-specific-hint{font-weight:600}',
-    'body.dark-mode .tg-tip,body.dark-mode .tg-ask{background:#1f2937;color:#e5e7eb}'
+    'html.it-dark .tg-tip,html.it-dark .tg-ask{background:#1f2937;color:#e5e7eb}',
+    'html.it-dark .tg-tip h6,html.it-dark .tg-ask h6{color:#93b4ff}',
+    'html.it-dark .tg-tip .tg-step,html.it-dark .tg-skip{color:#9ca3af}',
+    'html.it-dark .tg-back{background:#374151;color:#e5e7eb}'
   ].join('');
   document.head.appendChild(css);
 
@@ -132,10 +135,26 @@
       box.style.width = (r.width + pad * 2) + 'px';
       box.style.height = (r.height + pad * 2) + 'px';
     });
-    var tipTop = r.bottom + 14;
-    if (tipTop + 170 > window.innerHeight) tipTop = Math.max(10, r.top - 180);
-    tip.style.top = tipTop + 'px';
-    tip.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 360)) + 'px';
+    // Never cover the field: use the panel's real size and put it fully below or above it.
+    var tipH = tip.offsetHeight || 150;
+    var tipW = tip.offsetWidth || 340;
+    var gap = 16 + pad;
+    var top;
+    if (r.bottom + gap + tipH <= window.innerHeight - 8) {
+      top = r.bottom + gap;
+    } else if (r.top - gap - tipH >= 8) {
+      top = r.top - gap - tipH;
+    } else if (r.right + gap + tipW <= window.innerWidth - 8) {
+      // Tall field (e.g. the description box): beside it.
+      top = Math.max(8, Math.min(r.top, window.innerHeight - tipH - 8));
+      tip.style.left = (r.right + gap) + 'px';
+      tip.style.top = top + 'px';
+      return;
+    } else {
+      top = Math.max(8, window.innerHeight - tipH - 8);
+    }
+    tip.style.top = top + 'px';
+    tip.style.left = Math.max(10, Math.min(r.left, window.innerWidth - tipW - 10)) + 'px';
   }
 
   function show(i) {
@@ -153,8 +172,21 @@
     tip.querySelector('.tg-next').onclick = function () { i === steps.length - 1 ? finish() : show(i + 1); };
     var back = tip.querySelector('.tg-back');
     if (back) back.onclick = function () { show(i - 1); };
-    setTimeout(function () { positionAt(step.el); }, 350);
+    // Smooth scrolling takes a moment: follow the field until it stops moving, then place the panel.
+    settle(step.el, i);
     if (step.demo) typeInto(step.el, step.demo);
+  }
+
+  function settle(el, stepIndex) {
+    var lastTop = null, still = 0, tries = 0;
+    (function check() {
+      if (!guideRunning || index !== stepIndex) return;
+      var top = Math.round(el.getBoundingClientRect().top);
+      positionAt(el);
+      still = top === lastTop ? still + 1 : 0;
+      lastTop = top;
+      if (still < 3 && ++tries < 40) setTimeout(check, 80);
+    })();
   }
 
   function start() {

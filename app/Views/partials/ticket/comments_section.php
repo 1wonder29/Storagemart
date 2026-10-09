@@ -33,11 +33,23 @@ $sectionId = 'ticketComments_' . $ticketId;
             <div class="form-group mb-2">
                 <label class="small font-weight-bold text-uppercase mb-1" style="color:#64748b;letter-spacing:0.05em;">Add a comment</label>
                 <textarea class="form-control ticket-comment-input" rows="3" maxlength="2000"
-                          placeholder="Type your message here (visible to everyone on this ticket)..." required></textarea>
+                          placeholder="Type your message here (visible to everyone on this ticket)..."></textarea>
             </div>
-            <button type="submit" class="btn btn-sm ticket-comment-submit">
-                <i class="fas fa-paper-plane mr-1"></i> Post Comment
-            </button>
+            <div class="d-flex flex-wrap align-items-center" style="gap:8px">
+                <button type="submit" class="btn btn-sm ticket-comment-submit">
+                    <i class="fas fa-paper-plane mr-1"></i> Post Comment
+                </button>
+                <label class="btn btn-sm btn-outline-secondary mb-0" title="Attach a file or photo (max 10 MB)">
+                    <i class="fas fa-paperclip mr-1"></i> Attach file / photo
+                    <input type="file" class="ticket-comment-file d-none"
+                           accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt">
+                </label>
+                <label class="btn btn-sm btn-outline-secondary mb-0 d-md-none" title="Take a photo">
+                    <i class="fas fa-camera"></i>
+                    <input type="file" class="ticket-comment-file d-none" accept="image/*" capture="environment">
+                </label>
+                <span class="small text-muted ticket-comment-file-name"></span>
+            </div>
         </form>
     </div>
 </div>

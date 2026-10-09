@@ -662,6 +662,12 @@ class AdminController extends AuthController
             $this->redirect('/login');
             return;
         }
+        require_once __DIR__ . '/../../Helpers/AdminAccess.php';
+        if (!AdminAccess::canManageSystem()) {
+            $_SESSION['flash_error'] = 'The Audit Trail is for the system administrator only.';
+            $this->redirect('/admin/dashboard');
+            return;
+        }
 
         $auditTrail = new AuditTrail();
         
@@ -733,7 +739,8 @@ class AdminController extends AuthController
 
         header('Content-Type: application/json; charset=utf-8');
 
-        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+        require_once __DIR__ . '/../../Helpers/AdminAccess.php';
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN' || !AdminAccess::canManageSystem()) {
             http_response_code(403);
             echo json_encode(['error' => 'Unauthorized']);
             exit;

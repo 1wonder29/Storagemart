@@ -267,7 +267,7 @@ if ($summaryTicketStats === []) {
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket-status-filter.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/it-my-tickets.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/fetch_ticket_history.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261009"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 </html>

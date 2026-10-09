@@ -108,6 +108,65 @@
 
   // ---------- build UI ----------
   var head, badge, panel, titleName, titleSub, avatar, backBtn, openLink, body, composer, input, sendBtn, errorBox, helpBar;
+  var fileInput, cameraInput, attachChip, pendingFile = null;
+  var ACCEPT = '.jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt';
+  var MAX_FILE = 10 * 1024 * 1024;
+
+  function sizeLabel(bytes) {
+    bytes = parseInt(bytes, 10) || 0;
+    return bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB';
+  }
+
+  // Photo thumbnail or file chip for a message (DOM only, no innerHTML with data).
+  function attachmentNode(c) {
+    if (!c.attachment_url) return null;
+    var link = el('a', c.attachment_is_image ? 'tc-attach-img' : 'tc-attach-file');
+    link.href = c.attachment_url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    if (c.attachment_is_image) {
+      var img = el('img');
+      img.src = c.attachment_url;
+      img.alt = c.attachment_name || 'Photo';
+      img.loading = 'lazy';
+      img.addEventListener('load', function () { if (body) body.scrollTop = body.scrollHeight; });
+      link.appendChild(img);
+    } else {
+      link.appendChild(el('i', 'fas fa-file-alt'));
+      var meta = el('span');
+      meta.appendChild(el('strong', null, c.attachment_name || 'File'));
+      meta.appendChild(el('small', null, sizeLabel(c.attachment_size)));
+      link.appendChild(meta);
+    }
+    return link;
+  }
+
+  function setPendingFile(file) {
+    pendingFile = null;
+    attachChip.hidden = true;
+    attachChip.textContent = '';
+    if (!file) return;
+    if (file.size > MAX_FILE) { showError('The file is too large (max 10 MB).'); return; }
+    pendingFile = file;
+    var isImage = /^image\//.test(file.type);
+    if (isImage && window.URL && URL.createObjectURL) {
+      var thumb = el('img');
+      thumb.src = URL.createObjectURL(file);
+      attachChip.appendChild(thumb);
+    } else {
+      attachChip.appendChild(el('i', 'fas fa-file-alt'));
+    }
+    attachChip.appendChild(el('span', null, file.name + ' (' + sizeLabel(file.size) + ')'));
+    var remove = el('button', 'tc-icon-btn');
+    remove.type = 'button';
+    remove.setAttribute('aria-label', 'Remove attachment');
+    remove.appendChild(el('i', 'fas fa-times'));
+    remove.addEventListener('click', function () { setPendingFile(null); fileInput.value = ''; cameraInput.value = ''; });
+    attachChip.appendChild(remove);
+    attachChip.hidden = false;
+    errorBox.hidden = true;
+    input.focus();
+  }
 
   function build() {
     head = el('button', 'tc-head');
@@ -158,6 +217,38 @@
     helpBar.hidden = true;
 
     composer = el('form', 'tc-composer');
+    attachChip = el('div', 'tc-attach-chip');
+    attachChip.hidden = true;
+    fileInput = el('input');
+    fileInput.type = 'file';
+    fileInput.accept = ACCEPT;
+    fileInput.hidden = true;
+    cameraInput = el('input');
+    cameraInput.type = 'file';
+    cameraInput.accept = 'image/*';
+    cameraInput.setAttribute('capture', 'environment');
+    cameraInput.hidden = true;
+    var attachBtn = el('button', 'tc-tool');
+    attachBtn.type = 'button';
+    attachBtn.title = 'Attach a file or photo';
+    attachBtn.setAttribute('aria-label', 'Attach a file or photo');
+    attachBtn.appendChild(el('i', 'fas fa-paperclip'));
+    var cameraBtn = el('button', 'tc-tool');
+    cameraBtn.type = 'button';
+    cameraBtn.title = 'Take a photo';
+    cameraBtn.setAttribute('aria-label', 'Take a photo');
+    cameraBtn.appendChild(el('i', 'fas fa-camera'));
+    attachBtn.addEventListener('click', function () { fileInput.click(); });
+    cameraBtn.addEventListener('click', function () { cameraInput.click(); });
+    function pick(file) {
+      if (file && window.TMSShrinkImage) {
+        window.TMSShrinkImage(file).then(setPendingFile);
+      } else {
+        setPendingFile(file || null);
+      }
+    }
+    fileInput.addEventListener('change', function () { pick(fileInput.files[0]); });
+    cameraInput.addEventListener('change', function () { pick(cameraInput.files[0]); });
     input = el('textarea');
     input.rows = 1;
     input.maxLength = 2000;
@@ -167,6 +258,10 @@
     sendBtn.type = 'submit';
     sendBtn.setAttribute('aria-label', 'Send');
     sendBtn.appendChild(el('i', 'fas fa-paper-plane'));
+    composer.appendChild(fileInput);
+    composer.appendChild(cameraInput);
+    composer.appendChild(attachBtn);
+    composer.appendChild(cameraBtn);
     composer.appendChild(input);
     composer.appendChild(sendBtn);
 
@@ -174,6 +269,7 @@
     panel.appendChild(body);
     panel.appendChild(helpBar);
     panel.appendChild(errorBox);
+    panel.appendChild(attachChip);
     panel.appendChild(composer);
     document.body.appendChild(panel);
     document.body.appendChild(head);
@@ -415,7 +511,9 @@
       } else if (!mine) {
         msg.appendChild(el('div', 'tc-author', c.author_name + (c.author_role ? ' · ' + c.author_role : '')));
       }
-      msg.appendChild(bubble(c.comment_text));
+      var file = attachmentNode(c);
+      if (file) msg.appendChild(file);
+      if (c.comment_text) msg.appendChild(bubble(c.comment_text));
       msg.appendChild(el('div', 'tc-time', timeLabel(c.created_at)));
       list.appendChild(msg);
       state.lastCommentId = Math.max(state.lastCommentId, id);
@@ -431,12 +529,14 @@
 
   function send(preset) {
     var text = typeof preset === 'string' ? preset : input.value.trim();
-    if (!text || state.sending) return;
+    var file = typeof preset === 'string' ? null : pendingFile;
+    if ((!text && !file) || state.sending) return;
     state.sending = true;
     sendBtn.disabled = true;
     var form = new FormData();
     form.append('ticket_id', String(state.ticketId));
     form.append('comment', text);
+    if (file) form.append('attachment', file, file.name);
     api('/ticket-comments/add', { method: 'POST', body: form }).then(function (res) {
       if (!res.success) {
         showError(res.message || 'Message not sent.');
@@ -445,6 +545,9 @@
       if (typeof preset !== 'string') {
         input.value = '';
         input.style.height = 'auto';
+        setPendingFile(null);
+        fileInput.value = '';
+        cameraInput.value = '';
       }
       if (res.comment) renderMessages([res.comment], false);
     }).catch(function () {

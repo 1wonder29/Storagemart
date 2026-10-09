@@ -135,9 +135,34 @@ if ($uri === '/ticket-comments/fetch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+if ($uri === '/ticket-comments/file' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Controllers/TicketCommentController.php';
+    (new TicketCommentController())->downloadAttachment();
+    exit;
+}
+
 if ($uri === '/ticket-comments/add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/../app/Controllers/TicketCommentController.php';
     (new TicketCommentController())->addComment();
+    exit;
+}
+
+// TECHNICAL REPORT SIGNING (shared — requester, IT person, Admin)
+if (in_array($uri, ['/tickets/signature', '/tickets/signature/save', '/tickets/signature/remove', '/tickets/signature/pdf'], true)) {
+    require_once __DIR__ . '/../app/Controllers/TicketSignatureController.php';
+    $signatureController = new TicketSignatureController();
+    $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
+    if ($uri === '/tickets/signature' && !$isPost) {
+        $signatureController->show();
+    } elseif ($uri === '/tickets/signature/pdf' && !$isPost) {
+        $signatureController->pdf();
+    } elseif ($uri === '/tickets/signature/save' && $isPost) {
+        $signatureController->save();
+    } elseif ($uri === '/tickets/signature/remove' && $isPost) {
+        $signatureController->remove();
+    } else {
+        http_response_code(405);
+    }
     exit;
 }
 

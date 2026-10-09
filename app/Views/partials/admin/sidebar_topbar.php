@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../../../Helpers/SuperUser.php';
+require_once __DIR__ . '/../../../Helpers/AdminAccess.php';
 $base = rtrim(BASE_URL, '/');
+$showSystemMenu = AdminAccess::canManageSystem();
 $inRoleArea = SuperUser::isActingInRoleArea();
 $adminActivePage = $inRoleArea ? '' : ($activePage ?? '');
 $ticketSubPage = $inRoleArea ? '' : ($ticketSubPage ?? '');
@@ -159,7 +161,8 @@ if (SuperUser::isCurrent()) {
                     <span>My Issued Items</span></a>
             </li>
 
-            <!-- Nav Item - System (auto-assignment, announcements, IT manuals, themes) -->
+            <!-- Nav Item - System (auto-assignment, announcements, IT manuals, themes); not for the General Manager -->
+            <?php if ($showSystemMenu): ?>
             <?php
             $systemSubPage = $inRoleArea ? '' : ($systemSubPage ?? '');
             $systemOpen = $adminActivePage === 'system';
@@ -205,6 +208,7 @@ if (SuperUser::isCurrent()) {
                     <i class="fas fa-fw fa-history"></i>
                     <span>Audit Trail</span></a>
             </li>
+            <?php endif; ?>
 
             <?php if (!empty($fullAccessGroups)): ?>
             <hr class="sidebar-divider">

@@ -17,7 +17,7 @@ class SystemController extends AuthController
     /** GET shows / POST saves Admin > Ticket Auto-Assignment. */
     public function ticketAssignment(): void
     {
-        $this->requireAdmin();
+        $this->requireSystemAdmin();
         global $pdo;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -145,6 +145,9 @@ class SystemController extends AuthController
     public function manuals(): void
     {
         $role = $this->requireRoles(['ADMIN', 'IT']);
+        if ($role === 'ADMIN') {
+            $this->requireSystemAdmin();
+        }
         $home = $role === 'IT' ? '/it/manuals' : '/admin/manuals';
         global $pdo;
 
@@ -275,7 +278,7 @@ class SystemController extends AuthController
      */
     public function themes(): void
     {
-        $this->requireAdmin();
+        $this->requireSystemAdmin();
         global $pdo;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -589,6 +592,18 @@ class SystemController extends AuthController
         $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?');
         $stmt->execute([$table]);
         return (int) $stmt->fetchColumn() > 0;
+    }
+
+    /** System pages: Admin accounts except the General Manager. */
+    protected function requireSystemAdmin(): void
+    {
+        $this->requireAdmin();
+        require_once __DIR__ . '/../../Helpers/AdminAccess.php';
+        if (!AdminAccess::canManageSystem()) {
+            $_SESSION['flash_error'] = 'System settings are for the system administrator only.';
+            $this->redirect('/admin/dashboard');
+            exit;
+        }
     }
 
     protected function requireAdmin(): void

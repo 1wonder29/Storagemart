@@ -55,6 +55,66 @@ $oldPriority = (string) ($oldTicketInput['priority'] ?? 'Medium');
                 <div class="ticket-specific-hint text-warning small mt-1" id="ticketSpecificHint" hidden></div>
             </div>
 
+            <div class="mb-3 ticket-photos">
+                <label class="form-label"><i class="fas fa-camera"></i> Photos of the problem <span class="text-muted small">(optional, up to 4)</span></label>
+                <div class="d-flex flex-wrap align-items-center" style="gap:8px">
+                    <label class="btn btn-outline-primary btn-sm mb-0">
+                        <i class="fas fa-images mr-1"></i> Choose photos
+                        <input type="file" name="problem_photos[]" class="d-none ticket-photo-input" accept="image/*" multiple>
+                    </label>
+                    <label class="btn btn-outline-secondary btn-sm mb-0">
+                        <i class="fas fa-camera mr-1"></i> Take a photo
+                        <input type="file" name="problem_photos_camera[]" class="d-none ticket-photo-input" accept="image/*" capture="environment">
+                    </label>
+                    <span class="small text-muted" id="ticketPhotoCount"></span>
+                </div>
+                <div class="d-flex flex-wrap mt-2" style="gap:6px" id="ticketPhotoPreview"></div>
+                <small class="form-text text-muted">A photo of the screen, error message or device helps IT fix it faster. Max 10 MB each.</small>
+            </div>
+            <script>
+            (function () {
+                var box = document.currentScript.previousElementSibling;
+                var form = box.closest('form');
+                if (form) { form.enctype = 'multipart/form-data'; form.encoding = 'multipart/form-data'; }
+                var inputs = box.querySelectorAll('.ticket-photo-input');
+                var preview = box.querySelector('#ticketPhotoPreview');
+                var count = box.querySelector('#ticketPhotoCount');
+                function refresh() {
+                    preview.textContent = '';
+                    var files = [];
+                    inputs.forEach(function (input) { Array.prototype.forEach.call(input.files || [], function (f) { files.push(f); }); });
+                    var tooBig = files.some(function (f) { return f.size > 10 * 1024 * 1024; });
+                    if (files.length > 4 || tooBig) {
+                        alert(tooBig ? 'Each photo must be 10 MB or less.' : 'You can add up to 4 photos.');
+                        inputs.forEach(function (input) { input.value = ''; });
+                        files = [];
+                    }
+                    files.forEach(function (f) {
+                        var img = document.createElement('img');
+                        img.alt = f.name;
+                        img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6';
+                        if (window.URL && URL.createObjectURL) img.src = URL.createObjectURL(f);
+                        preview.appendChild(img);
+                    });
+                    count.textContent = files.length ? files.length + ' photo' + (files.length === 1 ? '' : 's') + ' added' : '';
+                }
+                // Shrink phone photos before the form is sent (keeps uploads small on the server).
+                function shrinkInput(input) {
+                    var files = Array.prototype.slice.call(input.files || []);
+                    if (!files.length || !window.TMSShrinkImage || typeof DataTransfer === 'undefined') { refresh(); return; }
+                    Promise.all(files.map(function (f) { return window.TMSShrinkImage(f); })).then(function (small) {
+                        try {
+                            var dt = new DataTransfer();
+                            small.forEach(function (f) { dt.items.add(f); });
+                            input.files = dt.files;
+                        } catch (e) { /* keep the originals */ }
+                        refresh();
+                    });
+                }
+                inputs.forEach(function (input) { input.addEventListener('change', function () { shrinkInput(input); }); });
+            })();
+            </script>
+
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="category" class="form-label">

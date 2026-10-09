@@ -16,10 +16,24 @@ class Announcements
         return trim((string) $stmt->fetchColumn());
     }
 
+    /** Approval columns exist once the database update has run. */
+    public static function hasApproval(PDO $pdo): bool
+    {
+        static $has = null;
+        if ($has === null) {
+            $has = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tblannouncements' AND COLUMN_NAME = 'approval_status'")
+                ->fetchColumn() === 1;
+        }
+        return $has;
+    }
+
     /** SQL condition (and params) for announcements this account may see. */
     private static function visibleWhere(string $department): array
     {
-        $where = "a.is_active = 1 AND a.starts_at <= NOW() AND (a.ends_at IS NULL OR a.ends_at > NOW())
+        global $pdo;
+        $approved = self::hasApproval($pdo) ? "a.approval_status = 'APPROVED' AND " : '';
+        $where = $approved . "a.is_active = 1 AND a.starts_at <= NOW() AND (a.ends_at IS NULL OR a.ends_at > NOW())
                   AND (a.audience = 'ALL' OR (a.audience = 'DEPARTMENT' AND a.department = ?))";
         return [$where, [$department]];
     }
@@ -74,9 +88,41 @@ class Announcements
             $sql .= " WHERE a.audience = 'DEPARTMENT' AND a.department = ?";
             $params[] = $department;
         }
-        $stmt = $pdo->prepare($sql . ' ORDER BY a.starts_at DESC LIMIT 200');
+        $order = self::hasApproval($pdo) ? "(a.approval_status = 'PENDING') DESC, " : '';
+        $stmt = $pdo->prepare($sql . ' ORDER BY ' . $order . 'a.starts_at DESC LIMIT 200');
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /** System administrators who approve department announcements (not the General Manager). */
+    public static function approverIds(PDO $pdo): array
+    {
+        try {
+            $rows = $pdo->query("SELECT account_id FROM tblaccounts
+                WHERE usertype = 'ADMIN' AND UPPER(status) = 'ACTIVE' AND COALESCE(is_superuser, 0) = 0")->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Throwable $e) {
+            $rows = $pdo->query("SELECT account_id FROM tblaccounts WHERE usertype = 'ADMIN' AND UPPER(status) = 'ACTIVE'")
+                ->fetchAll(PDO::FETCH_COLUMN);
+        }
+        return array_map('intval', $rows ?: []);
+    }
+
+    /** Bell notification for everyone the announcement is for (only when it is live now). */
+    public static function notifyRecipients(PDO $pdo, array $row, int $excludeAccountId): int
+    {
+        if ((string) $row['starts_at'] > date('Y-m-d H:i:s')) {
+            return 0; // scheduled: it pops up for each person when it starts
+        }
+        require_once __DIR__ . '/../Models/NotificationModel.php';
+        $notifications = new NotificationModel();
+        $message = 'Announcement: ' . mb_substr((string) $row['title'], 0, 120);
+        $sent = 0;
+        foreach (self::recipients($pdo, (string) $row['audience'], $row['department'] ?? null, $excludeAccountId) as $recipient) {
+            $notifications->create($recipient, $message, 'fa-bullhorn', $row['importance'] === 'important' ? 'danger' : 'info',
+                '/announcements/open?id=' . (int) $row['announcement_id'], (int) $row['announcement_id']);
+            $sent++;
+        }
+        return $sent;
     }
 
     /** Accounts that should see an announcement (for the bell notification). */

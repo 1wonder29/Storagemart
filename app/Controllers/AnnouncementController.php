@@ -30,6 +30,12 @@ class AnnouncementController extends AuthController
             $this->redirect('/login');
             return;
         }
+        require_once __DIR__ . '/../Helpers/AdminAccess.php';
+        if ($area === 'admin' && !AdminAccess::canManageSystem()) {
+            $_SESSION['flash_error'] = 'Announcements are managed by the system administrator.';
+            $this->redirect('/admin/dashboard');
+            return;
+        }
         global $pdo;
         $accountId = (int) $_SESSION['account_id'];
         $home = '/' . $area . '/announcements';
@@ -91,6 +97,12 @@ class AnnouncementController extends AuthController
             return;
         }
 
+        if (($action === 'approve' || $action === 'reject') && $role === 'ADMIN') {
+            $this->review($pdo, $id, $action, $accountId, trim((string) ($_POST['review_note'] ?? '')));
+            $this->redirect($home);
+            return;
+        }
+
         if ($action === 'delete' || $action === 'toggle') {
             if ($action === 'delete') {
                 $pdo->prepare('DELETE FROM tblannouncement_reads WHERE announcement_id = ?')->execute([$id]);
@@ -145,35 +157,96 @@ class AnnouncementController extends AuthController
         }
 
         $author = $this->authorName($pdo, $accountId, $role);
+        // A department head's announcement (new or edited) waits for Admin approval.
+        $needsApproval = $role !== 'ADMIN' && Announcements::hasApproval($pdo);
         if ($id > 0) {
             $pdo->prepare('UPDATE tblannouncements SET title = ?, body = ?, audience = ?, department = ?, importance = ?,
                     starts_at = ?, ends_at = ?, updated_at = NOW() WHERE announcement_id = ?')
                 ->execute([$title, $body, $audience, $audience === 'ALL' ? null : $targetDepartment, $importance, $startsAt, $endsAt, $id]);
-            $_SESSION['flash_success'] = 'Announcement updated.';
-        } else {
-            $pdo->prepare('INSERT INTO tblannouncements (title, body, audience, department, importance, starts_at, ends_at,
-                    is_active, created_by, created_by_role, created_by_name, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, NOW())')
-                ->execute([$title, $body, $audience, $audience === 'ALL' ? null : $targetDepartment, $importance, $startsAt, $endsAt,
-                    $accountId, $role, $author]);
-            $id = (int) $pdo->lastInsertId();
-
-            // Bell notification for everyone it is for (scheduled ones pop up when they start).
-            if ($startsAt <= date('Y-m-d H:i:s')) {
-                $notifications = new NotificationModel();
-                $message = 'Announcement: ' . mb_substr($title, 0, 120);
-                foreach (Announcements::recipients($pdo, $audience, $targetDepartment, $accountId) as $recipient) {
-                    $notifications->create($recipient, $message, 'fa-bullhorn', $importance === 'important' ? 'danger' : 'info',
-                        '/announcements/open?id=' . $id, $id);
-                }
+            if ($needsApproval) {
+                $pdo->prepare("UPDATE tblannouncements SET approval_status = 'PENDING', reviewed_by = NULL, reviewed_at = NULL,
+                        review_note = NULL WHERE announcement_id = ?")->execute([$id]);
+                $this->notifyApprovers($pdo, $id, $author, $title, $targetDepartment, true);
             }
-            $_SESSION['flash_success'] = $audience === 'ALL'
-                ? 'Announcement posted to everyone.'
-                : 'Announcement posted to the ' . $targetDepartment . ' department.';
+            $_SESSION['flash_success'] = $needsApproval
+                ? 'Announcement updated and sent to Admin for approval again.'
+                : 'Announcement updated.';
+        } else {
+            if ($needsApproval) {
+                $pdo->prepare("INSERT INTO tblannouncements (title, body, audience, department, importance, starts_at, ends_at,
+                        is_active, created_by, created_by_role, created_by_name, created_at, approval_status)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, NOW(), 'PENDING')")
+                    ->execute([$title, $body, $audience, $targetDepartment, $importance, $startsAt, $endsAt,
+                        $accountId, $role, $author]);
+                $id = (int) $pdo->lastInsertId();
+                $this->notifyApprovers($pdo, $id, $author, $title, $targetDepartment, false);
+                $_SESSION['flash_success'] = 'Announcement sent to Admin for approval. It is shown to the '
+                    . $targetDepartment . ' department once approved.';
+            } else {
+                $pdo->prepare('INSERT INTO tblannouncements (title, body, audience, department, importance, starts_at, ends_at,
+                        is_active, created_by, created_by_role, created_by_name, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, NOW())')
+                    ->execute([$title, $body, $audience, $audience === 'ALL' ? null : $targetDepartment, $importance, $startsAt, $endsAt,
+                        $accountId, $role, $author]);
+                $id = (int) $pdo->lastInsertId();
+                Announcements::notifyRecipients($pdo, [
+                    'announcement_id' => $id, 'title' => $title, 'audience' => $audience,
+                    'department' => $targetDepartment, 'importance' => $importance, 'starts_at' => $startsAt,
+                ], $accountId);
+                $_SESSION['flash_success'] = $audience === 'ALL'
+                    ? 'Announcement posted to everyone.'
+                    : 'Announcement posted to the ' . $targetDepartment . ' department.';
+            }
         }
         ActivityLogger::update('Announcements', (string) $id, 'Saved announcement: ' . $title, $_SESSION['username'] ?? 'Unknown',
             ['audience' => $audience, 'department' => $targetDepartment]);
         $this->redirect($home);
+    }
+
+    /** Admin approves or rejects a department head's announcement. */
+    private function review(PDO $pdo, int $id, string $action, int $accountId, string $note): void
+    {
+        $stmt = $pdo->prepare('SELECT * FROM tblannouncements WHERE announcement_id = ?');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row || ($row['approval_status'] ?? '') !== 'PENDING') {
+            $_SESSION['flash_error'] = 'This announcement is not waiting for approval.';
+            return;
+        }
+        if ($action === 'reject' && $note === '') {
+            $_SESSION['flash_error'] = 'Please give a reason so the department head can fix it.';
+            return;
+        }
+        $status = $action === 'approve' ? 'APPROVED' : 'REJECTED';
+        $pdo->prepare('UPDATE tblannouncements SET approval_status = ?, reviewed_by = ?, reviewed_at = NOW(), review_note = ?
+                WHERE announcement_id = ? AND approval_status = \'PENDING\'')
+            ->execute([$status, $accountId, $note !== '' ? mb_substr($note, 0, 255) : null, $id]);
+
+        $notifications = new NotificationModel();
+        $title = mb_substr((string) $row['title'], 0, 100);
+        $headPath = strtoupper((string) $row['created_by_role']) === 'HOM' ? '/hom/announcements' : '/head/announcements';
+        if ($status === 'APPROVED') {
+            $sent = Announcements::notifyRecipients($pdo, $row, (int) $row['created_by']);
+            $notifications->create((int) $row['created_by'], 'Your announcement "' . $title . '" was approved and posted.',
+                'fa-check-circle', 'success', $headPath, $id);
+            $_SESSION['flash_success'] = 'Announcement approved' . ($sent ? " and sent to {$sent} people." : '.');
+        } else {
+            $notifications->create((int) $row['created_by'], 'Your announcement "' . $title . '" was not approved: ' . $note,
+                'fa-times-circle', 'danger', $headPath, $id);
+            $_SESSION['flash_success'] = 'Announcement rejected. The department head was told why.';
+        }
+        ActivityLogger::update('Announcements', (string) $id, ucfirst(strtolower($status)) . ' announcement: ' . $row['title'],
+            $_SESSION['username'] ?? 'Unknown', ['note' => $note]);
+    }
+
+    private function notifyApprovers(PDO $pdo, int $id, string $author, string $title, string $department, bool $edited): void
+    {
+        $notifications = new NotificationModel();
+        foreach (Announcements::approverIds($pdo) as $adminId) {
+            $notifications->create($adminId,
+                $author . ($edited ? ' edited' : ' posted') . ' an announcement for ' . $department . ' that needs approval: ' . mb_substr($title, 0, 80),
+                'fa-bullhorn', 'warning', '/admin/announcements', $id);
+        }
     }
 
     /** GET /announcements/feed (JSON) */

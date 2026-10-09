@@ -244,8 +244,11 @@ html.it-dark .app-topbar .app-clock-date {
 /* Avatar and name open the profile (the header profile menu was removed). */
 #accordionSidebar.sidebar-modern a.sidebar-user-profile {
   display: block;
-  color: inherit;
   text-decoration: none;
+}
+
+#accordionSidebar.sidebar-modern a.sidebar-user-name.sidebar-user-profile {
+  color: #fff;
 }
 
 #accordionSidebar.sidebar-modern a.sidebar-user-name:hover,
