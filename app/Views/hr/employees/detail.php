@@ -269,10 +269,15 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                                         <th>Quantity</th>
                                         <th>Issued</th>
                                         <th>Condition</th>
+                                        <th>Received</th>
                                         <th>Return</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <?php
+                                    require_once dirname(__DIR__, 3) . '/Helpers/UniformReceipts.php';
+                                    $uniformReceipts = UniformReceipts::forAssignments(array_column($uniforms, 'assignment_id'));
+                                    ?>
                                     <?php foreach ($uniforms as $unif): ?>
                                         <tr>
                                             <td>
@@ -285,6 +290,7 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                                             <td><?= $unif['quantity_issued'] ?></td>
                                             <td><?= date('M d, Y', strtotime($unif['date_issued'])) ?></td>
                                             <td><?= htmlspecialchars($unif['condition_upon_issue'] ?? '-') ?></td>
+                                            <td><?= UniformReceipts::badge($uniformReceipts[(int) $unif['assignment_id']] ?? null) ?: '—' ?></td>
                                             <td>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/return_confirm/<?= $unif['assignment_id'] ?>"
                                                    class="btn btn-sm btn-primary">Return</a>

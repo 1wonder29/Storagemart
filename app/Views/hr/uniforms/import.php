@@ -30,7 +30,8 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <h1><i class="fas fa-file-import mr-2"></i>Import Items from Excel</h1>
-                    <p>Add many items or stock counts at once. Upload a spreadsheet, check the preview, then confirm. Nothing changes until you confirm.</p>
+                    <p>Add many items or stock counts at once. Upload a spreadsheet, check the preview, then send it for approval.
+                        The stock changes only when another HR account or the Admin approves it.</p>
                 </div>
             </div>
         </div>
@@ -163,8 +164,8 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
                     <form method="POST" action="<?= htmlspecialchars($base) ?>/hr/uniforms/import/apply" class="mr-2 mb-2">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
                         <input type="hidden" name="import_token" value="<?= htmlspecialchars($import['token']) ?>">
-                        <button type="submit" class="btn btn-success"><i class="fas fa-check mr-1"></i>
-                            <?= $import['mode'] === 'replace' ? 'Overwrite the list' : 'Add ' . count($validRows) . ' row(s)' ?></button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-paper-plane mr-1"></i>
+                            Send for approval (<?= $import['mode'] === 'replace' ? 'overwrite the list' : 'add ' . count($validRows) . ' row(s)' ?>)</button>
                     </form>
                     <?php elseif ($validRows): ?>
                     <button type="button" class="btn btn-primary mr-2 mb-2" data-toggle="modal" data-target="#importModeModal">
@@ -208,7 +209,7 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
                         <div class="small">The inventory becomes this file: stock is <strong>set</strong> to the file's quantity, and items not in the file are discontinued.</div>
                     </button>
                 </form>
-                <p class="small text-muted mt-3 mb-0">You will see the preview again before anything is saved.</p>
+                <p class="small text-muted mt-3 mb-0">You will see the preview again. Then you send it for approval; nothing is saved before it is approved.</p>
             </div>
         </div>
     </div>

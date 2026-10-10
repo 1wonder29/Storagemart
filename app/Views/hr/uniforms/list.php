@@ -51,6 +51,10 @@ $totalPages = (int) ($totalPages ?? 1);
                 </div>
             </div>
 
+            <?php
+            require_once dirname(__DIR__, 3) . '/Models/hr/HrBatchModel.php';
+            $pendingApprovals = (new HrBatchModel())->pendingCount();
+            ?>
             <div class="quick-actions">
                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/add" class="quick-action-btn qa-info">
                     <i class="fas fa-plus"></i> Add New Item
@@ -61,8 +65,17 @@ $totalPages = (int) ($totalPages ?? 1);
                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/export" class="quick-action-btn qa-success">
                     <i class="fas fa-file-excel"></i> Download Summary
                 </a>
+                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/assign-import" class="quick-action-btn qa-warning">
+                    <i class="fas fa-users"></i> Assign from Excel
+                </a>
                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/import" class="quick-action-btn qa-primary">
                     <i class="fas fa-file-import"></i> Import from Excel
+                </a>
+                <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/approvals" class="quick-action-btn qa-primary">
+                    <i class="fas fa-clipboard-check"></i> Approvals
+                    <?php if ($pendingApprovals > 0): ?>
+                        <span class="badge badge-light ml-1"><?= (int) $pendingApprovals ?></span>
+                    <?php endif; ?>
                 </a>
                 <button type="button" class="quick-action-btn qa-secondary border-0" data-toggle="modal" data-target="#resetStockModal">
                     <i class="fas fa-redo"></i> Reset All Stock
@@ -74,6 +87,14 @@ $totalPages = (int) ($totalPages ?? 1);
                     <?php endif; ?>
                 </a>
             </div>
+
+            <?php if ($pendingApprovals > 0): ?>
+                <div class="alert alert-warning alert-modern">
+                    <i class="fas fa-clipboard-check mr-1"></i>
+                    <?= (int) $pendingApprovals ?> Excel upload<?= $pendingApprovals === 1 ? ' is' : 's are' ?> waiting for approval.
+                    <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/approvals" class="font-weight-bold">Open Approvals</a>
+                </div>
+            <?php endif; ?>
 
             <?php if (!empty($_SESSION['successMessage'])): ?>
                 <div class="alert alert-success alert-dismissible fade show alert-modern" role="alert">

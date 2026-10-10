@@ -136,11 +136,20 @@ class TmsGuide
                 $s[] = self::steps('Item inventory (uniforms and other items)', 'Keep the stock of every item HR issues.', [
                     ['Add New Item', 'Item type, size, color, quantity in stock, reorder level and cost. Low stock shows in the Stock Status column.'],
                     ['Assign Item to Employee', 'Choose the employee, the item, size and quantity. The stock goes down by itself.'],
-                    ['Download Summary / Import from Excel', 'Download the stock list, or add many items at once from an Excel file.'],
+                    ['Download Summary / Import from Excel', 'Download the stock list, or add many items or stock counts at once from Excel. An import is sent for approval first.'],
                     ['Edit, Discontinue, Reactivate, Delete', 'Use the buttons on each row. Discontinued items are no longer issued; Delete permanently removes the item.'],
                 ], ['url' => $a . '/uniforms', 'menu' => 'Inventory', 'title' => 'Item Inventory',
                     'buttons' => [['Add New Item', 1], ['Assign Item to Employee', 2], ['Download Summary', 3], 'Import from Excel'],
                     'blocks' => [['table', ['Item', 'In Stock', 'Stock Status', 'Issued', 'Actions'], 4]]], [$a . '/uniforms', 'Open Inventory']);
+                $s[] = self::steps('Assign from Excel and approvals', 'Issue items to many employees at once. Excel uploads are approved before anything changes.', [
+                    ['Fill in the template', 'Assign from Excel > Download Template. One row per employee and item: Employee Email, Item Type, Size, Color, Quantity.'],
+                    ['Upload and check', 'The preview shows every row. Rows with a problem (employee not found, item discontinued, not enough stock) are skipped.'],
+                    ['Send for approval', 'Nothing is issued yet. The other HR accounts and the Admin are notified.'],
+                    ['Approve or reject', 'Another HR account or the Admin opens Approvals and approves (items are issued, stock goes down) or rejects with a reason. You cannot approve your own upload.'],
+                    ['Employees confirm', 'Each employee gets a notification and clicks "Confirm received". The Received column shows who has confirmed.'],
+                ], ['url' => $a . '/uniforms/approvals', 'menu' => 'Inventory', 'title' => 'Approvals',
+                    'buttons' => [['Assign from Excel', 1], 'Import from Excel', ['Approvals', 4]],
+                    'blocks' => [['table', ['Type', 'What', 'Sent by', 'Status'], 3], ['buttons', [['Approve', 4], 'Reject']], ['table', ['Employee', 'Item', 'Received'], 5]]], [$a . '/uniforms/approvals', 'Open Approvals']);
                 $s[] = self::steps('Lost / Damaged reports', 'When an employee reports an issued item as lost or damaged.', [
                     ['Open the reports', 'Click Lost / Damaged Reports in the menu (the number shows how many are waiting).'],
                     ['Check the report', 'Read the item, the employee\'s explanation and the date. Pending ones need your answer.'],
@@ -401,9 +410,10 @@ class TmsGuide
         return self::steps('My Issued Items', 'Uniforms and other items HR issued to you.', [
             ['Open My Issued Items', 'Click My Issued Items in the menu.'],
             ['Check the list', 'Item, size, quantity and date issued.'],
+            ['Confirm received', 'When HR gives you an item, click "Confirm received" so HR knows you have it.'],
             ['Report Lost / Damaged', 'Click it on the item, say what happened, and send. HR checks it and answers.'],
         ], ['url' => $url, 'menu' => 'My Issued Items', 'title' => 'My Issued Items',
-            'blocks' => [['table', ['Item', 'Size', 'Qty', 'Date Issued', 'Action'], 2], ['buttons', [['Report Lost / Damaged', 3]]]]], [$url, 'Open My Issued Items']);
+            'blocks' => [['table', ['Item', 'Size', 'Qty', 'Date Issued', 'Received'], 2], ['buttons', [['Confirm received', 3], ['Report Lost / Damaged', 4]]]]], [$url, 'Open My Issued Items']);
     }
 
     private static function announcementPost(string $role, string $url, string $who): array

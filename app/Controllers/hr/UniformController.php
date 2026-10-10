@@ -733,7 +733,7 @@ class UniformController extends AuthController {
             if (!empty($employee['account_id']) && !empty($issuedLabels)) {
                 $this->notificationModel->create(
                     (int) $employee['account_id'],
-                    'HR issued you: ' . implode(', ', $issuedLabels) . '.',
+                    'HR issued you: ' . implode(', ', $issuedLabels) . '. Please confirm you received it in My Issued Items.',
                     'fa-tshirt',
                     'info',
                     UniformReportModel::itemsPathForUsertype($employee['usertype'] ?? null),
@@ -1197,7 +1197,10 @@ class UniformController extends AuthController {
         $this->redirect('/hr/uniforms/import');
     }
 
-    /** POST /hr/uniforms/import/apply — import the previewed valid rows. */
+    /**
+     * POST /hr/uniforms/import/apply — send the previewed valid rows for approval.
+     * The stock changes only when another HR account or a full-access Admin approves.
+     */
     public function importApply() {
         $this->requireHR();
         $import = $_SESSION['uniform_import'] ?? null;
@@ -1215,23 +1218,282 @@ class UniformController extends AuthController {
             $this->redirect('/hr/uniforms/import');
         }
 
-        try {
-            $result = $this->uniformModel->applyImport($import['rows'], $import['mode'], $_SESSION['username'] ?? 'system');
-        } catch (\Throwable $e) {
-            error_log('UniformController::importApply error: ' . $e->getMessage());
-            $_SESSION['errorMessage'] = 'Import failed; nothing was changed. ' . $e->getMessage();
+        $newCount = count(array_filter($import['rows'], static fn($r) => $r['existing_id'] === null));
+        $summary = ($import['mode'] === 'replace' ? 'Overwrite the list: ' : 'Add to stock: ')
+            . count($import['rows']) . ' row(s), ' . $newCount . ' new item(s)';
+        $batchId = $this->submitBatch('STOCK', $import['mode'], $import['filename'], $import['rows'], count($import['errors']), $summary);
+        if ($batchId === 0) {
             $this->redirect('/hr/uniforms/import');
         }
         unset($_SESSION['uniform_import']);
+        $this->redirect('/hr/uniforms/approvals/' . $batchId);
+    }
 
-        ActivityLogger::create('HR - Uniforms', 'import',
-            "Imported items from {$import['filename']}: {$result['created']} new, {$result['updated']} updated ({$import['mode']} mode)",
-            $_SESSION['username'] ?? 'system', ['rows' => count($import['rows']), 'skipped' => count($import['errors'])]);
+    /* ---------- Approvals of HR uploads (inventory imports and Assign from Excel) ---------- */
 
-        $_SESSION['successMessage'] = "Import done: {$result['created']} new item(s) added, {$result['updated']} existing item(s) updated"
-            . (!empty($result['discontinued']) ? ", {$result['discontinued']} item(s) not in the file discontinued" : '')
-            . (count($import['errors']) ? '; ' . count($import['errors']) . ' row(s) with errors were skipped.' : '.');
-        $this->redirect('/hr/uniforms');
+    /** Saves a checked upload as PENDING and notifies the people who can approve it. Returns 0 on error. */
+    private function submitBatch(string $type, ?string $mode, string $filename, array $rows, int $skipped, string $summary): int
+    {
+        require_once __DIR__ . '/../../Models/hr/HrBatchModel.php';
+        $batches = new HrBatchModel();
+        if (!$batches->ready()) {
+            $_SESSION['errorMessage'] = 'Please import the database update (update M) first; nothing was sent.';
+            return 0;
+        }
+        $me = (int) $_SESSION['account_id'];
+        $batchId = $batches->create($type, $mode, $filename, $rows, $skipped, $summary, $me);
+        $who = $batches->nameOf($me);
+        $what = $type === 'ASSIGN' ? 'items to issue to employees' : 'an inventory update';
+        foreach ($batches->approverAccountIds($me) as $accountId) {
+            $this->notificationModel->create($accountId, "{$who} sent {$what} for your approval ({$filename}).",
+                'fa-clipboard-check', 'warning', '/hr/uniforms/approvals/' . $batchId, $batchId);
+        }
+        ActivityLogger::create('HR - Approvals', (string) $batchId, "Sent for approval: {$summary} ({$filename})",
+            $_SESSION['username'] ?? 'system', ['type' => $type, 'rows' => count($rows), 'skipped' => $skipped]);
+        $_SESSION['successMessage'] = 'Sent for approval. Nothing changes until another HR account or the Admin approves it.';
+        return $batchId;
+    }
+
+    /** GET /hr/uniforms/approvals */
+    public function approvals() {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Models/hr/HrBatchModel.php';
+        $batchModel = new HrBatchModel();
+        $setupMissing = !$batchModel->ready();
+        $batches = $setupMissing ? [] : $batchModel->recent(60);
+        $me = (int) $_SESSION['account_id'];
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+        require __DIR__ . '/../../Views/hr/uniforms/approvals.php';
+    }
+
+    /** GET /hr/uniforms/approvals/{id} */
+    public function approvalView(int $batchId) {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Models/hr/HrBatchModel.php';
+        $batchModel = new HrBatchModel();
+        $batch = $batchModel->ready() ? $batchModel->get($batchId) : null;
+        if (!$batch) {
+            $_SESSION['errorMessage'] = 'That upload was not found.';
+            $this->redirect('/hr/uniforms/approvals');
+        }
+        // Stock right now, so the approver sees whether there is still enough.
+        $stockNow = [];
+        $ids = array_filter(array_map(static fn($r) => (int) ($r['uniform_id'] ?? $r['existing_id'] ?? 0), $batch['rows']));
+        foreach ($ids as $id) {
+            $item = $this->uniformModel->getUniformById($id);
+            if ($item) {
+                $stockNow[$id] = ['stock' => (int) $item['quantity_in_stock'], 'status' => (string) ($item['status'] ?? 'ACTIVE')];
+            }
+        }
+        $toDiscontinue = ($batch['batch_type'] === 'STOCK' && $batch['import_mode'] === 'replace' && $batch['status'] === 'PENDING')
+            ? $this->uniformModel->activeItemsNotInImport($batch['rows']) : [];
+        $canDecide = HrBatchModel::canDecide($batch);
+        $isOwner = (int) $batch['submitted_by'] === (int) $_SESSION['account_id'];
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+        require __DIR__ . '/../../Views/hr/uniforms/approval_view.php';
+    }
+
+    /** POST /hr/uniforms/approvals/decide : batch_id, decision (approve / reject / cancel), note */
+    public function approvalDecide() {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Models/hr/HrBatchModel.php';
+        $batchModel = new HrBatchModel();
+        $batchId = (int) ($_POST['batch_id'] ?? 0);
+        $back = '/hr/uniforms/approvals/' . $batchId;
+        if (!$this->csrfOk()) {
+            $_SESSION['errorMessage'] = 'Invalid form token. Please try again.';
+            $this->redirect($back);
+        }
+        $batch = $batchModel->ready() ? $batchModel->get($batchId) : null;
+        if (!$batch) {
+            $_SESSION['errorMessage'] = 'That upload was not found.';
+            $this->redirect('/hr/uniforms/approvals');
+        }
+        $me = (int) $_SESSION['account_id'];
+        $decision = (string) ($_POST['decision'] ?? '');
+        $note = trim((string) ($_POST['note'] ?? ''));
+        $myName = $batchModel->nameOf($me);
+        $label = $batch['filename'] ?: ('upload #' . $batchId);
+
+        if ($decision === 'cancel') {
+            if ((int) $batch['submitted_by'] !== $me || !$batchModel->finish($batchId, 'CANCELLED', $me, $note)) {
+                $_SESSION['errorMessage'] = 'Only the person who sent it can cancel it, and only while it waits for approval.';
+                $this->redirect($back);
+            }
+            ActivityLogger::update('HR - Approvals', (string) $batchId, "Cancelled: {$label}", $_SESSION['username'] ?? 'system');
+            $_SESSION['successMessage'] = 'Cancelled. Nothing was changed.';
+            $this->redirect($back);
+        }
+        if (!HrBatchModel::canDecide($batch)) {
+            $_SESSION['errorMessage'] = 'You cannot approve this: it is not waiting for approval, or you sent it yourself.';
+            $this->redirect($back);
+        }
+        if ($decision === 'reject') {
+            if ($note === '') {
+                $_SESSION['errorMessage'] = 'Write the reason for rejecting it, so the sender can fix the file.';
+                $this->redirect($back);
+            }
+            if ($batchModel->finish($batchId, 'REJECTED', $me, $note)) {
+                $this->notifySender($batch, "{$myName} rejected your upload {$label}: {$note}", 'danger');
+                ActivityLogger::update('HR - Approvals', (string) $batchId, "Rejected: {$label} ({$note})", $_SESSION['username'] ?? 'system');
+                $_SESSION['successMessage'] = 'Rejected. Nothing was changed; the sender was notified.';
+            }
+            $this->redirect($back);
+        }
+        if ($decision !== 'approve' || !$batchModel->claim($batchId, $me)) {
+            $_SESSION['errorMessage'] = 'Someone already decided on this upload.';
+            $this->redirect($back);
+        }
+
+        try {
+            if ($batch['batch_type'] === 'STOCK') {
+                $result = $this->uniformModel->applyImport($batch['rows'], (string) $batch['import_mode'], $_SESSION['username'] ?? 'system');
+                $resultText = "{$result['created']} new item(s), {$result['updated']} updated"
+                    . (!empty($result['discontinued']) ? ", {$result['discontinued']} discontinued" : '');
+            } else {
+                $issued = $this->uniformModel->applyAssignBatch($batch['rows'], $batchId, $me);
+                $resultText = "{$issued} item row(s) issued to employees";
+                $this->notifyIssued($batch['rows']);
+            }
+            $batchModel->complete($batchId, 'APPROVED', $note, $resultText);
+            ActivityLogger::update('HR - Approvals', (string) $batchId, "Approved: {$label} ({$resultText})", $_SESSION['username'] ?? 'system');
+            $this->notifySender($batch, "{$myName} approved your upload {$label}: {$resultText}.", 'success');
+            $_SESSION['successMessage'] = 'Approved and done: ' . $resultText . '.';
+        } catch (\Throwable $e) {
+            error_log('UniformController::approvalDecide error: ' . $e->getMessage());
+            $batchModel->complete($batchId, 'FAILED', $note, $e->getMessage());
+            $this->notifySender($batch, "Your upload {$label} could not be applied: " . $e->getMessage(), 'danger');
+            $_SESSION['errorMessage'] = 'Could not apply it; nothing was changed. ' . $e->getMessage();
+        }
+        $this->redirect($back);
+    }
+
+    private function notifySender(array $batch, string $message, string $color): void
+    {
+        $this->notificationModel->create((int) $batch['submitted_by'], $message, 'fa-clipboard-check', $color,
+            '/hr/uniforms/approvals/' . (int) $batch['batch_id'], (int) $batch['batch_id']);
+    }
+
+    /** One notification per employee: what HR issued, and a reminder to confirm receipt. */
+    private function notifyIssued(array $rows): void
+    {
+        $byEmployee = [];
+        foreach ($rows as $row) {
+            $byEmployee[(int) $row['employee_id']][] = $row;
+            $this->hrModel->logAction('ASSIGNED_UNIFORM', (int) $row['employee_id'], (int) $row['uniform_id'], (int) $_SESSION['account_id'],
+                "Assigned {$row['quantity']}x {$row['item_label']} to {$row['employee_name']} (Assign from Excel)");
+        }
+        foreach ($byEmployee as $items) {
+            $first = $items[0];
+            if (empty($first['account_id'])) {
+                continue;
+            }
+            $labels = array_map(static fn($r) => $r['quantity'] . ' x ' . $r['item_label'], $items);
+            $this->notificationModel->create((int) $first['account_id'],
+                'HR issued you: ' . implode(', ', $labels) . '. Please confirm you received it in My Issued Items.',
+                'fa-tshirt', 'info', UniformReportModel::itemsPathForUsertype($first['usertype'] ?? null), (int) $first['employee_id']);
+        }
+    }
+
+    /* ---------- Assign items from Excel (sent for approval) ---------- */
+
+    /** GET /hr/uniforms/assign-import */
+    public function assignImportForm() {
+        $this->requireHR();
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+        $import = $_SESSION['uniform_assign_import'] ?? null;
+        require __DIR__ . '/../../Views/hr/uniforms/assign_import.php';
+    }
+
+    /** GET /hr/uniforms/assign-import/template */
+    public function assignImportTemplate() {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Services/UniformAssignImportService.php';
+        $csv = UniformAssignImportService::templateCsv();
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="assign_items_template.csv"');
+        header('Content-Length: ' . strlen($csv));
+        echo $csv;
+        exit;
+    }
+
+    /** POST /hr/uniforms/assign-import/preview */
+    public function assignImportPreview() {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Services/UniformAssignImportService.php';
+        unset($_SESSION['uniform_assign_import']);
+        if (!$this->csrfOk()) {
+            $_SESSION['errorMessage'] = 'Invalid form token. Please try again.';
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        $file = $_FILES['import_file'] ?? null;
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            $_SESSION['errorMessage'] = 'Please choose an .xlsx or .csv file to upload.';
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        $ext = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, ['xlsx', 'csv', 'xls', 'txt'], true)) {
+            $_SESSION['errorMessage'] = 'Only .xlsx and .csv files can be imported.';
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        try {
+            $result = UniformAssignImportService::parse(
+                (string) $file['tmp_name'],
+                (string) $file['name'],
+                fn(string $email, string $employeeId, string $name) => $this->uniformModel->findEmployeeForImport($email, $employeeId, $name),
+                fn(string $type, string $size, string $color) => $this->uniformModel->findUniformByKey($type, $size, $color)
+            );
+        } catch (\Throwable $e) {
+            $_SESSION['errorMessage'] = $e->getMessage();
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        $_SESSION['uniform_assign_import'] = [
+            'token'    => bin2hex(random_bytes(16)),
+            'filename' => basename((string) $file['name']),
+            'rows'     => $result['rows'],
+            'errors'   => $result['errors'],
+            'total'    => $result['total'],
+        ];
+        $this->redirect('/hr/uniforms/assign-import');
+    }
+
+    /** POST /hr/uniforms/assign-import/submit — send the valid rows for approval. */
+    public function assignImportSubmit() {
+        $this->requireHR();
+        $import = $_SESSION['uniform_assign_import'] ?? null;
+        if (!$this->csrfOk() || !$import || !hash_equals($import['token'], (string) ($_POST['import_token'] ?? ''))) {
+            $_SESSION['errorMessage'] = 'This preview has expired. Please upload the file again.';
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        if (empty($import['rows'])) {
+            $_SESSION['errorMessage'] = 'There are no valid rows to send. Fix the errors and upload again.';
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        $people = count(array_unique(array_column($import['rows'], 'employee_id')));
+        $pieces = array_sum(array_column($import['rows'], 'quantity'));
+        $summary = "Issue {$pieces} item(s) to {$people} employee(s)";
+        $batchId = $this->submitBatch('ASSIGN', null, $import['filename'], $import['rows'], count($import['errors']), $summary);
+        if ($batchId === 0) {
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        unset($_SESSION['uniform_assign_import']);
+        $this->redirect('/hr/uniforms/approvals/' . $batchId);
+    }
+
+    /** POST /hr/uniforms/assign-import/cancel */
+    public function assignImportCancel() {
+        $this->requireHR();
+        unset($_SESSION['uniform_assign_import']);
+        $this->redirect('/hr/uniforms/assign-import');
     }
 
     /** POST /hr/uniforms/import/mode: answer to the "add or overwrite" popup. */

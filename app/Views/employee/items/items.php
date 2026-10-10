@@ -19,6 +19,14 @@ foreach ($itemReports as $r) {
         $pendingCount++;
     }
 }
+// Items HR issued that the employee has not confirmed yet ("Confirm received").
+$toConfirm = 0;
+foreach ($issuedItems as $r) {
+    if (isset($r['receipt']) && empty($r['receipt']['received_at'])) {
+        $toConfirm++;
+    }
+}
+$csrfToken = $csrf_token ?? ($_SESSION['csrf_token'] ?? '');
 $statusLabels = [
     'PENDING'   => ['Waiting for HR', 'warning'],
     'CONFIRMED' => ['Confirmed by HR', 'danger'],
@@ -79,6 +87,14 @@ $statusLabels = [
             </div>
         </div>
 
+        <?php if ($toConfirm > 0): ?>
+            <div class="alert alert-warning d-flex align-items-center" role="status">
+                <i class="fas fa-hand-paper mr-2"></i>
+                <div>HR issued you <strong><?= (int) $toConfirm ?> item<?= $toConfirm === 1 ? '' : 's' ?></strong> that you have not confirmed yet.
+                    When you have it, click <strong>Confirm received</strong> on the item.</div>
+            </div>
+        <?php endif; ?>
+
         <div class="card asset-list-card shadow mb-4">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h6><i class="fas fa-tshirt"></i>Issued Items</h6>
@@ -100,6 +116,7 @@ $statusLabels = [
                                     <th>Size</th>
                                     <th>Qty</th>
                                     <th>Date Issued</th>
+                                    <th>Received</th>
                                     <th class="text-right">Action</th>
                                 </tr>
                             </thead>
@@ -110,6 +127,22 @@ $statusLabels = [
                                         <td><?= htmlspecialchars((string) $row['size']) ?></td>
                                         <td><?= (int) $row['quantity_issued'] ?></td>
                                         <td><?= htmlspecialchars($row['date_issued'] ? date('M j, Y', strtotime((string) $row['date_issued'])) : '—') ?></td>
+                                        <td>
+                                            <?php $receipt = $row['receipt'] ?? null; ?>
+                                            <?php if ($receipt === null): ?>
+                                                <span class="text-muted">—</span>
+                                            <?php elseif (!empty($receipt['received_at'])): ?>
+                                                <span class="badge badge-success"><i class="fas fa-check mr-1"></i><?= htmlspecialchars(date('M j, Y', strtotime((string) $receipt['received_at']))) ?></span>
+                                            <?php else: ?>
+                                                <form method="POST" action="<?= htmlspecialchars($itemsUrl) ?>/received" class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) $csrfToken) ?>">
+                                                    <input type="hidden" name="assignment_id" value="<?= (int) $row['assignment_id'] ?>">
+                                                    <button type="submit" class="btn btn-sm btn-success">
+                                                        <i class="fas fa-check mr-1"></i> Confirm received
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="text-right">
                                             <?php if (!empty($row['pending_report_type'])): ?>
                                                 <span class="badge badge-warning">

@@ -119,7 +119,14 @@ class UniformReportModel extends UniformModel {
                 ORDER BY ua.date_issued DESC, ua.assignment_id DESC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$employeeId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        require_once __DIR__ . '/../../Helpers/UniformReceipts.php';
+        $receipts = UniformReceipts::forAssignments(array_column($rows, 'assignment_id'));
+        foreach ($rows as &$row) {
+            $row['receipt'] = $receipts[(int) $row['assignment_id']] ?? null;
+        }
+        unset($row);
+        return $rows;
     }
 
     public function getReportsForEmployee(int $employeeId, int $limit = 50): array

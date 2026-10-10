@@ -1215,4 +1215,85 @@ class UniformModel extends HRModel {
             throw $e;
         }
     }
+
+    /**
+     * Finds the employee of an "Assign from Excel" row by email (account username or employee email),
+     * else by Employee ID, else by full name (only when exactly one employee has it).
+     * @return array{0: ?array, 1: ?string} [employee with name/info, problem message]
+     */
+    public function findEmployeeForImport(string $email, string $employeeId, string $name): array
+    {
+        $select = "SELECT e.employee_id, e.account_id, e.firstname, e.lastname, e.department, b.branchName,
+                          a.usertype, a.status AS account_status
+                   FROM {$this->tblemployee} e
+                   LEFT JOIN {$this->tblaccounts} a ON a.account_id = e.account_id
+                   LEFT JOIN tblbranch b ON b.branch_id = e.branch_id";
+        if ($email !== '') {
+            $stmt = $this->pdo->prepare("$select WHERE LOWER(a.username) = ? OR LOWER(e.email) = ? LIMIT 3");
+            $stmt->execute([$email, $email]);
+            $label = $email;
+        } elseif ($employeeId !== '') {
+            $stmt = $this->pdo->prepare("$select WHERE e.employee_id = ? LIMIT 3");
+            $stmt->execute([$employeeId]);
+            $label = 'Employee ID ' . $employeeId;
+        } else {
+            $stmt = $this->pdo->prepare("$select WHERE LOWER(CONCAT(TRIM(e.firstname), ' ', TRIM(e.lastname))) = LOWER(?)
+                    OR LOWER(CONCAT(TRIM(e.lastname), ', ', TRIM(e.firstname))) = LOWER(?) LIMIT 3");
+            $stmt->execute([$name, $name]);
+            $label = $name;
+        }
+        $found = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $ids = array_unique(array_column($found, 'employee_id'));
+        if (!$found) {
+            return [null, 'Employee not found: ' . $label];
+        }
+        if (count($ids) > 1) {
+            return [null, 'More than one employee matches ' . $label . '; use the Employee Email'];
+        }
+        $row = $found[0];
+        if ($email !== '' && $employeeId !== '' && (string) $row['employee_id'] !== $employeeId) {
+            return [null, 'Employee Email and Employee ID are different people'];
+        }
+        if (!empty($row['account_id']) && strtoupper((string) $row['account_status']) !== 'ACTIVE') {
+            return [null, 'Account is inactive: ' . trim($row['firstname'] . ' ' . $row['lastname']) . ' (separated?)'];
+        }
+        $row['name'] = trim($row['firstname'] . ' ' . $row['lastname']);
+        $row['info'] = implode(' · ', array_filter([(string) $row['department'], (string) $row['branchName'],
+            empty($row['account_id']) ? 'no TMS login' : '']));
+        return [$row, null];
+    }
+
+    /**
+     * Issues the rows of an approved "Assign from Excel" batch, all or nothing:
+     * if any item no longer has enough stock, nothing is issued.
+     * @return int number of items issued
+     */
+    public function applyAssignBatch(array $rows, int $batchId, int $createdBy): int
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $stock = $this->pdo->prepare("UPDATE {$this->tbluniform_inventory}
+                    SET quantity_in_stock = quantity_in_stock - ?, date_updated = NOW()
+                    WHERE uniform_id = ? AND status = 'ACTIVE' AND quantity_in_stock >= ?");
+            $insert = $this->pdo->prepare("INSERT INTO {$this->tbluniform_assignment}
+                    (employee_id, uniform_id, date_issued, quantity_issued, condition_upon_issue, remarks, createdby, datecreated, batch_id)
+                    VALUES (?, ?, NOW(), ?, ?, ?, ?, NOW(), ?)");
+            foreach ($rows as $row) {
+                $stock->execute([(int) $row['quantity'], (int) $row['uniform_id'], (int) $row['quantity']]);
+                if ($stock->rowCount() === 0) {
+                    throw new RuntimeException('Not enough stock now for ' . $row['item_label'] . ' (row ' . (int) $row['excel_row']
+                        . ' needs ' . (int) $row['quantity'] . '), or the item was discontinued. Nothing was issued.');
+                }
+                $insert->execute([(int) $row['employee_id'], (int) $row['uniform_id'], (int) $row['quantity'],
+                    (string) $row['condition'], (string) $row['remarks'], $createdBy, $batchId]);
+            }
+            $this->pdo->commit();
+            return count($rows);
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
 }

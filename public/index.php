@@ -262,7 +262,7 @@ if (preg_match('#^/(hr|admin)/employees/accountability/(\d+)(?:/(preview|downloa
 }
 
 // MY ISSUED ITEMS — the same page under each role's prefix, e.g. /head/items, /aom/items/report
-if (preg_match('#^/([a-z]+)/items(/report)?$#', $uri, $itemsMatch)) {
+if (preg_match('#^/([a-z]+)/items(/report|/received)?$#', $uri, $itemsMatch)) {
     require_once __DIR__ . '/../app/Controllers/employee/ItemController.php';
     if (EmployeeItemController::handlesPrefix($itemsMatch[1])) {
         $items = new EmployeeItemController($itemsMatch[1]);
@@ -270,8 +270,12 @@ if (preg_match('#^/([a-z]+)/items(/report)?$#', $uri, $itemsMatch)) {
             $items->index();
             exit;
         }
-        if (!empty($itemsMatch[2]) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (($itemsMatch[2] ?? '') === '/report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $items->report();
+            exit;
+        }
+        if (($itemsMatch[2] ?? '') === '/received' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $items->received();
             exit;
         }
     }
@@ -709,6 +713,22 @@ if (strpos($uri, '/hr') === 0) {
         $uniform->importCancel();
     } elseif ($sub === 'uniforms/import/mode' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $uniform->importMode();
+    } elseif ($sub === 'uniforms/assign-import') {
+        $uniform->assignImportForm();
+    } elseif ($sub === 'uniforms/assign-import/template') {
+        $uniform->assignImportTemplate();
+    } elseif ($sub === 'uniforms/assign-import/preview' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->assignImportPreview();
+    } elseif ($sub === 'uniforms/assign-import/submit' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->assignImportSubmit();
+    } elseif ($sub === 'uniforms/assign-import/cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->assignImportCancel();
+    } elseif ($sub === 'uniforms/approvals') {
+        $uniform->approvals();
+    } elseif ($sub === 'uniforms/approvals/decide' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->approvalDecide();
+    } elseif (preg_match('#^uniforms/approvals/(\d+)$#', $sub, $approvalMatch)) {
+        $uniform->approvalView((int) $approvalMatch[1]);
     } elseif ($sub === 'uniforms/reset-stock' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $uniform->resetStock();
     } elseif ($sub === 'uniforms/reports') {

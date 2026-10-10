@@ -98,6 +98,28 @@ class EmployeeItemController extends AuthController
         require __DIR__ . '/../../Views/employee/items/items.php';
     }
 
+    /** POST /{prefix}/items/received : the employee confirms they received an issued item. */
+    public function received()
+    {
+        $employeeId = $this->requireEmployeeId();
+        if (empty($_POST['csrf_token']) || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), (string) $_POST['csrf_token'])) {
+            $_SESSION['flash_error'] = 'Invalid form token. Please try again.';
+            $this->redirect($this->itemsPath());
+        }
+        require_once __DIR__ . '/../../Helpers/UniformReceipts.php';
+        $assignmentId = (int) ($_POST['assignment_id'] ?? 0);
+        if (!UniformReceipts::confirm($assignmentId, $employeeId)) {
+            $_SESSION['flash_error'] = 'This item was already confirmed, or it is not yours.';
+            $this->redirect($this->itemsPath());
+        }
+        $assignment = (new UniformReportModel())->getAssignmentById($assignmentId);
+        $itemLabel = trim(($assignment['uniform_type'] ?? 'Item') . ' (' . ($assignment['size'] ?? '') . ')');
+        ActivityLogger::update('Employee - Items', (string) $assignmentId, "Confirmed received: {$itemLabel}",
+            $_SESSION['username'] ?? 'Unknown');
+        $_SESSION['flash_success'] = 'Thank you. HR can see that you received ' . $itemLabel . '.';
+        $this->redirect($this->itemsPath());
+    }
+
     /** POST /{prefix}/items/report */
     public function report()
     {
