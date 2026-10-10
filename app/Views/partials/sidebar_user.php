@@ -13,7 +13,8 @@ $sidebarProfileUrl = AppShell::profileUrl();
     <script>
     (function () {
         try {
-            if (localStorage.getItem('app-sidebar-collapsed') === '1') {
+            // Desktop only: on phones the menu is a drawer that starts closed.
+            if (localStorage.getItem('app-sidebar-collapsed') === '1' && !(window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches)) {
                 var sidebar = document.currentScript.closest('.sidebar');
                 if (sidebar) sidebar.classList.add('toggled');
                 document.body.classList.add('sidebar-toggled');

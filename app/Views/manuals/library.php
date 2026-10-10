@@ -22,7 +22,7 @@ $total = array_sum(array_map('count', $groups));
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>IT Manuals | StorageMart</title>
+    <title>Manuals &amp; Guides | StorageMart</title>
     <link href="<?= $h($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -86,7 +86,7 @@ $total = array_sum(array_map('count', $groups));
 <div class="top">
     <div class="top-in">
         <img src="<?= $h($base) ?>/assets/img/storagemart-logo-header.png" alt="StorageMart">
-        <span class="kicker">IT DEPARTMENT MANUALS</span>
+        <span class="kicker">MANUALS &amp; GUIDES</span>
         <button type="button" class="btn" onclick="history.length > 1 ? history.back() : (location.href = '<?= $h($base) ?>/')"><i class="fas fa-arrow-left"></i> Back</button>
         <?php if ($canManage): ?>
             <a class="btn orange" href="<?= $h($base . $manageUrl) ?>"><i class="fas fa-edit"></i> Manage guides</a>
@@ -94,8 +94,8 @@ $total = array_sum(array_map('count', $groups));
     </div>
 </div>
 <div class="wrap">
-    <h1>IT Manuals</h1>
-    <p class="lead">Step-by-step guides from the IT Department. Open a guide to see its slides, or download it as PowerPoint.</p>
+    <h1>Manuals &amp; Guides</h1>
+    <p class="lead">How to use the TMS for your role, and step-by-step IT guides for common problems (printer, internet, email, CCTV...). Open a guide to see its slides, or download it as PowerPoint.</p>
 
     <section class="tms-guides" aria-label="How to use the TMS">
         <h2><span class="ico"><i class="fas fa-question"></i></span>How to use the TMS <small style="color:#8a94b8;font-weight:600">TMS user guides</small></h2>

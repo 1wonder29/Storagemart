@@ -21,9 +21,51 @@
     } catch (e) {}
   }
 
+  /* ---------- Phones: the menu slides in over the page and closes again ---------- */
+  var phone = window.matchMedia ? window.matchMedia('(max-width: 767.98px)') : null;
+  var backdrop = null;
+
+  function isPhone() {
+    return !!(phone && phone.matches);
+  }
+
+  function setMobileOpen(open) {
+    document.body.classList.toggle('sidebar-mobile-open', open);
+    if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  if (sidebar && isPhone()) {
+    // The saved desktop "collapsed" state does not apply to the phone menu.
+    sidebar.classList.remove('toggled');
+    document.body.classList.remove('sidebar-toggled');
+  }
+  if (sidebar) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'app-sidebar-backdrop';
+    backdrop.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(backdrop);
+    backdrop.addEventListener('click', function () { setMobileOpen(false); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && document.body.classList.contains('sidebar-mobile-open')) setMobileOpen(false);
+    });
+    if (phone && phone.addEventListener) {
+      phone.addEventListener('change', function () {
+        setMobileOpen(false);
+        if (isPhone()) {
+          sidebar.classList.remove('toggled');
+          document.body.classList.remove('sidebar-toggled');
+        }
+      });
+    }
+  }
+
   if (toggle && sidebar) {
-    toggle.setAttribute('aria-expanded', sidebar.classList.contains('toggled') ? 'false' : 'true');
+    toggle.setAttribute('aria-expanded', isPhone() ? 'false' : (sidebar.classList.contains('toggled') ? 'false' : 'true'));
     toggle.addEventListener('click', function () {
+      if (isPhone()) {
+        setMobileOpen(!document.body.classList.contains('sidebar-mobile-open'));
+        return;
+      }
       setCollapsed(!sidebar.classList.contains('toggled'));
     });
   }

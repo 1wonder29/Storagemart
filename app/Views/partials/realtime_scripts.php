@@ -9,7 +9,7 @@ $realtimeAsset = static function (string $path) use ($realtimeBase): string {
 <meta name="base-url" content="<?= htmlspecialchars($realtimeBase) ?>">
 <script>window.BASE_URL = <?= json_encode($realtimeBase) ?>;</script>
 <script src="<?= htmlspecialchars($realtimeAsset('/assets/js/realtime.js')) ?>" defer></script>
-<script src="<?= htmlspecialchars($realtimeBase) ?>/assets/author/ouaaa.js"></script>
+<script src="<?= htmlspecialchars($realtimeBase) ?>/assets/author/ouaaa.js?v=20261011"></script>
 <?php if (!empty($_SESSION['account_id'])): ?>
 <link href="<?= htmlspecialchars($realtimeAsset('/assets/css/ticket-chat.css')) ?>" rel="stylesheet">
 <script src="<?= htmlspecialchars($realtimeAsset('/assets/js/ticket-chat.js')) ?>" defer></script>

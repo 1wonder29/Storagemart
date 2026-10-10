@@ -63,6 +63,8 @@ $base = rtrim(BASE_URL, '/');
         </a>
     </li>
 
+    <?php require __DIR__ . '/../sidebar_manuals_link.php'; ?>
+
 </ul>
 <!-- End of Sidebar -->
 

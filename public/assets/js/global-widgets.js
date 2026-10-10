@@ -634,6 +634,14 @@
     open.rel = 'noopener';
     var skip = el('button', 'btn btn-sm btn-light', firstTime ? 'Skip for now' : 'Close');
     skip.type = 'button';
+    // The library of all manuals and guides (/manuals), also in every role's menu.
+    var manuals = el('a', 'btn btn-sm btn-warning tmsw-guide-manuals');
+    manuals.href = BASE + '/manuals';
+    manuals.target = '_blank';
+    manuals.rel = 'noopener';
+    manuals.appendChild(icon('fas fa-book-open'));
+    manuals.appendChild(document.createTextNode(' Manuals & Guides'));
+    right.appendChild(manuals);
     right.appendChild(open);
     right.appendChild(skip);
     head.appendChild(right);

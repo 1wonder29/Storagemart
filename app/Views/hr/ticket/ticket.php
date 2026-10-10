@@ -1,14 +1,12 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 
+// Every status is always shown (0 included), the same as on the Employee page.
+require_once __DIR__ . '/../../../Helpers/TicketStatus.php';
 $rawTicketStats = $ticketStats ?? [];
-$statusOrder = ['Pending', 'In Progress', 'Cancelled', 'Resolved'];
 $summaryTicketStats = [];
-foreach ($statusOrder as $status) {
-    $count = (int)($rawTicketStats[$status] ?? 0);
-    if ($count > 0 || $status === 'Resolved') {
-        $summaryTicketStats[$status] = $count;
-    }
+foreach (TicketStatus::all() as $status) {
+    $summaryTicketStats[$status] = (int) ($rawTicketStats[$status] ?? 0);
 }
 foreach ($rawTicketStats as $status => $count) {
     if (!isset($summaryTicketStats[$status])) {
