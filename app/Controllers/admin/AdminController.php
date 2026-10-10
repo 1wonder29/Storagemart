@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 require_once __DIR__ . '/../../Models/PasswordResetRequest.php';
 require_once __DIR__ . '/../../Helpers/LoginThrottle.php';
+require_once __DIR__ . '/../../Helpers/EmployeePersonal.php';
 require_once __DIR__ . '/../../Helpers/PasswordPolicy.php';
 
 class AdminController extends AuthController
@@ -262,6 +263,14 @@ class AdminController extends AuthController
                 'email'       => trim($_POST['email'] ?? ''),
             ];
 
+            // Personal details (only when the form had them, so an old form never clears them)
+            $savePersonal = !empty($_POST['personal_form']);
+            [$personal, $personalProblem] = EmployeePersonal::fromPost($_POST);
+            if ($savePersonal && $personalProblem !== null) {
+                $_SESSION['flash_error'] = $personalProblem;
+                $this->redirect('/admin/account/edit?account_id=' . (int) ($_POST['account_id'] ?? 0));
+            }
+
             $rawPw = trim($dataAcc['password']);
             $passwordChanged = $rawPw !== '';
             if ($passwordChanged && strpos($rawPw, '$2y$') !== 0 && ($problem = PasswordPolicy::adminSetProblem($rawPw)) !== null) {
@@ -289,6 +298,9 @@ class AdminController extends AuthController
 
                 if (!$okAcc || !$okEmp) {
                     throw new Exception("Failed updating records.");
+                }
+                if ($savePersonal && $pdo instanceof PDO) {
+                    EmployeePersonal::save($pdo, (int) $dataEmp['employee_id'], $personal);
                 }
 
                 // Log update via ActivityLogger
@@ -349,6 +361,10 @@ class AdminController extends AuthController
             'position'    => $full['position'] ?? '',
         ];
 
+        $editPdo = $accountModel->getPDO();
+        $personalReady = $editPdo instanceof PDO && EmployeePersonal::ready($editPdo);
+        $personal = $personalReady ? EmployeePersonal::get($editPdo, (int) $employee['employee_id']) : [];
+
         // Branches
         $branches = method_exists($accountModel, 'fetchBranches')
             ? $accountModel->fetchBranches()
@@ -383,6 +399,8 @@ class AdminController extends AuthController
 
         $accountModel = $this->model ?? new Account();
         $departmentModel = new Department();
+        $addPdo = $accountModel->getPDO();
+        $personalReady = $addPdo instanceof PDO && EmployeePersonal::ready($addPdo);
 
         // Helper to load layout variables consistently
         $loadLayout = function () {
@@ -428,6 +446,7 @@ class AdminController extends AuthController
             ];
 
             $password = (string)($_POST['password'] ?? '');
+            [$personal, $personalProblem] = EmployeePersonal::fromPost($_POST);
 
             // basic validation
             if ($old['username'] === '' || $password === '' || $old['usertype'] === '') {
@@ -456,6 +475,15 @@ class AdminController extends AuthController
                 (int)$old['employee_id'] <= 0
             ) {
                 $_SESSION['flash_error'] = 'Employee ID is required and must be a positive number with no spaces.';
+                $branches = $accountModel->fetchBranches();
+                $departments = $departmentModel->fetchAll();
+                extract($loadLayout());
+                require __DIR__ . '/../../Views/admin/account/add.php';
+                return;
+            }
+
+            if ($personalReady && $personalProblem !== null) {
+                $_SESSION['flash_error'] = $personalProblem;
                 $branches = $accountModel->fetchBranches();
                 $departments = $departmentModel->fetchAll();
                 extract($loadLayout());
@@ -516,6 +544,9 @@ class AdminController extends AuthController
                 $newEmployeeId = $accountModel->createEmployee($employeeData);
                 if (!$newEmployeeId) {
                     throw new Exception('EMPLOYEE INSERT FAILED.');
+                }
+                if ($personalReady) {
+                    EmployeePersonal::save($pdo, (int) $old['employee_id'], $personal);
                 }
 
                 // log

@@ -558,8 +558,8 @@ class TmsGuide
         $s[] = ['type' => 'statuses'];
         $s[] = self::steps('Users and employees', 'Who can sign in, and with which role.', [
             ['Filter', 'By Role, Department, Branch or Status (Active, Inactive, No login).'],
-            ['Add User', 'Username (company email), role, employee details, department and branch, and a simple first password (for example the SURNAME in capitals).'],
-            ['Edit user', 'Change the role, status or details. To reset a password, type a new temporary one and tell the person to change it after signing in.'],
+            ['Add User', 'Username (company email), role, employee details, department and branch, and a simple first password (for example the SURNAME in capitals). Personal details (birthday, start date, gender, phone) are optional.'],
+            ['Edit user', 'Change the role, status, details or personal details (birthday, start date). To reset a password, type a new temporary one and tell the person to change it after signing in.'],
             ['Unlock login now', 'After 3 wrong passwords an account is locked for 15 minutes. The lock button opens it right away.'],
             ['Delete or deactivate', 'Deactivate someone who left; delete only accounts made by mistake.'],
         ], ['url' => '/admin/account', 'menu' => 'Users', 'title' => 'Users & Employees', 'buttons' => [['Add User', 2]],

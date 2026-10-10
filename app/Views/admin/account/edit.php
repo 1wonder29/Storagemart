@@ -176,6 +176,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                             <input type="text" class="form-control" id="email" name="email" placeholder="Email" value="<?= htmlspecialchars($employee['email'] ?? '') ?>" required>
                                         </div>
                                     </div>
+                                    <?php require __DIR__ . '/_personal_fields.php'; ?>
                                     <div class="form-actions d-flex justify-content-end w-100">
                                         <button type="submit" class="btn btn-primary" name="btnSubmit">
                                             <i class="fas fa-save mr-1"></i> Save Changes

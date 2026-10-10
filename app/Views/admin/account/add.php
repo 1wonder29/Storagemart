@@ -60,7 +60,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                 <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="username" class="form-label">Username</label>
-                                        <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+                                        <input type="text" class="form-control" id="username" name="username" placeholder="Username" value="<?= htmlspecialchars((string) ($old['username'] ?? '')) ?>" required>
                                     </div>
                                     <div class="col-md-6 position-relative">
                                         <label for="password" class="form-label">Password</label>
@@ -90,11 +90,11 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                 <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="employee_id" class="form-label">Employee ID</label>
-                                        <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Employee ID" required>
+                                        <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Employee ID" value="<?= htmlspecialchars((string) ($old['employee_id'] ?? '')) ?>" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="branch_id" class="form-label">Branch</label>
-                                        <?php $currentBranch = $employee['branch_id'] ?? ''; ?>
+                                        <?php $currentBranch = $old['branch_id'] ?? ($employee['branch_id'] ?? ''); ?>
                                         <select id="branch_id" name="branch_id" class="form-control" required>
                                             <option value="">-- Select Branch --</option>
                                             <?php foreach ($branches as $b):
@@ -111,25 +111,25 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                 <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="lastname" class="form-label">Last Name</label>
-                                        <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Last name" required>
+                                        <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Last name" value="<?= htmlspecialchars((string) ($old['lastname'] ?? '')) ?>" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="firstname" class="form-label">First Name</label>
-                                        <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First name" required>
+                                        <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First name" value="<?= htmlspecialchars((string) ($old['firstname'] ?? '')) ?>" required>
                                     </div>
                                 </div>
 
                                 <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="middlename" class="form-label">Middle Name</label>
-                                        <input type="text" class="form-control" id="middlename" name="middlename" placeholder="Middle name">
+                                        <input type="text" class="form-control" id="middlename" name="middlename" placeholder="Middle name" value="<?= htmlspecialchars((string) ($old['middlename'] ?? '')) ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="department" class="form-label">Department</label>
                                         <select id="department" name="department" class="form-control" required>
                                             <option value="">-- Select Department --</option>
                                             <?php foreach (($departments ?? []) as $dept): ?>
-                                                <option value="<?= htmlspecialchars((string) $dept['code']) ?>"><?= htmlspecialchars((string) $dept['label']) ?></option>
+                                                <option value="<?= htmlspecialchars((string) $dept['code']) ?>"<?= (($old['department'] ?? '') === (string) $dept['code']) ? ' selected' : '' ?>><?= htmlspecialchars((string) $dept['label']) ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
@@ -138,13 +138,15 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                 <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="email" class="form-label">Email</label>
-                                        <input type="text" class="form-control" id="email" name="email" placeholder="Email" required>
+                                        <input type="text" class="form-control" id="email" name="email" placeholder="Email" value="<?= htmlspecialchars((string) ($old['email'] ?? '')) ?>" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="position" class="form-label">Position</label>
-                                        <input type="text" class="form-control" id="position" name="position" placeholder="Position" required>
+                                        <input type="text" class="form-control" id="position" name="position" placeholder="Position" value="<?= htmlspecialchars((string) ($old['position'] ?? '')) ?>" required>
                                     </div>
                                 </div>
+
+                                <?php require __DIR__ . '/_personal_fields.php'; ?>
 
                                 <div class="form-actions">
                                     <button type="submit" class="btn btn-primary" name="btnSubmit">
