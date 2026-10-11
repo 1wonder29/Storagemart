@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../Helpers/TicketAssigner.php';
 require_once __DIR__ . '/../../Helpers/TicketManuals.php';
 require_once __DIR__ . '/../../Helpers/TicketFormFields.php';
 require_once __DIR__ . '/../../Helpers/SeasonalThemes.php';
+require_once __DIR__ . '/../../Helpers/CustomEffects.php';
 
 /**
  * Admin pages added with the Oct 2026 update: ticket auto-assignment (zones, IT
@@ -71,7 +72,7 @@ class SystemController extends AuthController
                 error_log('SystemController::ticketAssignment save failed: ' . $e->getMessage());
                 $_SESSION['flash_error'] = 'Could not save the settings. Please run the database update (G2) first.';
             }
-            $this->redirect('/admin/ticket-assignment');
+            $this->redirect('/admin/ticket-assignment' . (!empty($_POST['duty_action']) ? '#saturday-duty' : ''));
             return;
         }
 
@@ -98,13 +99,14 @@ class SystemController extends AuthController
         $autoAssignEnabled = AppSettings::get('auto_assign_enabled', '1') === '1';
         $reassignMinutes = AppSettings::getInt('reassign_after_minutes', 30);
 
-        // Saturday duty: this month and the next 5, each with its Saturdays.
+        // Saturday duty: this month onwards (the Admin can add months), each with its Saturdays.
         require_once __DIR__ . '/../../Helpers/TicketAssigner.php';
         $dutyMonths = TicketAssigner::saturdayDutyMonths();
         $dutyDates = TicketAssigner::saturdayDutyDates();
         $saturdayMonths = [];
         $first = strtotime(date('Y-m-01'));
-        for ($i = 0; $i < 6; $i++) {
+        $showMonths = $this->saturdayMonthsToShow($dutyMonths, $dutyDates);
+        for ($i = 0; $i < $showMonths; $i++) {
             $monthStart = strtotime('+' . $i . ' month', $first);
             $month = date('Y-m', $monthStart);
             $saturdays = [];
@@ -156,6 +158,36 @@ class SystemController extends AuthController
                 unset($dates[(string) $date]);
             }
         }
+        // Buttons of the Saturday duty card: add a month, remove the last month, clear a month, rotation.
+        $show = AppSettings::getInt('saturday_duty_show', 6);
+        $action = (string) ($_POST['duty_action'] ?? '');
+        if ($action === 'add_month') {
+            $show = min(24, max($show, $this->saturdayMonthsToShow($months, $dates)) + 1);
+        } elseif (preg_match('/^(clear|remove):(\d{4}-\d{2})$/', $action, $m)) {
+            unset($months[$m[2]]);
+            foreach (array_keys($dates) as $date) {
+                if (substr($date, 0, 7) === $m[2]) {
+                    unset($dates[$date]);
+                }
+            }
+            if ($m[1] === 'remove') {
+                $show = max(1, $this->monthsBetween(date('Y-m'), $m[2]) - 1); // the removed month was the last one shown
+            }
+        } elseif ($action === 'rotate') {
+            $people = array_values(array_filter(array_map('intval', (array) ($_POST['rotate_people'] ?? [])),
+                static fn(int $id): bool => $id > 0 && in_array($id, $itStaff, true)));
+            $from = (string) ($_POST['rotate_from'] ?? '');
+            $count = max(1, min(24, (int) ($_POST['rotate_months'] ?? 6)));
+            if ($people && preg_match('/^\d{4}-\d{2}$/', $from) && $from >= date('Y-m')) {
+                $start = strtotime($from . '-01');
+                for ($i = 0; $i < $count; $i++) {
+                    $months[date('Y-m', strtotime('+' . $i . ' month', $start))] = $people[$i % count($people)];
+                }
+                $show = min(24, max($show, $this->monthsBetween(date('Y-m'), date('Y-m', strtotime('+' . ($count - 1) . ' month', $start)))));
+            }
+        }
+        AppSettings::set('saturday_duty_show', (string) $show);
+
         // Keep one year of history.
         $oldest = date('Y-m', strtotime('-12 month'));
         $months = array_filter($months, static function (string $month) use ($oldest): bool {
@@ -166,6 +198,25 @@ class SystemController extends AuthController
         }, ARRAY_FILTER_USE_KEY);
         AppSettings::set('saturday_duty', $months ? json_encode($months) : null);
         AppSettings::set('saturday_duty_dates', $dates ? json_encode($dates) : null);
+    }
+
+    /** Months shown in the Saturday duty card: the saved number, and always up to the last scheduled month. */
+    private function saturdayMonthsToShow(array $months, array $dates): int
+    {
+        $show = AppSettings::getInt('saturday_duty_show', 6);
+        $last = date('Y-m');
+        foreach (array_merge(array_keys($months), array_map(static fn($d) => substr($d, 0, 7), array_keys($dates))) as $month) {
+            $last = max($last, $month);
+        }
+        return max(1, min(24, max($show, $this->monthsBetween(date('Y-m'), $last))));
+    }
+
+    /** 2026-10 to 2026-12 = 3 months (both included). */
+    private function monthsBetween(string $from, string $to): int
+    {
+        [$fy, $fm] = array_map('intval', explode('-', $from));
+        [$ty, $tm] = array_map('intval', explode('-', $to));
+        return ($ty - $fy) * 12 + ($tm - $fm) + 1;
     }
 
     /** POST /it/availability — IT marks themselves away / available. */
@@ -518,6 +569,8 @@ class SystemController extends AuthController
                 } elseif ($action === 'stop') {
                     $pdo->prepare('UPDATE tblthemes_schedule SET ends_at = NOW() WHERE schedule_id = ? AND ends_at > NOW()')->execute([$scheduleId]);
                     $_SESSION['flash_success'] = 'Theme ended now.';
+                } elseif ($action === 'save_effect' || $action === 'delete_effect') {
+                    $back = $this->saveCustomEffect($pdo, $action);
                 } elseif ($action === 'save_theme') {
                     $back = $this->saveTheme($pdo);
                 } elseif ($action === 'delete_theme') {
@@ -597,7 +650,88 @@ class SystemController extends AuthController
         $editTheme = $editKey !== '' ? SeasonalThemes::get($pdo, $editKey) : null;
         $themeOld = $_SESSION['theme_old_input'] ?? null;
         unset($_SESSION['theme_old_input']);
-        $this->renderAdmin('admin/system/themes.php', compact('schedules', 'setupMissing', 'current', 'themes', 'editKey', 'editTheme', 'themeOld'));
+        $customReady = CustomEffects::ready($pdo);
+        $customEffects = CustomEffects::all($pdo);
+        $customJs = CustomEffects::forBrowser($pdo);
+        $editEffect = $customEffects['c' . (int) ($_GET['edit_effect'] ?? 0)] ?? null;
+        $this->renderAdmin('admin/system/themes.php', compact('schedules', 'setupMissing', 'current', 'themes', 'editKey', 'editTheme', 'themeOld',
+            'customReady', 'customEffects', 'customJs', 'editEffect'));
+    }
+
+    /** Add, edit or delete a custom effect (pictures / emoji in a style). Returns the page to go back to. */
+    private function saveCustomEffect(PDO $pdo, string $action): string
+    {
+        $back = '/admin/themes#custom-effects';
+        $id = (int) ($_POST['effect_id'] ?? 0);
+        $existing = CustomEffects::all($pdo)['c' . $id] ?? null;
+        if ($action === 'delete_effect') {
+            if ($existing) {
+                $pdo->prepare('DELETE FROM tblcustom_effects WHERE effect_id = ?')->execute([$id]);
+                CustomEffects::deleteImages($existing['images']);
+                // Take it out of the themes that used it.
+                foreach ($pdo->query('SELECT theme_key, effects FROM tblthemes')->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $list = array_filter(array_map('trim', explode(',', (string) $row['effects'])), static fn($k) => $k !== '' && $k !== 'c' . $id);
+                    if (implode(',', $list) !== (string) $row['effects']) {
+                        $pdo->prepare('UPDATE tblthemes SET effects = ? WHERE theme_key = ?')->execute([implode(',', $list), $row['theme_key']]);
+                    }
+                }
+                ActivityLogger::delete('Admin - Themes', 'c' . $id, 'Custom effect deleted: ' . $existing['name'], $_SESSION['username'] ?? 'Unknown');
+                $_SESSION['flash_success'] = 'The effect "' . $existing['name'] . '" was deleted.';
+            }
+            return $back;
+        }
+
+        $name = mb_substr(trim((string) ($_POST['effect_name'] ?? '')), 0, 60);
+        $style = (string) ($_POST['effect_style'] ?? '');
+        $emoji = implode(' ', array_slice(array_values(array_filter(preg_split('/[\s,]+/u', trim((string) ($_POST['effect_emoji'] ?? ''))) ?: [], 'strlen')), 0, 6));
+        $round = !empty($_POST['effect_round']) ? 1 : 0;
+        $size = max(30, min(140, (int) ($_POST['effect_size'] ?? 70)));
+        $amount = max(4, min(40, (int) ($_POST['effect_amount'] ?? 20)));
+        $keep = $existing ? array_values(array_intersect($existing['images'], (array) ($_POST['keep_images'] ?? []))) : [];
+        if ($name === '' || !isset(CustomEffects::STYLES[$style])) {
+            $_SESSION['flash_error'] = 'Give the effect a name and choose its style.';
+            return '/admin/themes?' . ($existing ? 'edit_effect=' . $id . '&' : '') . 'new_effect=1#custom-effects';
+        }
+
+        $new = [];
+        $files = $_FILES['effect_images'] ?? null;
+        try {
+            if ($files && is_array($files['name'])) {
+                foreach ($files['name'] as $i => $fileName) {
+                    if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+                        continue;
+                    }
+                    if (count($keep) + count($new) >= CustomEffects::MAX_IMAGES) {
+                        break;
+                    }
+                    $new[] = CustomEffects::storeImage([
+                        'name' => $fileName, 'type' => $files['type'][$i], 'tmp_name' => $files['tmp_name'][$i],
+                        'error' => $files['error'][$i], 'size' => $files['size'][$i],
+                    ]);
+                }
+            }
+        } catch (RuntimeException $e) {
+            CustomEffects::deleteImages($new);
+            $_SESSION['flash_error'] = $e->getMessage();
+            return '/admin/themes?' . ($existing ? 'edit_effect=' . $id . '&' : '') . 'new_effect=1#custom-effects';
+        }
+        $images = array_merge($keep, $new);
+        if (!$images && $emoji === '') {
+            $_SESSION['flash_error'] = 'Add at least one picture or one emoji.';
+            return '/admin/themes?' . ($existing ? 'edit_effect=' . $id . '&' : '') . 'new_effect=1#custom-effects';
+        }
+        if ($existing) {
+            $pdo->prepare('UPDATE tblcustom_effects SET name = ?, style = ?, images = ?, emoji = ?, round_images = ?, size = ?, amount = ?, updated_at = NOW()
+                    WHERE effect_id = ?')->execute([$name, $style, json_encode($images), $emoji, $round, $size, $amount, $id]);
+            CustomEffects::deleteImages(array_diff($existing['images'], $keep));
+        } else {
+            $pdo->prepare('INSERT INTO tblcustom_effects (name, style, images, emoji, round_images, size, amount, created_by, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())')->execute([$name, $style, json_encode($images), $emoji, $round, $size, $amount, (int) $_SESSION['account_id']]);
+        }
+        ActivityLogger::update('Admin - Themes', $existing ? 'c' . $id : 'new', 'Custom effect saved: ' . $name, $_SESSION['username'] ?? 'Unknown',
+            ['style' => $style, 'pictures' => count($images)]);
+        $_SESSION['flash_success'] = 'Effect "' . $name . '" saved. Tick it in a theme (5. Effects) to use it.';
+        return $back;
     }
 
     /** Add or edit a theme (Admin > Seasonal Themes). Returns the page to go back to. */
@@ -611,7 +745,10 @@ class SystemController extends AuthController
         $main = strtolower((string) ($_POST['color_main'] ?? ''));
         $accent = strtolower((string) ($_POST['color_accent'] ?? ''));
         $message = trim((string) ($_POST['message'] ?? ''));
-        $effects = array_values(array_intersect(array_keys(SeasonalThemes::EFFECTS), (array) ($_POST['effects'] ?? [])));
+        $effects = array_values(array_merge(
+            array_intersect(array_keys(SeasonalThemes::EFFECTS), (array) ($_POST['effects'] ?? [])),
+            array_intersect(array_keys(CustomEffects::all($pdo)), (array) ($_POST['effects'] ?? []))
+        ));
         $from = (string) ($_POST['date_from'] ?? '');
         $to = (string) ($_POST['date_to'] ?? '');
         $md = static function (string $value): ?string {

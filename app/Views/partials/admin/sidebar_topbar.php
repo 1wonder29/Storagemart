@@ -98,6 +98,11 @@ if (SuperUser::isCurrent()) {
                             <i class="fas fa-id-card"></i>
                             <span>Users &amp; Employees</span>
                         </a>
+                        <a class="sidebar-submenu-item <?= ($userSubPage === 'requests') ? 'active' : '' ?>"
+                           href="<?= htmlspecialchars($base) ?>/admin/user-requests">
+                            <i class="fas fa-user-plus"></i>
+                            <span>User Requests from HR</span>
+                        </a>
                         <a class="sidebar-submenu-item <?= ($userSubPage === 'department') ? 'active' : '' ?>"
                            href="<?= htmlspecialchars($base) ?>/admin/department">
                             <i class="fas fa-building"></i>

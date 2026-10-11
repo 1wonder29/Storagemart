@@ -18,16 +18,32 @@ class WidgetController extends AuthController
         $year = (int) date('Y');
         $greeted = [];
         $counts = [];
+        $wall = []; // celebrant => greetings, shown to everyone like a chat
         try {
             $ids = array_column(array_filter($people, static function ($p) { return $p['days_left'] === 0; }), 'account_id');
             if ($ids) {
                 $in = implode(',', array_fill(0, count($ids), '?'));
-                $stmt = $pdo->prepare("SELECT celebrant_account_id, COUNT(*) AS n, SUM(from_account_id = ?) AS mine
-                        FROM tblbirthday_greetings WHERE greet_year = ? AND celebrant_account_id IN ($in) GROUP BY celebrant_account_id");
-                $stmt->execute(array_merge([$me, $year], $ids));
+                $stmt = $pdo->prepare("SELECT g.celebrant_account_id, g.from_account_id, g.message, g.created_at,
+                            TRIM(CONCAT(COALESCE(e.firstname, ''), ' ', COALESCE(e.lastname, ''))) AS from_name, a.username
+                        FROM tblbirthday_greetings g
+                        LEFT JOIN tblaccounts a ON a.account_id = g.from_account_id
+                        LEFT JOIN tblemployee e ON e.account_id = g.from_account_id
+                        WHERE g.greet_year = ? AND g.celebrant_account_id IN ($in)
+                        ORDER BY g.greeting_id ASC");
+                $stmt->execute(array_merge([$year], $ids));
                 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-                    $counts[(int) $row['celebrant_account_id']] = (int) $row['n'];
-                    $greeted[(int) $row['celebrant_account_id']] = (int) $row['mine'] > 0;
+                    $celebrant = (int) $row['celebrant_account_id'];
+                    $mine = (int) $row['from_account_id'] === $me;
+                    $counts[$celebrant] = ($counts[$celebrant] ?? 0) + 1;
+                    if ($mine) {
+                        $greeted[$celebrant] = true;
+                    }
+                    $wall[$celebrant][] = [
+                        'from' => $row['from_name'] !== '' ? $row['from_name'] : (string) $row['username'],
+                        'message' => (string) $row['message'],
+                        'time' => date('g:i A', strtotime((string) $row['created_at'])),
+                        'mine' => $mine,
+                    ];
                 }
             }
         } catch (Throwable $e) {
@@ -40,6 +56,7 @@ class WidgetController extends AuthController
             if ($person['days_left'] === 0) {
                 $person['greet_count'] = $counts[$person['account_id']] ?? 0;
                 $person['greeted'] = $greeted[$person['account_id']] ?? false;
+                $person['greetings'] = array_slice($wall[$person['account_id']] ?? [], -50);
                 $today[] = $person;
             } else {
                 $person['starts_at'] = $person['date'] . 'T00:00:00';
@@ -99,6 +116,32 @@ class WidgetController extends AuthController
         } catch (Throwable $e) {
             error_log('WidgetController::birthdayGreet failed: ' . $e->getMessage());
             $this->json(['success' => false, 'message' => 'Could not send the greeting. Please run the database update first.'], 500);
+        }
+    }
+
+    /** POST /birthdays/ungreet : take back my greeting (only on the birthday itself, e.g. sent by mistake). */
+    public function birthdayUngreet(): void
+    {
+        $me = $this->jsonAccount(true);
+        global $pdo;
+        $celebrant = (int) ($_POST['celebrant_id'] ?? 0);
+        $isToday = false;
+        foreach (Birthdays::upcoming($pdo) as $person) {
+            if ($person['account_id'] === $celebrant && $person['days_left'] === 0) {
+                $isToday = true;
+            }
+        }
+        if (!$isToday) {
+            $this->json(['success' => false, 'message' => 'A greeting can only be taken back on the birthday itself.'], 400);
+        }
+        try {
+            $pdo->prepare('DELETE FROM tblbirthday_greetings WHERE celebrant_account_id = ? AND from_account_id = ? AND greet_year = ?')
+                ->execute([$celebrant, $me, (int) date('Y')]);
+            $count = $pdo->prepare('SELECT COUNT(*) FROM tblbirthday_greetings WHERE celebrant_account_id = ? AND greet_year = ?');
+            $count->execute([$celebrant, (int) date('Y')]);
+            $this->json(['success' => true, 'greet_count' => (int) $count->fetchColumn()]);
+        } catch (Throwable $e) {
+            $this->json(['success' => false, 'message' => 'Could not take back the greeting.'], 500);
         }
     }
 

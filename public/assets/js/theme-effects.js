@@ -285,6 +285,121 @@
     },
   };
 
+  // ---------- Effects made by the Admin (Themes > Custom effects): pictures and / or emoji ----------
+  // def = { style, images: [url...], emoji: [...], round, size, amount }
+  function customPiece(def, scale) {
+    var size = Math.round((def.size || 60) * (scale || 1) * rand(0.85, 1.15));
+    var pics = def.images || [];
+    var emoji = def.emoji || [];
+    var node = span('tfx-cpiece');
+    if (pics.length && (!emoji.length || Math.random() < 0.75)) {
+      var img = document.createElement('img');
+      img.src = pick(pics);
+      img.alt = '';
+      img.className = 'tfx-cimg' + (def.round ? ' round' : '');
+      img.style.width = img.style.height = size + 'px';
+      node.appendChild(img);
+    } else {
+      node.textContent = emoji.length ? pick(emoji) : '✨';
+      node.style.fontSize = size + 'px';
+    }
+    return { node: node, size: size };
+  }
+  var CUSTOM = {
+    // Rockets go up; each burst throws the pictures out like crackers.
+    fireworks: function (def, s, theme) {
+      var root = layer(s, 2.5);
+      var palette = (theme.colors || []).concat(['#f6c23e', '#ff6b6b', '#4ecdc4', '#ffffff', '#a78bfa']);
+      var bursts = count(Math.max(3, Math.min(8, Math.round((def.amount || 20) / 4))));
+      for (var b = 0; b < bursts; b++) {
+        (function (delay) {
+          var x = rand(15, 85), y = rand(18, 45);
+          var rocket = span('tfx-rocket');
+          rocket.style.left = x + 'vw';
+          rocket.style.setProperty('--tfx-y', y + 'vh');
+          anim(rocket, 'tfx-launch', 0.7, delay, 'ease-out');
+          root.appendChild(rocket);
+          var color = pick(palette);
+          for (var i = 0; i < 16; i++) {
+            var spark = span('tfx-spark');
+            var a = (i / 16) * Math.PI * 2, d = rand(60, 120);
+            spark.style.left = x + 'vw';
+            spark.style.top = y + 'vh';
+            spark.style.background = spark.style.color = Math.random() < 0.3 ? pick(palette) : color;
+            spark.style.setProperty('--tfx-dx', Math.cos(a) * d + 'px');
+            spark.style.setProperty('--tfx-dy', Math.sin(a) * d + 'px');
+            anim(spark, 'tfx-burst', 1.3, delay + 0.7, 'ease-out');
+            root.appendChild(spark);
+          }
+          var n = 6;
+          for (var j = 0; j < n; j++) {
+            var piece = customPiece(def, 0.75);
+            var angle = (j / n) * Math.PI * 2 + rand(-0.3, 0.3), dist = rand(90, 190);
+            piece.node.style.left = x + 'vw';
+            piece.node.style.top = y + 'vh';
+            piece.node.style.marginLeft = piece.node.style.marginTop = (-piece.size / 2) + 'px';
+            piece.node.style.setProperty('--tfx-dx', Math.cos(angle) * dist + 'px');
+            piece.node.style.setProperty('--tfx-dy', Math.sin(angle) * dist + 'px');
+            anim(piece.node, 'tfx-cburst', 2, delay + 0.7, 'cubic-bezier(.2,.7,.3,1)');
+            root.appendChild(piece.node);
+          }
+        })(rand(0, Math.max(1, s - 3)));
+      }
+    },
+    fall: function (def, s) {
+      var root = layer(s, 4);
+      for (var i = 0; i < count(def.amount || 20); i++) {
+        var outer = span('tfx-fall-outer');
+        outer.style.left = rand(0, 94) + 'vw';
+        anim(outer, 'tfx-fall', rand(5, 10), rand(0, Math.max(1, s - 3)));
+        var piece = customPiece(def);
+        piece.node.className += ' tfx-sway';
+        piece.node.style.animationDuration = rand(1.6, 3.2) + 's';
+        outer.appendChild(piece.node);
+        root.appendChild(outer);
+      }
+    },
+    rise: function (def, s) {
+      var root = layer(s, 4);
+      for (var i = 0; i < count(def.amount || 20); i++) {
+        var outer = span('tfx-rise-outer');
+        outer.style.left = rand(0, 94) + 'vw';
+        anim(outer, 'tfx-rise', rand(6, 10), rand(0, Math.max(1, s - 4)), 'ease-in');
+        var piece = customPiece(def);
+        piece.node.className += ' tfx-sway';
+        piece.node.style.animationDuration = rand(1.8, 3.4) + 's';
+        outer.appendChild(piece.node);
+        root.appendChild(outer);
+      }
+    },
+    pop: function (def, s) {
+      var root = layer(s, 2);
+      for (var i = 0; i < count(def.amount || 20); i++) {
+        var piece = customPiece(def);
+        piece.node.style.left = rand(4, 90) + 'vw';
+        piece.node.style.top = rand(10, 80) + 'vh';
+        anim(piece.node, 'tfx-cpop', rand(1.4, 2.2), rand(0, Math.max(1, s - 2)), 'ease-out');
+        root.appendChild(piece.node);
+      }
+    },
+    fly: function (def, s) {
+      var root = layer(s, 2);
+      for (var i = 0; i < count(Math.max(4, Math.round((def.amount || 20) / 2))); i++) {
+        var fly = span('tfx-flyer');
+        fly.style.top = rand(8, 75) + 'vh';
+        var toLeft = Math.random() < 0.5;
+        anim(fly, toLeft ? 'tfx-cross-left' : 'tfx-cross-right', rand(5, 9), rand(0, Math.max(1, s - 4)));
+        var piece = customPiece(def);
+        piece.node.className += ' tfx-bob';
+        fly.appendChild(piece.node);
+        root.appendChild(fly);
+      }
+    },
+  };
+  function playCustom(def, seconds, theme) {
+    (CUSTOM[def.style] || CUSTOM.fall)(def, seconds, theme || {});
+  }
+
   window.TMSEffects = {
     names: Object.keys(EFFECTS),
     /** Plays the effects; returns false when pressed again too soon (nothing happens). */
@@ -296,6 +411,11 @@
       seconds = seconds || 10;
       theme = theme || {};
       (keys && keys.length ? keys : ['items']).forEach(function (key) {
+        var custom = theme.custom && theme.custom[key];
+        if (custom) {
+          try { playCustom(custom, seconds, theme); } catch (e) { /* never breaks the page */ }
+          return;
+        }
         if (EFFECTS[key]) {
           try { EFFECTS[key](seconds, theme); } catch (e) { /* one effect failing never breaks the page */ }
         }

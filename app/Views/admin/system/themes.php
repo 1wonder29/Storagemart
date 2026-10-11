@@ -36,10 +36,28 @@ if (!empty($themeOld)) {
         'effects' => (array) ($themeOld['effects'] ?? []),
     ];
 }
+$customEffects = $customEffects ?? [];
+$customJs = $customJs ?? [];
+$effectLabel = static function (string $effect) use ($customEffects): string {
+    return $customEffects[$effect]['name'] ?? (SeasonalThemes::EFFECTS[$effect][0] ?? $effect);
+};
 $effectsJs = [];
 foreach ($themes as $key => $theme) {
-    $effectsJs[$key] = ['items' => $theme['items'], 'colors' => $theme['colors'], 'effects' => $theme['effects']];
+    $effectsJs[$key] = ['items' => $theme['items'], 'colors' => $theme['colors'], 'effects' => $theme['effects'], 'custom' => (object) $customJs];
 }
+// Custom effect form: editing one, or a new one.
+$effectFormOpen = !empty($editEffect) || !empty($_GET['new_effect']);
+$ef = [
+    'id' => (int) ($editEffect['id'] ?? 0),
+    'name' => (string) ($editEffect['name'] ?? ''),
+    'style' => (string) ($editEffect['style'] ?? 'fireworks'),
+    'emoji' => implode(' ', $editEffect['emoji'] ?? []),
+    'round' => $editEffect ? !empty($editEffect['round']) : true,
+    'size' => (int) ($editEffect['size'] ?? 70),
+    'amount' => (int) ($editEffect['amount'] ?? 20),
+    'images' => $editEffect['images'] ?? [],
+];
+$effectImageUrl = static fn(string $file): string => $base . '/effects/image?f=' . rawurlencode($file);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -68,6 +86,22 @@ foreach ($themes as $key => $theme) {
         .fx-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:4px 14px; }
         .fx-grid .custom-control { display:flex; align-items:center; }
         .fx-grid .fx-play { margin-left:6px; }
+        .cfx-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap:10px; }
+        .cfx-item { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:8px 10px; border:1px solid #e6ecf7; border-radius:12px; background:#fbfcff; }
+        .cfx-thumbs { display:flex; flex:0 0 auto; }
+        .cfx-thumbs img, .cfx-thumbs span { width:34px; height:34px; border-radius:8px; object-fit:cover; border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.15); margin-left:-8px; background:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:20px; }
+        .cfx-thumbs img:first-child, .cfx-thumbs span:first-child { margin-left:0; }
+        .cfx-thumbs img.round { border-radius:50%; }
+        .cfx-info { flex:1; min-width:120px; display:flex; flex-direction:column; }
+        .cfx-info strong { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .cfx-info span { font-size:.75rem; color:#64748b; }
+        .cfx-form { border-top:1px solid #edf1f8; padding-top:14px; }
+        .cfx-keep, .cfx-new { display:flex; flex-wrap:wrap; gap:8px; }
+        .cfx-keep-item { position:relative; margin:0; cursor:pointer; }
+        .cfx-keep-item input { position:absolute; top:4px; left:4px; }
+        .cfx-keep-item img, .cfx-new img { width:64px; height:64px; object-fit:cover; border-radius:10px; border:2px solid #e2e8f0; }
+        .cfx-keep-item input:not(:checked) + img { opacity:.35; filter:grayscale(1); }
+        html.it-dark .cfx-item { background:#232838; border-color:#343a4f; }
         .sched-badge { display:inline-block; padding:1px 8px; border-radius:999px; font-size:.7rem; font-weight:700; }
         .sched-badge.live { background:#d1fae5; color:#047857; } .sched-badge.up { background:#e0e7ff; color:#3730a3; }
         .sched-badge.past { background:#f3f4f6; color:#6b7280; } .sched-badge.off { background:#fee2e2; color:#b91c1c; }
@@ -145,9 +179,9 @@ foreach ($themes as $key => $theme) {
                                 <div class="small font-weight-bold text-gray-700 mb-1">Effects</div>
                                 <ol class="fx-list">
                                     <?php foreach ($theme['effects'] as $effect): ?>
-                                        <li><?= $h(SeasonalThemes::EFFECTS[$effect][0] ?? $effect) ?>
+                                        <li><?= $h($effectLabel($effect)) ?>
                                             <button type="button" class="fx-play js-fx" data-theme="<?= $h($key) ?>" data-effect="<?= $h($effect) ?>"
-                                                    title="Test: <?= $h(SeasonalThemes::EFFECTS[$effect][1] ?? '') ?>" aria-label="Test the <?= $h(SeasonalThemes::EFFECTS[$effect][0] ?? $effect) ?> effect">
+                                                    title="Test: <?= $h(SeasonalThemes::EFFECTS[$effect][1] ?? 'Your own effect') ?>" aria-label="Test the <?= $h($effectLabel($effect)) ?> effect">
                                                 <i class="fas fa-play"></i></button></li>
                                     <?php endforeach; ?>
                                 </ol>
@@ -242,6 +276,19 @@ foreach ($themes as $key => $theme) {
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
+                                <?php if ($customEffects): ?>
+                                    <div class="small font-weight-bold text-primary mt-2 mb-1"><i class="fas fa-star mr-1"></i>Your own effects <a href="#custom-effects" class="font-weight-normal">(make more below)</a></div>
+                                    <div class="fx-grid">
+                                        <?php foreach ($customEffects as $effect => $custom): ?>
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" class="custom-control-input" id="fx_<?= $h($effect) ?>" name="effects[]" value="<?= $h($effect) ?>"
+                                                    <?= in_array($effect, $form['effects'], true) ? 'checked' : '' ?>>
+                                                <label class="custom-control-label small" for="fx_<?= $h($effect) ?>" title="<?= $h(CustomEffects::STYLES[$custom['style']][1] ?? '') ?>"><?= $h($custom['name']) ?></label>
+                                                <button type="button" class="fx-play js-fx-form" data-effect="<?= $h($effect) ?>" aria-label="Test the <?= $h($custom['name']) ?> effect"><i class="fas fa-play"></i></button>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                             <div class="form-row" id="tf-dates">
                                 <div class="form-group col-sm-4">
@@ -261,6 +308,112 @@ foreach ($themes as $key => $theme) {
                     </div>
                 </div>
             <?php endif; ?>
+
+            <div class="card form-card shadow mb-4" id="custom-effects">
+                <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="gap:8px">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-star mr-1"></i>Custom effects <small class="text-muted font-weight-normal">(your own pictures or emoji)</small></h6>
+                    <?php if (!$effectFormOpen && !empty($customReady)): ?>
+                        <a href="<?= $h($base) ?>/admin/themes?new_effect=1#custom-effects" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Add an effect</a>
+                    <?php endif; ?>
+                </div>
+                <div class="card-body">
+                    <?php if (empty($customReady)): ?>
+                        <p class="text-muted mb-0">Please import the database update (update O) first.</p>
+                    <?php else: ?>
+                        <p class="small text-muted">Make a funny effect, for example <b>Fireworks</b> where every burst throws out the IT team's faces.
+                            Upload the pictures (faces look best cropped close), choose the style, press <b>Preview</b>, then <b>Save</b>.
+                            Then tick it under <b>5. Effects</b> of a theme.</p>
+                        <?php if ($customEffects): ?>
+                            <div class="cfx-list mb-3">
+                                <?php foreach ($customEffects as $key => $custom): ?>
+                                    <div class="cfx-item">
+                                        <div class="cfx-thumbs">
+                                            <?php foreach (array_slice($custom['images'], 0, 4) as $img): ?>
+                                                <img src="<?= $h($effectImageUrl($img)) ?>" alt="" class="<?= $custom['round'] ? 'round' : '' ?>">
+                                            <?php endforeach; ?>
+                                            <?php foreach (array_slice($custom['emoji'], 0, 4 - min(4, count($custom['images']))) as $em): ?>
+                                                <span><?= $h($em) ?></span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <div class="cfx-info"><strong><?= $h($custom['name']) ?></strong><span><?= $h(CustomEffects::STYLES[$custom['style']][0] ?? $custom['style']) ?></span></div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary js-fx-custom" data-effect="<?= $h($key) ?>"><i class="fas fa-play"></i> Preview</button>
+                                        <a class="btn btn-sm btn-light" href="<?= $h($base) ?>/admin/themes?edit_effect=<?= (int) $custom['id'] ?>#custom-effects" title="Edit"><i class="fas fa-pen"></i></a>
+                                        <form method="POST" action="<?= $h($base) ?>/admin/themes" class="d-inline" onsubmit="return confirm('Delete this effect? Themes that use it stop playing it.');">
+                                            <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
+                                            <input type="hidden" name="action" value="delete_effect">
+                                            <input type="hidden" name="effect_id" value="<?= (int) $custom['id'] ?>">
+                                            <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($effectFormOpen): ?>
+                            <form method="POST" action="<?= $h($base) ?>/admin/themes" enctype="multipart/form-data" id="effectForm" class="cfx-form">
+                                <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
+                                <input type="hidden" name="action" value="save_effect">
+                                <input type="hidden" name="effect_id" value="<?= (int) $ef['id'] ?>">
+                                <h6 class="font-weight-bold mb-3"><?= $ef['id'] ? 'Edit the effect' : 'New effect' ?></h6>
+                                <div class="form-row">
+                                    <div class="form-group col-md-4">
+                                        <label for="e_name">1. Name</label>
+                                        <input type="text" class="form-control" id="e_name" name="effect_name" maxlength="60" required value="<?= $h($ef['name']) ?>" placeholder="e.g. IT team fireworks">
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label for="e_style">2. Style</label>
+                                        <select class="custom-select" id="e_style" name="effect_style">
+                                            <?php foreach (CustomEffects::STYLES as $style => [$label, $desc]): ?>
+                                                <option value="<?= $h($style) ?>"<?= $ef['style'] === $style ? ' selected' : '' ?>><?= $h($label . ' - ' . $desc) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label for="e_emoji">Emoji <small class="text-muted">(optional, up to 6)</small></label>
+                                        <input type="text" class="form-control" id="e_emoji" name="effect_emoji" value="<?= $h($ef['emoji']) ?>" placeholder="🎉 😂 💥">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="e_images">3. Pictures <small class="text-muted">(up to <?= CustomEffects::MAX_IMAGES ?>; JPG, PNG, GIF or WebP; max 3 MB each)</small></label>
+                                    <?php if ($ef['images']): ?>
+                                        <div class="cfx-keep mb-2">
+                                            <?php foreach ($ef['images'] as $i => $img): ?>
+                                                <label class="cfx-keep-item" title="Untick to remove this picture">
+                                                    <input type="checkbox" name="keep_images[]" value="<?= $h($img) ?>" checked data-url="<?= $h($effectImageUrl($img)) ?>">
+                                                    <img src="<?= $h($effectImageUrl($img)) ?>" alt="Picture <?= $i + 1 ?>">
+                                                </label>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <input type="file" class="form-control-file" id="e_images" name="effect_images[]" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                                    <div class="cfx-new mt-2" id="e_new"></div>
+                                </div>
+                                <div class="form-row align-items-end">
+                                    <div class="form-group col-md-4">
+                                        <label for="e_size">4. Size <small class="text-muted" id="e_size_v"><?= (int) $ef['size'] ?> px</small></label>
+                                        <input type="range" class="custom-range" id="e_size" name="effect_size" min="30" max="140" value="<?= (int) $ef['size'] ?>">
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label for="e_amount">How many <small class="text-muted" id="e_amount_v"><?= (int) $ef['amount'] ?></small></label>
+                                        <input type="range" class="custom-range" id="e_amount" name="effect_amount" min="4" max="40" value="<?= (int) $ef['amount'] ?>">
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="e_round" name="effect_round" value="1"<?= $ef['round'] ? ' checked' : '' ?>>
+                                            <label class="custom-control-label" for="e_round">Round pictures (best for faces)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-wrap" style="gap:8px">
+                                    <button type="button" class="btn btn-outline-primary" id="e_preview"><i class="fas fa-play"></i> 5. Preview</button>
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 6. Save effect</button>
+                                    <a href="<?= $h($base) ?>/admin/themes#custom-effects" class="btn btn-light">Cancel</a>
+                                </div>
+                            </form>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
 
             <div class="row">
                 <div class="col-xl-5">
@@ -418,6 +571,50 @@ foreach ($themes as $key => $theme) {
                 if (!window.confirm('Delete the ' + form.getAttribute('data-name') + ' theme and its schedules?')) e.preventDefault();
             });
         });
+        // Custom effects: preview a saved one, or the one in the form (with the pictures just chosen).
+        var CUSTOM = <?= json_encode((object) $customJs, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
+        document.querySelectorAll('.js-fx-custom').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                play([btn.getAttribute('data-effect')], { custom: CUSTOM, colors: ['#f85f00', '#19398a'] }, btn);
+            });
+        });
+        var effectForm = document.getElementById('effectForm');
+        if (effectForm) {
+            var fileInput = document.getElementById('e_images');
+            var newBox = document.getElementById('e_new');
+            var localUrls = [];
+            var showNew = function () {
+                localUrls.forEach(function (u) { URL.revokeObjectURL(u); });
+                localUrls = Array.prototype.slice.call(fileInput.files || [], 0, <?= CustomEffects::MAX_IMAGES ?>).map(function (f) { return URL.createObjectURL(f); });
+                newBox.innerHTML = '';
+                localUrls.forEach(function (u) {
+                    var img = document.createElement('img');
+                    img.src = u;
+                    img.alt = '';
+                    newBox.appendChild(img);
+                });
+            };
+            fileInput.addEventListener('change', showNew);
+            ['size', 'amount'].forEach(function (k) {
+                var input = document.getElementById('e_' + k);
+                input.addEventListener('input', function () { document.getElementById('e_' + k + '_v').textContent = input.value + (k === 'size' ? ' px' : ''); });
+            });
+            document.getElementById('e_preview').addEventListener('click', function () {
+                var kept = Array.prototype.map.call(effectForm.querySelectorAll('input[name="keep_images[]"]:checked'), function (c) { return c.getAttribute('data-url'); });
+                var def = {
+                    style: document.getElementById('e_style').value,
+                    images: kept.concat(localUrls),
+                    emoji: document.getElementById('e_emoji').value.trim().split(/[\s,]+/).filter(Boolean),
+                    round: document.getElementById('e_round').checked,
+                    size: parseInt(document.getElementById('e_size').value, 10),
+                    amount: parseInt(document.getElementById('e_amount').value, 10)
+                };
+                if (!def.images.length && !def.emoji.length) { window.alert('Choose at least one picture or type an emoji first.'); return; }
+                play(['__preview'], { custom: { __preview: def }, colors: ['#f85f00', '#19398a'] }, document.getElementById('e_preview'));
+            });
+            setTimeout(function () { document.getElementById('custom-effects').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
+        }
+
         // Test one effect of a theme.
         document.querySelectorAll('.js-fx').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -433,6 +630,7 @@ foreach ($themes as $key => $theme) {
                 return {
                     items: document.getElementById('f_items').value.trim().split(/[\s,]+/).filter(Boolean),
                     colors: [document.getElementById('f_main').value, document.getElementById('f_accent').value],
+                    custom: CUSTOM,
                 };
             };
             var paint = function () {

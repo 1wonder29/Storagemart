@@ -148,7 +148,7 @@ if ($uri === '/ticket-comments/add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // BIRTHDAY PANEL, EMPLOYEES' FIRST-TIME GUIDE (shared)
-$widgetRoutes = ['GET /birthdays/feed' => 'birthdayFeed', 'POST /birthdays/greet' => 'birthdayGreet',
+$widgetRoutes = ['GET /birthdays/feed' => 'birthdayFeed', 'POST /birthdays/greet' => 'birthdayGreet', 'POST /birthdays/ungreet' => 'birthdayUngreet',
     'POST /onboarding/done' => 'onboardingDone', 'GET /guide' => 'guide'];
 if (isset($widgetRoutes[$_SERVER['REQUEST_METHOD'] . ' ' . $uri])) {
     require_once __DIR__ . '/../app/Controllers/WidgetController.php';
@@ -163,6 +163,23 @@ $directChatRoutes = ['GET /direct-chat/poll' => 'poll', 'GET /direct-chat/users'
 if (isset($directChatRoutes[$_SERVER['REQUEST_METHOD'] . ' ' . $uri])) {
     require_once __DIR__ . '/../app/Controllers/DirectChatController.php';
     (new DirectChatController())->{$directChatRoutes[$_SERVER['REQUEST_METHOD'] . ' ' . $uri]}();
+    exit;
+}
+
+// PICTURES OF THE CUSTOM SCREEN EFFECTS (Themes > Custom effects; for everyone signed in)
+if ($uri === '/effects/image' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Helpers/CustomEffects.php';
+    $effectImage = !empty($_SESSION['account_id']) ? CustomEffects::imagePath((string) ($_GET['f'] ?? '')) : null;
+    if ($effectImage === null) {
+        http_response_code(404);
+        exit;
+    }
+    $effectTypes = ['jpg' => 'image/jpeg', 'png' => 'image/png', 'gif' => 'image/gif', 'webp' => 'image/webp'];
+    header('Content-Type: ' . $effectTypes[strtolower(pathinfo($effectImage, PATHINFO_EXTENSION))]);
+    header('Content-Length: ' . filesize($effectImage));
+    header('Cache-Control: private, max-age=604800');
+    header('X-Content-Type-Options: nosniff');
+    readfile($effectImage);
     exit;
 }
 
@@ -418,6 +435,18 @@ if (strpos($uri, '/admin') === 0) {
         $admin->ratings();
     } elseif ($sub === 'ratings/data') {
         $admin->ratingsData();
+    } elseif (in_array($sub, ['user-requests', 'user-requests/decide', 'user-requests/hr-head'], true)) {
+        require_once __DIR__ . '/../app/Controllers/UserRequestController.php';
+        $userRequests = new UserRequestController();
+        if ($sub === 'user-requests') {
+            $userRequests->adminList();
+        } elseif ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . rtrim(BASE_URL, '/') . '/admin/user-requests');
+        } elseif ($sub === 'user-requests/decide') {
+            $userRequests->adminDecide();
+        } else {
+            $userRequests->adminSetHrHead();
+        }
     } elseif ($sub === 'reports/tickets') {
         $admin->ticketReport();
     } elseif ($sub === 'reports/tickets/export') {
@@ -645,6 +674,22 @@ if (strpos($uri, '/hr') === 0) {
     $hrAsset = new HrAssetController();
 
     $sub = trim(substr($uri, strlen('/hr')), '/');
+
+    if (in_array($sub, ['user-requests', 'user-requests/new', 'user-requests/decide'], true)) {
+        // New user accounts requested by HR (HR Head, then Admin approve).
+        require_once __DIR__ . '/../app/Controllers/UserRequestController.php';
+        $userRequests = new UserRequestController();
+        if ($sub === 'user-requests') {
+            $userRequests->hrList();
+        } elseif ($sub === 'user-requests/new') {
+            $userRequests->hrForm();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $userRequests->hrDecide();
+        } else {
+            header('Location: ' . rtrim(BASE_URL, '/') . '/hr/user-requests');
+        }
+        exit;
+    }
 
     if ($sub === '' || $sub === 'dashboard') {
         $hr->dashboard();

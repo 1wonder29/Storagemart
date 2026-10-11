@@ -38,6 +38,8 @@ foreach ($branches as $branch) {
         .duty-sat.changed { background:#fff1e8; color:#c2410c; }
         .duty-days { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px 16px; padding:8px 0 4px; }
         .duty-days label { font-size:.78rem; font-weight:700; margin-bottom:2px; }
+        .duty-rotate { padding:10px 12px; margin-bottom:12px; border-radius:10px; background:#f5f8fe; border:1px solid #e1e8f6; }
+        html.it-dark .duty-rotate { background:#1f2433; border-color:#343a4f; }
         html.it-dark .duty-now { background:#3a2a1f; color:#fdba74; }
         html.it-dark .duty-now.on { background:#1f3a2c; color:#86efac; }
     </style>
@@ -111,39 +113,63 @@ foreach ($branches as $branch) {
 
                 <div class="card form-card shadow mb-4" id="saturday-duty">
                     <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
-                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-calendar-week mr-1"></i> Saturday duty (monthly rotation)</h6>
-                        <span class="small text-muted">On Saturdays every new ticket goes to this IT person</span>
+                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-calendar-week mr-1"></i> Saturday duty schedule</h6>
+                        <span class="small text-muted">On Saturdays every new ticket goes to the IT person on duty</span>
                     </div>
                     <div class="card-body">
                         <?php
                         $dutyName = static function (?int $id) use ($staffNames): string {
                             return $id ? ($staffNames[$id] ?? 'an IT person who is not active') : '';
                         };
+                        $firstName = static function (?int $id) use ($staffNames): string {
+                            return $id ? (explode(' ', $staffNames[$id] ?? '?')[0]) : '';
+                        };
                         $satLabel = $dutyIsToday ? 'Today (Saturday)' : 'Next Saturday (' . date('M j', strtotime($nextSaturday)) . ')';
+                        $monthKeys = array_keys($saturdayMonths);
+                        $lastMonth = end($monthKeys);
                         ?>
                         <?php if ($dutyNext): ?>
                             <div class="duty-now on"><i class="fas fa-user-clock"></i> <?= htmlspecialchars($satLabel) ?>: every new ticket goes to <?= htmlspecialchars($dutyName($dutyNext)) ?>.</div>
                         <?php else: ?>
                             <div class="duty-now"><i class="fas fa-info-circle"></i> <?= htmlspecialchars($satLabel) ?>: nobody is set, so the zone rules are used.</div>
                         <?php endif; ?>
+
+                        <div class="duty-rotate">
+                            <div class="font-weight-bold mb-1"><i class="fas fa-sync-alt mr-1 text-warning"></i> Quick rotation</div>
+                            <div class="d-flex flex-wrap align-items-center" style="gap:6px">
+                                <?php for ($r = 0; $r < 3; $r++): ?>
+                                    <select class="custom-select custom-select-sm" name="rotate_people[]" style="max-width:170px" aria-label="Person <?= $r + 1 ?> in the rotation">
+                                        <option value="0"><?= $r === 0 ? '1st person' : ($r === 1 ? '2nd person' : '3rd (optional)') ?></option>
+                                        <?php foreach ($staff as $member): ?>
+                                            <option value="<?= (int) $member['employee_id'] ?>"><?= htmlspecialchars($member['name']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                <?php endfor; ?>
+                                <span class="small">from</span>
+                                <input type="month" class="form-control form-control-sm" name="rotate_from" value="<?= date('Y-m') ?>" min="<?= date('Y-m') ?>" style="max-width:160px" aria-label="First month">
+                                <span class="small">for</span>
+                                <select class="custom-select custom-select-sm" name="rotate_months" style="max-width:110px" aria-label="Number of months">
+                                    <?php foreach ([3, 6, 12] as $n): ?><option value="<?= $n ?>"<?= $n === 6 ? ' selected' : '' ?>><?= $n ?> months</option><?php endforeach; ?>
+                                </select>
+                                <button type="submit" name="duty_action" value="rotate" class="btn btn-sm btn-warning"><i class="fas fa-magic"></i> Fill the months</button>
+                            </div>
+                            <div class="small text-muted mt-1">Example: Fonzy, then Charles: October Fonzy, November Charles, December Fonzy...</div>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table table-sm duty-table mb-2">
-                                <thead><tr><th>Month</th><th>Saturdays</th><th style="min-width:230px">IT person on duty</th></tr></thead>
+                                <thead><tr><th>Month</th><th style="min-width:220px">IT person on duty</th><th>Saturdays (click "Adjust" to change one day)</th><th></th></tr></thead>
                                 <tbody>
                                 <?php foreach ($saturdayMonths as $month => $saturdays):
                                     $monthDuty = $dutyMonths[$month] ?? 0;
                                     $monthName = date('F Y', strtotime($month . '-01'));
+                                    $hasChanges = false;
+                                    foreach ($saturdays as $sat) {
+                                        $hasChanges = $hasChanges || array_key_exists($sat, $dutyDates);
+                                    }
                                 ?>
                                     <tr>
                                         <td class="font-weight-bold text-nowrap"><?= htmlspecialchars($monthName) ?></td>
-                                        <td>
-                                            <?php foreach ($saturdays as $sat):
-                                                $changed = array_key_exists($sat, $dutyDates);
-                                                $changeText = $changed ? 'Changed: ' . ($dutyDates[$sat] ? $dutyName($dutyDates[$sat]) : 'normal zone rules') : '';
-                                            ?>
-                                                <span class="duty-sat<?= $changed ? ' changed' : '' ?>" title="<?= htmlspecialchars($changeText) ?>"><?= date('M j', strtotime($sat)) ?><?= $changed ? ' *' : '' ?></span>
-                                            <?php endforeach; ?>
-                                        </td>
                                         <td>
                                             <select class="custom-select custom-select-sm" name="saturday_duty[<?= htmlspecialchars($month) ?>]"
                                                     aria-label="IT person on Saturday duty in <?= htmlspecialchars($monthName) ?>">
@@ -152,8 +178,16 @@ foreach ($branches as $branch) {
                                                     <option value="<?= (int) $member['employee_id'] ?>" <?= (int) $member['employee_id'] === $monthDuty ? 'selected' : '' ?>><?= htmlspecialchars($member['name']) ?></option>
                                                 <?php endforeach; ?>
                                             </select>
-                                            <details class="mt-1">
-                                                <summary class="small text-primary">Change one Saturday</summary>
+                                        </td>
+                                        <td>
+                                            <?php foreach ($saturdays as $sat):
+                                                $changed = array_key_exists($sat, $dutyDates);
+                                                $who = $changed ? ($dutyDates[$sat] ? $firstName($dutyDates[$sat]) : 'zone rules') : $firstName($monthDuty);
+                                            ?>
+                                                <span class="duty-sat<?= $changed ? ' changed' : '' ?>" title="<?= $changed ? 'Adjusted for this day' : 'Same as the month' ?>"><?= date('M j', strtotime($sat)) ?><?= $who !== '' ? ' · ' . htmlspecialchars($who) : '' ?></span>
+                                            <?php endforeach; ?>
+                                            <details class="mt-1"<?= $hasChanges ? ' open' : '' ?>>
+                                                <summary class="small text-primary">Adjust one Saturday (swap, leave, holiday)</summary>
                                                 <div class="duty-days">
                                                     <?php foreach ($saturdays as $sat):
                                                         $dayValue = array_key_exists($sat, $dutyDates) ? ($dutyDates[$sat] ? (string) $dutyDates[$sat] : 'none') : '';
@@ -165,27 +199,37 @@ foreach ($branches as $branch) {
                                                                 <?php foreach ($staff as $member): ?>
                                                                     <option value="<?= (int) $member['employee_id'] ?>" <?= $dayValue === (string) (int) $member['employee_id'] ? 'selected' : '' ?>><?= htmlspecialchars($member['name']) ?></option>
                                                                 <?php endforeach; ?>
-                                                                <option value="none" <?= $dayValue === 'none' ? 'selected' : '' ?>>Nobody (normal zone rules)</option>
+                                                                <option value="none" <?= $dayValue === 'none' ? 'selected' : '' ?>>Nobody that day (normal zone rules)</option>
                                                             </select>
                                                         </div>
                                                     <?php endforeach; ?>
                                                 </div>
                                             </details>
                                         </td>
+                                        <td class="text-right text-nowrap">
+                                            <?php if ($monthDuty || $hasChanges): ?>
+                                                <button type="submit" name="duty_action" value="clear:<?= htmlspecialchars($month) ?>" class="btn btn-sm btn-outline-secondary" title="Remove the person and the adjusted days of this month"
+                                                        onclick="return confirm('Clear the Saturday duty of <?= htmlspecialchars($monthName) ?>?');"><i class="fas fa-eraser"></i> Clear</button>
+                                            <?php endif; ?>
+                                            <?php if ($month === $lastMonth && count($saturdayMonths) > 1): ?>
+                                                <button type="submit" name="duty_action" value="remove:<?= htmlspecialchars($month) ?>" class="btn btn-sm btn-outline-danger" title="Remove this month from the schedule"
+                                                        onclick="return confirm('Remove <?= htmlspecialchars($monthName) ?> from the schedule?');"><i class="fas fa-times"></i></button>
+                                            <?php endif; ?>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
+                        <button type="submit" name="duty_action" value="add_month" class="btn btn-sm btn-outline-primary mb-3"><i class="fas fa-plus"></i> Add a month</button>
                         <ul class="small text-muted rule-list mb-0 pl-3">
                             <li>On a Saturday, every new ticket (all branches and Head Office) goes to the person on duty, and tickets not opened in time move to them too.</li>
                             <li>The person on duty keeps their tickets that day. If they are marked <strong>Away</strong>, the normal zone rules are used.</li>
-                            <li>Use "Change one Saturday" for swaps, for example when the person on duty is on leave that day.</li>
-                            <li>Press <strong>Save Settings</strong> at the bottom of the page.</li>
+                            <li><strong>Quick rotation</strong> fills many months at once; <strong>Adjust one Saturday</strong> is for swaps, leave or holidays; <strong>Clear</strong> empties a month; <strong>Add a month</strong> / <i class="fas fa-times"></i> adds or removes the last month.</li>
+                            <li>The buttons in this box save right away. After changing the lists, press <strong>Save Settings</strong> at the bottom of the page.</li>
                         </ul>
                     </div>
                 </div>
-
                 <div class="card form-card shadow mb-4">
                     <div class="card-header">
                         <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-map-marked-alt mr-1"></i> Zones</h6>

@@ -156,6 +156,24 @@ $staffCount = count($itStaffPerformance);
                 </div>
 
                 <div id="staff-performance" class="tab-pane fade">
+                    <?php if (!empty($canLinkAdmin)): ?>
+                        <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/ratings" class="card shadow-sm mb-3">
+                            <div class="card-body py-3 d-flex flex-wrap align-items-center" style="gap:10px">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                <input type="hidden" name="action" value="link_admin_person">
+                                <i class="fas fa-user-shield text-primary"></i>
+                                <label for="adminPerson" class="mb-0 font-weight-bold">The shared <span class="text-primary">Admin</span> account is handled by</label>
+                                <select id="adminPerson" name="admin_person" class="custom-select custom-select-sm" style="max-width:240px">
+                                    <option value="0">-- Nobody (list "Admin" on its own) --</option>
+                                    <?php foreach ($adminPersonOptions as $option): ?>
+                                        <option value="<?= (int) $option['employee_id'] ?>"<?= (int) $option['employee_id'] === (int) $adminPersonId ? ' selected' : '' ?>><?= htmlspecialchars((string) $option['name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-save"></i> Save</button>
+                                <small class="text-muted w-100">Ratings for tickets handled in the Admin account are counted for this IT person. Their own account and rights do not change.</small>
+                            </div>
+                        </form>
+                    <?php endif; ?>
                     <div class="card report-list-card shadow mb-4">
                         <div class="card-header d-flex align-items-center justify-content-between">
                             <h6><i class="fas fa-trophy mr-1 text-warning"></i> IT Staff Performance Ranking</h6>

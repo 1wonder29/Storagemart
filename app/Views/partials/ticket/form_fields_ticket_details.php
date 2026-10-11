@@ -180,3 +180,5 @@ $oldPriority = (string) ($oldTicketInput['priority'] ?? 'Medium');
 </div>
 <script src="<?= htmlspecialchars($formBase) ?>/assets/js/ticket-form.js?v=<?= (int) @filemtime(__DIR__ . '/../../../../public/assets/js/ticket-form.js') ?>"></script>
 <script src="<?= htmlspecialchars($formBase) ?>/assets/js/ticket-guide.js?v=<?= (int) @filemtime(__DIR__ . '/../../../../public/assets/js/ticket-guide.js') ?>"></script>
+<?php /* Suggestions while typing the subject and description (what device, where, what happens). */ ?>
+<script src="<?= htmlspecialchars($formBase) ?>/assets/js/ticket-writer.js?v=<?= (int) @filemtime(__DIR__ . '/../../../../public/assets/js/ticket-writer.js') ?>"></script>

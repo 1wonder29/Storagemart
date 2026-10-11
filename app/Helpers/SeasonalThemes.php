@@ -117,7 +117,7 @@ class SeasonalThemes
     {
         $items = preg_split('/[\s,]+/u', trim((string) $row['items'])) ?: [];
         $effects = array_values(array_filter(array_map('trim', explode(',', (string) $row['effects'])), static function ($key) {
-            return isset(self::EFFECTS[$key]);
+            return isset(self::EFFECTS[$key]) || (bool) preg_match('/^c\d{1,9}$/', $key); // c3 = custom effect
         }));
         return [
             'name' => (string) $row['name'],
@@ -149,10 +149,17 @@ class SeasonalThemes
         if (!$theme) {
             return null;
         }
+        $customKeys = array_values(array_filter($theme['effects'], static fn($k) => (bool) preg_match('/^c\d{1,9}$/', $k)));
+        $custom = [];
+        if ($customKeys) {
+            require_once __DIR__ . '/CustomEffects.php';
+            $custom = CustomEffects::forBrowser($pdo, $customKeys);
+        }
         return [
             'key' => $key,
             'name' => $theme['name'],
-            'effects' => $theme['effects'] ?: ['items'],
+            'custom' => (object) $custom,
+            'effects' => array_values(array_filter($theme['effects'], static fn($k) => !preg_match('/^c\d{1,9}$/', $k) || isset($custom[$k]))) ?: ['items'],
             'items' => $theme['items'] ?: ['✨'],
             'colors' => $theme['colors'],
             'message' => ($message !== null && trim($message) !== '') ? trim($message) : $theme['message'],

@@ -177,6 +177,11 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                         </div>
                                     </div>
                                     <?php require __DIR__ . '/_personal_fields.php'; ?>
+                                    <div class="custom-control custom-checkbox mt-2 mb-3">
+                                        <input type="checkbox" class="custom-control-input" id="reset_guide" name="reset_guide" value="1">
+                                        <label class="custom-control-label" for="reset_guide">Show the first-time guide again at their next sign-in</label>
+                                    </div>
+                                    <p class="small text-muted mb-3"><i class="fas fa-envelope mr-1"></i> When you set a new password, the person gets an e-mail saying their password was changed.</p>
                                     <div class="form-actions d-flex justify-content-end w-100">
                                         <button type="submit" class="btn btn-primary" name="btnSubmit">
                                             <i class="fas fa-save mr-1"></i> Save Changes

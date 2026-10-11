@@ -29,13 +29,13 @@ class TmsGuide
 
     /** Left menu of each role (for the screen pictures). */
     public const MENUS = [
-        'EMPLOYEE' => ['Dashboard', 'My Tickets', 'Create Ticket', 'Assets', 'My Issued Items'],
-        'HEAD' => ['Dashboard', 'My Tickets', 'Create Ticket', 'Assets', 'My Issued Items', 'Employees', 'Announcements'],
-        'HR' => ['Dashboard', 'Employees', 'Inventory', 'Lost / Damaged Reports', 'My Issued Items', 'Tickets'],
+        'EMPLOYEE' => ['Dashboard', 'My Tickets', 'Create Ticket', 'Assets', 'My Issued Items', 'Manuals & Guides'],
+        'HEAD' => ['Dashboard', 'My Tickets', 'Create Ticket', 'Assets', 'My Issued Items', 'Employees', 'Announcements', 'Manuals & Guides'],
+        'HR' => ['Dashboard', 'Employees', 'New User Requests', 'Inventory', 'Lost / Damaged Reports', 'My Issued Items', 'Tickets', 'Manuals & Guides'],
         'IT' => ['Dashboard', 'Ticket', 'My Assets', 'My Issued Items', 'Employee Uploads', 'My Ratings', 'Assets for Replacement', 'Troubleshooting Guides'],
-        'AOM' => ['Dashboard', 'Employees', 'Assets', 'My Issued Items', 'Tickets', 'My Ticket', 'Employee Ticket'],
-        'OM' => ['Dashboard', 'Employees', 'Assets', 'My Issued Items', 'AOM Branches', 'Tickets', 'My Ticket', 'Employee Ticket'],
-        'HOM' => ['Dashboard', 'Employees', 'Assets', 'My Issued Items', 'AOM Branches', 'Tickets', 'My Ticket', 'Employee Ticket', 'Announcements'],
+        'AOM' => ['Dashboard', 'Employees', 'Assets', 'My Issued Items', 'Tickets', 'My Ticket', 'Employee Ticket', 'Manuals & Guides'],
+        'OM' => ['Dashboard', 'Employees', 'Assets', 'My Issued Items', 'AOM Branches', 'Tickets', 'My Ticket', 'Employee Ticket', 'Manuals & Guides'],
+        'HOM' => ['Dashboard', 'Employees', 'Assets', 'My Issued Items', 'AOM Branches', 'Tickets', 'My Ticket', 'Employee Ticket', 'Announcements', 'Manuals & Guides'],
         'ADMIN' => ['Dashboard', 'Users', 'Ticket', 'Assets Directory', 'My Issued Items', 'System', 'Audit Trail', 'Ratings Report', 'Ticket Report'],
     ];
 
@@ -138,9 +138,18 @@ class TmsGuide
                     ['Assign Item to Employee', 'Choose the employee, the item, size and quantity. The stock goes down by itself.'],
                     ['Download Summary / Import from Excel', 'Download the stock list, or add many items or stock counts at once from Excel. An import is sent for approval first.'],
                     ['Edit, Discontinue, Reactivate, Delete', 'Use the buttons on each row. Discontinued items are no longer issued; Delete permanently removes the item.'],
+                    ['What do you want to do?', 'The buttons are in 4 groups: items in stock, give items to employees, approve Excel uploads, lost or damaged items. "How it works" shows the 4 steps.'],
                 ], ['url' => $a . '/uniforms', 'menu' => 'Inventory', 'title' => 'Item Inventory',
                     'buttons' => [['Add New Item', 1], ['Assign Item to Employee', 2], ['Download Summary', 3], 'Import from Excel'],
                     'blocks' => [['table', ['Item', 'In Stock', 'Stock Status', 'Issued', 'Actions'], 4]]], [$a . '/uniforms', 'Open Inventory']);
+                $s[] = self::steps('New user requests', 'HR fills in a new employee\'s account. It is created after the HR Head and the Admin approve.', [
+                    ['Request a new user', 'New User Requests (left menu) or Employees > Request a new user. Fill in the login, role, branch, department, position and personal details.'],
+                    ['HR Head approves', 'The HR Head gets a notification and clicks Approve, or Reject with a reason. When the HR Head sends the request, this step is already done.'],
+                    ['Admin approves', 'The Admin clicks "Approve and create the account". You get a notification when it is ready.'],
+                    ['Give the first password', 'Tell the employee their username and the first password you typed. They change it after signing in.'],
+                ], ['url' => $a . '/user-requests', 'menu' => 'New User Requests', 'title' => 'New User Requests',
+                    'buttons' => [['Request a new user', 1]],
+                    'blocks' => [['list', ['Juan Dela Cruz · Employee · Waiting for the HR Head', 'Approve (HR Head) · Reject'], 2], ['list', ['Ana Reyes · Approved, account created'], 3]]], [$a . '/user-requests', 'Open New User Requests']);
                 $s[] = self::steps('Assign from Excel and approvals', 'Issue items to many employees at once. Excel uploads are approved before anything changes.', [
                     ['Fill in the template', 'Assign from Excel > Download Template. One row per employee and item: Employee Email, Item Type, Size, Color, Quantity.'],
                     ['Upload and check', 'The preview shows every row. Rows with a problem (employee not found, item discontinued, not enough stock) are skipped.'],
@@ -352,7 +361,7 @@ class TmsGuide
         $out[] = self::steps('File a new ticket', 'One concern per ticket. It takes about a minute.', [
             ['Open the form', 'Click "' . ($menu === 'Tickets' ? 'Create New Ticket' : 'Create Ticket') . '" in the menu or on the ticket list.'],
             ['Check your details', 'Your employee ID, name, department and branch are filled in for you.'],
-            ['Subject and Description', 'Say which device, where, and what happens (see the example on the next slides).'],
+            ['Subject and Description', 'Say which device (brand / model), where, and what happens. While you type, the boxes under the fields tick what is done and suggest what to add: click a suggestion to add it.'],
             ['Photos (optional)', 'Add up to 4 photos of the screen, error or device. On a phone, "Take a photo" opens the camera.'],
             ['Category and Priority', 'Pick what the problem is about and how urgent it is.'],
             ['Click ' . $submit, 'Check the Live Preview first. A troubleshooting guide is sent in the ticket chat right away.'],
@@ -442,11 +451,11 @@ class TmsGuide
     {
         return self::steps('Birthdays', 'Birthdays are part of the announcements.', [
             ['Birthday today', 'When a colleague has a birthday, a "Birthday today" card shows after the announcements.'],
-            ['Greet', 'Click Greet, change the message if you like, and click Send. They see it when they sign in.'],
-            ['Coming up', 'The megaphone panel also lists the birthdays in the next 3 days with a countdown.'],
+            ['Greet', 'Click Greet, change the message if you like, and click Send. All greetings show like a chat under the person. Sent one by mistake? Click Undo (on the birthday itself).'],
+            ['Coming up', 'The megaphone panel also lists the birthdays in the next 3 days, for example "In 2 days · Tue, Oct 13".'],
             ['Your birthday', 'On your day you get a greeting with your colleagues\' wishes. Only the day is shown, never the year.'],
         ], ['url' => self::ROLES[$role]['home'], 'menu' => 'Dashboard', 'title' => 'Dashboard', 'top' => ['bullhorn' => 3],
-            'blocks' => [['note', '🎂 Birthday today · Juan Dela Cruz · Operations · Eran', 1], ['buttons', [['Greet', 2]]], ['list', ['Coming up: Ana Reyes · Tomorrow · 23:59:10']]]]);
+            'blocks' => [['note', '🎂 Birthday today · Juan Dela Cruz · Operations · Eran', 1], ['buttons', [['Greet', 2]]], ['list', ['Coming up: Ana Reyes · Tomorrow · Mon, Oct 13']]]]);
     }
 
     private static function chatRequests(): array
@@ -462,12 +471,12 @@ class TmsGuide
 
     private static function manualsLibrary(string $role): array
     {
-        return self::steps('IT manuals library', 'Step-by-step slides for common IT problems, and this guide.', [
-            ['Open the library', 'Open tms.storagemart.com.ph/manuals, or the link sent in a ticket chat.'],
+        return self::steps('Manuals & Guides', 'Step-by-step slides for common IT problems, and this guide.', [
+            ['Open the library', 'Click Manuals & Guides at the bottom of the left menu (Help), the orange button in the ? guide, or the link sent in a ticket chat.'],
             ['Find a guide', 'Pick a group (Printer, Computer, Network, CCTV…) or type in Search.'],
             ['View or download', 'View slides opens it on the screen (Full screen works too). PowerPoint downloads it.'],
             ['TMS user guides', 'At the top of the library: the TMS guide for your role.' . (in_array($role, ['IT', 'ADMIN'], true) ? ' IT and Admin see every role\'s guide.' : '')],
-        ], ['url' => '/manuals', 'title' => 'IT Manuals', 'blocks' => [['buttons', ['All', ['Printer Issues', 2], 'Computer', 'Network', 'CCTV'], 0], ['tiles', ['Printer Paper Jam', 'No Internet', 'PC Won\'t Turn On', 'Outlook Won\'t Open'], 3]]], ['/manuals', 'Open the library']);
+        ], ['url' => '/manuals', 'menu' => 'Manuals & Guides', 'title' => 'Manuals & Guides', 'blocks' => [['buttons', ['All', ['Printer Issues', 2], 'Computer', 'Network', 'CCTV'], 0], ['tiles', ['Printer Paper Jam', 'No Internet', 'PC Won\'t Turn On', 'Outlook Won\'t Open'], 3]]], ['/manuals', 'Open the library']);
     }
 
     private static function manualsEditor(string $role, string $url): array
@@ -562,6 +571,7 @@ class TmsGuide
             ['Edit user', 'Change the role, status, details or personal details (birthday, start date). To reset a password, type a new temporary one and tell the person to change it after signing in.'],
             ['Unlock login now', 'After 3 wrong passwords an account is locked for 15 minutes. The lock button opens it right away.'],
             ['Delete or deactivate', 'Deactivate someone who left; delete only accounts made by mistake.'],
+            ['Requests from HR', 'New users requested by HR (already approved by the HR Head) wait here. Approve to create the account, or Reject with a reason.'],
         ], ['url' => '/admin/account', 'menu' => 'Users', 'title' => 'Users & Employees', 'buttons' => [['Add User', 2]],
             'blocks' => [['filters', [['Role', 1], 'Department', 'Branch', 'Status']], ['table', ['Name', 'Role', 'Branch', 'Status', 'Actions'], 3], ['buttons', [['Edit', 3], ['Unlock', 4], ['Deactivate', 5]]]]], ['/admin/account', 'Open Users']);
         $s[] = self::steps('Departments', 'The departments used in every dropdown.', [
@@ -581,7 +591,7 @@ class TmsGuide
             ['Rules', 'Turn "Assign new tickets automatically" on, and set after how long an unopened ticket moves to the next IT person.'],
             ['Zones', 'Choose the IT person of each zone (A, B…). Add a zone when needed.'],
             ['Branch Zones', 'Put each branch in a zone. Its tickets go to that zone\'s IT person.'],
-            ['Saturday duty', 'Choose the IT person for each month\'s Saturdays (the rotation). On Saturdays every new ticket goes to them. "Change one Saturday" is for swaps.'],
+            ['Saturday duty', 'Quick rotation fills many months (for example Fonzy, then Charles). Change a month\'s person, Adjust one Saturday for swaps or holidays, Clear a month, Add a month or remove the last one. On Saturdays every new ticket goes to the person on duty.'],
             ['IT Staff Availability', 'Mark IT staff as Away: no new tickets, and unopened ones move to someone else. Then Save Settings.'],
         ], ['url' => '/admin/ticket-assignment', 'menu' => 'System', 'title' => 'Ticket Auto-Assignment',
             'blocks' => [['switch', 'Assign new tickets automatically', 1], ['table', ['Month', 'Saturdays', 'IT person on duty'], 4], ['form', [['Zone A IT person', 2], 'Zone B IT person']], ['table', ['Branch', 'Zone', 'Tickets go to'], 3], ['buttons', [['Away', 5], ['Save Settings', 5]]]]], ['/admin/ticket-assignment', 'Open Auto-Assignment']);
@@ -605,6 +615,7 @@ class TmsGuide
             ['Theme list', 'Each theme shows its effects. Press ▶ to test one effect, Preview to see the whole look (only you see it).'],
             ['Add a theme', 'Name, emoji, colors, greeting and effects. "How to add a theme" shows every step.'],
             ['Schedule', 'Set the release date and time and the end. Everyone sees it during that time.'],
+            ['Custom effects', 'Make your own effect: upload pictures (for example the IT team\'s faces) or emoji, choose a style such as Fireworks, press Preview, Save, then tick it in a theme.'],
         ], ['url' => '/admin/themes', 'menu' => 'System', 'title' => 'Seasonal Themes', 'buttons' => [['Add a theme', 2], 'How to add a theme'],
             'blocks' => [['tiles', ['Halloween', 'Christmas', 'New Year', 'Valentine\'s'], 1], ['buttons', ['Preview', ['Schedule', 3]]]]], ['/admin/themes', 'Open Themes']);
         $s[] = self::steps('Chat with users', 'Ask anyone about a concern, with a time to answer.', [

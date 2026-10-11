@@ -45,6 +45,8 @@ if (!empty($queryParams)) {
                     <div class="col-lg-8">
                         <h1><i class="fas fa-users mr-2"></i>Employees</h1>
                         <p>Search, filter, and review employee records and accountability forms in one view.</p>
+                        <a href="<?= htmlspecialchars($base) ?>/hr/user-requests/new" class="btn btn-light btn-sm mt-1"><i class="fas fa-user-plus"></i> Request a new user</a>
+                        <a href="<?= htmlspecialchars($base) ?>/hr/user-requests" class="btn btn-light btn-sm mt-1"><i class="fas fa-list"></i> New user requests</a>
                     </div>
                     <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
                         <div class="hero-stat d-inline-block text-center px-4">

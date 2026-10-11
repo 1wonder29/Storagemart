@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 require_once __DIR__ . '/../../Models/PasswordResetRequest.php';
 require_once __DIR__ . '/../../Helpers/LoginThrottle.php';
 require_once __DIR__ . '/../../Helpers/EmployeePersonal.php';
+require_once __DIR__ . '/../../Services/PasswordChangeMailer.php';
 require_once __DIR__ . '/../../Helpers/PasswordPolicy.php';
 
 class AdminController extends AuthController
@@ -150,6 +151,18 @@ class AdminController extends AuthController
                 $_SESSION['flash_success'] = "The password reset request from {$label} was dismissed.";
             } else {
                 $_SESSION['flash_error'] = 'That request was already handled.';
+            }
+            return;
+        }
+
+        // Everyone sees the first-time guide again at their next sign-in.
+        if ($action === 'reset_guide_all') {
+            try {
+                $count = $accountModel->getPDO()->exec('UPDATE tblaccounts SET onboarding_done_at = NULL WHERE onboarding_done_at IS NOT NULL');
+                ActivityLogger::update('Admin - Users', 'all', 'First-time guide shown again to everyone', $actor, ['accounts' => (int) $count]);
+                $_SESSION['flash_success'] = 'Everyone will see the first-time guide again at their next sign-in (' . (int) $count . ' accounts).';
+            } catch (Throwable $e) {
+                $_SESSION['flash_error'] = 'Please run the database update first.';
             }
             return;
         }
@@ -324,6 +337,17 @@ class AdminController extends AuthController
                 }
                 if ($passwordChanged) {
                     (new PasswordResetRequest())->resolveForAccount((int) $dataAcc['account_id'], (string) ($_SESSION['username'] ?? 'admin'));
+                    // Tell the owner by e-mail, in case it was not requested by them.
+                    if ($pdo instanceof PDO) {
+                        PasswordChangeMailer::send($pdo, (int) $dataAcc['account_id'], true);
+                    }
+                }
+                if (!empty($_POST['reset_guide']) && $pdo instanceof PDO) {
+                    try {
+                        $pdo->prepare('UPDATE tblaccounts SET onboarding_done_at = NULL WHERE account_id = ?')->execute([(int) $dataAcc['account_id']]);
+                    } catch (Throwable $e) {
+                        // column not migrated yet
+                    }
                 }
 
                 $_SESSION['flash_success'] = $passwordChanged
@@ -803,6 +827,32 @@ class AdminController extends AuthController
         }
 
         require_once __DIR__ . '/../../Models/admin/RatingsModel.php';
+        require_once __DIR__ . '/../../Helpers/AdminAccess.php';
+        require_once __DIR__ . '/../../Helpers/AdminAccountPerson.php';
+        global $pdo;
+
+        $canLinkAdmin = AdminAccess::canManageSystem();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'link_admin_person') {
+            if (!$canLinkAdmin || empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', (string) $_POST['csrf_token'])) {
+                $_SESSION['flash_error'] = 'Only the system administrator can change this.';
+            } else {
+                $person = (int) ($_POST['admin_person'] ?? 0);
+                $valid = array_map('intval', array_column(AdminAccountPerson::candidates($pdo), 'employee_id'));
+                AppSettings::set(AdminAccountPerson::SETTING, ($person > 0 && in_array($person, $valid, true)) ? (string) $person : null);
+                ActivityLogger::update('Admin - Ratings', 'admin-account', 'Shared admin account linked to a person',
+                    $_SESSION['username'] ?? 'Unknown', ['employee_id' => $person]);
+                $_SESSION['flash_success'] = $person > 0
+                    ? 'Saved. The ratings of the shared Admin account now count for this person.'
+                    : 'Saved. The shared Admin account is listed on its own again.';
+            }
+            $this->redirect('/admin/ratings#staff-performance');
+            return;
+        }
+        $adminPersonOptions = $canLinkAdmin ? AdminAccountPerson::candidates($pdo) : [];
+        $adminPersonId = AdminAccountPerson::personEmployeeId();
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
 
         $ratingsModel = new RatingsModel();
         $ratings = $ratingsModel->getAllRatings();

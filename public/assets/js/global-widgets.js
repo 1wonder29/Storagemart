@@ -4,7 +4,7 @@
  *    megaphone with unread count in the header.
  *  - Birthdays are part of the announcements: a "Birthday today" card pops up after the
  *    announcements (Greet button), and the megaphone panel lists today's birthdays and the ones
- *    in the next 3 days with a countdown. The celebrant gets a greeting with the colleagues' wishes.
+ *    in the next 3 days (days left). The celebrant gets a greeting with the colleagues' wishes.
  *  - Seasonal theme scheduled by Admin: colors, greeting ribbon and its screen effects (theme-effects.js).
  *  - "How to use the TMS" guide for the user's role (first sign-in, and the "?" button).
  *  - Anti-spam: buttons that play screen effects rest for a few seconds after a click
@@ -202,12 +202,41 @@
     if (store(BD_SEEN_KEY) === '1') return 0;
     return othersToday().filter(function (p) { return !p.greeted; }).length;
   }
-  function countdown(target) {
-    var ms = Math.max(0, new Date(target).getTime() - (Date.now() + bd.offset));
-    var s = Math.floor(ms / 1000);
-    var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
-    var pad = function (n) { return ('0' + n).slice(-2); };
-    return (d ? d + 'd ' : '') + pad(h) + ':' + pad(m) + ':' + pad(sec);
+  // "Tomorrow · Mon, Oct 13" / "In 3 days · Wed, Oct 15" (no running clock).
+  function daysLabel(days, date) {
+    var when = '';
+    try {
+      when = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    } catch (e) { when = date; }
+    return (days === 1 ? 'Tomorrow' : 'In ' + days + ' days') + (when ? ' · ' + when : '');
+  }
+
+  // Greetings for a celebrant, shown to everyone like a chat (newest at the bottom).
+  function greetingWall(p) {
+    var wall = el('div', 'tmsw-bdp-wall');
+    function render() {
+      wall.innerHTML = '';
+      var list = p.greetings || [];
+      wall.hidden = !list.length;
+      if (!list.length) return;
+      wall.appendChild(el('div', 'tmsw-bdp-wall-title', list.length + (list.length === 1 ? ' greeting' : ' greetings')));
+      list.forEach(function (g) {
+        var msg = el('div', 'tmsw-bdp-msg' + (g.mine ? ' mine' : ''));
+        msg.appendChild(el('span', 'tmsw-bdp-msg-av', initials(g.from)));
+        var bubble = el('div', 'tmsw-bdp-bubble');
+        var top = el('div', 'tmsw-bdp-msg-top');
+        top.appendChild(el('strong', null, g.mine ? 'You' : g.from));
+        top.appendChild(el('span', null, g.time || ''));
+        bubble.appendChild(top);
+        bubble.appendChild(el('div', 'tmsw-bdp-msg-text', g.message));
+        msg.appendChild(bubble);
+        wall.appendChild(msg);
+      });
+      wall.scrollTop = wall.scrollHeight;
+    }
+    render();
+    wall.refresh = render;
+    return wall;
   }
 
   // One person with a birthday today: name, department / branch, Greet (or "It's your birthday").
@@ -228,7 +257,11 @@
       row.appendChild(see);
       return wrap;
     }
-    var status = el('span', 'tmsw-bdp-greeted', '✓ Greeted');
+    var status = el('span', 'tmsw-bdp-greeted', '✓ Greeted ');
+    var undo = el('button', 'btn btn-link btn-sm p-0 tmsw-bdp-undo', 'Undo');
+    undo.type = 'button';
+    undo.title = 'Take back your greeting (for example if you sent it by mistake)';
+    status.appendChild(undo);
     status.hidden = !p.greeted;
     var greet = el('button', 'btn btn-sm btn-warning tmsw-bdp-btn', 'Greet');
     greet.type = 'button';
@@ -247,6 +280,23 @@
     form.appendChild(input);
     form.appendChild(send);
     wrap.appendChild(form);
+    var wall = greetingWall(p);
+    wrap.appendChild(wall);
+    undo.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (undo.disabled || !window.confirm('Take back your birthday greeting to ' + p.name + '?')) return;
+      undo.disabled = true;
+      post('/birthdays/ungreet', { celebrant_id: p.account_id }).then(function (res) {
+        undo.disabled = false;
+        if (!res || !res.success) { window.alert((res && res.message) || 'Could not take back the greeting.'); return; }
+        p.greeted = false;
+        p.greetings = (p.greetings || []).filter(function (g) { return !g.mine; });
+        status.hidden = true;
+        greet.hidden = false;
+        wall.refresh();
+        annBadge();
+      }).catch(function () { undo.disabled = false; });
+    });
     greet.addEventListener('click', function (e) { e.stopPropagation(); form.hidden = false; greet.hidden = true; input.focus(); input.select(); });
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -258,6 +308,9 @@
         p.greeted = true;
         form.hidden = true;
         status.hidden = false;
+        p.greetings = (p.greetings || []).concat([{ from: 'You', message: input.value.trim() || 'Happy birthday! 🎂',
+          time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }), mine: true }]);
+        wall.refresh();
         annBadge();
         playEffect('confetti', [], ['#f85f00', '#19398a', '#f6c23e', '#2661d4'], 4);
       }).catch(function () { send.disabled = false; });
@@ -271,9 +324,7 @@
     var info = el('div', 'tmsw-bdp-info');
     info.appendChild(el('strong', null, p.is_me ? 'Your birthday' : p.name));
     info.appendChild(el('span', null, [p.department, p.branch].filter(Boolean).join(' · ')));
-    var when = el('span', 'tmsw-bdp-count');
-    info.appendChild(when);
-    counters.push({ node: when, target: p.starts_at, days: p.days_left });
+    info.appendChild(el('span', 'tmsw-bdp-count', daysLabel(p.days_left, p.date)));
     row.appendChild(info);
     return row;
   }
@@ -294,15 +345,6 @@
     if (bd.upcoming.length) {
       box.appendChild(el('div', 'tmsw-bdp-label', 'Coming up'));
       bd.upcoming.forEach(function (p) { box.appendChild(upcomingRow(p, counters)); });
-    }
-    if (counters.length) {
-      var tick = function () {
-        counters.forEach(function (c) {
-          c.node.textContent = (c.days === 1 ? 'Tomorrow' : 'In ' + c.days + ' days') + ' · ' + countdown(c.target);
-        });
-      };
-      tick();
-      bd.timers.push(setInterval(tick, 1000));
     }
     return box;
   }

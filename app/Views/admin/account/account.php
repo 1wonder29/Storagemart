@@ -225,6 +225,21 @@ ksort($branchOptions);
                     </h6>
                     <div class="card-header-actions">
                         <span class="badge badge-primary"><?= $totalUsers ?> user<?= $totalUsers === 1 ? '' : 's' ?></span>
+                        <?php
+                        require_once __DIR__ . '/../../../Models/UserRequestModel.php';
+                        $userRequestsWaiting = (new UserRequestModel())->countWaiting('ADMIN');
+                        ?>
+                        <a href="<?= htmlspecialchars($base) ?>/admin/user-requests" class="btn btn-sm <?= $userRequestsWaiting ? 'btn-warning' : 'btn-outline-primary' ?>" title="New user accounts requested by HR">
+                            <i class="fas fa-user-plus"></i> Requests from HR<?php if ($userRequestsWaiting): ?> <span class="badge badge-light"><?= (int) $userRequestsWaiting ?></span><?php endif; ?>
+                        </a>
+                        <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/account" class="d-inline"
+                              onsubmit="return confirm('Show the first-time guide again to EVERYONE at their next sign-in?');">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                            <input type="hidden" name="action" value="reset_guide_all">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Everyone sees the first-time guide again at their next sign-in">
+                                <i class="fas fa-redo"></i> First-time guide for all
+                            </button>
+                        </form>
                         <a href="<?= htmlspecialchars($base) ?>/admin/account/add" class="btn btn-sm btn-primary">
                             <i class="fas fa-plus mr-1"></i> Add User
                         </a>

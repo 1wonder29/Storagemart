@@ -105,3 +105,23 @@
 @keyframes tfx-turn { to { transform: rotate(360deg); } }
 @keyframes tfx-wave { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes tfx-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Effects made by the Admin: pictures (round for faces) or emoji */
+.tfx-layer .tfx-cimg { display: block; object-fit: cover; border: 3px solid #fff; border-radius: 14px; background: #fff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); }
+.tfx-layer .tfx-cimg.round { border-radius: 50%; }
+.tfx-layer .tfx-cpiece { opacity: 0; }
+.tfx-layer .tfx-fall-outer .tfx-cpiece, .tfx-layer .tfx-rise-outer .tfx-cpiece, .tfx-layer .tfx-flyer .tfx-cpiece { opacity: 1; }
+@keyframes tfx-cburst {
+  0% { transform: translate(0, 0) scale(0.2) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; transform: translate(calc(var(--tfx-dx) * 0.2), calc(var(--tfx-dy) * 0.2)) scale(1.1) rotate(-8deg); }
+  70% { opacity: 1; }
+  100% { transform: translate(var(--tfx-dx), calc(var(--tfx-dy) + 70px)) scale(0.95) rotate(18deg); opacity: 0; }
+}
+@keyframes tfx-cpop {
+  0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+  25% { transform: scale(1.15) rotate(6deg); opacity: 1; }
+  40% { transform: scale(1) rotate(0deg); opacity: 1; }
+  80% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
