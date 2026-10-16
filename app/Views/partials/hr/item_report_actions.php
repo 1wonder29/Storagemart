@@ -39,7 +39,7 @@ $reportCanSwitch = ($r['status'] ?? '') === 'PENDING' || (($r['status'] ?? '') =
 <?php endif; ?>
 <?php if ($reportCanSwitch): ?>
     <form method="POST" action="<?= htmlspecialchars($base) ?>/hr/uniforms/reports/change-type" class="d-inline"
-          onsubmit="return confirm('Change this report to <?= strtolower($reportOtherType) ?>?');">
+          data-confirm="Change this report to <?= strtolower($reportOtherType) ?>?">
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? ($_SESSION['csrf_token'] ?? '')) ?>">
         <input type="hidden" name="report_id" value="<?= (int) $r['report_id'] ?>">
         <input type="hidden" name="report_type" value="<?= $reportOtherType ?>">

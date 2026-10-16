@@ -22,7 +22,7 @@ $now = date('Y-m-d H:i:s');
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/admin-users.css" rel="stylesheet">
-    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <style>
         .ann-item { border-left:4px solid #4e73df; }
         .ann-item.important { border-left-color:#e74a3b; }
@@ -226,7 +226,7 @@ $now = date('Y-m-d H:i:s');
                                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="<?= (int) $item['is_active'] === 1 ? 'Hide' : 'Show again' ?>">
                                                         <i class="fas <?= (int) $item['is_active'] === 1 ? 'fa-eye-slash' : 'fa-eye' ?>"></i></button>
                                                 </form>
-                                                <form method="POST" action="<?= $h($base . $home) ?>" class="d-inline" onsubmit="return confirm('Delete this announcement?');">
+                                                <form method="POST" action="<?= $h($base . $home) ?>" class="d-inline" data-confirm="Delete this announcement?">
                                                     <input type="hidden" name="csrf_token" value="<?= $h($csrf_token) ?>">
                                                     <input type="hidden" name="action" value="delete">
                                                     <input type="hidden" name="announcement_id" value="<?= (int) $item['announcement_id'] ?>">

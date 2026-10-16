@@ -58,7 +58,7 @@ $editorConfig = [
     <link href="<?= $h($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/admin-users.css" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/manual-editor.css?v=20261010" rel="stylesheet">
-    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <?php if ($isIt) { require_once __DIR__ . '/../partials/it/theme_head.php'; } ?>
 </head>
 
@@ -429,7 +429,7 @@ $editorConfig = [
                                                        class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
                                                     <?php if ((int) $manual['is_default'] !== 1): ?>
                                                         <form method="POST" action="<?= $h($base . $home) ?>" class="d-inline"
-                                                              onsubmit="return confirm('Delete this guide?');">
+                                                              data-confirm="Delete this guide?">
                                                             <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
                                                             <input type="hidden" name="action" value="delete">
                                                             <input type="hidden" name="manual_id" value="<?= (int) $manual['manual_id'] ?>">
@@ -493,7 +493,7 @@ $editorConfig = [
     <script src="<?= $h($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?= $h($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script>window.TMS_MANUAL_EDITOR = <?= json_encode($editorConfig, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;</script>
-    <script src="<?= $h($base) ?>/assets/js/manual-editor.js?v=20261010"></script>
+    <script src="<?= $h($base) ?>/assets/js/manual-editor.js?v=20261016"></script>
     <?php require __DIR__ . '/../partials/flash_modal.php'; ?>
 </body>
 

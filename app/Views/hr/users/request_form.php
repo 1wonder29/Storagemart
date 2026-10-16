@@ -13,7 +13,7 @@ $v = static fn(string $key) => htmlspecialchars((string) ($old[$key] ?? ''), ENT
     <title>Storage Mart | Request a New User</title>
     <link href="<?= $h($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= $h($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/hr-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/hr-pages.css" rel="stylesheet">
@@ -93,7 +93,7 @@ $v = static fn(string $key) => htmlspecialchars((string) ($old[$key] ?? ''), ENT
                     <div class="row">
                         <div class="col-md-6 form-group">
                             <label class="form-label" for="employee_id">Employee ID</label>
-                            <input type="text" class="form-control" id="employee_id" name="employee_id" value="<?= $v('employee_id') ?>" inputmode="numeric" required>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id" value="<?= $v('employee_id') ?>" inputmode="numeric" pattern="[0-9]+" maxlength="11" title="Numbers only" placeholder="Numbers only" required data-numbers-only>
                         </div>
                         <div class="col-md-6 form-group">
                             <label class="form-label" for="branch_id">Branch</label>
@@ -131,7 +131,19 @@ $v = static fn(string $key) => htmlspecialchars((string) ($old[$key] ?? ''), ENT
                         </div>
                         <div class="col-md-4 form-group">
                             <label class="form-label" for="email">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" value="<?= $v('email') ?>">
+                            <input type="email" class="form-control" id="email" name="email" value="<?= $v('email') ?>" pattern=".+@.+\..+" title="A full email address with @" placeholder="storagemart.firstnamelastname@gmail.com" data-company-email data-first="#firstname" data-last="#lastname">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="form-label" for="gmail_password">Gmail password <span class="text-muted small">(company Gmail, optional)</span></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="gmail_password" name="gmail_password" minlength="8" maxlength="100" autocomplete="new-password" spellcheck="false" placeholder="Middle name + Employee ID" data-gmail-formula>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary" data-gmail-formula-btn="#gmail_password" title="Middle name + Employee ID"><i class="fas fa-calculator"></i> Formula</button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">Formula from the corporate email list: middle name + Employee ID (e.g. C.2600192); it fills in by itself. Not the TMS password. After the account is made, Admin and HR see it on the Company Gmail page (with a QR code to create the Gmail on a phone).</small>
                         </div>
                     </div>
 
@@ -155,5 +167,6 @@ $v = static fn(string $key) => htmlspecialchars((string) ($old[$key] ?? ''), ENT
 <script src="<?= $h($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= $h($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= $h($base) ?>/assets/js/storagemart.min.js"></script>
+<script src="<?= $h($base) ?>/assets/js/user-form.js?v=20261016"></script>
 </body>
 </html>

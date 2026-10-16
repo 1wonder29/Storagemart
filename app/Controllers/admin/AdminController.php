@@ -276,6 +276,11 @@ class AdminController extends AuthController
                 'email'       => trim($_POST['email'] ?? ''),
             ];
 
+            if ($dataEmp['email'] !== '' && !filter_var($dataEmp['email'], FILTER_VALIDATE_EMAIL)) {
+                $_SESSION['flash_error'] = 'Enter a full email address with @, for example storagemart.juandelacruz@gmail.com.';
+                $this->redirect('/admin/account/edit?account_id=' . (int) ($_POST['account_id'] ?? 0));
+            }
+
             // Personal details (only when the form had them, so an old form never clears them)
             $savePersonal = !empty($_POST['personal_form']);
             [$personal, $personalProblem] = EmployeePersonal::fromPost($_POST);
@@ -471,6 +476,13 @@ class AdminController extends AuthController
 
             $password = (string)($_POST['password'] ?? '');
             [$personal, $personalProblem] = EmployeePersonal::fromPost($_POST);
+            $gmailPassword = (string) ($_POST['gmail_password'] ?? '');
+            $old['gmail_password'] = $gmailPassword;
+            if ($gmailPassword === '') {
+                require_once __DIR__ . '/../../Models/CompanyGmailModel.php';
+                $gmailFormula = CompanyGmailModel::formulaPassword($old['middlename'], $old['employee_id'], $old['lastname']);
+                $gmailPassword = mb_strlen($gmailFormula) >= 8 ? $gmailFormula : '';
+            }
 
             // basic validation
             if ($old['username'] === '' || $password === '' || $old['usertype'] === '') {
@@ -508,6 +520,20 @@ class AdminController extends AuthController
 
             if ($personalReady && $personalProblem !== null) {
                 $_SESSION['flash_error'] = $personalProblem;
+                $branches = $accountModel->fetchBranches();
+                $departments = $departmentModel->fetchAll();
+                extract($loadLayout());
+                require __DIR__ . '/../../Views/admin/account/add.php';
+                return;
+            }
+
+            // Email: a full address with @ (the company Gmail is storagemart.<name>@gmail.com).
+            $emailProblem = !filter_var($old['email'], FILTER_VALIDATE_EMAIL)
+                ? 'Enter a full email address with @, for example storagemart.juandelacruz@gmail.com.'
+                : (($gmailPassword !== '' && (mb_strlen($gmailPassword) < 8 || mb_strlen($gmailPassword) > 100))
+                    ? 'The Gmail password must be 8 to 100 characters (Google needs at least 8).' : null);
+            if ($emailProblem !== null) {
+                $_SESSION['flash_error'] = $emailProblem;
                 $branches = $accountModel->fetchBranches();
                 $departments = $departmentModel->fetchAll();
                 extract($loadLayout());
@@ -587,6 +613,17 @@ class AdminController extends AuthController
                     ]);
 
                 if ($pdo instanceof PDO) $pdo->commit();
+
+                // Company Gmail: keep the address and Gmail password, then show the QR / checklist page.
+                require_once __DIR__ . '/../../Models/CompanyGmailModel.php';
+                $companyGmail = new CompanyGmailModel();
+                $isGmail = (bool) preg_match('/@gmail\.com$/i', $old['email']);
+                if ($companyGmail->ready() && ($isGmail || $gmailPassword !== '')) {
+                    $companyGmail->remember((int) $old['employee_id'], $isGmail ? $old['email'] : '', $gmailPassword, (int) ($_SESSION['account_id'] ?? 0));
+                    $_SESSION['flash_success'] = 'New account created. Next: create the company Gmail. Scan the QR code with the employee\'s phone.';
+                    $this->redirect('/admin/company-gmail?employee_id=' . (int) $old['employee_id']);
+                    return;
+                }
 
                 $_SESSION['flash_success'] = 'New Account successfully created!';
                 $this->redirect('/admin/account');

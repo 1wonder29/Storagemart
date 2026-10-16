@@ -435,6 +435,19 @@ if (strpos($uri, '/admin') === 0) {
         $admin->ratings();
     } elseif ($sub === 'ratings/data') {
         $admin->ratingsData();
+    } elseif (in_array($sub, ['company-gmail', 'company-gmail/save', 'company-gmail/reveal'], true)) {
+        // Company Gmail of an employee: address, Gmail password, QR to Google sign-up, checklist.
+        require_once __DIR__ . '/../app/Controllers/CompanyGmailController.php';
+        $companyGmail = new CompanyGmailController();
+        if ($sub === 'company-gmail') {
+            $companyGmail->showPage('admin');
+        } elseif ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . rtrim(BASE_URL, '/') . '/admin/account');
+        } elseif ($sub === 'company-gmail/save') {
+            $companyGmail->savePage('admin');
+        } else {
+            $companyGmail->revealPassword('admin');
+        }
     } elseif (in_array($sub, ['user-requests', 'user-requests/decide', 'user-requests/hr-head'], true)) {
         require_once __DIR__ . '/../app/Controllers/UserRequestController.php';
         $userRequests = new UserRequestController();
@@ -674,6 +687,21 @@ if (strpos($uri, '/hr') === 0) {
     $hrAsset = new HrAssetController();
 
     $sub = trim(substr($uri, strlen('/hr')), '/');
+
+    if (in_array($sub, ['company-gmail', 'company-gmail/save', 'company-gmail/reveal'], true)) {
+        require_once __DIR__ . '/../app/Controllers/CompanyGmailController.php';
+        $companyGmail = new CompanyGmailController();
+        if ($sub === 'company-gmail') {
+            $companyGmail->showPage('hr');
+        } elseif ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . rtrim(BASE_URL, '/') . '/hr/employees');
+        } elseif ($sub === 'company-gmail/save') {
+            $companyGmail->savePage('hr');
+        } else {
+            $companyGmail->revealPassword('hr');
+        }
+        exit;
+    }
 
     if (in_array($sub, ['user-requests', 'user-requests/new', 'user-requests/decide'], true)) {
         // New user accounts requested by HR (HR Head, then Admin approve).

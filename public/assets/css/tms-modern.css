@@ -376,3 +376,100 @@ html.it-dark .table tbody tr:only-child > td[colspan].text-center::before { colo
   .app-topbar .app-topbar-brand img { height: 1.6rem; }
   .topbar.app-topbar .topbar-divider { display: none !important; }
 }
+
+/* ==========================================================================
+   Update P
+   ========================================================================== */
+
+/* Menu icons were 30% white and hard to see (light and dark mode). */
+#accordionSidebar.sidebar-modern .nav-item .nav-link i { color: rgba(255, 255, 255, 0.8); }
+#accordionSidebar.sidebar-modern .nav-item .nav-link:hover i,
+#accordionSidebar.sidebar-modern .nav-item .nav-link:focus i { color: #fff; }
+
+/* Ticket photos: tiles with a remove button. */
+.ticket-photo-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.ticket-photo-tile { position: relative; width: 84px; height: 84px; border-radius: 12px; overflow: hidden; border: 1px solid #dbe3f0; background: #f5f7fb; box-shadow: 0 2px 8px rgba(15, 37, 99, 0.08); }
+.ticket-photo-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ticket-photo-remove { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border: 0; border-radius: 50%; background: rgba(15, 23, 42, 0.75); color: #fff; font-size: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.ticket-photo-remove:hover, .ticket-photo-remove:focus-visible { background: #dc2626; outline: none; }
+.ticket-photos label.btn.disabled { opacity: 0.55; pointer-events: none; }
+.ticket-comment-keys { margin-top: 4px; font-size: 0.75rem; }
+@media (hover: none) and (pointer: coarse) { .ticket-comment-keys { display: none; } }
+
+/* Clickable links inside ticket comments. */
+.ticket-comment-text a { color: #2661D4; text-decoration: underline; word-break: break-all; }
+html.it-dark .ticket-comment-text a { color: #8fb0ff; }
+
+/* ---------- Dark mode: things that stayed light or became unreadable ---------- */
+
+/* Stat tiles (e.g. "Total ticket") kept their light gradient. */
+html.it-dark .personal-stat-card,
+html.it-dark .admin-stat-card,
+html.it-dark .employee-stat-card,
+html.it-dark .hr-stat-card,
+html.it-dark .aom-stat-card,
+html.it-dark .om-stat-card { background: var(--it-surface) !important; }
+html.it-dark .personal-stat-card.is-active { border-color: #6c8ef5 !important; box-shadow: 0 0 0 2px rgba(108, 142, 245, 0.35) !important; }
+html.it-dark .admin-ticket-page .personal-stat-card.tone-pending .stat-number { color: #cbd5e1; }
+html.it-dark .admin-ticket-page .personal-stat-card.tone-tickets .stat-number { color: #86efac; }
+
+/* Windows (Ticket History and others): body, table card, footer. */
+html.it-dark .modal-body,
+html.it-dark .modal-footer,
+html.it-dark .modal-table-card { background-color: var(--it-surface) !important; border-color: var(--it-border) !important; }
+html.it-dark .modal-section-title { color: #a5b8ff !important; }
+html.it-dark .btn-modal-close { background: var(--it-surface-2) !important; color: var(--it-text) !important; border-color: var(--it-border) !important; }
+html.it-dark .modal-header.bg-success { background: #15803d !important; }
+html.it-dark .modal-header.bg-warning .modal-title,
+html.it-dark .modal-header.bg-warning .close { color: #1f2937 !important; }
+
+/* Page numbers under tables. */
+html.it-dark .page-link,
+html.it-dark .dt-paging .dt-paging-button,
+html.it-dark .dataTables_paginate .paginate_button { background-color: var(--it-surface-2) !important; color: #c7d2fe !important; border-color: var(--it-border) !important; }
+html.it-dark .page-item.active .page-link,
+html.it-dark .page-link.current,
+html.it-dark .dt-paging .dt-paging-button.current { background: #2661D4 !important; border-color: #2661D4 !important; color: #fff !important; }
+html.it-dark .page-item.disabled .page-link { color: var(--it-text-dim) !important; }
+html.it-dark .dt-info, html.it-dark .dataTables_info { color: var(--it-text-muted) !important; }
+
+/* Highlighted row (Audit Trail details) was yellow with white text. */
+html.it-dark .table-warning,
+html.it-dark .table-warning > td,
+html.it-dark .table-warning > th { background-color: rgba(248, 95, 0, 0.18) !important; color: var(--it-text) !important; }
+
+/* Ratings: technician names, star numbers, dates, header icons. */
+html.it-dark .tech-name,
+html.it-dark .star-num { color: var(--it-text) !important; }
+html.it-dark td.date-cell { color: var(--it-text-muted) !important; }
+html.it-dark .header-icon i { color: #d8b4fe !important; }
+
+/* Navy heading and empty-list icons on dark cards. */
+html.it-dark .card-header h6 > i,
+html.it-dark .card-header h5 > i,
+html.it-dark h6 > i.fas,
+html.it-dark h6 > i.far,
+html.it-dark .empty-state > i,
+html.it-dark .form-section-title > i,
+html.it-dark .uniform-count,
+html.it-dark .uniform-count i { color: #8fb0ff !important; }
+
+/* HR inventory guide and New user request form titles. */
+html.it-dark .inv-guide-head,
+html.it-dark .inv-group-title,
+html.it-dark .ur-section,
+html.it-dark .ur-step b { color: #a5b8ff !important; }
+html.it-dark .count-badge.badge-info { background: #0e7490 !important; color: #fff !important; }
+
+/* "View all notifications" link. */
+html.it-dark .notification-dropdown-footer a { color: #8fb0ff !important; }
+
+/* Outline buttons that were too dark on dark cards. */
+html.it-dark .btn-outline-success { color: #4ade80; border-color: #22c55e; }
+html.it-dark .btn-outline-success:hover { color: #052e16; background: #4ade80; }
+html.it-dark .btn-outline-danger { color: #f87171; border-color: #ef4444; }
+html.it-dark .btn-outline-danger:hover { color: #fff; background: #dc2626; }
+
+/* Ratings page: empty bars and the tab buttons were white in dark mode. */
+html.it-dark .rating-breakdown-track { background: #1c2130 !important; }
+html.it-dark .admin-ratings-page .ratings-tabs .nav-link:not(.active) { background: var(--it-surface-2) !important; color: var(--it-text) !important; border-color: var(--it-border) !important; }

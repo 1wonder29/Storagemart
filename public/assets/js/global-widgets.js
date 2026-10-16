@@ -14,6 +14,8 @@
 (function () {
   'use strict';
 
+  function ask(message) { return window.TmsDialog ? window.TmsDialog.confirm(message) : Promise.resolve(window.confirm(message)); }
+
   var cfg = window.TMS_WIDGETS;
   if (!cfg || window.__tmsWidgetsLoaded) return;
   window.__tmsWidgetsLoaded = true;
@@ -284,18 +286,21 @@
     wrap.appendChild(wall);
     undo.addEventListener('click', function (e) {
       e.stopPropagation();
-      if (undo.disabled || !window.confirm('Take back your birthday greeting to ' + p.name + '?')) return;
-      undo.disabled = true;
-      post('/birthdays/ungreet', { celebrant_id: p.account_id }).then(function (res) {
-        undo.disabled = false;
-        if (!res || !res.success) { window.alert((res && res.message) || 'Could not take back the greeting.'); return; }
-        p.greeted = false;
-        p.greetings = (p.greetings || []).filter(function (g) { return !g.mine; });
-        status.hidden = true;
-        greet.hidden = false;
-        wall.refresh();
-        annBadge();
-      }).catch(function () { undo.disabled = false; });
+      if (undo.disabled) return;
+      ask('Take back your birthday greeting to ' + p.name + '?').then(function (yes) {
+        if (!yes) return;
+        undo.disabled = true;
+        post('/birthdays/ungreet', { celebrant_id: p.account_id }).then(function (res) {
+          undo.disabled = false;
+          if (!res || !res.success) { window.alert((res && res.message) || 'Could not take back the greeting.'); return; }
+          p.greeted = false;
+          p.greetings = (p.greetings || []).filter(function (g) { return !g.mine; });
+          status.hidden = true;
+          greet.hidden = false;
+          wall.refresh();
+          annBadge();
+        }).catch(function () { undo.disabled = false; });
+      });
     });
     greet.addEventListener('click', function (e) { e.stopPropagation(); form.hidden = false; greet.hidden = true; input.focus(); input.select(); });
     form.addEventListener('submit', function (e) {

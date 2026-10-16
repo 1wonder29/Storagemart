@@ -19,7 +19,7 @@ class RealtimeController extends AuthController
             echo json_encode([
                 'success'       => true,
                 'count'         => $model->getUnreadCount($accountId),
-                'notifications' => $model->getLatest($accountId, 5),
+                'notifications' => $model->getForBell($accountId),
                 'server_time'   => date('Y-m-d H:i:s'),
             ]);
         });

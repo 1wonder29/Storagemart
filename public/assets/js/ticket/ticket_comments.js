@@ -36,10 +36,23 @@
     return 'role-pill role-pill-default';
   }
 
+  // Web addresses in a comment become links (the text is escaped first, so only real links are made).
+  function linkify(escaped) {
+    return escaped.replace(/\bhttps?:\/\/[^\s<]+/g, function (url) {
+      let trail = '';
+      while (/[.,!?;:)\]]$/.test(url) || /&(?:#0?39|quot);$/.test(url)) {
+        const m = url.match(/(&(?:#0?39|quot);|[.,!?;:)\]])$/);
+        trail = m[1] + trail;
+        url = url.slice(0, -m[1].length);
+      }
+      return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+    });
+  }
+
   function renderComment(comment) {
     const role = escapeHtml(comment.author_role || 'User');
     const name = escapeHtml(comment.author_name || 'Unknown');
-    const text = escapeHtml(comment.comment_text || '').replace(/\n/g, '<br>');
+    const text = linkify(escapeHtml(comment.comment_text || '')).replace(/\n/g, '<br>');
     const date = formatDate(comment.created_at);
     let attachment = '';
     if (comment.attachment_url) {
@@ -282,6 +295,33 @@
     $section.on('submit.ticketComments', '.ticket-comments-form', function (e) {
       e.preventDefault();
       submitComment($section);
+    });
+    // Enter sends the comment; Shift + Enter starts a new line. On phones (no Shift key)
+    // Enter keeps making a new line and the Post Comment button sends.
+    const touchOnly = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    $section.on('keydown.ticketComments', '.ticket-comment-input', function (e) {
+      const ev = e.originalEvent || e;
+      if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || ev.isComposing || touchOnly) {
+        return;
+      }
+      e.preventDefault();
+      submitComment($section);
+    });
+    // Camera button: the camera window (laptop webcam or phone), or the phone camera app.
+    $section.on('click.ticketComments', '.ticket-comment-camera', function () {
+      const input = $section.find('.ticket-comment-camera-input')[0];
+      if (!window.TMSCamera) {
+        if (input) input.click();
+        return;
+      }
+      window.TMSCamera.take({ fallbackInput: input }).then(function (file) {
+        if (!file) return;
+        const shrink = window.TMSShrinkImage ? window.TMSShrinkImage(file) : Promise.resolve(file);
+        shrink.then(function (small) {
+          $section.data('comment-file', small);
+          $section.find('.ticket-comment-file-name').text('Attached: ' + (small.name || 'photo.jpg'));
+        });
+      });
     });
   }
 

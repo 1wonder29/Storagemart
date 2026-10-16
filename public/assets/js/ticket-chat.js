@@ -249,7 +249,10 @@
     cameraBtn.setAttribute('aria-label', 'Take a photo');
     cameraBtn.appendChild(el('i', 'fas fa-camera'));
     attachBtn.addEventListener('click', function () { fileInput.click(); });
-    cameraBtn.addEventListener('click', function () { cameraInput.click(); });
+    cameraBtn.addEventListener('click', function () {
+      if (!window.TMSCamera) { cameraInput.click(); return; }
+      window.TMSCamera.take({ fallbackInput: cameraInput }).then(function (file) { if (file) pick(file); });
+    });
     function pick(file) {
       if (file && window.TMSShrinkImage) {
         window.TMSShrinkImage(file).then(setPendingFile);

@@ -1,5 +1,7 @@
 <?php
 $base = rtrim(BASE_URL, '/');
+require_once __DIR__ . '/../../../Helpers/ReturnTo.php';
+$defectiveSelf = ReturnTo::clean($_SERVER['REQUEST_URI'] ?? '', '/admin/assets/defective') ?? '/admin/assets/defective';
 
 $months = [
     1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
@@ -177,7 +179,7 @@ $totalItems = (int) ($totalItems ?? count($items ?? []));
                                                    class="btn btn-sm btn-outline-primary" title="View group">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="<?= htmlspecialchars($base) ?>/admin/assets/item/edit?inventory_id=<?= (int) ($row['inventory_id'] ?? 0) ?>"
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/assets/item/edit?inventory_id=<?= (int) ($row['inventory_id'] ?? 0) ?>&amp;return_to=<?= htmlspecialchars(rawurlencode($defectiveSelf)) ?>"
                                                    class="btn btn-sm btn-outline-secondary" title="Edit">
                                                     <i class="fas fa-edit"></i>
                                                 </a>

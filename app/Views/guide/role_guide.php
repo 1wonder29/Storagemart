@@ -157,7 +157,7 @@ $statuses = [
     <link href="<?= $h($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <style>
         :root { --navy: #19398a; --navy-dark: #0f2563; --blue: #2661d4; --orange: #f85f00; --orange-soft: #fff1e8; --ink: #1f2937; --muted: #4b5563; }
         * { box-sizing: border-box; }

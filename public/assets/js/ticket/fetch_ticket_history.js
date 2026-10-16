@@ -65,7 +65,7 @@
               $("#ticketHistoryTable tbody").append(`
                                 <tr>
                                     <td>${escapeHtml(row.action_details)}</td>
-                                    <td>${escapeHtml(row.performed_by)}</td>
+                                    <td>${escapeHtml(String(row.performed_by || "").trim() || "System")}</td>
                                     <td>${escapeHtml(row.old_status || "")}</td>
                                     <td>${escapeHtml(row.new_status || "")}</td>
                                     <td>${escapeHtml(row.date_logged || "")}</td>

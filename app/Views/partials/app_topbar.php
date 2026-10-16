@@ -46,5 +46,7 @@ $shellDisplayName = $shellUser['fullname'] !== '' ? $shellUser['fullname'] : (st
         <li class="nav-item d-flex align-items-center app-topbar-extras" id="appTopbarExtras"></li>
     </ul>
 </nav>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/tms-dialog.js?v=20261016"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/tms-camera.js?v=20261016" defer></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/app-shell.js?v=20261011" defer></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/it-dark-mode.js" defer></script>

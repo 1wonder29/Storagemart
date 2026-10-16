@@ -26,7 +26,7 @@ $total = array_sum(array_map('count', $groups));
     <link href="<?= $h($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; background: #f4f5fa; color: #1f2937; font-family: "Montserrat", "Century Gothic", Arial, sans-serif; }

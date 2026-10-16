@@ -11,7 +11,7 @@ $base = rtrim(BASE_URL, '/');
 <?php /* StorageMart navy / blue / orange for every role (www.storagemart.com.ph and the logo); loaded last. */ ?>
 <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart-brand.css?v=20261011" rel="stylesheet">
 <?php /* Modern buttons, header icons, badges, cards and fields for every role. */ ?>
-<link href="<?= htmlspecialchars($base) ?>/assets/css/tms-modern.css?v=20261011" rel="stylesheet">
+<link href="<?= htmlspecialchars($base) ?>/assets/css/tms-modern.css?v=20261016" rel="stylesheet">
 <script>
 (function () {
     try {

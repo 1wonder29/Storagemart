@@ -36,7 +36,7 @@ if ($isAssign && $batch['status'] === 'PENDING') {
     <title>Storage Mart | Approval #<?= (int) $batch['batch_id'] ?></title>
     <link href="<?= $h($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= $h($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/hr-dashboard.css?v=20261008" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/hr-uniforms.css" rel="stylesheet">
@@ -159,14 +159,14 @@ if ($isAssign && $batch['status'] === 'PENDING') {
                             <input type="text" class="form-control" id="note" name="note" maxlength="255" placeholder="e.g. Checked against the delivery receipt">
                         </div>
                         <button type="submit" name="decision" value="approve" class="btn btn-success mr-2" <?= $short ? 'disabled' : '' ?>
-                                onclick="return confirm('<?= $isAssign ? 'Issue these items to the employees now?' : 'Apply this inventory update now?' ?>');">
+                                data-confirm="<?= $isAssign ? 'Issue these items to the employees now?' : 'Apply this inventory update now?' ?>">
                             <i class="fas fa-check mr-1"></i> Approve<?= $isAssign ? ' and issue' : ' and update stock' ?></button>
                         <button type="submit" name="decision" value="reject" class="btn btn-outline-danger">
                             <i class="fas fa-times mr-1"></i> Reject</button>
                     </form>
                 <?php elseif ($isOwner): ?>
                     <p class="mb-2">You sent this upload, so another HR account or the Admin must approve it. They were notified.</p>
-                    <form method="POST" action="<?= $h($base) ?>/hr/uniforms/approvals/decide" onsubmit="return confirm('Cancel this upload? Nothing will be changed.');">
+                    <form method="POST" action="<?= $h($base) ?>/hr/uniforms/approvals/decide" data-confirm="Cancel this upload? Nothing will be changed.">
                         <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
                         <input type="hidden" name="batch_id" value="<?= (int) $batch['batch_id'] ?>">
                         <button type="submit" name="decision" value="cancel" class="btn btn-outline-secondary"><i class="fas fa-ban mr-1"></i> Cancel my upload</button>

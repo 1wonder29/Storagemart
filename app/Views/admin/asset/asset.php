@@ -203,7 +203,7 @@ ksort($categories);
                                                 </a>
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/group/delete?group_id=<?= (int) ($row['group_id'] ?? 0) ?>"
                                                    class="btn btn-sm btn-outline-danger" title="Delete group"
-                                                   onclick="return confirm('Are you sure you want to delete this asset group?');">
+                                                   data-confirm="Are you sure you want to delete this asset group?">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </div>

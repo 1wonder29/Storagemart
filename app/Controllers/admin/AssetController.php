@@ -950,9 +950,13 @@ class AssetController extends AuthController {
             $this->redirect('/admin/assets/item?group_id=' . (int)($_POST['group_id'] ?? 0)); return;
         }
         // Blank is allowed for older items whose purchase year is unknown.
+        require_once __DIR__ . '/../../Helpers/ReturnTo.php';
+        // Where Save goes afterwards (the page the person opened Edit from); kept on errors too.
+        $returnTo = ReturnTo::clean($_POST['return_to'] ?? '', '/admin/assets');
+        $returnQuery = $returnTo !== null ? '&return_to=' . rawurlencode($returnTo) : '';
         if ($yearPurchased !== '' && !Asset::isValidPurchaseYear($yearPurchased)) {
             $_SESSION['flash_error'] = 'Year Purchased must be a 4-digit year (e.g. ' . date('Y') . ') or left blank. Use the Branch field for the location.';
-            $this->redirect('/admin/assets/item/edit?inventory_id=' . $inventoryID); return;
+            $this->redirect('/admin/assets/item/edit?inventory_id=' . $inventoryID . $returnQuery); return;
         }
 
         $assetModel = new Asset();
@@ -966,7 +970,7 @@ class AssetController extends AuthController {
         }
         $status = strtoupper($status);
         $currentStatus = strtoupper(trim((string) ($current['status'] ?? '')));
-        $editUrl = '/admin/assets/item/edit?inventory_id=' . $inventoryID;
+        $editUrl = '/admin/assets/item/edit?inventory_id=' . $inventoryID . $returnQuery;
         if (!in_array($status, ['UNASSIGNED', 'ASSIGNED', 'DEFECTIVE', 'DISPOSED', 'LOST', 'RETURNED'], true)) {
             $_SESSION['flash_error'] = 'Please choose a valid status.';
             $this->redirect($editUrl); return;
@@ -1020,9 +1024,11 @@ class AssetController extends AuthController {
             $this->redirect($editUrl); return;
         }
 
-        // redirect back to item list for the group
+        // Back to the page Edit was opened from (e.g. Defective Items), else the group's item list.
         $group_id = (int) ($current['group_id'] ?? 0);
-        $this->redirect('/admin/assets/item?group_id=' . $group_id);
+        $this->redirect($returnTo !== null && strpos($returnTo, '/admin/assets/item/edit') !== 0
+            ? $returnTo
+            : '/admin/assets/item?group_id=' . $group_id);
     }
 
     public function markDefective()

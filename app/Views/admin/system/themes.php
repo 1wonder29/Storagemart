@@ -71,7 +71,7 @@ $effectImageUrl = static fn(string $file): string => $base . '/effects/image?f='
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/admin-users.css" rel="stylesheet">
-    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <style>
         .theme-card { border-radius:14px; overflow:hidden; height:100%; }
         .theme-swatch { height:86px; display:flex; align-items:center; justify-content:center; gap:10px; font-size:1.9rem; color:#fff; }
@@ -338,7 +338,7 @@ $effectImageUrl = static fn(string $file): string => $base . '/effects/image?f='
                                         <div class="cfx-info"><strong><?= $h($custom['name']) ?></strong><span><?= $h(CustomEffects::STYLES[$custom['style']][0] ?? $custom['style']) ?></span></div>
                                         <button type="button" class="btn btn-sm btn-outline-primary js-fx-custom" data-effect="<?= $h($key) ?>"><i class="fas fa-play"></i> Preview</button>
                                         <a class="btn btn-sm btn-light" href="<?= $h($base) ?>/admin/themes?edit_effect=<?= (int) $custom['id'] ?>#custom-effects" title="Edit"><i class="fas fa-pen"></i></a>
-                                        <form method="POST" action="<?= $h($base) ?>/admin/themes" class="d-inline" onsubmit="return confirm('Delete this effect? Themes that use it stop playing it.');">
+                                        <form method="POST" action="<?= $h($base) ?>/admin/themes" class="d-inline" data-confirm="Delete this effect? Themes that use it stop playing it.">
                                             <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
                                             <input type="hidden" name="action" value="delete_effect">
                                             <input type="hidden" name="effect_id" value="<?= (int) $custom['id'] ?>">
@@ -463,7 +463,7 @@ $effectImageUrl = static fn(string $file): string => $base . '/effects/image?f='
                                 </div>
                             </form>
                             <hr>
-                            <form method="POST" action="<?= $h($base) ?>/admin/themes" onsubmit="return confirm('Add back any built-in theme that was deleted?');">
+                            <form method="POST" action="<?= $h($base) ?>/admin/themes" data-confirm="Add back any built-in theme that was deleted?">
                                 <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
                                 <input type="hidden" name="action" value="restore_builtin">
                                 <button class="btn btn-sm btn-link px-0"><i class="fas fa-undo mr-1"></i>Restore the built-in themes</button>
@@ -521,7 +521,7 @@ $effectImageUrl = static fn(string $file): string => $base . '/effects/image?f='
                                                                     <i class="fas <?= (int) $s['is_active'] === 1 ? 'fa-toggle-on' : 'fa-toggle-off' ?>"></i></button>
                                                             </form>
                                                         <?php endif; ?>
-                                                        <form method="POST" action="<?= $h($base) ?>/admin/themes" class="d-inline" onsubmit="return confirm('Delete this schedule?');">
+                                                        <form method="POST" action="<?= $h($base) ?>/admin/themes" class="d-inline" data-confirm="Delete this schedule?">
                                                             <input type="hidden" name="csrf_token" value="<?= $h($csrf_token ?? '') ?>">
                                                             <input type="hidden" name="action" value="delete">
                                                             <input type="hidden" name="schedule_id" value="<?= (int) $s['schedule_id'] ?>">
@@ -567,9 +567,7 @@ $effectImageUrl = static fn(string $file): string => $base . '/effects/image?f='
             });
         });
         document.querySelectorAll('.js-delete-theme').forEach(function (form) {
-            form.addEventListener('submit', function (e) {
-                if (!window.confirm('Delete the ' + form.getAttribute('data-name') + ' theme and its schedules?')) e.preventDefault();
-            });
+            form.setAttribute('data-confirm', 'Delete the ' + form.getAttribute('data-name') + ' theme and its schedules?');
         });
         // Custom effects: preview a saved one, or the one in the form (with the pictures just chosen).
         var CUSTOM = <?= json_encode((object) $customJs, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;

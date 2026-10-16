@@ -233,7 +233,7 @@ ksort($branchOptions);
                             <i class="fas fa-user-plus"></i> Requests from HR<?php if ($userRequestsWaiting): ?> <span class="badge badge-light"><?= (int) $userRequestsWaiting ?></span><?php endif; ?>
                         </a>
                         <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/account" class="d-inline"
-                              onsubmit="return confirm('Show the first-time guide again to EVERYONE at their next sign-in?');">
+                              data-confirm="Show the first-time guide again to EVERYONE at their next sign-in?">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                             <input type="hidden" name="action" value="reset_guide_all">
                             <button type="submit" class="btn btn-sm btn-outline-secondary" title="Everyone sees the first-time guide again at their next sign-in">
@@ -384,6 +384,10 @@ ksort($branchOptions);
                                                     </form>
                                                 <?php endif; ?>
                                                 <?php if ($employeeId > 0): ?>
+                                                    <a href="<?= htmlspecialchars($base) ?>/admin/company-gmail?employee_id=<?= $employeeId ?>"
+                                                       class="btn btn-sm btn-outline-secondary btn-action-icon" title="Company Gmail (password, QR, checklist)">
+                                                        <i class="fab fa-google"></i>
+                                                    </a>
                                                     <a href="<?= htmlspecialchars($base) ?>/admin/assets/view?employee_id=<?= $employeeId ?>"
                                                        class="btn btn-sm btn-outline-info btn-action-icon" title="View assigned assets">
                                                         <i class="fas fa-box-open"></i>

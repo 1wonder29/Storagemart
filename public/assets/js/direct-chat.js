@@ -6,6 +6,8 @@
  */
 (function () {
   'use strict';
+
+  function ask(message) { return window.TmsDialog ? window.TmsDialog.confirm(message) : Promise.resolve(window.confirm(message)); }
   var cfg = window.TMS_WIDGETS;
   if (!cfg || window.__directChatLoaded) return;
   window.__directChatLoaded = true;
@@ -296,8 +298,10 @@
     state.win = { node: win, name: name, sub: sub, banner: banner, body: body, input: input, send: sendBtn, end: end };
     x.addEventListener('click', closeChat);
     end.addEventListener('click', function () {
-      if (!window.confirm('End this chat?')) return;
-      api('/direct-chat/close', fd({ chat_id: chatId })).then(function () { load(); poll(); });
+      ask('End this chat?').then(function (ok) {
+        if (!ok) return;
+        api('/direct-chat/close', fd({ chat_id: chatId })).then(function () { load(); poll(); });
+      });
     });
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : sendBtn.click(); } });
     var sending = false;

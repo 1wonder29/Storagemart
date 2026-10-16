@@ -18,7 +18,7 @@ $passwordFields = [
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png">
+    <link rel="icon" type="image/png" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016">
     <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/auth-login.css?v=20261012">
     <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/ui-readonly-interaction.css?v=2">
 </head>

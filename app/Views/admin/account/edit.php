@@ -44,6 +44,9 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                             <div class="col-12">
                                 <h1><i class="fas fa-user-edit mr-2"></i>Update Account</h1>
                                 <p>Update login credentials, role assignments, and employee profile details.</p>
+                                <?php if (!empty($employee['employee_id'])): ?>
+                                    <a href="<?= htmlspecialchars($base) ?>/admin/company-gmail?employee_id=<?= (int) $employee['employee_id'] ?>" class="btn btn-light btn-sm"><i class="fab fa-google"></i> Company Gmail</a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -173,7 +176,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                     <div class="row form-row-gap">
                                         <div class="col-md-6">
                                             <label for="email" class="form-label">Email</label>
-                                            <input type="text" class="form-control" id="email" name="email" placeholder="Email" value="<?= htmlspecialchars($employee['email'] ?? '') ?>" required>
+                                            <input type="email" class="form-control" id="email" name="email" placeholder="name@gmail.com" value="<?= htmlspecialchars($employee['email'] ?? '') ?>" required pattern=".+@.+\..+" title="A full email address with @">
                                         </div>
                                     </div>
                                     <?php require __DIR__ . '/_personal_fields.php'; ?>
@@ -252,6 +255,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-edit.js"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/user-form.js?v=20261016"></script>
 </body>
 
 </html>

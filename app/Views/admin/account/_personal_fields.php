@@ -33,6 +33,7 @@ $pv = static fn(string $key): string => htmlspecialchars((string) ($personal[$ke
     </div>
     <div class="col-md-6">
         <label for="phone" class="form-label">Phone number</label>
-        <input type="tel" class="form-control" id="phone" name="phone" value="<?= $pv('phone') ?>" placeholder="e.g. 0917 123 4567" maxlength="20">
+        <input type="tel" class="form-control" id="phone" name="phone" value="<?= $pv('phone') ?>" placeholder="e.g. 09171234567" maxlength="20" data-numbers-only="phone">
+        <small class="form-text text-muted">Numbers only.</small>
     </div>
 </div>

@@ -194,9 +194,14 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                                 actionTaken.focus();
                                 return;
                             }
-                            if (!window.confirm('Mark this ticket as resolved? The requester will be notified.')) { return; }
-                            actionField.value = 'Resolve';
-                            form.submit();
+                            var ask = window.TmsDialog
+                                ? window.TmsDialog.confirm('Mark this ticket as resolved? The requester will be notified.', { okText: 'Mark as Done', danger: false })
+                                : Promise.resolve(window.confirm('Mark this ticket as resolved? The requester will be notified.'));
+                            ask.then(function (ok) {
+                                if (!ok) { return; }
+                                actionField.value = 'Resolve';
+                                form.submit();
+                            });
                         });
                     })();
                     </script>

@@ -11,6 +11,8 @@
  */
 (function () {
   'use strict';
+
+  function ask(message) { return window.TmsDialog ? window.TmsDialog.confirm(message) : Promise.resolve(window.confirm(message)); }
   var cfg = window.TMS_MANUAL_EDITOR || {};
   var form = document.getElementById('manualForm');
 
@@ -186,10 +188,13 @@
       del.setAttribute('aria-label', 'Remove');
       del.appendChild(icon('fas fa-trash'));
       del.addEventListener('click', function () {
-        if ((it.text || it.heading || it.photoUrl || it.file) && !window.confirm('Remove this ' + (it.type === 'step' ? 'step' : it.type === 'section' ? 'section title' : 'page') + '?')) return;
-        items.splice(i, 1);
-        render();
-        renderPreview();
+        var filled = it.text || it.heading || it.photoUrl || it.file;
+        (filled ? ask('Remove this ' + (it.type === 'step' ? 'step' : it.type === 'section' ? 'section title' : 'page') + '?') : Promise.resolve(true)).then(function (ok) {
+          if (!ok) return;
+          items.splice(i, 1);
+          render();
+          renderPreview();
+        });
       });
       tools.appendChild(del);
       head.appendChild(tools);
@@ -506,7 +511,15 @@
   if (exampleBtn) {
     exampleBtn.addEventListener('click', function () {
       var filled = ['m_title', 'm_intro', 'm_issue', 'm_factors', 'm_solution', 'm_note'].some(function (id) { return val(id); }) || items.length;
-      if (filled && !window.confirm('Replace what you typed with the example?')) return;
+      if (filled && !exampleBtn.__confirmed) {
+        ask('Replace what you typed with the example?').then(function (ok) {
+          if (!ok) return;
+          exampleBtn.__confirmed = true;
+          exampleBtn.click();
+        });
+        return;
+      }
+      exampleBtn.__confirmed = false;
       $('m_title').value = 'Printer Paper Jam (Brother DCP-L2540DW)';
       $('m_group').value = 'Printer Issues';
       $('m_intro').value = 'In this procedure the facilitator can clear a paper jam on the Brother DCP-L2540DW without waiting for IT.';

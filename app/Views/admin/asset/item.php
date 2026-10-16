@@ -192,7 +192,7 @@ function admin_can_transfer_asset(string $status): bool
                                     $branch = (string) ($row['branchName'] ?? '');
                                     $itemAge = AssetAge::age($row['year_purchased'] ?? '');
                                     $itemDue = $itemAge !== null && $itemAge >= $replacementYears
-                                        && !in_array(strtoupper($status), ['DISPOSE', 'DISPOSED', 'LOST'], true);
+                                        && !in_array(strtoupper($status), ['DISPOSE', 'DISPOSED', 'LOST', 'DEFECTIVE'], true);
                                 ?>
                                     <tr data-branch="<?= htmlspecialchars(strtolower(trim($branch))) ?>"
                                         data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>"
@@ -266,7 +266,7 @@ function admin_can_transfer_asset(string $status): bool
                                                 <?php if (strtoupper(trim($status)) !== 'ASSIGNED'): ?>
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/item/delete?inventory_id=<?= (int) ($row['inventory_id'] ?? 0) ?>"
                                                    class="btn btn-sm btn-outline-danger" title="Delete"
-                                                   onclick="return confirm('Are you sure you want to delete this item?');">
+                                                   data-confirm="Are you sure you want to delete this item?">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                                 <?php endif; ?>

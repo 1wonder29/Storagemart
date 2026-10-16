@@ -14,7 +14,7 @@ $totalPages = (int) ($totalPages ?? 1);
     <title>Storage Mart | Inventory</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-uniforms.css" rel="stylesheet">
@@ -260,7 +260,7 @@ $totalPages = (int) ($totalPages ?? 1);
                                                         <form method="post"
                                                               action="<?= htmlspecialchars($base) ?>/hr/uniforms/reactivate/<?= (int) $uniform['uniform_id'] ?>"
                                                               class="d-inline"
-                                                              onsubmit="return confirm('Reactivate this item?');">
+                                                              data-confirm="Reactivate this item?">
                                                             <button type="submit" class="btn btn-sm btn-success" title="Make the item active again">
                                                                 <i class="fas fa-undo"></i> Reactivate
                                                             </button>
@@ -268,7 +268,7 @@ $totalPages = (int) ($totalPages ?? 1);
                                                         <form method="post"
                                                               action="<?= htmlspecialchars($base) ?>/hr/uniforms/delete-permanent/<?= (int) $uniform['uniform_id'] ?>"
                                                               class="d-inline"
-                                                              onsubmit="return confirm('Delete this item permanently? Its past issuance records are removed too. This cannot be undone.');">
+                                                              data-confirm="Delete this item permanently? Its past issuance records are removed too. This cannot be undone.">
                                                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
                                                             <button type="submit" class="btn btn-sm btn-danger" title="Remove the item for good">
                                                                 <i class="fas fa-trash-alt"></i> Delete permanently

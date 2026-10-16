@@ -73,7 +73,7 @@ $totalCategories = count($categories);
                             <button type="submit" class="btn btn-primary" name="btnSubmit">
                                 <i class="fas fa-save mr-1"></i> Save Category
                             </button>
-                            <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="reset" class="btn btn-outline-secondary" title="Clear the form and stay on this page">Clear</button>
                         </div>
                     </form>
                 </div>
@@ -116,7 +116,7 @@ $totalCategories = count($categories);
                                             <div class="action-btn-group">
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/category/delete?category_id=<?= (int) ($category['category_id'] ?? 0) ?>"
                                                    class="btn btn-sm btn-outline-danger" title="Delete category"
-                                                   onclick="return confirm('Are you sure you want to delete this category?');">
+                                                   data-confirm="Are you sure you want to delete this category?">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </div>

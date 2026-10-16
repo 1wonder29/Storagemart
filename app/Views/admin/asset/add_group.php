@@ -100,7 +100,8 @@ $totalGroups = (int) ($totalGroups ?? 0);
                             <button type="submit" class="btn btn-primary" name="btnSubmit">
                                 <i class="fas fa-save mr-1"></i> Save Group
                             </button>
-                            <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                            <?php require_once __DIR__ . '/../../../Helpers/ReturnTo.php'; ?>
+                            <a href="<?= htmlspecialchars($base . ReturnTo::path('/admin/assets', '/admin/assets', strtok((string) (ReturnTo::clean($_SERVER['REQUEST_URI'] ?? '', '/') ?? ''), '?') ?: null)) ?>" class="btn btn-outline-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>

@@ -90,7 +90,8 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                 <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="employee_id" class="form-label">Employee ID</label>
-                                        <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Employee ID" value="<?= htmlspecialchars((string) ($old['employee_id'] ?? '')) ?>" required>
+                                        <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Numbers only, e.g. 2600192" value="<?= htmlspecialchars((string) ($old['employee_id'] ?? '')) ?>" required inputmode="numeric" pattern="[0-9]+" maxlength="11" title="Numbers only" data-numbers-only>
+                                        <small class="form-text text-muted">Numbers only.</small>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="branch_id" class="form-label">Branch</label>
@@ -138,11 +139,24 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                 <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="email" class="form-label">Email</label>
-                                        <input type="text" class="form-control" id="email" name="email" placeholder="Email" value="<?= htmlspecialchars((string) ($old['email'] ?? '')) ?>" required>
+                                        <input type="email" class="form-control" id="email" name="email" placeholder="storagemart.firstnamelastname@gmail.com" value="<?= htmlspecialchars((string) ($old['email'] ?? '')) ?>" required pattern=".+@.+\..+" title="A full email address with @" data-company-email data-first="#firstname" data-last="#lastname">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="position" class="form-label">Position</label>
                                         <input type="text" class="form-control" id="position" name="position" placeholder="Position" value="<?= htmlspecialchars((string) ($old['position'] ?? '')) ?>" required>
+                                    </div>
+                                </div>
+
+                                <div class="row form-row-gap">
+                                    <div class="col-md-6">
+                                        <label for="gmail_password" class="form-label">Gmail password <span class="text-muted small">(company Gmail, optional)</span></label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="gmail_password" name="gmail_password" minlength="8" maxlength="100" autocomplete="new-password" spellcheck="false" placeholder="Middle name + Employee ID" data-gmail-formula value="<?= htmlspecialchars((string) ($old['gmail_password'] ?? '')) ?>">
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-secondary" data-gmail-formula-btn="#gmail_password" title="Middle name + Employee ID"><i class="fas fa-calculator"></i> Formula</button>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted">Formula from the corporate email list: middle name + Employee ID (e.g. C.2600192); it fills in by itself. Not the TMS password. Admin and HR can see it later on the Company Gmail page, which also has a QR code to create the Gmail on a phone.</small>
                                     </div>
                                 </div>
 
@@ -175,6 +189,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-edit.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/user-form.js?v=20261016"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 

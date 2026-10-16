@@ -147,6 +147,7 @@ class TmsGuide
                     ['HR Head approves', 'The HR Head gets a notification and clicks Approve, or Reject with a reason. When the HR Head sends the request, this step is already done.'],
                     ['Admin approves', 'The Admin clicks "Approve and create the account". You get a notification when it is ready.'],
                     ['Give the first password', 'Tell the employee their username and the first password you typed. They change it after signing in.'],
+                    ['Company Gmail', 'The email fills in as storagemart.firstnamelastname@gmail.com and the Gmail password as middle name + Employee ID. After the account is made, Company Gmail (on the employee page) shows the Gmail password and a QR code that opens Google sign-up on the employee\'s phone.'],
                 ], ['url' => $a . '/user-requests', 'menu' => 'New User Requests', 'title' => 'New User Requests',
                     'buttons' => [['Request a new user', 1]],
                     'blocks' => [['list', ['Juan Dela Cruz · Employee · Waiting for the HR Head', 'Approve (HR Head) · Reject'], 2], ['list', ['Ana Reyes · Approved, account created'], 3]]], [$a . '/user-requests', 'Open New User Requests']);
@@ -362,7 +363,7 @@ class TmsGuide
             ['Open the form', 'Click "' . ($menu === 'Tickets' ? 'Create New Ticket' : 'Create Ticket') . '" in the menu or on the ticket list.'],
             ['Check your details', 'Your employee ID, name, department and branch are filled in for you.'],
             ['Subject and Description', 'Say which device (brand / model), where, and what happens. While you type, the boxes under the fields tick what is done and suggest what to add: click a suggestion to add it.'],
-            ['Photos (optional)', 'Add up to 4 photos of the screen, error or device. On a phone, "Take a photo" opens the camera.'],
+            ['Photos (optional)', 'Add up to 4 photos of the screen, error or device, one at a time or several at once; the x removes one. "Take a photo" opens the camera of the phone or laptop (allow the camera when the browser asks).'],
             ['Category and Priority', 'Pick what the problem is about and how urgent it is.'],
             ['Click ' . $submit, 'Check the Live Preview first. A troubleshooting guide is sent in the ticket chat right away.'],
         ], ['url' => $url, 'menu' => $menu, 'title' => 'New Support Ticket',
@@ -387,7 +388,7 @@ class TmsGuide
         $it = $role === 'IT';
         return self::steps('Inside a ticket', 'Everything about one concern is on one page.', [
             ['Details and history', 'Employee, branch, priority, status and every update in order.'],
-            ['Comments and chat', 'Write to ' . ($it ? 'the requester' : 'IT') . ', attach photos or files, or press Ctrl+V to paste a screenshot. The chat bubble at the bottom right of every page has your open tickets.'],
+            ['Comments and chat', 'Write to ' . ($it ? 'the requester' : 'IT') . ', attach photos or files, or press Ctrl+V to paste a screenshot. Enter sends; Shift + Enter starts a new line. Links can be clicked. The chat bubble at the bottom right of every page has your open tickets.'],
             ['Troubleshooting guide', 'The best guide for the problem is sent in the chat. Try its steps; many problems are fixed in minutes.'],
             ['Need help from IT personnel', $it ? 'When the requester presses it, you get a notification: call or visit them.' : 'If the guide did not help, press this button in the chat so the IT person helps you directly.'],
             ['Cancel Ticket', $role === 'ADMIN' ? 'The Admin can cancel any open ticket, with a reason.' : 'Only before IT is assigned, with a reason. After that, ask IT in the chat (only the Admin can cancel it).'],
@@ -572,6 +573,7 @@ class TmsGuide
             ['Unlock login now', 'After 3 wrong passwords an account is locked for 15 minutes. The lock button opens it right away.'],
             ['Delete or deactivate', 'Deactivate someone who left; delete only accounts made by mistake.'],
             ['Requests from HR', 'New users requested by HR (already approved by the HR Head) wait here. Approve to create the account, or Reject with a reason.'],
+            ['Company Gmail', 'The Google button on each user: the Gmail address, the Gmail password (middle name + Employee ID; Admin and HR can see it, never the TMS password), a QR code that opens Google sign-up on a phone, and the set-up status.'],
         ], ['url' => '/admin/account', 'menu' => 'Users', 'title' => 'Users & Employees', 'buttons' => [['Add User', 2]],
             'blocks' => [['filters', [['Role', 1], 'Department', 'Branch', 'Status']], ['table', ['Name', 'Role', 'Branch', 'Status', 'Actions'], 3], ['buttons', [['Edit', 3], ['Unlock', 4], ['Deactivate', 5]]]]], ['/admin/account', 'Open Users']);
         $s[] = self::steps('Departments', 'The departments used in every dropdown.', [

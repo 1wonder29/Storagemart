@@ -1,9 +1,12 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 $groupId = (int) ($inventory['group_id'] ?? ($_GET['group_id'] ?? 0));
-$backUrl = $groupId > 0
-    ? $base . '/admin/assets/item?group_id=' . $groupId
-    : $base . '/admin/assets';
+require_once __DIR__ . '/../../../Helpers/ReturnTo.php';
+// Back where the person came from (item list, Defective Items, ...), not always the item list.
+$returnTo = ReturnTo::path($groupId > 0 ? '/admin/assets/item?group_id=' . $groupId : '/admin/assets', '/admin/assets', '/admin/assets/item/edit');
+$backUrl = $base . $returnTo;
+$backLabel = strpos($returnTo, '/admin/assets/defective') === 0 ? 'Back to Defective Items'
+    : (strpos($returnTo, '/admin/assets/item') === 0 ? 'Back to Inventory' : 'Back');
 
 $currentStatus = strtoupper(trim((string) ($inventory['status'] ?? '')));
 // Assigning and returning go through Assign/Transfer and Return, so an assigned
@@ -52,7 +55,7 @@ $statusOptions = [
                     <p>Edit asset item details, status, and serial number information.</p>
                     <div class="quick-nav mt-3">
                         <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-sm btn-outline-light">
-                            <i class="fas fa-arrow-left mr-1"></i> Back to Inventory
+                            <i class="fas fa-arrow-left mr-1"></i> <?= htmlspecialchars($backLabel) ?>
                         </a>
                     </div>
                 </div>
@@ -70,6 +73,7 @@ $statusOptions = [
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                             <input type="hidden" name="inventory" value="<?= (int)($inventory['inventory_id'] ?? 0) ?>">
                             <input type="hidden" name="group_id" value="<?= (int)($inventory['group_id'] ?? ($_GET['group_id'] ?? 0)) ?>">
+                            <input type="hidden" name="return_to" value="<?= htmlspecialchars($returnTo) ?>">
 
                             <div class="row mb-4">
                                 <div class="col-md-6">

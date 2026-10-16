@@ -5,6 +5,8 @@
 (function () {
   'use strict';
 
+  function ask(message) { return window.TmsDialog ? window.TmsDialog.confirm(message) : Promise.resolve(window.confirm(message)); }
+
   var paper = document.getElementById('sigPaper');
   if (!paper) return;
 
@@ -258,10 +260,12 @@
       var remove = el('button', 'remove', 'Remove');
       remove.type = 'button';
       remove.addEventListener('click', function () {
-        if (!confirm('Remove your signature from this report?')) return;
-        post('/tickets/signature/remove', { slot: slot }).then(function (res) {
-          if (!res.success) { alert(res.message || 'Not removed.'); return; }
-          window.location.reload();
+        ask('Remove your signature from this report?').then(function (ok) {
+          if (!ok) return;
+          post('/tickets/signature/remove', { slot: slot }).then(function (res) {
+            if (!res.success) { alert(res.message || 'Not removed.'); return; }
+            window.location.reload();
+          });
         });
       });
       mini.appendChild(change);

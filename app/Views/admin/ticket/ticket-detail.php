@@ -103,7 +103,7 @@ $base = rtrim(BASE_URL, '/');
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-<script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261009"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261016"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/edit_ticket_action.js"></script>
 <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 

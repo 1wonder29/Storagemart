@@ -401,7 +401,7 @@ $summaryActiveFilter = $activeTicketFilter;
                                 <thead>
                                     <tr>
                                         <th>Action Taken</th>
-                                        <th>Technician</th>
+                                        <th>Done by</th>
                                         <th>Old Status</th>
                                         <th>New Status</th>
                                         <th>Date</th>
@@ -546,8 +546,8 @@ $summaryActiveFilter = $activeTicketFilter;
     </script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket-status-filter.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-tickets.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/fetch_ticket_history.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261009"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/fetch_ticket_history.js?v=20261016"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261016"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/edit_ticket_action.js"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>

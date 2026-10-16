@@ -23,7 +23,7 @@ arsort($byCategory);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= $h($base) ?>/assets/css/admin-users.css" rel="stylesheet">
-    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <?php if ($isIt) { require_once __DIR__ . '/../partials/it/theme_head.php'; } ?>
     <style>
         .cat-chip { display:inline-block; padding:3px 10px; margin:0 6px 6px 0; border-radius:999px; font-size:.78rem; font-weight:700;
@@ -53,7 +53,7 @@ arsort($byCategory);
                     <div class="col-lg-8">
                         <h1><i class="fas fa-history mr-2"></i>Assets for Replacement</h1>
                         <p>Every asset (TV, CCTV, PC set, laptop and all other types) bought <?= (int) $years ?> or more years ago,
-                            based on Year Purchased. Oldest first. Disposed and lost items are not listed.</p>
+                            based on Year Purchased. Oldest first. Disposed and lost items are not listed, and defective items are in Defective Items instead.</p>
                     </div>
                     <div class="col-lg-4">
                         <div class="hero-stat mt-3 mt-lg-0">

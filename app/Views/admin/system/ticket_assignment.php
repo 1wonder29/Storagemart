@@ -209,11 +209,11 @@ foreach ($branches as $branch) {
                                         <td class="text-right text-nowrap">
                                             <?php if ($monthDuty || $hasChanges): ?>
                                                 <button type="submit" name="duty_action" value="clear:<?= htmlspecialchars($month) ?>" class="btn btn-sm btn-outline-secondary" title="Remove the person and the adjusted days of this month"
-                                                        onclick="return confirm('Clear the Saturday duty of <?= htmlspecialchars($monthName) ?>?');"><i class="fas fa-eraser"></i> Clear</button>
+                                                        data-confirm="Clear the Saturday duty of <?= htmlspecialchars($monthName) ?>?"><i class="fas fa-eraser"></i> Clear</button>
                                             <?php endif; ?>
                                             <?php if ($month === $lastMonth && count($saturdayMonths) > 1): ?>
                                                 <button type="submit" name="duty_action" value="remove:<?= htmlspecialchars($month) ?>" class="btn btn-sm btn-outline-danger" title="Remove this month from the schedule"
-                                                        onclick="return confirm('Remove <?= htmlspecialchars($monthName) ?> from the schedule?');"><i class="fas fa-times"></i></button>
+                                                        data-confirm="Remove <?= htmlspecialchars($monthName) ?> from the schedule?"><i class="fas fa-times"></i></button>
                                             <?php endif; ?>
                                         </td>
                                     </tr>

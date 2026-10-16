@@ -23,7 +23,7 @@ $mine = array_values(array_filter($slots, static fn($s) => isset($slotNames[$s])
     <title>Storage Mart | Sign Technical Report <?= $h($facts['ticket_number']) ?></title>
     <link href="<?= $h($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:400,600,700,800" rel="stylesheet">
-    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <style><?= $paperCss ?></style>
     <link href="<?= $h($base) ?>/assets/css/ticket-signature.css?v=<?= (int) @filemtime(__DIR__ . '/../../../public/assets/css/ticket-signature.css') ?>" rel="stylesheet">
 </head>
@@ -106,6 +106,7 @@ $mine = array_values(array_filter($slots, static fn($s) => isset($slotNames[$s])
     </div>
 </div>
 
+<script src="<?= $h($base) ?>/assets/js/tms-dialog.js?v=20261016"></script>
 <script src="<?= $h($base) ?>/assets/js/ticket-signature.js?v=<?= (int) @filemtime(__DIR__ . '/../../../public/assets/js/ticket-signature.js') ?>"></script>
 </body>
 </html>

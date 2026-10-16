@@ -16,7 +16,7 @@ class Asset extends BaseModel {
         require_once __DIR__ . '/../../Helpers/AssetAge.php';
         $due = AssetAge::dueSql('i');
         $sql = "SELECT g.group_id, g.groupName, g.description, c.categoryName,
-            SUM(CASE WHEN i.status NOT IN ('DISPOSE','DISPOSED','LOST') AND {$due} THEN 1 ELSE 0 END) AS dueReplacement,
+            SUM(CASE WHEN i.status NOT IN ('DISPOSE','DISPOSED','LOST','DEFECTIVE') AND {$due} THEN 1 ELSE 0 END) AS dueReplacement,
             SUM(CASE WHEN i.status NOT IN ('DISPOSE','DISPOSED','LOST','DEFECTIVE') THEN 1 ELSE 0 END) AS totalItems,
             SUM(CASE WHEN i.status = 'ASSIGNED' THEN 1 ELSE 0 END) AS assigned,
             SUM(CASE WHEN i.status IN ('UNASSIGNED', 'RETURNED') THEN 1 ELSE 0 END) AS unassigned,
@@ -43,7 +43,7 @@ class Asset extends BaseModel {
                 JOIN {$this->tblcategory} c ON c.category_id = g.category_id
                 LEFT JOIN tblbranch b ON b.branch_id = i.branch_id
                 LEFT JOIN {$this->tblemployee} e ON e.employee_id = i.employee_id
-                WHERE i.status NOT IN ('DISPOSE','DISPOSED','LOST') AND {$due}
+                WHERE i.status NOT IN ('DISPOSE','DISPOSED','LOST','DEFECTIVE') AND {$due}
                 ORDER BY CAST(TRIM(i.year_purchased) AS UNSIGNED), c.categoryName, g.groupName";
         return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }

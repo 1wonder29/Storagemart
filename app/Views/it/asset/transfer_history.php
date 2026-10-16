@@ -11,7 +11,7 @@ $base = rtrim(BASE_URL, '/');
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <?php require_once __DIR__ . '/../../partials/it/theme_head.php'; ?>
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.png" type="image/png">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/it-assets.css" rel="stylesheet">
 </head>

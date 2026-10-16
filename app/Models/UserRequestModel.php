@@ -128,7 +128,21 @@ class UserRequestModel
             return [$d, 'Choose the branch and department, and type the position.'];
         }
         if ($d['email'] !== '' && !filter_var($d['email'], FILTER_VALIDATE_EMAIL)) {
-            return [$d, 'The email address is not valid.'];
+            return [$d, 'Enter a full email address with @, for example storagemart.juandelacruz@gmail.com.'];
+        }
+        // Company Gmail password (optional): kept encrypted until the account is created.
+        $gmailPassword = (string) ($post['gmail_password'] ?? '');
+        if ($gmailPassword === '') {
+            require_once __DIR__ . '/CompanyGmailModel.php';
+            $gmailFormula = CompanyGmailModel::formulaPassword($d['middlename'], $d['employee_id'], $d['lastname']);
+            $gmailPassword = mb_strlen($gmailFormula) >= 8 ? $gmailFormula : '';
+        }
+        if ($gmailPassword !== '') {
+            if (mb_strlen($gmailPassword) < 8 || mb_strlen($gmailPassword) > 100) {
+                return [$d, 'The Gmail password must be 8 to 100 characters (Google needs at least 8).'];
+            }
+            require_once __DIR__ . '/../Helpers/SecretBox.php';
+            $d['gmail_password_enc'] = SecretBox::encrypt($gmailPassword);
         }
         if (($problem = PasswordPolicy::adminSetProblem($password)) !== null) {
             return [$d, $problem];
@@ -292,6 +306,17 @@ class UserRequestModel
                 'admin_by' => $adminAccountId, 'admin_at' => 'NOW()', 'created_account_id' => (int) $accountId,
             ]);
             $this->pdo->commit();
+            // Company Gmail: the address and the Gmail password HR typed.
+            try {
+                require_once __DIR__ . '/CompanyGmailModel.php';
+                $gmailPassword = !empty($d['gmail_password_enc']) ? (string) SecretBox::decrypt($d['gmail_password_enc']) : '';
+                $isGmail = (bool) preg_match('/@gmail\.com$/i', (string) ($d['email'] ?? ''));
+                if ($isGmail || $gmailPassword !== '') {
+                    (new CompanyGmailModel($this->pdo))->remember((int) $d['employee_id'], $isGmail ? (string) $d['email'] : '', $gmailPassword, $adminAccountId);
+                }
+            } catch (Throwable $e) {
+                error_log('Company Gmail not saved for request ' . $request['request_id'] . ': ' . $e->getMessage());
+            }
             return [true, 'Account created for ' . $request['full_name'] . '.'];
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) {

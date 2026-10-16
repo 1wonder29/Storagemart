@@ -25,7 +25,7 @@ $date = static fn($d) => $d ? date('M j, Y g:i A', strtotime((string) $d)) : '';
     <title>Storage Mart | New User Requests</title>
     <link href="<?= $h($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= $h($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= $h($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <?php if ($isAdminArea): ?>
         <link href="<?= $h($base) ?>/assets/css/admin-users.css" rel="stylesheet">
@@ -158,7 +158,7 @@ $date = static fn($d) => $d ? date('M j, Y g:i A', strtotime((string) $d)) : '';
                 ?>
                 <div class="ur-actions">
                     <?php if ($canDecide && empty($setupMissing) && ($isAdminArea ? $r['status'] === 'ADMIN' : true)): ?>
-                        <form method="POST" action="<?= $h($action) ?>" class="d-inline" onsubmit="return confirm('<?= $isAdminArea ? 'Create this account now?' : 'Approve this request?' ?>');">
+                        <form method="POST" action="<?= $h($action) ?>" class="d-inline" data-confirm="<?= $isAdminArea ? 'Create this account now?' : 'Approve this request?' ?>">
                             <input type="hidden" name="csrf_token" value="<?= $h($_SESSION['csrf_token'] ?? '') ?>">
                             <input type="hidden" name="request_id" value="<?= (int) $r['request_id'] ?>">
                             <input type="hidden" name="decision" value="approve">
@@ -177,7 +177,7 @@ $date = static fn($d) => $d ? date('M j, Y g:i A', strtotime((string) $d)) : '';
                         </form>
                     <?php endif; ?>
                     <?php if (!$isAdminArea && $mine): ?>
-                        <form method="POST" action="<?= $h($action) ?>" class="d-inline" onsubmit="return confirm('Cancel this request?');">
+                        <form method="POST" action="<?= $h($action) ?>" class="d-inline" data-confirm="Cancel this request?">
                             <input type="hidden" name="csrf_token" value="<?= $h($_SESSION['csrf_token'] ?? '') ?>">
                             <input type="hidden" name="request_id" value="<?= (int) $r['request_id'] ?>">
                             <input type="hidden" name="decision" value="cancel">
@@ -205,7 +205,11 @@ $date = static fn($d) => $d ? date('M j, Y g:i A', strtotime((string) $d)) : '';
                                     <td><?= $h($r['requested_name']) ?><div class="small text-muted"><?= $h($date($r['requested_at'])) ?></div></td>
                                     <td><span class="badge badge-<?= UserRequestModel::STATUS_LABELS[$r['status']][1] ?? 'secondary' ?>"><?= $h(UserRequestModel::STATUS_LABELS[$r['status']][0] ?? $r['status']) ?></span>
                                         <?php if ($r['admin_name'] || $r['hr_head_name']): ?><div class="small text-muted"><?= $h($r['admin_name'] ?: $r['hr_head_name']) ?></div><?php endif; ?></td>
-                                    <td class="small"><?= $h($r['decision_note'] ?? '') ?></td>
+                                    <td class="small"><?= $h($r['decision_note'] ?? '') ?>
+                                        <?php if ($r['status'] === 'APPROVED' && !empty($r['data']['employee_id'])): ?>
+                                            <a class="btn btn-sm btn-outline-secondary mt-1" href="<?= $h($base) ?>/<?= $isAdminArea ? 'admin' : 'hr' ?>/company-gmail?employee_id=<?= (int) $r['data']['employee_id'] ?>"><i class="fab fa-google"></i> Company Gmail</a>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                             </tbody>

@@ -474,7 +474,7 @@ class UniformController extends AuthController {
             }
 
             if (strtoupper($uniform['status'] ?? '') !== 'DISCONTINUED') {
-                $_SESSION['errorMessage'] = 'Only discontinued uniforms can be reactivated.';
+                $_SESSION['errorMessage'] = 'Only discontinued items can be reactivated.';
                 $this->redirect('/hr/uniforms');
             }
 
@@ -498,7 +498,7 @@ class UniformController extends AuthController {
                     "Reactivated uniform: {$uniform['uniform_type']} - Size {$uniform['size']}"
                 );
 
-                $_SESSION['successMessage'] = 'Uniform reactivated successfully!';
+                $_SESSION['successMessage'] = 'Item reactivated. It can be issued again.';
             } else {
                 $_SESSION['errorMessage'] = 'Error reactivating uniform.';
             }

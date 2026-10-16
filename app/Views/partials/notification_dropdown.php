@@ -10,7 +10,7 @@ if (!empty($_SESSION['account_id'])) {
         require_once __DIR__ . '/../../Models/NotificationModel.php';
         $bellModel = new NotificationModel();
         $bellCount = $bellModel->getUnreadCount((int) $_SESSION['account_id']);
-        $bellItems = $bellModel->getLatest((int) $_SESSION['account_id'], 10);
+        $bellItems = $bellModel->getForBell((int) $_SESSION['account_id']);
     } catch (Throwable $e) {
         error_log('Notification bell failed: ' . $e->getMessage());
     }

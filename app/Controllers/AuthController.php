@@ -437,7 +437,7 @@ class AuthController {
 
         return [
             'count' => $model->getUnreadCount($userId),
-            'notifications' => $model->getLatest($userId, 10)
+            'notifications' => $model->getForBell($userId)
         ];
     }
 

@@ -34,6 +34,7 @@ $sectionId = 'ticketComments_' . $ticketId;
                 <label class="small font-weight-bold text-uppercase mb-1" style="color:#64748b;letter-spacing:0.05em;">Add a comment</label>
                 <textarea class="form-control ticket-comment-input" rows="3" maxlength="2000"
                           placeholder="Type your message here (visible to everyone on this ticket). Ctrl+V pastes a screenshot."></textarea>
+                <small class="form-text text-muted ticket-comment-keys">Enter sends the comment. Shift + Enter starts a new line.</small>
             </div>
             <div class="d-flex flex-wrap align-items-center" style="gap:8px">
                 <button type="submit" class="btn btn-sm ticket-comment-submit">
@@ -44,10 +45,10 @@ $sectionId = 'ticketComments_' . $ticketId;
                     <input type="file" class="ticket-comment-file d-none"
                            accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt">
                 </label>
-                <label class="btn btn-sm btn-outline-secondary mb-0 d-md-none" title="Take a photo">
+                <button type="button" class="btn btn-sm btn-outline-secondary mb-0 ticket-comment-camera" title="Take a photo" aria-label="Take a photo">
                     <i class="fas fa-camera"></i>
-                    <input type="file" class="ticket-comment-file d-none" accept="image/*" capture="environment">
-                </label>
+                </button>
+                <input type="file" class="ticket-comment-file ticket-comment-camera-input d-none" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
                 <span class="small text-muted ticket-comment-file-name"></span>
             </div>
         </form>
