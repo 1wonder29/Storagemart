@@ -143,11 +143,11 @@ class TmsGuide
                     'buttons' => [['Add New Item', 1], ['Assign Item to Employee', 2], ['Download Summary', 3], 'Import from Excel'],
                     'blocks' => [['table', ['Item', 'In Stock', 'Stock Status', 'Issued', 'Actions'], 4]]], [$a . '/uniforms', 'Open Inventory']);
                 $s[] = self::steps('New user requests', 'HR fills in a new employee\'s account. It is created after the HR Head and the Admin approve.', [
-                    ['Request a new user', 'New User Requests (left menu) or Employees > Request a new user. Fill in the login, role, branch, department, position and personal details.'],
+                    ['Request a new user', 'New User Requests (left menu) or Employees > Request a new user. Fill in the employee, make their company Gmail (QR code or Open Google sign-up) and tick every Gmail step, then the TMS login.'],
                     ['HR Head approves', 'The HR Head gets a notification and clicks Approve, or Reject with a reason. When the HR Head sends the request, this step is already done.'],
                     ['Admin approves', 'The Admin clicks "Approve and create the account". You get a notification when it is ready.'],
                     ['Give the first password', 'Tell the employee their username and the first password you typed. They change it after signing in.'],
-                    ['Company Gmail', 'The email fills in as storagemart.firstnamelastname@gmail.com and the Gmail password as middle name + Employee ID. After the account is made, Company Gmail (on the employee page) shows the Gmail password and a QR code that opens Google sign-up on the employee\'s phone.'],
+                    ['Company Gmail', 'The Gmail address fills in as storagemart.firstnamelastname@gmail.com and the Gmail password as middle name + Employee ID. The request can only be sent when all 4 Gmail steps are ticked. Later, Company Gmail on the employee page shows the Gmail password.'],
                 ], ['url' => $a . '/user-requests', 'menu' => 'New User Requests', 'title' => 'New User Requests',
                     'buttons' => [['Request a new user', 1]],
                     'blocks' => [['list', ['Juan Dela Cruz · Employee · Waiting for the HR Head', 'Approve (HR Head) · Reject'], 2], ['list', ['Ana Reyes · Approved, account created'], 3]]], [$a . '/user-requests', 'Open New User Requests']);
@@ -568,7 +568,7 @@ class TmsGuide
         $s[] = ['type' => 'statuses'];
         $s[] = self::steps('Users and employees', 'Who can sign in, and with which role.', [
             ['Filter', 'By Role, Department, Branch or Status (Active, Inactive, No login).'],
-            ['Add User', 'Username (company email), role, employee details, department and branch, and a simple first password (for example the SURNAME in capitals). Personal details (birthday, start date, gender, phone) are optional.'],
+            ['Add User', 'In this order: 1 the employee (the user type sets the department, e.g. IT staff are in IT), 2 their company Gmail (QR code or Open Google sign-up; tick all 4 steps), 3 the TMS login (the username is the Gmail address) and a simple first password. The Employee ID and the email cannot belong to someone else.'],
             ['Edit user', 'Change the role, status, details or personal details (birthday, start date). To reset a password, type a new temporary one and tell the person to change it after signing in.'],
             ['Unlock login now', 'After 3 wrong passwords an account is locked for 15 minutes. The lock button opens it right away.'],
             ['Delete or deactivate', 'Deactivate someone who left; delete only accounts made by mistake.'],

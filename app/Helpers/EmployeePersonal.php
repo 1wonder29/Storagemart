@@ -36,9 +36,12 @@ class EmployeePersonal
         if ($data['birthdate'] !== '' && (!self::validDate($data['birthdate']) || $data['birthdate'] > $today || $data['birthdate'] < '1930-01-01')) {
             return [$data, 'Birthday must be a real date in the past.'];
         }
+        if ($data['birthdate'] !== '' && $data['birthdate'] > date('Y-m-d', strtotime('-15 years'))) {
+            return [$data, 'Birthday: the employee must be at least 15 years old. Check the year.'];
+        }
         if ($data['date_hired'] !== '' && (!self::validDate($data['date_hired']) || $data['date_hired'] < '1990-01-01'
-                || $data['date_hired'] > date('Y-m-d', strtotime('+1 year')))) {
-            return [$data, 'Start date must be a real date (not more than a year from now).'];
+                || $data['date_hired'] > date('Y-m-d', strtotime('+3 months')))) {
+            return [$data, 'Start date must be a real date, at most 3 months from today.'];
         }
         if ($data['birthdate'] !== '' && $data['date_hired'] !== '' && $data['date_hired'] <= $data['birthdate']) {
             return [$data, 'The start date must be after the birthday.'];
@@ -46,8 +49,9 @@ class EmployeePersonal
         if ($data['gender'] !== '' && !in_array($data['gender'], self::GENDERS, true)) {
             return [$data, 'Choose Male or Female for the gender, or leave it empty.'];
         }
-        if ($data['phone'] !== '' && !preg_match('/^[0-9+()\-\s]{7,20}$/', $data['phone'])) {
-            return [$data, 'Phone number: use 7 to 20 digits (spaces, +, - and brackets are fine).'];
+        $digits = preg_replace('/\D/', '', $data['phone']);
+        if ($data['phone'] !== '' && (!preg_match('/^\+?[0-9()\-\s]+$/', $data['phone']) || strlen($digits) < 7 || strlen($digits) > 13)) {
+            return [$data, 'Phone number: numbers only, 7 to 13 digits (for example 09171234567).'];
         }
         return [$data, null];
     }

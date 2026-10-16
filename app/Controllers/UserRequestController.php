@@ -83,6 +83,8 @@ class UserRequestController extends AuthController
         }
         $base = rtrim(BASE_URL, '/');
         $roleOptions = UserRequestModel::roleOptions();
+        require_once __DIR__ . '/../Helpers/AccountRules.php';
+        $roleDepartments = AccountRules::departmentMap($GLOBALS['pdo']);
         require __DIR__ . '/../Views/hr/users/request_form.php';
     }
 

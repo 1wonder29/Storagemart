@@ -159,6 +159,21 @@ class CompanyGmailModel
         $this->save($employeeId, $email, $password !== '' ? $password : null, [], '', $by);
     }
 
+    /** Other employees whose TMS email or company Gmail is $email (each person needs their own). */
+    public function othersWithEmail(string $email, int $employeeId): array
+    {
+        $email = trim($email);
+        if ($email === '') {
+            return [];
+        }
+        $sql = "SELECT DISTINCT e.employee_id, TRIM(CONCAT(COALESCE(e.firstname, ''), ' ', COALESCE(e.lastname, ''))) AS name
+                FROM tblemployee e" . ($this->ready() ? ' LEFT JOIN tblcompany_gmail g ON g.employee_id = e.employee_id' : '') . "
+                WHERE e.employee_id <> ? AND (LOWER(TRIM(e.email)) = LOWER(?)" . ($this->ready() ? ' OR LOWER(TRIM(g.email)) = LOWER(?)' : '') . ')';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($this->ready() ? [$employeeId, $email, $email] : [$employeeId, $email]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     /** Name of the person who last saved the record (for "Done by"). */
     public function updatedByName(?int $accountId): string
     {

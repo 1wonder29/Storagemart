@@ -41,6 +41,7 @@ class CompanyGmailController extends AuthController
             $email = preg_match('/@gmail\.com$/i', (string) $employee['email']) ? (string) $employee['email'] : $suggested;
         }
         $updatedBy = $this->gmail->updatedByName(isset($gmail['updated_by']) ? (int) $gmail['updated_by'] : null);
+        $sameEmail = $this->gmail->othersWithEmail($email, $employeeId);
         $ctx = $this->getLoggedUserContext();
         $base = $ctx['base'];
         $loggedFirstname = $ctx['loggedFirstname'];

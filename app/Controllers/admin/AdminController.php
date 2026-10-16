@@ -275,9 +275,17 @@ class AdminController extends AuthController
                 'branch_id'   => (int)($_POST['branch_id'] ?? 0),
                 'email'       => trim($_POST['email'] ?? ''),
             ];
+            if (isset($_POST['position'])) {
+                $dataEmp['position'] = trim((string) $_POST['position']);
+            }
 
-            if ($dataEmp['email'] !== '' && !filter_var($dataEmp['email'], FILTER_VALIDATE_EMAIL)) {
-                $_SESSION['flash_error'] = 'Enter a full email address with @, for example storagemart.juandelacruz@gmail.com.';
+            require_once __DIR__ . '/../../Helpers/AccountRules.php';
+            $editPdo = $accountModel->getPDO();
+            $editProblem = ($dataEmp['email'] !== '' ? AccountRules::emailProblem($editPdo, $dataEmp['email'], (int) $dataEmp['employee_id']) : null)
+                ?? AccountRules::departmentProblem($editPdo, (string) $dataAcc['usertype'], (string) $dataEmp['department'])
+                ?? ((isset($dataEmp['position']) && $dataEmp['position'] === '') ? 'Please fill in the position.' : null);
+            if ($editProblem !== null) {
+                $_SESSION['flash_error'] = $editProblem;
                 $this->redirect('/admin/account/edit?account_id=' . (int) ($_POST['account_id'] ?? 0));
             }
 
@@ -411,6 +419,8 @@ class AdminController extends AuthController
 
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
+        require_once __DIR__ . '/../../Helpers/AccountRules.php';
+        $roleDepartments = $accountModel->getPDO() instanceof PDO ? AccountRules::departmentMap($accountModel->getPDO()) : [];
         require __DIR__ . '/../../Views/admin/account/edit.php';
     }
 
@@ -430,6 +440,9 @@ class AdminController extends AuthController
         $departmentModel = new Department();
         $addPdo = $accountModel->getPDO();
         $personalReady = $addPdo instanceof PDO && EmployeePersonal::ready($addPdo);
+        require_once __DIR__ . '/../../Helpers/AccountRules.php';
+        $roleDepartments = $addPdo instanceof PDO ? AccountRules::departmentMap($addPdo) : [];
+        $gmailChecksOld = [];
 
         // Helper to load layout variables consistently
         $loadLayout = function () {
@@ -527,11 +540,19 @@ class AdminController extends AuthController
                 return;
             }
 
-            // Email: a full address with @ (the company Gmail is storagemart.<name>@gmail.com).
-            $emailProblem = !filter_var($old['email'], FILTER_VALIDATE_EMAIL)
-                ? 'Enter a full email address with @, for example storagemart.juandelacruz@gmail.com.'
-                : (($gmailPassword !== '' && (mb_strlen($gmailPassword) < 8 || mb_strlen($gmailPassword) > 100))
-                    ? 'The Gmail password must be 8 to 100 characters (Google needs at least 8).' : null);
+            // Employee, company Gmail and role checks with a clear message (instead of a database error).
+            $gmailChecksOld = (array) ($_POST['gmail_checks'] ?? []);
+            $emailProblem = null;
+            if ($old['lastname'] === '' || $old['firstname'] === '' || $old['position'] === '' || $old['department'] === '' || (int) $old['branch_id'] <= 0) {
+                $emailProblem = 'Fill in the last name, first name, branch, department and position.';
+            }
+            $emailProblem = $emailProblem
+                ?? AccountRules::employeeIdProblem($addPdo, $old['employee_id'])
+                ?? AccountRules::departmentProblem($addPdo, $old['usertype'], $old['department'])
+                ?? AccountRules::emailProblem($addPdo, $old['email'])
+                ?? (($gmailPassword === '' || mb_strlen($gmailPassword) < 8 || mb_strlen($gmailPassword) > 100)
+                    ? 'The Gmail password must be 8 to 100 characters (Google needs at least 8).' : null)
+                ?? AccountRules::gmailChecksProblem($gmailChecksOld);
             if ($emailProblem !== null) {
                 $_SESSION['flash_error'] = $emailProblem;
                 $branches = $accountModel->fetchBranches();
@@ -614,18 +635,16 @@ class AdminController extends AuthController
 
                 if ($pdo instanceof PDO) $pdo->commit();
 
-                // Company Gmail: keep the address and Gmail password, then show the QR / checklist page.
+                // Company Gmail (made before the account): address, Gmail password and the ticked steps.
                 require_once __DIR__ . '/../../Models/CompanyGmailModel.php';
                 $companyGmail = new CompanyGmailModel();
-                $isGmail = (bool) preg_match('/@gmail\.com$/i', $old['email']);
-                if ($companyGmail->ready() && ($isGmail || $gmailPassword !== '')) {
-                    $companyGmail->remember((int) $old['employee_id'], $isGmail ? $old['email'] : '', $gmailPassword, (int) ($_SESSION['account_id'] ?? 0));
-                    $_SESSION['flash_success'] = 'New account created. Next: create the company Gmail. Scan the QR code with the employee\'s phone.';
-                    $this->redirect('/admin/company-gmail?employee_id=' . (int) $old['employee_id']);
-                    return;
+                if ($companyGmail->ready()) {
+                    $companyGmail->save((int) $old['employee_id'], $old['email'], $gmailPassword, $gmailChecksOld,
+                        'Made with Add User', (int) ($_SESSION['account_id'] ?? 0));
                 }
 
-                $_SESSION['flash_success'] = 'New Account successfully created!';
+                $_SESSION['flash_success'] = 'Account created for ' . trim($old['firstname'] . ' ' . $old['lastname'])
+                    . '. They sign in with ' . $old['username'] . '; the company Gmail and its password are saved (Users > Google button).';
                 $this->redirect('/admin/account');
                 return;
 

@@ -37,7 +37,7 @@ $v = static fn(string $key) => htmlspecialchars((string) ($old[$key] ?? ''), ENT
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <h1><i class="fas fa-user-plus mr-2"></i>Request a New User</h1>
-                    <p>Fill in the new employee's account and details. The account is created only after the HR Head and the Admin approve.</p>
+                    <p>Make the employee's company Gmail, then fill in their details and TMS login. The TMS account is created only after the HR Head and the Admin approve.</p>
                 </div>
                 <div class="col-lg-4 text-lg-right mt-3 mt-lg-0">
                     <a href="<?= $h($base) ?>/hr/user-requests" class="btn btn-light btn-sm"><i class="fas fa-arrow-left"></i> My requests</a>
@@ -46,9 +46,9 @@ $v = static fn(string $key) => htmlspecialchars((string) ($old[$key] ?? ''), ENT
         </div>
 
         <div class="ur-steps">
-            <div class="ur-step"><span class="n">1</span><span><b>HR fills in this form</b>Login, role, branch, department and personal details.</span></div>
+            <div class="ur-step"><span class="n">1</span><span><b>HR makes the company Gmail</b>Then fills in this form and ticks every Gmail step.</span></div>
             <div class="ur-step"><span class="n">2</span><span><b>The HR Head approves</b>Skipped when the HR Head sends the request.</span></div>
-            <div class="ur-step"><span class="n">3</span><span><b>The Admin approves</b>The account is created. Give the first password to the person.</span></div>
+            <div class="ur-step"><span class="n">3</span><span><b>The Admin approves</b>The TMS account is created. Give the first password to the person.</span></div>
         </div>
 
         <?php if (!empty($_SESSION['flash_error'])): ?>
@@ -61,60 +61,33 @@ $v = static fn(string $key) => htmlspecialchars((string) ($old[$key] ?? ''), ENT
                 <form method="POST" action="<?= $h($base) ?>/hr/user-requests/new" autocomplete="off">
                     <input type="hidden" name="csrf_token" value="<?= $h($_SESSION['csrf_token'] ?? '') ?>">
 
-                    <div class="ur-section"><i class="fas fa-key mr-1"></i> Account</div>
+                    <div class="ur-section"><span class="badge badge-pill badge-primary mr-1">1</span> Employee</div>
                     <div class="row">
-                        <div class="col-md-6 form-group">
-                            <label class="form-label" for="username">Username (company email)</label>
-                            <input type="text" class="form-control" id="username" name="username" value="<?= $v('username') ?>" placeholder="storagemart.firstlast@gmail.com" required>
+                        <div class="col-md-4 form-group">
+                            <label class="form-label" for="lastname">Last name</label>
+                            <input type="text" class="form-control" id="lastname" name="lastname" value="<?= $v('lastname') ?>" required autocomplete="off">
                         </div>
-                        <div class="col-md-6 form-group">
-                            <label class="form-label" for="password">First password</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="password" name="password" required autocomplete="new-password" placeholder="For example the SURNAME in capitals">
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="var p=document.getElementById('password');p.type=p.type==='password'?'text':'password';" aria-label="Show or hide the password"><i class="fas fa-eye"></i></button>
-                                </div>
-                            </div>
-                            <small class="form-text text-muted">Give it to the employee after the account is approved. They change it after signing in.</small>
+                        <div class="col-md-4 form-group">
+                            <label class="form-label" for="firstname">First name</label>
+                            <input type="text" class="form-control" id="firstname" name="firstname" value="<?= $v('firstname') ?>" required autocomplete="off">
                         </div>
-                        <div class="col-md-6 form-group">
+                        <div class="col-md-4 form-group">
+                            <label class="form-label" for="middlename">Middle name</label>
+                            <input type="text" class="form-control" id="middlename" name="middlename" value="<?= $v('middlename') ?>" placeholder="N/A if none" autocomplete="off">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label class="form-label" for="employee_id">Employee ID</label>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id" value="<?= $v('employee_id') ?>" inputmode="numeric" pattern="[0-9]{1,10}" maxlength="10" title="Numbers only" placeholder="Numbers only, from the masterlist" required data-numbers-only autocomplete="off">
+                        </div>
+                        <div class="col-md-4 form-group">
                             <label class="form-label" for="usertype">User type</label>
-                            <select class="custom-select" id="usertype" name="usertype" required>
+                            <select class="custom-select" id="usertype" name="usertype" required data-role-department='<?= $h(json_encode($roleDepartments ?? [])) ?>'>
                                 <option value="">-- Choose --</option>
                                 <?php foreach ($roleOptions as $code => $label): ?>
                                     <option value="<?= $h($code) ?>"<?= ($old['usertype'] ?? '') === $code ? ' selected' : '' ?>><?= $h($label) ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <small class="form-text text-muted">IT and Admin accounts are made by the Admin.</small>
-                        </div>
-                    </div>
-
-                    <div class="ur-section mt-2"><i class="fas fa-id-badge mr-1"></i> Employee details</div>
-                    <div class="row">
-                        <div class="col-md-6 form-group">
-                            <label class="form-label" for="employee_id">Employee ID</label>
-                            <input type="text" class="form-control" id="employee_id" name="employee_id" value="<?= $v('employee_id') ?>" inputmode="numeric" pattern="[0-9]+" maxlength="11" title="Numbers only" placeholder="Numbers only" required data-numbers-only>
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label class="form-label" for="branch_id">Branch</label>
-                            <select class="custom-select" id="branch_id" name="branch_id" required>
-                                <option value="">-- Choose --</option>
-                                <?php foreach ($branches as $b): ?>
-                                    <option value="<?= (int) $b['branch_id'] ?>"<?= (int) ($old['branch_id'] ?? 0) === (int) $b['branch_id'] ? ' selected' : '' ?>><?= $h($b['branchName']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label class="form-label" for="lastname">Last name</label>
-                            <input type="text" class="form-control" id="lastname" name="lastname" value="<?= $v('lastname') ?>" required>
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label class="form-label" for="firstname">First name</label>
-                            <input type="text" class="form-control" id="firstname" name="firstname" value="<?= $v('firstname') ?>" required>
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label class="form-label" for="middlename">Middle name</label>
-                            <input type="text" class="form-control" id="middlename" name="middlename" value="<?= $v('middlename') ?>">
                         </div>
                         <div class="col-md-4 form-group">
                             <label class="form-label" for="department">Department</label>
@@ -125,31 +98,62 @@ $v = static fn(string $key) => htmlspecialchars((string) ($old[$key] ?? ''), ENT
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-4 form-group">
-                            <label class="form-label" for="position">Position</label>
-                            <input type="text" class="form-control" id="position" name="position" value="<?= $v('position') ?>" required>
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label class="form-label" for="email">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" value="<?= $v('email') ?>" pattern=".+@.+\..+" title="A full email address with @" placeholder="storagemart.firstnamelastname@gmail.com" data-company-email data-first="#firstname" data-last="#lastname">
-                        </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-6 form-group">
-                            <label class="form-label" for="gmail_password">Gmail password <span class="text-muted small">(company Gmail, optional)</span></label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="gmail_password" name="gmail_password" minlength="8" maxlength="100" autocomplete="new-password" spellcheck="false" placeholder="Middle name + Employee ID" data-gmail-formula>
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-outline-secondary" data-gmail-formula-btn="#gmail_password" title="Middle name + Employee ID"><i class="fas fa-calculator"></i> Formula</button>
-                                </div>
-                            </div>
-                            <small class="form-text text-muted">Formula from the corporate email list: middle name + Employee ID (e.g. C.2600192); it fills in by itself. Not the TMS password. After the account is made, Admin and HR see it on the Company Gmail page (with a QR code to create the Gmail on a phone).</small>
+                            <label class="form-label" for="branch_id">Branch</label>
+                            <select class="custom-select" id="branch_id" name="branch_id" required>
+                                <option value="">-- Choose --</option>
+                                <?php foreach ($branches as $b): ?>
+                                    <option value="<?= (int) $b['branch_id'] ?>"<?= (int) ($old['branch_id'] ?? 0) === (int) $b['branch_id'] ? ' selected' : '' ?>><?= $h($b['branchName']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="form-label" for="position">Position</label>
+                            <input type="text" class="form-control" id="position" name="position" value="<?= $v('position') ?>" required autocomplete="off">
                         </div>
                     </div>
 
                     <?php require dirname(__DIR__, 2) . '/admin/account/_personal_fields.php'; ?>
 
-                    <div class="form-group mt-3">
+                    <div class="ur-section mt-4"><span class="badge badge-pill badge-primary mr-1">2</span> Company Gmail <span class="text-muted small font-weight-normal">(make it first)</span></div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="form-label" for="email">Gmail address</label>
+                            <input type="email" class="form-control" id="email" name="email" value="<?= $v('email') ?>" pattern=".+@.+\..+" title="A full email address with @" placeholder="storagemart.firstnamelastname@gmail.com" required data-company-email data-first="#firstname" data-last="#lastname" autocomplete="off">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="form-label" for="gmail_password">Gmail password</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="gmail_password" name="gmail_password" minlength="8" maxlength="100" autocomplete="off" spellcheck="false" placeholder="Middle name + Employee ID" data-gmail-formula value="<?= $v('gmail_password_plain') ?>" required>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary" data-gmail-formula-btn="#gmail_password" title="Middle name + Employee ID"><i class="fas fa-calculator"></i> Formula</button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">Middle name + Employee ID (e.g. C.2600192), as in the corporate email list. Not the TMS password.</small>
+                        </div>
+                    </div>
+                    <?php $gmailChecksOld = $old['gmail_checks'] ?? []; require dirname(__DIR__, 2) . '/admin/account/_gmail_setup.php'; ?>
+
+                    <div class="ur-section"><span class="badge badge-pill badge-primary mr-1">3</span> TMS login</div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="form-label" for="username">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" value="<?= $v('username') ?>" placeholder="Same as the Gmail address" required autocomplete="off" data-follow-email="#email">
+                            <small class="form-text text-muted">Fills in with the Gmail address.</small>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="form-label" for="password">First TMS password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" name="password" required autocomplete="new-password" placeholder="For example the SURNAME in capitals">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="var p=document.getElementById('password');p.type=p.type==='password'?'text':'password';" aria-label="Show or hide the password"><i class="fas fa-eye"></i></button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">Give it to the employee after the account is approved. They change it after signing in.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-2">
                         <label class="form-label" for="reason">Note for the approvers <span class="text-muted small">(optional)</span></label>
                         <input type="text" class="form-control" id="reason" name="reason" maxlength="255" value="<?= $v('reason') ?>" placeholder="e.g. New hire, starts on Monday at Pasig branch">
                     </div>
@@ -167,6 +171,7 @@ $v = static fn(string $key) => htmlspecialchars((string) ($old[$key] ?? ''), ENT
 <script src="<?= $h($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= $h($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= $h($base) ?>/assets/js/storagemart.min.js"></script>
-<script src="<?= $h($base) ?>/assets/js/user-form.js?v=20261016"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="<?= $h($base) ?>/assets/js/user-form.js?v=20261017"></script>
 </body>
 </html>

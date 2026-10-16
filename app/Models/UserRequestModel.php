@@ -121,14 +121,23 @@ class UserRequestModel
         if (!in_array($d['usertype'], self::ROLES, true)) {
             return [$d, 'Choose the user type. IT and Admin accounts are made by the Admin.'];
         }
-        if (!ctype_digit($d['employee_id']) || (int) $d['employee_id'] <= 0) {
-            return [$d, 'Employee ID is required and must be a positive number with no spaces.'];
+        require_once __DIR__ . '/../Helpers/AccountRules.php';
+        $d['gmail_checks'] = array_map('intval', (array) ($post['gmail_checks'] ?? []));
+        $d['gmail_password_plain'] = (string) ($post['gmail_password'] ?? '');
+        if ($problem = AccountRules::employeeIdProblem($this->pdo, $d['employee_id'])) {
+            return [$d, $problem];
         }
         if ($d['branch_id'] <= 0 || $d['department'] === '' || $d['position'] === '') {
             return [$d, 'Choose the branch and department, and type the position.'];
         }
-        if ($d['email'] !== '' && !filter_var($d['email'], FILTER_VALIDATE_EMAIL)) {
-            return [$d, 'Enter a full email address with @, for example storagemart.juandelacruz@gmail.com.'];
+        if ($problem = AccountRules::departmentProblem($this->pdo, $d['usertype'], $d['department'])) {
+            return [$d, $problem];
+        }
+        if ($problem = AccountRules::emailProblem($this->pdo, $d['email'])) {
+            return [$d, $problem];
+        }
+        if ($problem = AccountRules::gmailChecksProblem($d['gmail_checks'])) {
+            return [$d, $problem];
         }
         // Company Gmail password (optional): kept encrypted until the account is created.
         $gmailPassword = (string) ($post['gmail_password'] ?? '');
@@ -136,6 +145,9 @@ class UserRequestModel
             require_once __DIR__ . '/CompanyGmailModel.php';
             $gmailFormula = CompanyGmailModel::formulaPassword($d['middlename'], $d['employee_id'], $d['lastname']);
             $gmailPassword = mb_strlen($gmailFormula) >= 8 ? $gmailFormula : '';
+        }
+        if ($gmailPassword === '') {
+            return [$d, 'Type the Gmail password (middle name + Employee ID, at least 8 characters).'];
         }
         if ($gmailPassword !== '') {
             if (mb_strlen($gmailPassword) < 8 || mb_strlen($gmailPassword) > 100) {
@@ -150,7 +162,7 @@ class UserRequestModel
         if ($personalError !== null) {
             return [$d, $personalError];
         }
-        if ($problem = $this->conflict($d['username'], (int) $d['employee_id'])) {
+        if ($problem = $this->conflict($d['username'], (int) $d['employee_id'], 0, $d['email'])) {
             return [$d, $problem];
         }
         $d['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
@@ -158,7 +170,7 @@ class UserRequestModel
     }
 
     /** Username or employee ID already used by an account or by another open request. */
-    public function conflict(string $username, int $employeeId, int $exceptRequestId = 0): ?string
+    public function conflict(string $username, int $employeeId, int $exceptRequestId = 0, string $email = ''): ?string
     {
         $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM tblaccounts WHERE LOWER(username) = LOWER(?)');
         $stmt->execute([$username]);
@@ -181,6 +193,9 @@ class UserRequestModel
             if ((int) ($other['employee_id'] ?? 0) === $employeeId) {
                 return 'There is already a request waiting for this Employee ID.';
             }
+            if ($email !== '' && strcasecmp((string) ($other['email'] ?? ''), $email) === 0) {
+                return 'There is already a request waiting for this Gmail address.';
+            }
         }
         return null;
     }
@@ -191,6 +206,7 @@ class UserRequestModel
         $stmt = $this->pdo->prepare('INSERT INTO tbluser_requests
                 (data_json, full_name, username, usertype, status, requested_by, requested_at, hr_head_by, hr_head_at)
                 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ' . ($isHead ? 'NOW()' : 'NULL') . ')');
+        unset($data['gmail_password_plain']);
         $stmt->execute([
             json_encode($data, JSON_UNESCAPED_UNICODE),
             trim($data['firstname'] . ' ' . $data['lastname']),
@@ -263,7 +279,9 @@ class UserRequestModel
     public function createAccount(array $request, int $adminAccountId, string $adminUsername): array
     {
         $d = $request['data'];
-        if ($problem = $this->conflict((string) $d['username'], (int) $d['employee_id'], (int) $request['request_id'])) {
+        require_once __DIR__ . '/../Helpers/AccountRules.php';
+        if ($problem = $this->conflict((string) $d['username'], (int) $d['employee_id'], (int) $request['request_id'], (string) ($d['email'] ?? ''))
+            ?? AccountRules::emailProblem($this->pdo, (string) ($d['email'] ?? ''))) {
             return [false, $problem];
         }
         if (!$this->move((int) $request['request_id'], 'ADMIN', 'CREATING')) {
@@ -312,7 +330,9 @@ class UserRequestModel
                 $gmailPassword = !empty($d['gmail_password_enc']) ? (string) SecretBox::decrypt($d['gmail_password_enc']) : '';
                 $isGmail = (bool) preg_match('/@gmail\.com$/i', (string) ($d['email'] ?? ''));
                 if ($isGmail || $gmailPassword !== '') {
-                    (new CompanyGmailModel($this->pdo))->remember((int) $d['employee_id'], $isGmail ? (string) $d['email'] : '', $gmailPassword, $adminAccountId);
+                    // The Gmail was made first (HR ticked every step): keep the steps as done.
+                    (new CompanyGmailModel($this->pdo))->save((int) $d['employee_id'], (string) $d['email'], $gmailPassword !== '' ? $gmailPassword : null,
+                        (array) ($d['gmail_checks'] ?? []), 'Made with a New user request', $adminAccountId);
                 }
             } catch (Throwable $e) {
                 error_log('Company Gmail not saved for request ' . $request['request_id'] . ': ' . $e->getMessage());

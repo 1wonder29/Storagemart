@@ -371,19 +371,24 @@ class Account extends BaseModel {
     public function updateEmployee(array $data): bool {
         $id = (int)($data['employee_id'] ?? 0);
         if ($id <= 0) return false;
+        $withPosition = array_key_exists('position', $data);
         $sql = "UPDATE {$this->tblemployee}
-                SET lastname = ?, firstname = ?, middlename = ?, department = ?, branch_id = ?, email = ?
+                SET lastname = ?, firstname = ?, middlename = ?, department = ?, branch_id = ?, email = ?" . ($withPosition ? ', position = ?' : '') . "
                 WHERE employee_id = ? LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
-        if (!$stmt->execute([
+        $params = [
             $data['lastname'] ?? '',
             $data['firstname'] ?? '',
             $data['middlename'] ?? '',
             $data['department'] ?? '',
             (int)($data['branch_id'] ?? 0),
             $data['email'] ?? '',
-            $id
-        ])) {
+        ];
+        if ($withPosition) {
+            $params[] = (string) $data['position'];
+        }
+        $params[] = $id;
+        if (!$stmt->execute($params)) {
             $err = $stmt->errorInfo();
             error_log('Account::updateEmployee execute failed: ' . json_encode($err));
             return false;

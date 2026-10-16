@@ -23,7 +23,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-users.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
@@ -94,7 +94,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                     <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="usertype" class="form-label">User Type</label>
-                                        <select id="usertype" name="usertype" class="form-control" required>
+                                        <select id="usertype" name="usertype" class="form-control" required data-role-department='<?= htmlspecialchars(json_encode($roleDepartments ?? []), ENT_QUOTES) ?>'>
                                             <option value="">-- Select User Type --</option>
                                             <?php
                                             $currentRole = strtoupper(trim((string) ($account['usertype'] ?? '')));
@@ -178,6 +178,10 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                             <label for="email" class="form-label">Email</label>
                                             <input type="email" class="form-control" id="email" name="email" placeholder="name@gmail.com" value="<?= htmlspecialchars($employee['email'] ?? '') ?>" required pattern=".+@.+\..+" title="A full email address with @">
                                         </div>
+                                        <div class="col-md-6">
+                                            <label for="position" class="form-label">Position</label>
+                                            <input type="text" class="form-control" id="position" name="position" placeholder="Position" value="<?= htmlspecialchars($employee['position'] ?? '') ?>" required>
+                                        </div>
                                     </div>
                                     <?php require __DIR__ . '/_personal_fields.php'; ?>
                                     <div class="custom-control custom-checkbox mt-2 mb-3">
@@ -255,7 +259,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-edit.js"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
-<script src="<?= htmlspecialchars($base) ?>/assets/js/user-form.js?v=20261016"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/user-form.js?v=20261017"></script>
 </body>
 
 </html>

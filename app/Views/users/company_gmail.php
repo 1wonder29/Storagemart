@@ -93,6 +93,11 @@ $backUrl = $isAdminArea
                 <?php unset($_SESSION[$key]); ?>
             <?php endif; ?>
         <?php endforeach; ?>
+        <?php if (!empty($sameEmail)): ?>
+            <div class="alert alert-warning"><i class="fas fa-exclamation-triangle mr-1"></i>
+                This Gmail address is also used by <?= $h(implode(', ', array_map(static fn($o) => $o['name'] . ' (Employee ID ' . $o['employee_id'] . ')', $sameEmail))) ?>.
+                Each employee needs their own company Gmail: change the address here and in Edit User.</div>
+        <?php endif; ?>
         <?php if (!$ready): ?>
             <div class="alert alert-warning">Please import the database update (update P) first. Until then nothing on this page can be saved.</div>
         <?php endif; ?>
@@ -170,7 +175,8 @@ $backUrl = $isAdminArea
                 <div class="cg-qr" id="cgQr" data-url="<?= $h($signupUrl) ?>" role="img" aria-label="QR code that opens Google sign-up">
                     <span class="cg-note">Loading QR code&hellip;</span>
                 </div>
-                <p class="text-center mb-3"><a href="<?= $h($signupUrl) ?>" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Open Google sign-up on this computer</a></p>
+                <p class="text-center mb-1"><button type="button" class="btn btn-primary btn-sm" id="cgOpenSignup" data-url="<?= $h($signupUrl) ?>"><i class="fab fa-google"></i> Open Google sign-up beside this page</button></p>
+                <p class="cg-note text-center mb-3">Google does not allow its sign-up page inside other websites, so it opens in a small window next to this one.</p>
                 <ol class="cg-steps">
                     <li>Scan the QR code with the employee's phone. Google's <strong>Create a Google Account</strong> page opens.</li>
                     <li>Type the first name, last name, birthday and gender.</li>
@@ -232,6 +238,13 @@ $backUrl = $isAdminArea
             e.preventDefault();
             document.getElementById('gmailEmail').value = a.getAttribute('data-value');
         });
+    });
+    document.getElementById('cgOpenSignup').addEventListener('click', function () {
+        var url = this.getAttribute('data-url');
+        var w = Math.min(520, screen.availWidth), h = Math.min(820, screen.availHeight - 40);
+        var win = window.open(url, 'tmsGoogleSignup', 'width=' + w + ',height=' + h + ',left=' + ((screen.availLeft || 0) + screen.availWidth - w - 10)
+            + ',top=' + ((screen.availTop || 0) + 20) + ',resizable=yes,scrollbars=yes');
+        if (win) { win.focus(); } else { window.open(url, '_blank', 'noopener'); }
     });
     document.getElementById('cgFormula').addEventListener('click', function () {
         pw.value = this.getAttribute('data-value') || '';
