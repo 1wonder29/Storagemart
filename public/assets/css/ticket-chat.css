@@ -213,3 +213,44 @@ html.it-dark {
 @media (prefers-reduced-motion: reduce) {
   .tc-head, .tc-head:hover { transition: none; transform: none; }
 }
+
+/* Files and photos in the chat */
+.tc-tool { flex: 0 0 auto; border: 0; background: transparent; color: var(--tc-muted); width: 30px; height: 36px; border-radius: 8px; cursor: pointer; }
+.tc-tool:hover, .tc-tool:focus { color: var(--tc-blue-2); background: var(--tc-surface-2); }
+.tc-attach-chip { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-top: 1px solid var(--tc-border); background: var(--tc-surface-2); font-size: 0.78rem; color: var(--tc-text); }
+.tc-attach-chip[hidden] { display: none; }
+.tc-attach-chip img { width: 38px; height: 38px; object-fit: cover; border-radius: 6px; }
+.tc-attach-chip span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-attach-chip .tc-icon-btn { color: var(--tc-muted); }
+.tc-attach-img { display: block; margin: 2px 0 4px; }
+.tc-attach-img img { display: block; max-width: 220px; max-height: 220px; border-radius: 12px; border: 1px solid var(--tc-border); }
+.tc-attach-file { display: flex; align-items: center; gap: 10px; margin: 2px 0 4px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--tc-border); background: var(--tc-surface); color: var(--tc-text); text-decoration: none; max-width: 240px; }
+.tc-attach-file i { font-size: 1.3rem; color: var(--tc-blue-2); }
+.tc-attach-file span { display: flex; flex-direction: column; min-width: 0; }
+.tc-attach-file strong { font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-attach-file small { color: var(--tc-muted); font-size: 0.7rem; }
+.tc-attach-file:hover { text-decoration: none; border-color: var(--tc-blue-2); }
+
+/* Troubleshooting guide message, "Need help from IT personnel" bar, "Are you there?" popup */
+.tc-msg.tc-system { align-self: stretch; max-width: 100%; }
+.tc-msg.tc-system .tc-bubble { background: #fff7ed; color: #7c2d12; border: 1px solid #fed7aa; border-radius: 12px; }
+html.it-dark .tc-msg.tc-system .tc-bubble { background: #3b2a1e; color: #fde3cf; border-color: #7c4a26; }
+.tc-msg .tc-bubble a { color: inherit; text-decoration: underline; word-break: break-all; }
+.tc-help { padding: 8px 12px; border-top: 1px solid var(--tc-border); background: var(--tc-surface-2); font-size: 0.78rem; color: var(--tc-text); }
+.tc-help[hidden] { display: none; }
+.tc-help-info { margin-bottom: 6px; color: var(--tc-muted); }
+.tc-help-progress { height: 4px; border-radius: 4px; background: var(--tc-border); overflow: hidden; margin-bottom: 8px; }
+.tc-help-progress[hidden] { display: none; }
+.tc-help-progress span { display: block; height: 100%; width: 0; background: var(--tc-orange); transition: width 1s linear; }
+.tc-help-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; padding: 7px 14px; font-size: 0.8rem; font-weight: 700; color: #fff; background: var(--tc-orange); cursor: pointer; }
+.tc-help .tc-help-btn { width: 100%; }
+.tc-help-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.tc-help-btn.tc-help-ghost { background: transparent; color: var(--tc-blue-2); border: 1px solid var(--tc-border); }
+.tc-help-done { color: #047857; font-weight: 600; }
+.tc-ping { position: fixed; inset: 0; z-index: 1080; background: rgba(17, 24, 39, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.tc-ping-card { background: var(--tc-surface); color: var(--tc-text); border-radius: 16px; padding: 22px 22px 18px; width: 100%; max-width: 340px; text-align: center; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); animation: tc-pop 0.2s ease-out; }
+.tc-ping-card h5 { font-weight: 800; margin: 8px 0 6px; }
+.tc-ping-card p { color: var(--tc-muted); font-size: 0.88rem; margin-bottom: 16px; }
+.tc-ping-icon { width: 54px; height: 54px; margin: 0 auto; border-radius: 50%; background: #fff1e8; color: var(--tc-orange); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+.tc-ping-actions { display: flex; gap: 8px; justify-content: center; }
+@keyframes tc-pop { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }

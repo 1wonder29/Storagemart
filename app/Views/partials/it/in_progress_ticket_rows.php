@@ -196,12 +196,7 @@ foreach ($tickets as $row):
                             <i class="fas fa-clock fa-sm fa-fw mr-2 text-warning"></i> Pending
                         </a>
                         <?php endif; ?>
-                        <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item cancelTicketBtn"
-                            data-ticket-id="<?= $ticketId ?>"
-                            data-ticket-num="<?= htmlspecialchars($row['ticket_number'] ?? '') ?>">
-                            <i class="fas fa-ban fa-sm fa-fw mr-2 text-secondary"></i> Cancel
-                        </a>
+                        <?php /* Assigned tickets can only be cancelled by the admin. */ ?>
                     </div>
                 </div>
             </div>

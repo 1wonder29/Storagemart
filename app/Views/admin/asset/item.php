@@ -1,5 +1,7 @@
 <?php
+require_once __DIR__ . '/../../../Helpers/AssetAge.php';
 $base = rtrim(BASE_URL, '/');
+$replacementYears = AssetAge::threshold();
 
 $totalItems = count($items);
 $branches = [];
@@ -68,7 +70,7 @@ function admin_can_transfer_asset(string $status): bool
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
 
@@ -121,7 +123,7 @@ function admin_can_transfer_asset(string $status): bool
 
             <div class="filter-toolbar">
                 <div class="row align-items-end">
-                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                    <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
                         <label for="invBranchFilter">Branch</label>
                         <select id="invBranchFilter" class="form-control form-control-sm">
                             <option value="">All Branches</option>
@@ -130,7 +132,15 @@ function admin_can_transfer_asset(string $status): bool
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                    <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                        <label for="invAgeFilter">Age</label>
+                        <select id="invAgeFilter" class="form-control form-control-sm">
+                            <option value="">Any age</option>
+                            <option value="due">For replacement (<?= $replacementYears ?>+ years)</option>
+                            <option value="unknown">Year not set</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
                         <label for="invStatusFilter">Status</label>
                         <select id="invStatusFilter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
@@ -139,7 +149,7 @@ function admin_can_transfer_asset(string $status): bool
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-4 col-sm-6 text-md-right">
+                    <div class="col-md-3 col-sm-6 text-md-right">
                         <button type="button" id="invClearFilters" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-undo mr-1"></i> Clear Filters
                         </button>
@@ -180,9 +190,13 @@ function admin_can_transfer_asset(string $status): bool
                                 <?php foreach ($items as $row):
                                     $status = (string) ($row['status'] ?? '');
                                     $branch = (string) ($row['branchName'] ?? '');
+                                    $itemAge = AssetAge::age($row['year_purchased'] ?? '');
+                                    $itemDue = $itemAge !== null && $itemAge >= $replacementYears
+                                        && !in_array(strtoupper($status), ['DISPOSE', 'DISPOSED', 'LOST', 'DEFECTIVE'], true);
                                 ?>
                                     <tr data-branch="<?= htmlspecialchars(strtolower(trim($branch))) ?>"
-                                        data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>">
+                                        data-status="<?= htmlspecialchars(strtolower(trim($status))) ?>"
+                                        data-age="<?= $itemDue ? 'due' : ($itemAge === null ? 'unknown' : 'ok') ?>">
                                         <td>
                                             <div class="desc-text" style="max-width:none;"><?= htmlspecialchars((string) ($row['itemInfo'] ?? '')) ?></div>
                                         </td>
@@ -198,7 +212,14 @@ function admin_can_transfer_asset(string $status): bool
                                                 <span class="text-muted">—</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td><?= htmlspecialchars((string) ($row['year_purchased'] ?? '') !== '' ? (string) $row['year_purchased'] : '—') ?></td>
+                                        <td>
+                                            <?= htmlspecialchars((string) ($row['year_purchased'] ?? '') !== '' ? (string) $row['year_purchased'] : '—') ?>
+                                            <?php if ($itemDue): ?>
+                                                <span class="badge badge-warning d-block mt-1" title="Purchased <?= (int) $itemAge ?> years ago">
+                                                    <i class="fas fa-history"></i> For replacement · <?= (int) $itemAge ?> yrs
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td>
                                             <?php if ($status !== ''): ?>
                                                 <span class="status-badge <?= admin_asset_status_class($status) ?>">
@@ -242,11 +263,13 @@ function admin_can_transfer_asset(string $status): bool
                                                    class="btn btn-sm btn-outline-info" title="History">
                                                     <i class="fas fa-history"></i>
                                                 </a>
+                                                <?php if (strtoupper(trim($status)) !== 'ASSIGNED'): ?>
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/item/delete?inventory_id=<?= (int) ($row['inventory_id'] ?? 0) ?>"
                                                    class="btn btn-sm btn-outline-danger" title="Delete"
-                                                   onclick="return confirm('Are you sure you want to delete this item?');">
+                                                   data-confirm="Are you sure you want to delete this item?">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
@@ -283,8 +306,9 @@ function admin_can_transfer_asset(string $status): bool
                         <p class="mb-3">You are marking asset <strong id="defectiveAssetNumber"></strong> as defective. The item must be unassigned (returned from an employee) before it can be marked defective.</p>
                         <div class="form-group mb-0">
                             <label for="defectiveReason">Reason <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="defectiveReason" name="reason" rows="4" required
+                            <textarea class="form-control" id="defectiveReason" name="reason" rows="4" maxlength="200" required
                                       placeholder="Describe the defect or issue"></textarea>
+                            <small class="form-text text-muted">Maximum 200 characters. You can change it later with Edit.</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -308,7 +332,7 @@ function admin_can_transfer_asset(string $status): bool
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-asset-inventory.js?v=20261007"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-asset-inventory.js?v=20261009"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 

@@ -67,7 +67,7 @@ $totalTickets = count($tickets);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base)?>/assets/css/storagemart.css" rel="stylesheet">
     <?php require_once __DIR__ . '/../../partials/it/theme_head.php'; ?>
-    <link rel="icon" href="<?= htmlspecialchars($base)?>/assets/img/favicon.png" type="image/png">
+    <link rel="icon" href="<?= htmlspecialchars($base)?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base)?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base)?>/assets/css/it-ticket-list.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/ticket-history-modal.css" rel="stylesheet">
@@ -393,7 +393,7 @@ $totalTickets = count($tickets);
     });
     </script>
     <script>window.BASE_URL = "<?= htmlspecialchars($base) ?>";</script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261016"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 </html>

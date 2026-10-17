@@ -65,7 +65,7 @@ $summaryActiveFilter = $activeTicketFilter;
     <link href="<?= htmlspecialchars($base) ?>/assets/css/it-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-ticket-list.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/ticket-history-modal.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
 
@@ -401,7 +401,7 @@ $summaryActiveFilter = $activeTicketFilter;
                                 <thead>
                                     <tr>
                                         <th>Action Taken</th>
-                                        <th>Technician</th>
+                                        <th>Done by</th>
                                         <th>Old Status</th>
                                         <th>New Status</th>
                                         <th>Date</th>
@@ -546,8 +546,8 @@ $summaryActiveFilter = $activeTicketFilter;
     </script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket-status-filter.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-tickets.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/fetch_ticket_history.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/fetch_ticket_history.js?v=20261016"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261016"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/edit_ticket_action.js"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>

@@ -80,12 +80,17 @@ $(document).on('click', '.viewBtn', function () {
           </tr>
         `);
       } else {
+        const esc = function (v) {
+          return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c];
+          });
+        };
         const rowsHtml = history.map(row => {
-          const action = row.action_details || '';
-          const tech = row.assigned_to || '';
-          const oldS = row.old_status || '';
-          const newS = row.new_status || '';
-          const date = row.date_logged || '';
+          const action = esc(row.action_details);
+          const tech = esc(String(row.assigned_to || '').trim() || 'System');
+          const oldS = esc(row.old_status);
+          const newS = esc(row.new_status);
+          const date = esc(row.date_logged);
           return `<tr>
                     <td>${action}</td>
                     <td>${tech}</td>

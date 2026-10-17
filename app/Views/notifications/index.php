@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../Helpers/AppUrl.php';
 /** @var string $base */
 /** @var string $loggedFirstname */
 /** @var string $loggedPosition */
@@ -36,7 +37,7 @@ if (!function_exists('tms_notification_time')) {
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
 </head>
 <body id="page-top">
 <div id="wrapper">
@@ -132,7 +133,7 @@ if (!function_exists('tms_notification_time')) {
                             $icon = (string) ($n['icon'] ?? 'fa-bell');
                         ?>
                             <a class="notification-item <?= $isRead ? 'notification-read' : 'notification-unread' ?>"
-                               href="<?= htmlspecialchars((string) ($n['action_url'] ?? '#')) ?>"
+                               href="<?= htmlspecialchars(AppUrl::resolve($n['action_url'] ?? null)) ?>"
                                data-id="<?= (int) ($n['id'] ?? 0) ?>"
                                data-related="<?= (int) ($n['related_id'] ?? 0) ?>">
                                 <span class="notification-indicator" aria-hidden="true"></span>

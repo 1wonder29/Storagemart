@@ -105,6 +105,28 @@ if ($uri === '/ticket-chat/threads' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     (new TicketChatController())->threads();
     exit;
 }
+// ANNOUNCEMENTS — Admin to everyone, HEAD / HOM to their own department; feed for the header
+if (preg_match('#^/(admin|head|hom)/announcements$#', $uri, $announcementArea)) {
+    require_once __DIR__ . '/../app/Controllers/AnnouncementController.php';
+    (new AnnouncementController())->manage($announcementArea[1]);
+    exit;
+}
+if ($uri === '/announcements/feed' || $uri === '/announcements/read' || $uri === '/announcements/open') {
+    require_once __DIR__ . '/../app/Controllers/AnnouncementController.php';
+    $announcementAction = substr($uri, strlen('/announcements/'));
+    if ($announcementAction === 'read' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        exit;
+    }
+    (new AnnouncementController())->{$announcementAction}();
+    exit;
+}
+
+if ($uri === '/ticket-chat/help' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../app/Controllers/TicketChatController.php';
+    (new TicketChatController())->requestHelp();
+    exit;
+}
 
 // TICKET COMMENTS (shared — employee, IT, admin)
 if ($uri === '/ticket-comments/fetch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -113,9 +135,78 @@ if ($uri === '/ticket-comments/fetch' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+if ($uri === '/ticket-comments/file' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Controllers/TicketCommentController.php';
+    (new TicketCommentController())->downloadAttachment();
+    exit;
+}
+
 if ($uri === '/ticket-comments/add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/../app/Controllers/TicketCommentController.php';
     (new TicketCommentController())->addComment();
+    exit;
+}
+
+// BIRTHDAY PANEL, EMPLOYEES' FIRST-TIME GUIDE (shared)
+$widgetRoutes = ['GET /birthdays/feed' => 'birthdayFeed', 'POST /birthdays/greet' => 'birthdayGreet', 'POST /birthdays/ungreet' => 'birthdayUngreet',
+    'POST /onboarding/done' => 'onboardingDone', 'GET /guide' => 'guide'];
+if (isset($widgetRoutes[$_SERVER['REQUEST_METHOD'] . ' ' . $uri])) {
+    require_once __DIR__ . '/../app/Controllers/WidgetController.php';
+    (new WidgetController())->{$widgetRoutes[$_SERVER['REQUEST_METHOD'] . ' ' . $uri]}();
+    exit;
+}
+
+// ADMIN CHAT REQUESTS (shared: the Admin starts, the user accepts / declines)
+$directChatRoutes = ['GET /direct-chat/poll' => 'poll', 'GET /direct-chat/users' => 'users', 'GET /direct-chat/messages' => 'messages',
+    'POST /direct-chat/start' => 'start', 'POST /direct-chat/respond' => 'respond', 'POST /direct-chat/send' => 'send',
+    'POST /direct-chat/close' => 'close'];
+if (isset($directChatRoutes[$_SERVER['REQUEST_METHOD'] . ' ' . $uri])) {
+    require_once __DIR__ . '/../app/Controllers/DirectChatController.php';
+    (new DirectChatController())->{$directChatRoutes[$_SERVER['REQUEST_METHOD'] . ' ' . $uri]}();
+    exit;
+}
+
+// PICTURES OF THE CUSTOM SCREEN EFFECTS (Themes > Custom effects; for everyone signed in)
+if ($uri === '/effects/image' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Helpers/CustomEffects.php';
+    $effectImage = !empty($_SESSION['account_id']) ? CustomEffects::imagePath((string) ($_GET['f'] ?? '')) : null;
+    if ($effectImage === null) {
+        http_response_code(404);
+        exit;
+    }
+    $effectTypes = ['jpg' => 'image/jpeg', 'png' => 'image/png', 'gif' => 'image/gif', 'webp' => 'image/webp'];
+    header('Content-Type: ' . $effectTypes[strtolower(pathinfo($effectImage, PATHINFO_EXTENSION))]);
+    header('Content-Length: ' . filesize($effectImage));
+    header('Cache-Control: private, max-age=604800');
+    header('X-Content-Type-Options: nosniff');
+    readfile($effectImage);
+    exit;
+}
+
+// IT MANUALS (library, slides, PowerPoint, step photos; for everyone signed in)
+$manualRoutes = ['/manuals' => 'library', '/manuals/view' => 'view', '/manuals/pptx' => 'pptx', '/manuals/photo' => 'photo', '/manuals/file' => 'file'];
+if (isset($manualRoutes[$uri]) && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_once __DIR__ . '/../app/Controllers/ManualController.php';
+    (new ManualController())->{$manualRoutes[$uri]}();
+    exit;
+}
+
+// TECHNICAL REPORT SIGNING (shared — requester, IT person, Admin)
+if (in_array($uri, ['/tickets/signature', '/tickets/signature/save', '/tickets/signature/remove', '/tickets/signature/pdf'], true)) {
+    require_once __DIR__ . '/../app/Controllers/TicketSignatureController.php';
+    $signatureController = new TicketSignatureController();
+    $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
+    if ($uri === '/tickets/signature' && !$isPost) {
+        $signatureController->show();
+    } elseif ($uri === '/tickets/signature/pdf' && !$isPost) {
+        $signatureController->pdf();
+    } elseif ($uri === '/tickets/signature/save' && $isPost) {
+        $signatureController->save();
+    } elseif ($uri === '/tickets/signature/remove' && $isPost) {
+        $signatureController->remove();
+    } else {
+        http_response_code(405);
+    }
     exit;
 }
 
@@ -188,7 +279,7 @@ if (preg_match('#^/(hr|admin)/employees/accountability/(\d+)(?:/(preview|downloa
 }
 
 // MY ISSUED ITEMS — the same page under each role's prefix, e.g. /head/items, /aom/items/report
-if (preg_match('#^/([a-z]+)/items(/report)?$#', $uri, $itemsMatch)) {
+if (preg_match('#^/([a-z]+)/items(/report|/received)?$#', $uri, $itemsMatch)) {
     require_once __DIR__ . '/../app/Controllers/employee/ItemController.php';
     if (EmployeeItemController::handlesPrefix($itemsMatch[1])) {
         $items = new EmployeeItemController($itemsMatch[1]);
@@ -196,8 +287,12 @@ if (preg_match('#^/([a-z]+)/items(/report)?$#', $uri, $itemsMatch)) {
             $items->index();
             exit;
         }
-        if (!empty($itemsMatch[2]) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (($itemsMatch[2] ?? '') === '/report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $items->report();
+            exit;
+        }
+        if (($itemsMatch[2] ?? '') === '/received' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $items->received();
             exit;
         }
     }
@@ -214,6 +309,21 @@ if (strpos($uri, '/admin') === 0) {
     $asset = new AssetController();
     $department = new DepartmentController();
     $sub = trim(substr($uri, strlen('/admin')), '/');
+
+    // System pages (ticket auto-assignment, announcements, IT manuals, themes).
+    $systemRoutes = [
+        'ticket-assignment' => 'ticketAssignment',
+        'manuals' => 'manuals',
+        'themes' => 'themes',
+        'assets/replacement' => 'assetReplacement',
+        'assets/import' => 'assetImport',
+        'service-status' => 'serviceStatus',
+    ];
+    if (isset($systemRoutes[$sub])) {
+        require_once __DIR__ . '/../app/Controllers/admin/SystemController.php';
+        (new SystemController())->{$systemRoutes[$sub]}();
+        exit;
+    }
 
     if ($sub === '' || $sub === 'dashboard') {
         $admin->dashboard();
@@ -325,6 +435,31 @@ if (strpos($uri, '/admin') === 0) {
         $admin->ratings();
     } elseif ($sub === 'ratings/data') {
         $admin->ratingsData();
+    } elseif (in_array($sub, ['company-gmail', 'company-gmail/save', 'company-gmail/reveal'], true)) {
+        // Company Gmail of an employee: address, Gmail password, QR to Google sign-up, checklist.
+        require_once __DIR__ . '/../app/Controllers/CompanyGmailController.php';
+        $companyGmail = new CompanyGmailController();
+        if ($sub === 'company-gmail') {
+            $companyGmail->showPage('admin');
+        } elseif ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . rtrim(BASE_URL, '/') . '/admin/account');
+        } elseif ($sub === 'company-gmail/save') {
+            $companyGmail->savePage('admin');
+        } else {
+            $companyGmail->revealPassword('admin');
+        }
+    } elseif (in_array($sub, ['user-requests', 'user-requests/decide', 'user-requests/hr-head'], true)) {
+        require_once __DIR__ . '/../app/Controllers/UserRequestController.php';
+        $userRequests = new UserRequestController();
+        if ($sub === 'user-requests') {
+            $userRequests->adminList();
+        } elseif ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . rtrim(BASE_URL, '/') . '/admin/user-requests');
+        } elseif ($sub === 'user-requests/decide') {
+            $userRequests->adminDecide();
+        } else {
+            $userRequests->adminSetHrHead();
+        }
     } elseif ($sub === 'reports/tickets') {
         $admin->ticketReport();
     } elseif ($sub === 'reports/tickets/export') {
@@ -405,6 +540,24 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
 
     $sub = trim(substr($uri, strlen('/it')), '/');
 
+    if ($sub === 'availability' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        require_once __DIR__ . '/../app/Controllers/admin/SystemController.php';
+        (new SystemController())->itAvailability();
+        exit;
+    }
+    if ($sub === 'manuals' || $sub === 'service-status' || $sub === 'asset-replacement') {
+        require_once __DIR__ . '/../app/Controllers/admin/SystemController.php';
+        $systemController = new SystemController();
+        if ($sub === 'manuals') {
+            $systemController->manuals();
+        } elseif ($sub === 'service-status') {
+            $systemController->serviceStatus();
+        } else {
+            $systemController->assetReplacement();
+        }
+        exit;
+    }
+
     if ($sub === '' || $sub === 'dashboard') {
         $it->dashboard();
     } elseif ($sub === 'profile') {
@@ -428,7 +581,7 @@ if ($uri === '/it' || strpos($uri, '/it/') === 0) {
     } elseif ($sub === 'tickets/create') {
         $ticket->create();
     } elseif ($sub === 'tickets/history') {
-        $ticket->history();
+        $ticket->index();
     } elseif ($sub === 'tickets/history/fetch') {
         $ticket->fetchHistory();
     } elseif ($sub === 'tickets/in_progress') {
@@ -535,6 +688,37 @@ if (strpos($uri, '/hr') === 0) {
 
     $sub = trim(substr($uri, strlen('/hr')), '/');
 
+    if (in_array($sub, ['company-gmail', 'company-gmail/save', 'company-gmail/reveal'], true)) {
+        require_once __DIR__ . '/../app/Controllers/CompanyGmailController.php';
+        $companyGmail = new CompanyGmailController();
+        if ($sub === 'company-gmail') {
+            $companyGmail->showPage('hr');
+        } elseif ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . rtrim(BASE_URL, '/') . '/hr/employees');
+        } elseif ($sub === 'company-gmail/save') {
+            $companyGmail->savePage('hr');
+        } else {
+            $companyGmail->revealPassword('hr');
+        }
+        exit;
+    }
+
+    if (in_array($sub, ['user-requests', 'user-requests/new', 'user-requests/decide'], true)) {
+        // New user accounts requested by HR (HR Head, then Admin approve).
+        require_once __DIR__ . '/../app/Controllers/UserRequestController.php';
+        $userRequests = new UserRequestController();
+        if ($sub === 'user-requests') {
+            $userRequests->hrList();
+        } elseif ($sub === 'user-requests/new') {
+            $userRequests->hrForm();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $userRequests->hrDecide();
+        } else {
+            header('Location: ' . rtrim(BASE_URL, '/') . '/hr/user-requests');
+        }
+        exit;
+    }
+
     if ($sub === '' || $sub === 'dashboard') {
         $hr->dashboard();
     } elseif ($sub === 'employees') {
@@ -600,12 +784,32 @@ if (strpos($uri, '/hr') === 0) {
         $uniform->importApply();
     } elseif ($sub === 'uniforms/import/cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $uniform->importCancel();
+    } elseif ($sub === 'uniforms/import/mode' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->importMode();
+    } elseif ($sub === 'uniforms/assign-import') {
+        $uniform->assignImportForm();
+    } elseif ($sub === 'uniforms/assign-import/template') {
+        $uniform->assignImportTemplate();
+    } elseif ($sub === 'uniforms/assign-import/preview' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->assignImportPreview();
+    } elseif ($sub === 'uniforms/assign-import/submit' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->assignImportSubmit();
+    } elseif ($sub === 'uniforms/assign-import/cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->assignImportCancel();
+    } elseif ($sub === 'uniforms/approvals') {
+        $uniform->approvals();
+    } elseif ($sub === 'uniforms/approvals/decide' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->approvalDecide();
+    } elseif (preg_match('#^uniforms/approvals/(\d+)$#', $sub, $approvalMatch)) {
+        $uniform->approvalView((int) $approvalMatch[1]);
     } elseif ($sub === 'uniforms/reset-stock' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $uniform->resetStock();
     } elseif ($sub === 'uniforms/reports') {
         $uniform->reports();
     } elseif ($sub === 'uniforms/reports/resolve' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $uniform->resolveReport();
+    } elseif ($sub === 'uniforms/reports/change-type' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->changeReportType();
     } elseif ($sub === 'uniforms/add') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $uniform->addForm();
@@ -626,6 +830,8 @@ if (strpos($uri, '/hr') === 0) {
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uniform->delete($uniformId);
         }
+    } elseif (strpos($sub, 'uniforms/delete-permanent/') === 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $uniform->deletePermanently((int) substr($sub, strlen('uniforms/delete-permanent/')));
     } elseif (strpos($sub, 'uniforms/reactivate/') === 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $uniformId = (int) substr($sub, strlen('uniforms/reactivate/'));
         $uniform->reactivate($uniformId);

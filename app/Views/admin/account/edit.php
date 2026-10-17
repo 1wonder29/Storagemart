@@ -23,7 +23,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-users.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
@@ -44,6 +44,9 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                             <div class="col-12">
                                 <h1><i class="fas fa-user-edit mr-2"></i>Update Account</h1>
                                 <p>Update login credentials, role assignments, and employee profile details.</p>
+                                <?php if (!empty($employee['employee_id'])): ?>
+                                    <a href="<?= htmlspecialchars($base) ?>/admin/company-gmail?employee_id=<?= (int) $employee['employee_id'] ?>" class="btn btn-light btn-sm"><i class="fab fa-google"></i> Company Gmail</a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -82,7 +85,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                                 <i class="fas fa-eye"></i>
                                             </span>
                                         </div>
-                                        <small class="form-text text-muted"><?= htmlspecialchars(PasswordPolicy::HINT) ?></small>
+                                        <small class="form-text text-muted"><?= htmlspecialchars(PasswordPolicy::ADMIN_HINT) ?></small>
                                     </div>
 
 
@@ -91,7 +94,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                     <div class="row form-row-gap">
                                     <div class="col-md-6">
                                         <label for="usertype" class="form-label">User Type</label>
-                                        <select id="usertype" name="usertype" class="form-control" required>
+                                        <select id="usertype" name="usertype" class="form-control" required data-role-department='<?= htmlspecialchars(json_encode($roleDepartments ?? []), ENT_QUOTES) ?>'>
                                             <option value="">-- Select User Type --</option>
                                             <?php
                                             $currentRole = strtoupper(trim((string) ($account['usertype'] ?? '')));
@@ -173,9 +176,19 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
                                     <div class="row form-row-gap">
                                         <div class="col-md-6">
                                             <label for="email" class="form-label">Email</label>
-                                            <input type="text" class="form-control" id="email" name="email" placeholder="Email" value="<?= htmlspecialchars($employee['email'] ?? '') ?>" required>
+                                            <input type="email" class="form-control" id="email" name="email" placeholder="name@gmail.com" value="<?= htmlspecialchars($employee['email'] ?? '') ?>" required pattern=".+@.+\..+" title="A full email address with @">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="position" class="form-label">Position</label>
+                                            <input type="text" class="form-control" id="position" name="position" placeholder="Position" value="<?= htmlspecialchars($employee['position'] ?? '') ?>" required>
                                         </div>
                                     </div>
+                                    <?php require __DIR__ . '/_personal_fields.php'; ?>
+                                    <div class="custom-control custom-checkbox mt-2 mb-3">
+                                        <input type="checkbox" class="custom-control-input" id="reset_guide" name="reset_guide" value="1">
+                                        <label class="custom-control-label" for="reset_guide">Show the first-time guide again at their next sign-in</label>
+                                    </div>
+                                    <p class="small text-muted mb-3"><i class="fas fa-envelope mr-1"></i> When you set a new password, the person gets an e-mail saying their password was changed.</p>
                                     <div class="form-actions d-flex justify-content-end w-100">
                                         <button type="submit" class="btn btn-primary" name="btnSubmit">
                                             <i class="fas fa-save mr-1"></i> Save Changes
@@ -246,6 +259,7 @@ require_once __DIR__ . '/../../../Helpers/PasswordPolicy.php';
     <script src="<?= htmlspecialchars($base) ?>/assets/js/demo/datatables-demo.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-edit.js"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/user-form.js?v=20261017"></script>
 </body>
 
 </html>

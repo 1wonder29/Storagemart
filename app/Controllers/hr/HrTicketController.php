@@ -158,6 +158,22 @@ class HrTicketController extends AuthController
             $branchId = $employeeBranchId;
         }
 
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketRules.php';
+        $ruleError = TicketRules::rejectionFor($pdo, [
+            'employee_id'     => (int) $employeeId,
+            'category'        => trim($_POST['category'] ?? ''),
+            'subject'         => trim($_POST['subject'] ?? ''),
+            'concern_details' => trim($_POST['concern_details'] ?? ''),
+            'inventory_id'    => !empty($_POST['inventory_id']) ? (int) $_POST['inventory_id'] : null,
+            'branch_id'       => (int) $branchId,
+            'self_filed'      => true,
+        ], (string) ($_SESSION['usertype'] ?? ''));
+        if ($ruleError !== null) {
+            $this->redirect(TicketRules::rejectAndReturnPath($ruleError, $_POST, '/hr/tickets/create'));
+            return;
+        }
+
         $ticketId = $model->createTicket([
             'employee_id'     => (int)$employeeId,
             'inventory_id'    => !empty($_POST['inventory_id']) ? (int)$_POST['inventory_id'] : null,

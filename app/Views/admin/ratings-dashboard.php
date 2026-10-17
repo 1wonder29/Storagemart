@@ -33,7 +33,7 @@ $staffCount = count($itStaffPerformance);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-ratings.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
@@ -156,6 +156,24 @@ $staffCount = count($itStaffPerformance);
                 </div>
 
                 <div id="staff-performance" class="tab-pane fade">
+                    <?php if (!empty($canLinkAdmin)): ?>
+                        <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/ratings" class="card shadow-sm mb-3">
+                            <div class="card-body py-3 d-flex flex-wrap align-items-center" style="gap:10px">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                <input type="hidden" name="action" value="link_admin_person">
+                                <i class="fas fa-user-shield text-primary"></i>
+                                <label for="adminPerson" class="mb-0 font-weight-bold">The shared <span class="text-primary">Admin</span> account is handled by</label>
+                                <select id="adminPerson" name="admin_person" class="custom-select custom-select-sm" style="max-width:240px">
+                                    <option value="0">-- Nobody (list "Admin" on its own) --</option>
+                                    <?php foreach ($adminPersonOptions as $option): ?>
+                                        <option value="<?= (int) $option['employee_id'] ?>"<?= (int) $option['employee_id'] === (int) $adminPersonId ? ' selected' : '' ?>><?= htmlspecialchars((string) $option['name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-save"></i> Save</button>
+                                <small class="text-muted w-100">Ratings for tickets handled in the Admin account are counted for this IT person. Their own account and rights do not change.</small>
+                            </div>
+                        </form>
+                    <?php endif; ?>
                     <div class="card report-list-card shadow mb-4">
                         <div class="card-header d-flex align-items-center justify-content-between">
                             <h6><i class="fas fa-trophy mr-1 text-warning"></i> IT Staff Performance Ranking</h6>

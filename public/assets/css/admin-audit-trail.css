@@ -249,6 +249,20 @@
 .admin-audit-page .module-pill.module-asset { background: #f3e5f5; color: #6a1b9a; }
 .admin-audit-page .module-pill.module-account { background: #e8eaf6; color: #3949ab; }
 
+.admin-audit-page .log-no,
+#auditDetailModal .log-no {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #4e73df;
+}
+
+.admin-audit-page .record-ref {
+  font-size: 0.72rem;
+  color: #858796;
+  margin-top: 2px;
+}
+
 .admin-audit-page .record-id {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 0.8rem;

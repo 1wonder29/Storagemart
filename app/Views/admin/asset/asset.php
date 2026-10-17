@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../Helpers/AssetAge.php';
 $base = rtrim(BASE_URL, '/');
 
 $totalGroups = count($assets);
@@ -34,7 +35,7 @@ ksort($categories);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
 
@@ -125,6 +126,12 @@ ksort($categories);
                         <i class="fas fa-boxes mr-1"></i> Asset Groups
                     </h6>
                     <div class="card-header-actions">
+                        <a href="<?= htmlspecialchars($base) ?>/admin/assets/import" class="btn btn-sm btn-outline-primary mr-2">
+                            <i class="fas fa-file-import mr-1"></i> Import from Excel
+                        </a>
+                        <a href="<?= htmlspecialchars($base) ?>/admin/assets/replacement" class="btn btn-sm btn-outline-warning mr-2">
+                            <i class="fas fa-history mr-1"></i> For replacement (<?= (int) array_sum(array_column($assets, 'dueReplacement')) ?>)
+                        </a>
                         <span class="badge badge-info"><?= (int) $totalGroups ?> group<?= $totalGroups === 1 ? '' : 's' ?></span>
                     </div>
                 </div>
@@ -146,6 +153,7 @@ ksort($categories);
                                     <th>Assigned</th>
                                     <th>Unassigned</th>
                                     <th>Defective</th>
+                                    <th title="Purchased <?= (int) AssetAge::threshold() ?> or more years ago">For Replacement</th>
                                     <th class="text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -174,6 +182,15 @@ ksort($categories);
                                         <td><span class="qty-badge assigned"><?= (int) ($row['assigned'] ?? 0) ?></span></td>
                                         <td><span class="qty-badge unassigned"><?= (int) ($row['unassigned'] ?? 0) ?></span></td>
                                         <td><span class="qty-badge defective"><?= (int) ($row['defective'] ?? 0) ?></span></td>
+                                        <td>
+                                            <?php if ((int) ($row['dueReplacement'] ?? 0) > 0): ?>
+                                                <a href="<?= htmlspecialchars($base) ?>/admin/assets/replacement" class="badge badge-warning p-2" title="See the replacement list">
+                                                    <i class="fas fa-history"></i> <?= (int) $row['dueReplacement'] ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="qty-badge">0</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="text-right">
                                             <div class="action-btn-group">
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/item?group_id=<?= (int) ($row['group_id'] ?? 0) ?>"
@@ -186,7 +203,7 @@ ksort($categories);
                                                 </a>
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/group/delete?group_id=<?= (int) ($row['group_id'] ?? 0) ?>"
                                                    class="btn btn-sm btn-outline-danger" title="Delete group"
-                                                   onclick="return confirm('Are you sure you want to delete this asset group?');">
+                                                   data-confirm="Are you sure you want to delete this asset group?">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </div>
@@ -216,7 +233,7 @@ ksort($categories);
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-assets-directory.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-assets-directory.js?v=20261009"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 

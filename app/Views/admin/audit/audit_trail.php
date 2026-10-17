@@ -38,10 +38,10 @@ if (!function_exists('audit_display_action')) {
     function audit_display_action(string $action): string
     {
         if (strpos($action, '[DELETE]') === 0) {
-            return substr($action, 10);
+            return ltrim(substr($action, 8));
         }
         if (strpos($action, '[TRANSFER]') === 0) {
-            return substr($action, 11);
+            return ltrim(substr($action, 10));
         }
         return $action;
     }
@@ -81,7 +81,7 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
-    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-audit-trail.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-audit-trail.css?v=20261010" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -222,7 +222,7 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
                                     <th>Date / Time</th>
                                     <th>Action</th>
                                     <th>Module</th>
-                                    <th>Record ID</th>
+                                    <th>Log No. / Record</th>
                                     <th>Performed By</th>
                                     <th class="text-center">View</th>
                                 </tr>
@@ -260,14 +260,19 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="record-id"><?= htmlspecialchars($log['ID'] ?? '') ?></span>
+                                        <?php if (isset($log['log_id'])): ?>
+                                            <span class="log-no" title="Unique number of this log line">#<?= (int) $log['log_id'] ?></span>
+                                        <?php endif; ?>
+                                        <div class="record-ref" title="The record this log line is about (the same record can have many log lines)">
+                                            Record <span class="record-id"><?= htmlspecialchars($log['ID'] ?? '') ?></span>
+                                        </div>
                                     </td>
                                     <td>
                                         <span class="performer-name"><?= htmlspecialchars($log['performedby'] ?? 'System') ?></span>
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-view-detail"
-                                                onclick="viewDetails('<?= htmlspecialchars($log['ID'] ?? '', ENT_QUOTES) ?>')"
+                                                onclick="viewDetails('<?= htmlspecialchars($log['ID'] ?? '', ENT_QUOTES) ?>', '<?= htmlspecialchars($log['module'] ?? '', ENT_QUOTES) ?>', <?= (int) ($log['log_id'] ?? 0) ?>)"
                                                 title="View details">
                                             <i class="fas fa-eye"></i>
                                         </button>
@@ -449,22 +454,23 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
     <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
 
     <script>
-    function viewDetails(recordId) {
+    function viewDetails(recordId, module, logId) {
         const base = '<?= htmlspecialchars($base) ?>';
 
         document.getElementById('auditDetailContent').innerHTML =
             '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div></div>';
         $('#auditDetailModal').modal('show');
 
-        fetch(base + '/admin/audit-detail?record_id=' + encodeURIComponent(recordId))
+        fetch(base + '/admin/audit-detail?record_id=' + encodeURIComponent(recordId) + '&module=' + encodeURIComponent(module || ''))
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.data.length > 0) {
                     let html = '<div class="alert alert-info border-0" style="background:#e8eaf6;color:#3949ab;">' +
-                        '<strong>Record ID:</strong> ' + escapeHtml(recordId) +
-                        ' &nbsp;|&nbsp; <strong>Total Activities:</strong> ' + data.data.length +
+                        (logId ? '<strong>Log No.:</strong> #' + logId + ' &nbsp;|&nbsp; ' : '') +
+                        '<strong>' + escapeHtml(module || 'Record') + ':</strong> ' + escapeHtml(recordId) +
+                        ' &nbsp;|&nbsp; <strong>All activities on this record:</strong> ' + data.data.length +
                         '</div><div class="table-responsive"><table class="table table-hover mb-0">' +
-                        '<thead><tr><th>Date</th><th>Time</th><th>Action</th><th>Module</th><th>Performed By</th><th>Details</th></tr></thead><tbody>';
+                        '<thead><tr><th>Log No.</th><th>Date</th><th>Time</th><th>Action</th><th>Module</th><th>Performed By</th><th>Details</th></tr></thead><tbody>';
 
                     data.data.forEach(log => {
                         const action = escapeHtml(log.action || '');
@@ -489,7 +495,9 @@ if (!empty($endDate)) $paginationBase['end_date'] = $endDate;
                             }
                         } catch (e) {}
 
-                        html += '<tr>' +
+                        const isThis = logId && Number(log.log_id) === Number(logId);
+                        html += '<tr' + (isThis ? ' class="table-warning"' : '') + '>' +
+                            '<td><span class="log-no">' + (log.log_id ? '#' + escapeHtml(String(log.log_id)) : '') + '</span></td>' +
                             '<td class="date-cell"><div class="date-main">' + escapeHtml(log.datelog || 'N/A') + '</div></td>' +
                             '<td class="date-cell"><div class="date-time">' + escapeHtml(log.timelog || 'N/A') + '</div></td>' +
                             '<td><div class="action-text ' + actionClass + '">' + action + '</div></td>' +

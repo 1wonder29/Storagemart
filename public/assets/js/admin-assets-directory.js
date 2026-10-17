@@ -44,7 +44,7 @@
       fixedHeader: { header: true },
       order: [[0, "asc"]],
       pageLength: 10,
-      columnDefs: [{ targets: [7], orderable: false, searchable: false }],
+      columnDefs: [{ targets: [-1], orderable: false, searchable: false }],
     });
 
     var categoryFilter = "";

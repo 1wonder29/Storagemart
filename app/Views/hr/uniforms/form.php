@@ -12,7 +12,7 @@ $pageTitle = $isEditing ? 'Edit Item' : 'Add Item';
     <title>Storage Mart | <?= $pageTitle ?></title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-uniforms.css" rel="stylesheet">
@@ -76,18 +76,12 @@ $pageTitle = $isEditing ? 'Edit Item' : 'Add Item';
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label for="color" class="form-label">Color</label>
                                 <input type="text" class="form-control" id="color" name="color" maxlength="50"
                                        value="<?= $uniform ? htmlspecialchars((string) ($uniform['color'] ?? '')) : '' ?>" placeholder="e.g., Blue">
                             </div>
-                            <div class="col-md-4">
-                                <label for="supplier" class="form-label">Supplier</label>
-                                <input type="text" class="form-control" id="supplier" name="supplier" maxlength="150"
-                                       value="<?= $uniform ? htmlspecialchars((string) ($uniform['supplier'] ?? '')) : '' ?>" placeholder="Who you buy it from (optional)">
-                                <small class="form-text text-muted">Leave blank if unknown; it shows as "Not set" in the summary.</small>
-                            </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label for="cost_per_unit" class="form-label">Cost per Unit (PHP)</label>
                                 <input type="number" class="form-control" id="cost_per_unit" name="cost_per_unit" min="0" step="0.01"
                                        value="<?= $uniform && $uniform['cost_per_unit'] !== null ? htmlspecialchars((string) $uniform['cost_per_unit']) : '' ?>" placeholder="Optional">

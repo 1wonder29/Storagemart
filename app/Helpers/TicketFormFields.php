@@ -99,6 +99,37 @@ class TicketFormFields
      * admin mailbox (unless an admin filed it themselves). Failures are logged but never
      * block ticket creation (e.g. an environment that has not run the migration yet).
      */
+    /** Up to 4 photos from the create form, each posted as a chat message from the filer. */
+    private static function savePhotos(PDO $pdo, int $ticketId): void
+    {
+        require_once __DIR__ . '/TicketAttachments.php';
+        $files = array_merge(
+            TicketAttachments::filesFrom($_FILES['problem_photos'] ?? null),
+            TicketAttachments::filesFrom($_FILES['problem_photos_camera'] ?? null)
+        );
+        $accountId = (int) ($_SESSION['account_id'] ?? 0);
+        if (!$files || $accountId <= 0) {
+            return;
+        }
+        require_once __DIR__ . '/../Models/TicketCommentModel.php';
+        $model = new TicketCommentModel();
+        $author = $model->getAuthorDisplayInfo($accountId);
+        $skipped = 0;
+        foreach (array_slice($files, 0, 4) as $i => $file) {
+            try {
+                $attachment = TicketAttachments::store($file, $ticketId, true);
+                $model->addComment($ticketId, $accountId, $author['role'], $author['name'],
+                    $i === 0 ? 'Photo of the problem' : '', $attachment);
+            } catch (Throwable $e) {
+                $skipped++;
+                error_log('Ticket ' . $ticketId . ' photo skipped: ' . $e->getMessage());
+            }
+        }
+        if ($skipped > 0) {
+            $_SESSION['flash_error'] = $skipped . ' photo(s) could not be added. You can send them in the ticket chat.';
+        }
+    }
+
     public static function ticketCreated(int $ticketId, array $post): void
     {
         if ($ticketId <= 0) {
@@ -116,6 +147,19 @@ class TicketFormFields
         if (strtoupper((string) ($_SESSION['usertype'] ?? '')) !== 'ADMIN') {
             require_once __DIR__ . '/../Services/TicketMailer.php';
             TicketMailer::newTicket($ticketId);
+        }
+
+        // Branch zone / Head Office rule assigns IT right away (no admin approval step).
+        require_once __DIR__ . '/TicketAssigner.php';
+        TicketAssigner::autoAssign($pdo, $ticketId);
+
+        // Photos of the problem chosen on the form go into the ticket chat (IT sees them there and on the ticket).
+        self::savePhotos($pdo, $ticketId);
+
+        // Troubleshooting guide in the ticket chat; the chat opens on the next page for the filer.
+        require_once __DIR__ . '/TicketManuals.php';
+        if (TicketManuals::postWelcome($pdo, $ticketId) && strtoupper((string) ($_SESSION['usertype'] ?? '')) !== 'ADMIN') {
+            $_SESSION['tms_open_chat_ticket'] = $ticketId;
         }
     }
 }

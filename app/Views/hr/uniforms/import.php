@@ -14,7 +14,7 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
     <title>Storage Mart | Import Items</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css?v=20261008" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-uniforms.css" rel="stylesheet">
@@ -30,7 +30,8 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <h1><i class="fas fa-file-import mr-2"></i>Import Items from Excel</h1>
-                    <p>Add many items or stock counts at once. Upload a spreadsheet, check the preview, then confirm. Nothing changes until you confirm.</p>
+                    <p>Add many items or stock counts at once. Upload a spreadsheet, check the preview, then send it for approval.
+                        The stock changes only when another HR account or the Admin approves it.</p>
                 </div>
             </div>
         </div>
@@ -59,18 +60,9 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
                                 <label for="import_file" class="font-weight-bold">Spreadsheet (.xlsx or .csv, max 2 MB)</label>
                                 <input type="file" class="form-control-file" id="import_file" name="import_file" accept=".xlsx,.csv" required>
                             </div>
-                            <div class="form-group">
-                                <label class="font-weight-bold d-block">Quantity column means</label>
-                                <div class="custom-control custom-radio">
-                                    <input type="radio" id="modeAdd" name="mode" value="add" class="custom-control-input" checked>
-                                    <label class="custom-control-label" for="modeAdd">New stock received — <strong>add</strong> to current stock</label>
-                                </div>
-                                <div class="custom-control custom-radio">
-                                    <input type="radio" id="modeSet" name="mode" value="set" class="custom-control-input">
-                                    <label class="custom-control-label" for="modeSet">Physical count — <strong>replace</strong> current stock</label>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-search mr-1"></i> Preview Import</button>
+                            <p class="small text-muted">The file is read first and shown to you. Then you choose whether to
+                                <strong>add</strong> its rows to the current list or <strong>overwrite</strong> the list with it.</p>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-search mr-1"></i> Read file &amp; preview</button>
                         </form>
                     </div>
                 </div>
@@ -84,7 +76,7 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
                             <li><strong>Item Type</strong> (required) — e.g. New Polo Shirt</li>
                             <li><strong>Size</strong> (required) — e.g. M, One Size</li>
                             <li><strong>Quantity</strong> (required) — whole number</li>
-                            <li>Color, Reorder Level, Cost per Unit, Supplier (optional)</li>
+                            <li>Color, Reorder Level, Cost per Unit (optional)</li>
                         </ul>
                         <p class="mb-0">A row whose Item Type, Size and Color match an existing item updates that item; otherwise a new item is created. Start from the template to avoid header mistakes.</p>
                     </div>
@@ -98,10 +90,22 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
                 <span class="small text-muted">
                     <?= count($validRows) ?> ready (<?= $newCount ?> new, <?= count($validRows) - $newCount ?> existing) ·
                     <?= count($rowErrors) ?> with errors ·
-                    mode: <strong><?= $import['mode'] === 'set' ? 'replace stock' : 'add to stock' ?></strong>
+                    <?php if ($import['mode'] === null): ?>
+                        <strong class="text-warning">choose how to import</strong>
+                    <?php else: ?>
+                        <strong><?= $import['mode'] === 'replace' ? 'Overwrite the list' : 'Add new rows' ?></strong>
+                    <?php endif; ?>
+                    · <a href="#" data-toggle="modal" data-target="#importModeModal">change</a>
                 </span>
             </div>
             <div class="card-body">
+                <?php if ($import['mode'] === 'replace' && !empty($toDiscontinue)): ?>
+                    <div class="alert alert-warning">
+                        <strong>Overwrite the list:</strong> <?= count($toDiscontinue) ?> active item(s) are not in the file and will be
+                        <strong>discontinued</strong> (their history is kept; you can reactivate them later):
+                        <?= htmlspecialchars(implode(', ', array_map(static fn($i) => $i['uniform_type'] . ' (' . $i['size'] . ')', array_slice($toDiscontinue, 0, 15)))) ?><?= count($toDiscontinue) > 15 ? '…' : '' ?>
+                    </div>
+                <?php endif; ?>
                 <?php if ($rowErrors): ?>
                     <div class="alert alert-warning">
                         <strong><?= count($rowErrors) ?> row(s) will be skipped:</strong>
@@ -119,13 +123,14 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
                         <thead>
                             <tr>
                                 <th>Row</th><th>Action</th><th>Item</th><th>Size</th><th>Color</th>
-                                <th>Stock now</th><th>Quantity</th><th>Stock after</th><th>Reorder</th><th>Cost</th><th>Supplier</th>
+                                <th>Stock now</th><th>Quantity</th><th>Stock after</th><th>Reorder</th><th>Cost</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($validRows as $r):
                                 $isNew = $r['existing_id'] === null;
-                                $after = $isNew ? $r['quantity'] : ($import['mode'] === 'set' ? $r['quantity'] : $r['existing_stock'] + $r['quantity']);
+                                $replace = $import['mode'] === 'replace';
+                                $after = $isNew ? $r['quantity'] : ($replace ? $r['quantity'] : $r['existing_stock'] + $r['quantity']);
                             ?>
                                 <tr>
                                     <td><?= (int) $r['excel_row'] ?></td>
@@ -143,11 +148,10 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
                                     <td><?= htmlspecialchars($r['size']) ?></td>
                                     <td><?= htmlspecialchars($r['color'] ?: '—') ?></td>
                                     <td><?= $isNew ? '—' : (int) $r['existing_stock'] ?></td>
-                                    <td><?= $import['mode'] === 'set' || $isNew ? '' : '+' ?><?= (int) $r['quantity'] ?></td>
+                                    <td><?= $replace || $isNew ? '' : '+' ?><?= (int) $r['quantity'] ?></td>
                                     <td class="font-weight-bold"><?= (int) $after ?></td>
                                     <td><?= $r['reorder'] === null ? '—' : (int) $r['reorder'] ?></td>
                                     <td><?= $r['cost'] === null ? '—' : number_format((float) $r['cost'], 2) ?></td>
-                                    <td><?= htmlspecialchars($r['supplier'] ?? '—') ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -156,12 +160,16 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
                 <?php endif; ?>
 
                 <div class="d-flex flex-wrap mt-3">
-                    <?php if ($validRows): ?>
+                    <?php if ($validRows && $import['mode'] !== null): ?>
                     <form method="POST" action="<?= htmlspecialchars($base) ?>/hr/uniforms/import/apply" class="mr-2 mb-2">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
                         <input type="hidden" name="import_token" value="<?= htmlspecialchars($import['token']) ?>">
-                        <button type="submit" class="btn btn-success"><i class="fas fa-check mr-1"></i> Import <?= count($validRows) ?> row(s)</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-paper-plane mr-1"></i>
+                            Send for approval (<?= $import['mode'] === 'replace' ? 'overwrite the list' : 'add ' . count($validRows) . ' row(s)' ?>)</button>
                     </form>
+                    <?php elseif ($validRows): ?>
+                    <button type="button" class="btn btn-primary mr-2 mb-2" data-toggle="modal" data-target="#importModeModal">
+                        <i class="fas fa-question-circle mr-1"></i> Choose how to import</button>
                     <?php endif; ?>
                     <form method="POST" action="<?= htmlspecialchars($base) ?>/hr/uniforms/import/cancel" class="mb-2">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
@@ -174,8 +182,44 @@ $newCount = count(array_filter($validRows, static fn($r) => $r['existing_id'] ==
     </div>
 </div>
 </div>
+<?php if ($import && !empty($import['rows'])): ?>
+<!-- Asked after the file was read: add its rows, or overwrite the list with it. -->
+<div class="modal fade" id="importModeModal" tabindex="-1" role="dialog" aria-labelledby="importModeTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModeTitle"><i class="fas fa-file-import mr-1"></i> How should this file be imported?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3"><?= htmlspecialchars($import['filename']) ?>: <?= count($import['rows']) ?> valid row(s).</p>
+                <form method="POST" action="<?= htmlspecialchars($base) ?>/hr/uniforms/import/mode" class="mb-2">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
+                    <input type="hidden" name="mode" value="add">
+                    <button type="submit" class="btn btn-outline-primary btn-block text-left p-3">
+                        <strong><i class="fas fa-plus-circle mr-1"></i> Add new rows / stock</strong>
+                        <div class="small">New items are added and quantities are <strong>added</strong> to current stock. Everything else stays as it is.</div>
+                    </button>
+                </form>
+                <form method="POST" action="<?= htmlspecialchars($base) ?>/hr/uniforms/import/mode">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
+                    <input type="hidden" name="mode" value="replace">
+                    <button type="submit" class="btn btn-outline-danger btn-block text-left p-3">
+                        <strong><i class="fas fa-sync-alt mr-1"></i> Overwrite the list</strong>
+                        <div class="small">The inventory becomes this file: stock is <strong>set</strong> to the file's quantity, and items not in the file are discontinued.</div>
+                    </button>
+                </form>
+                <p class="small text-muted mt-3 mb-0">You will see the preview again. Then you send it for approval; nothing is saved before it is approved.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/storagemart.min.js"></script>
+<?php if ($import && !empty($import['rows']) && $import['mode'] === null): ?>
+<script>$(function () { $('#importModeModal').modal('show'); });</script>
+<?php endif; ?>
 </body>
 </html>

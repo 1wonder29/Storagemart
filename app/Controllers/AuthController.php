@@ -164,6 +164,11 @@ class AuthController {
             } else {
                 ActivityLogger::action('PASSWORD_CHANGE', 'Authentication', (string) $accountId,
                     'Password changed by the account owner', (string) ($_SESSION['username'] ?? ''));
+                require_once __DIR__ . '/../Services/PasswordChangeMailer.php';
+                global $pdo;
+                if ($pdo instanceof PDO) {
+                    PasswordChangeMailer::send($pdo, $accountId, false);
+                }
                 $this->redirect('/change-password?done=1');
             }
         }
@@ -432,7 +437,7 @@ class AuthController {
 
         return [
             'count' => $model->getUnreadCount($userId),
-            'notifications' => $model->getLatest($userId, 10)
+            'notifications' => $model->getForBell($userId)
         ];
     }
 

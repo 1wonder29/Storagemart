@@ -11,7 +11,7 @@ class NotificationController extends AuthController
 
         return [
             'count' => $notificationModel->getUnreadCount($accountId),
-            'notifications' => $notificationModel->getLatest($accountId, 5)
+            'notifications' => $notificationModel->getForBell($accountId)
         ];
     }
 

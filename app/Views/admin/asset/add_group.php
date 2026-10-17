@@ -15,7 +15,7 @@ $totalGroups = (int) ($totalGroups ?? 0);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
 </head>
 
 <body id="page-top">
@@ -91,8 +91,8 @@ $totalGroups = (int) ($totalGroups ?? 0);
                             </div>
                             <div class="col-md-6">
                                 <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
-                                <textarea id="description" name="description" class="form-control" rows="5" maxlength="1000" required placeholder="Model details, specs, or notes"></textarea>
-                                <small class="form-text text-muted">Maximum 1000 characters.</small>
+                                <textarea id="description" name="description" class="form-control" rows="5" maxlength="150" required placeholder="e.g. Laptops issued to employees and branches"></textarea>
+                                <small class="form-text text-muted">Maximum 150 characters.</small>
                             </div>
                         </div>
 
@@ -100,7 +100,8 @@ $totalGroups = (int) ($totalGroups ?? 0);
                             <button type="submit" class="btn btn-primary" name="btnSubmit">
                                 <i class="fas fa-save mr-1"></i> Save Group
                             </button>
-                            <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                            <?php require_once __DIR__ . '/../../../Helpers/ReturnTo.php'; ?>
+                            <a href="<?= htmlspecialchars($base . ReturnTo::path('/admin/assets', '/admin/assets', strtok((string) (ReturnTo::clean($_SERVER['REQUEST_URI'] ?? '', '/') ?? ''), '?') ?: null)) ?>" class="btn btn-outline-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>

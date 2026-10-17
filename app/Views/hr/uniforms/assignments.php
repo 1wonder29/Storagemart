@@ -20,7 +20,7 @@ if ($conditionFilter === 'DAMAGED') {
     <title>Storage Mart | Item Assignments</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-uniforms.css" rel="stylesheet">
@@ -114,10 +114,15 @@ if ($conditionFilter === 'DAMAGED') {
                                         <th>Quantity</th>
                                         <th>Date Returned</th>
                                         <th>Status</th>
+                                        <th>Received</th>
                                         <th class="text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <?php
+                                    require_once dirname(__DIR__, 3) . '/Helpers/UniformReceipts.php';
+                                    $receipts = UniformReceipts::forAssignments(array_column($assignments, 'assignment_id'));
+                                    ?>
                                     <?php foreach ($assignments as $a): ?>
                                         <?php $isActive = empty($a['date_returned']); ?>
                                         <tr>
@@ -156,6 +161,7 @@ if ($conditionFilter === 'DAMAGED') {
                                                     </span>
                                                 <?php endif; ?>
                                             </td>
+                                            <td><?= UniformReceipts::badge($receipts[(int) ($a['assignment_id'] ?? 0)] ?? null) ?: '<span class="text-muted">—</span>' ?></td>
                                             <td class="text-right">
                                                 <?php if ($isActive): ?>
                                                     <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/return_confirm/<?= (int) $a['assignment_id'] ?>"

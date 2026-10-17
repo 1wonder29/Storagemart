@@ -154,6 +154,22 @@ class OMTicketController extends AuthController
             $priority = 'Low';
         }
 
+        global $pdo;
+        require_once __DIR__ . '/../../Helpers/TicketRules.php';
+        $ruleError = TicketRules::rejectionFor($pdo, [
+            'employee_id'     => $targetEmployeeId,
+            'category'        => trim((string) ($_POST['category'] ?? '')),
+            'subject'         => trim((string) ($_POST['subject'] ?? '')),
+            'concern_details' => $concern,
+            'inventory_id'    => !empty($_POST['inventory_id']) ? (int) $_POST['inventory_id'] : null,
+            'branch_id'       => (int) ($empRow['branch_id'] ?? 0),
+            'self_filed'      => $targetEmployeeId === (int) $omEmployeeId,
+        ], (string) ($_SESSION['usertype'] ?? ''));
+        if ($ruleError !== null) {
+            $this->redirect(TicketRules::rejectAndReturnPath($ruleError, $_POST, '/om/tickets/create'));
+            return;
+        }
+
         $model = new EmployeeTicket();
         $ticketId = $model->createTicket([
             'employee_id' => $targetEmployeeId,

@@ -98,7 +98,6 @@ class UniformController extends AuthController {
                 'Damaged',
                 'Lost',
                 'Item Status',
-                'Supplier',
                 'Cost Per Unit',
                 'Stock Value',
                 'Date Added',
@@ -106,7 +105,6 @@ class UniformController extends AuthController {
 
             $rows = [];
             $totals = ['in_stock' => 0, 'issued' => 0, 'damaged' => 0, 'lost' => 0, 'value' => 0.0];
-            $missingSupplier = 0;
 
             foreach ($uniforms as $uniform) {
                 $inStock = (int) ($uniform['quantity_in_stock'] ?? 0);
@@ -116,10 +114,6 @@ class UniformController extends AuthController {
                 $cost = ($uniform['cost_per_unit'] ?? null) !== null && $uniform['cost_per_unit'] !== ''
                     ? round((float) $uniform['cost_per_unit'], 2) : null;
                 $value = $cost !== null ? round($cost * $inStock, 2) : null;
-                $supplier = trim((string) ($uniform['supplier'] ?? ''));
-                if ($supplier === '') {
-                    $missingSupplier++;
-                }
 
                 $totals['in_stock'] += $inStock;
                 $totals['issued'] += $issued;
@@ -146,7 +140,6 @@ class UniformController extends AuthController {
                     $damaged,
                     $lost,
                     strtoupper($uniform['status'] ?? 'ACTIVE'),
-                    $supplier !== '' ? $supplier : 'Not set',
                     $cost ?? '',
                     $value ?? '',
                     !empty($uniform['datecreated']) ? date('Y-m-d', strtotime((string) $uniform['datecreated'])) : '',
@@ -158,7 +151,7 @@ class UniformController extends AuthController {
                 $rows[] = $blank;
                 $rows[] = array_replace($blank, [
                     0 => 'TOTALS', 3 => $totals['in_stock'], 6 => $totals['issued'],
-                    7 => $totals['damaged'], 8 => $totals['lost'], 12 => round($totals['value'], 2),
+                    7 => $totals['damaged'], 8 => $totals['lost'], 11 => round($totals['value'], 2),
                 ]);
 
                 // Which item is out with which employee.
@@ -186,9 +179,7 @@ class UniformController extends AuthController {
                 $rows[] = array_replace($blank, [0 => 'NOTES']);
                 $rows[] = array_replace($blank, [0 => 'Issued (Not Returned) = quantity currently with employees.']);
                 $rows[] = array_replace($blank, [0 => 'Stock Value = In Stock x Cost Per Unit (only for items with a cost).']);
-                if ($missingSupplier > 0) {
-                    $rows[] = array_replace($blank, [0 => $missingSupplier . ' item(s) have no supplier. Set Supplier and Cost Per Unit in Inventory > Edit Item.']);
-                }
+
                 $rows[] = array_replace($blank, [0 => 'Generated ' . date('Y-m-d H:i') . ' by ' . ($_SESSION['username'] ?? 'HR')]);
             }
 
@@ -233,9 +224,9 @@ class UniformController extends AuthController {
                 'size' => trim($_POST['size'] ?? ''),
                 'quantity_in_stock' => (int) ($_POST['quantity_in_stock'] ?? 0),
                 'reorder_level' => (int) ($_POST['reorder_level'] ?? 5),
-                // Optional details; blank clears them (NULL) so placeholder suppliers can be removed.
+                // Optional details; blank clears them (NULL). Supplier is no longer asked for.
                 'color' => trim((string) ($_POST['color'] ?? '')),
-                'supplier' => trim((string) ($_POST['supplier'] ?? '')) !== '' ? trim((string) $_POST['supplier']) : null,
+                'supplier' => null,
                 'cost_per_unit' => is_numeric($_POST['cost_per_unit'] ?? null) && (float) $_POST['cost_per_unit'] >= 0
                     ? round((float) $_POST['cost_per_unit'], 2) : null,
                 'createdby' => $_SESSION['username'] ?? 'system'
@@ -323,9 +314,8 @@ class UniformController extends AuthController {
                 'size' => trim($_POST['size'] ?? ''),
                 'quantity_in_stock' => (int) ($_POST['quantity_in_stock'] ?? 0),
                 'reorder_level' => (int) ($_POST['reorder_level'] ?? 5),
-                // Optional details; blank clears them (NULL) so placeholder suppliers can be removed.
+                // Optional details; blank clears them (NULL). Supplier is no longer asked for.
                 'color' => trim((string) ($_POST['color'] ?? '')),
-                'supplier' => trim((string) ($_POST['supplier'] ?? '')) !== '' ? trim((string) $_POST['supplier']) : null,
                 'cost_per_unit' => is_numeric($_POST['cost_per_unit'] ?? null) && (float) $_POST['cost_per_unit'] >= 0
                     ? round((float) $_POST['cost_per_unit'], 2) : null,
                 'updated_by' => $_SESSION['username'] ?? 'system'
@@ -418,7 +408,7 @@ class UniformController extends AuthController {
                         'quantity_in_stock' => $uniform['quantity_in_stock']
                     ]);
                 
-                $_SESSION['successMessage'] = 'Uniform deleted successfully!';
+                $_SESSION['successMessage'] = 'Item discontinued. You can reactivate it, or delete it permanently from the list.';
                 $this->redirect('/hr/uniforms');
             } else {
                 $_SESSION['errorMessage'] = 'Error deleting uniform.';
@@ -430,6 +420,38 @@ class UniformController extends AuthController {
             $_SESSION['errorMessage'] = 'Error deleting uniform: ' . $e->getMessage();
             $this->redirect('/hr/uniforms');
         }
+    }
+
+    /**
+     * POST /hr/uniforms/delete-permanent/{id}: remove a discontinued item for good,
+     * with its past issuance records. Not allowed while any unit is still issued or
+     * waiting for review.
+     */
+    public function deletePermanently($uniformId) {
+        $this->requireHR();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->csrfOk()) {
+            $_SESSION['errorMessage'] = 'Invalid request. Please try again.';
+            $this->redirect('/hr/uniforms');
+        }
+        $uniformId = (int) $uniformId;
+        $uniform = $this->uniformModel->getUniformById($uniformId);
+        if (!$uniform) {
+            $_SESSION['errorMessage'] = 'Item not found.';
+            $this->redirect('/hr/uniforms');
+        }
+        if (strtoupper((string) ($uniform['status'] ?? '')) !== 'DISCONTINUED') {
+            $_SESSION['errorMessage'] = 'Discontinue the item first, then delete it permanently.';
+            $this->redirect('/hr/uniforms');
+        }
+        [$ok, $message, $history] = $this->uniformModel->deleteUniformPermanently($uniformId);
+        if ($ok) {
+            ActivityLogger::delete('HR - Uniforms', (string) $uniformId,
+                "Permanently deleted item: {$uniform['uniform_type']} - Size {$uniform['size']}"
+                    . ($history > 0 ? " (with {$history} past record(s))" : ''),
+                $_SESSION['username'] ?? 'system', $uniform);
+        }
+        $_SESSION[$ok ? 'successMessage' : 'errorMessage'] = $message;
+        $this->redirect('/hr/uniforms');
     }
 
     /**
@@ -452,7 +474,7 @@ class UniformController extends AuthController {
             }
 
             if (strtoupper($uniform['status'] ?? '') !== 'DISCONTINUED') {
-                $_SESSION['errorMessage'] = 'Only discontinued uniforms can be reactivated.';
+                $_SESSION['errorMessage'] = 'Only discontinued items can be reactivated.';
                 $this->redirect('/hr/uniforms');
             }
 
@@ -476,7 +498,7 @@ class UniformController extends AuthController {
                     "Reactivated uniform: {$uniform['uniform_type']} - Size {$uniform['size']}"
                 );
 
-                $_SESSION['successMessage'] = 'Uniform reactivated successfully!';
+                $_SESSION['successMessage'] = 'Item reactivated. It can be issued again.';
             } else {
                 $_SESSION['errorMessage'] = 'Error reactivating uniform.';
             }
@@ -711,7 +733,7 @@ class UniformController extends AuthController {
             if (!empty($employee['account_id']) && !empty($issuedLabels)) {
                 $this->notificationModel->create(
                     (int) $employee['account_id'],
-                    'HR issued you: ' . implode(', ', $issuedLabels) . '.',
+                    'HR issued you: ' . implode(', ', $issuedLabels) . '. Please confirm you received it in My Issued Items.',
                     'fa-tshirt',
                     'info',
                     UniformReportModel::itemsPathForUsertype($employee['usertype'] ?? null),
@@ -874,13 +896,17 @@ class UniformController extends AuthController {
                 (int) ($_SESSION['account_id'] ?? 0),
                 $condition,
                 $remarks,
-                $returnBreakdown
+                $returnBreakdown,
+                true
             );
 
             if ($result) {
                 $this->hrModel->logAction('RETURNED_UNIFORM', $assignment['employee_id'] ?? null, $assignment['uniform_id'] ?? null, $_SESSION['account_id'] ?? 0,
                     "Returned assignment: {$assignmentId} (Breakdown total: {$breakdownTotal})");
-                $_SESSION['successMessage'] = 'Uniform returned successfully. Accountability form has been updated.';
+                $held = $returnBreakdown['DAMAGED'] + $returnBreakdown['LOST'];
+                $_SESSION['successMessage'] = 'Item returned. Accountability form has been updated.'
+                    . ($held > 0 ? " {$held} damaged / lost unit(s) are Pending in Lost / Damaged Reports: "
+                        . 'Confirm them, mark the item OK, or switch damaged / lost if it was a mistake.' : '');
             } else {
                 $_SESSION['errorMessage'] = 'Failed to process return.';
             }
@@ -986,11 +1012,16 @@ class UniformController extends AuthController {
             $item = trim($report['uniform_type'] . ' (' . $report['size'] . ')');
             $what = strtolower((string) $report['report_type']);
             $alreadyReturned = !empty($report['date_returned']);
-            $text = $decision === 'CONFIRMED'
+            $fromReturn = ($report['source'] ?? '') === 'HR_RETURN';
+            $text = $fromReturn
+                ? ($decision === 'CONFIRMED'
+                    ? "HR confirmed the item you returned: {$report['quantity']} x {$item} recorded as {$what}."
+                    : "HR checked the item you returned ({$item}): it is OK and went back to stock.")
+                : ($decision === 'CONFIRMED'
                 ? "HR confirmed your report: {$report['quantity']} x {$item} recorded as {$what}."
                 : ($alreadyReturned
                     ? "HR closed your report for {$item}: this item was already returned."
-                    : "HR reviewed your report for {$item}: the item is OK and remains active with you.");
+                    : "HR reviewed your report for {$item}: the item is OK and remains active with you."));
             if ($replacement !== null) {
                 $text .= " Replacement issued: {$replacement}.";
             }
@@ -1021,6 +1052,26 @@ class UniformController extends AuthController {
                 ]);
         }
 
+        $_SESSION[$ok ? 'successMessage' : 'errorMessage'] = $message;
+        $this->redirect($returnPath);
+    }
+
+    /** POST /hr/uniforms/reports/change-type: switch a report between damaged and lost (fix a mistake). */
+    public function changeReportType() {
+        $this->requireHR();
+        $returnTo = (string) ($_POST['return_to'] ?? '');
+        $returnPath = preg_match('#^/hr/employees/detail/\d+$#', $returnTo) ? $returnTo : '/hr/uniforms/reports';
+        if (!$this->csrfOk()) {
+            $_SESSION['errorMessage'] = 'Invalid form token. Please try again.';
+            $this->redirect($returnPath);
+        }
+        $reportId = (int) ($_POST['report_id'] ?? 0);
+        $newType = (string) ($_POST['report_type'] ?? '');
+        [$ok, $message] = (new UniformReportModel())->changeReportType($reportId, $newType);
+        if ($ok) {
+            ActivityLogger::update('HR - Uniforms', (string) $reportId, 'Lost / damaged report changed: ' . $message,
+                $_SESSION['username'] ?? 'system', ['report_id' => $reportId, 'report_type' => strtoupper($newType)]);
+        }
         $_SESSION[$ok ? 'successMessage' : 'errorMessage'] = $message;
         $this->redirect($returnPath);
     }
@@ -1079,6 +1130,10 @@ class UniformController extends AuthController {
         }
         $csrf_token = $_SESSION['csrf_token'];
         $import = $_SESSION['uniform_import'] ?? null;
+        // Overwrite mode: active items that are not in the file will be discontinued.
+        $toDiscontinue = ($import && ($import['mode'] ?? '') === 'replace')
+            ? $this->uniformModel->activeItemsNotInImport($import['rows'])
+            : [];
         require __DIR__ . '/../../Views/hr/uniforms/import.php';
     }
 
@@ -1134,7 +1189,7 @@ class UniformController extends AuthController {
         $_SESSION['uniform_import'] = [
             'token'    => bin2hex(random_bytes(16)),
             'filename' => basename((string) $file['name']),
-            'mode'     => ($_POST['mode'] ?? 'add') === 'set' ? 'set' : 'add',
+            'mode'     => null, // chosen in the popup after the first preview
             'rows'     => $result['rows'],
             'errors'   => $result['errors'],
             'total'    => $result['total'],
@@ -1142,7 +1197,10 @@ class UniformController extends AuthController {
         $this->redirect('/hr/uniforms/import');
     }
 
-    /** POST /hr/uniforms/import/apply — import the previewed valid rows. */
+    /**
+     * POST /hr/uniforms/import/apply — send the previewed valid rows for approval.
+     * The stock changes only when another HR account or a full-access Admin approves.
+     */
     public function importApply() {
         $this->requireHR();
         $import = $_SESSION['uniform_import'] ?? null;
@@ -1155,23 +1213,299 @@ class UniformController extends AuthController {
             $_SESSION['errorMessage'] = 'There are no valid rows to import. Fix the errors and upload again.';
             $this->redirect('/hr/uniforms/import');
         }
+        if (!in_array($import['mode'] ?? null, ['add', 'replace'], true)) {
+            $_SESSION['errorMessage'] = 'Choose how to import the file first (add new rows or overwrite the list).';
+            $this->redirect('/hr/uniforms/import');
+        }
 
-        try {
-            $result = $this->uniformModel->applyImport($import['rows'], $import['mode'], $_SESSION['username'] ?? 'system');
-        } catch (\Throwable $e) {
-            error_log('UniformController::importApply error: ' . $e->getMessage());
-            $_SESSION['errorMessage'] = 'Import failed; nothing was changed. ' . $e->getMessage();
+        $newCount = count(array_filter($import['rows'], static fn($r) => $r['existing_id'] === null));
+        $summary = ($import['mode'] === 'replace' ? 'Overwrite the list: ' : 'Add to stock: ')
+            . count($import['rows']) . ' row(s), ' . $newCount . ' new item(s)';
+        $batchId = $this->submitBatch('STOCK', $import['mode'], $import['filename'], $import['rows'], count($import['errors']), $summary);
+        if ($batchId === 0) {
             $this->redirect('/hr/uniforms/import');
         }
         unset($_SESSION['uniform_import']);
+        $this->redirect('/hr/uniforms/approvals/' . $batchId);
+    }
 
-        ActivityLogger::create('HR - Uniforms', 'import',
-            "Imported items from {$import['filename']}: {$result['created']} new, {$result['updated']} updated ({$import['mode']} mode)",
-            $_SESSION['username'] ?? 'system', ['rows' => count($import['rows']), 'skipped' => count($import['errors'])]);
+    /* ---------- Approvals of HR uploads (inventory imports and Assign from Excel) ---------- */
 
-        $_SESSION['successMessage'] = "Import done: {$result['created']} new item(s) added, {$result['updated']} existing item(s) updated"
-            . (count($import['errors']) ? '; ' . count($import['errors']) . ' row(s) with errors were skipped.' : '.');
-        $this->redirect('/hr/uniforms');
+    /** Saves a checked upload as PENDING and notifies the people who can approve it. Returns 0 on error. */
+    private function submitBatch(string $type, ?string $mode, string $filename, array $rows, int $skipped, string $summary): int
+    {
+        require_once __DIR__ . '/../../Models/hr/HrBatchModel.php';
+        $batches = new HrBatchModel();
+        if (!$batches->ready()) {
+            $_SESSION['errorMessage'] = 'Please import the database update (update M) first; nothing was sent.';
+            return 0;
+        }
+        $me = (int) $_SESSION['account_id'];
+        $batchId = $batches->create($type, $mode, $filename, $rows, $skipped, $summary, $me);
+        $who = $batches->nameOf($me);
+        $what = $type === 'ASSIGN' ? 'items to issue to employees' : 'an inventory update';
+        foreach ($batches->approverAccountIds($me) as $accountId) {
+            $this->notificationModel->create($accountId, "{$who} sent {$what} for your approval ({$filename}).",
+                'fa-clipboard-check', 'warning', '/hr/uniforms/approvals/' . $batchId, $batchId);
+        }
+        ActivityLogger::create('HR - Approvals', (string) $batchId, "Sent for approval: {$summary} ({$filename})",
+            $_SESSION['username'] ?? 'system', ['type' => $type, 'rows' => count($rows), 'skipped' => $skipped]);
+        $_SESSION['successMessage'] = 'Sent for approval. Nothing changes until another HR account or the Admin approves it.';
+        return $batchId;
+    }
+
+    /** GET /hr/uniforms/approvals */
+    public function approvals() {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Models/hr/HrBatchModel.php';
+        $batchModel = new HrBatchModel();
+        $setupMissing = !$batchModel->ready();
+        $batches = $setupMissing ? [] : $batchModel->recent(60);
+        $me = (int) $_SESSION['account_id'];
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+        require __DIR__ . '/../../Views/hr/uniforms/approvals.php';
+    }
+
+    /** GET /hr/uniforms/approvals/{id} */
+    public function approvalView(int $batchId) {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Models/hr/HrBatchModel.php';
+        $batchModel = new HrBatchModel();
+        $batch = $batchModel->ready() ? $batchModel->get($batchId) : null;
+        if (!$batch) {
+            $_SESSION['errorMessage'] = 'That upload was not found.';
+            $this->redirect('/hr/uniforms/approvals');
+        }
+        // Stock right now, so the approver sees whether there is still enough.
+        $stockNow = [];
+        $ids = array_filter(array_map(static fn($r) => (int) ($r['uniform_id'] ?? $r['existing_id'] ?? 0), $batch['rows']));
+        foreach ($ids as $id) {
+            $item = $this->uniformModel->getUniformById($id);
+            if ($item) {
+                $stockNow[$id] = ['stock' => (int) $item['quantity_in_stock'], 'status' => (string) ($item['status'] ?? 'ACTIVE')];
+            }
+        }
+        $toDiscontinue = ($batch['batch_type'] === 'STOCK' && $batch['import_mode'] === 'replace' && $batch['status'] === 'PENDING')
+            ? $this->uniformModel->activeItemsNotInImport($batch['rows']) : [];
+        $canDecide = HrBatchModel::canDecide($batch);
+        $isOwner = (int) $batch['submitted_by'] === (int) $_SESSION['account_id'];
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+        require __DIR__ . '/../../Views/hr/uniforms/approval_view.php';
+    }
+
+    /** POST /hr/uniforms/approvals/decide : batch_id, decision (approve / reject / cancel), note */
+    public function approvalDecide() {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Models/hr/HrBatchModel.php';
+        $batchModel = new HrBatchModel();
+        $batchId = (int) ($_POST['batch_id'] ?? 0);
+        $back = '/hr/uniforms/approvals/' . $batchId;
+        if (!$this->csrfOk()) {
+            $_SESSION['errorMessage'] = 'Invalid form token. Please try again.';
+            $this->redirect($back);
+        }
+        $batch = $batchModel->ready() ? $batchModel->get($batchId) : null;
+        if (!$batch) {
+            $_SESSION['errorMessage'] = 'That upload was not found.';
+            $this->redirect('/hr/uniforms/approvals');
+        }
+        $me = (int) $_SESSION['account_id'];
+        $decision = (string) ($_POST['decision'] ?? '');
+        $note = trim((string) ($_POST['note'] ?? ''));
+        $myName = $batchModel->nameOf($me);
+        $label = $batch['filename'] ?: ('upload #' . $batchId);
+
+        if ($decision === 'cancel') {
+            if ((int) $batch['submitted_by'] !== $me || !$batchModel->finish($batchId, 'CANCELLED', $me, $note)) {
+                $_SESSION['errorMessage'] = 'Only the person who sent it can cancel it, and only while it waits for approval.';
+                $this->redirect($back);
+            }
+            ActivityLogger::update('HR - Approvals', (string) $batchId, "Cancelled: {$label}", $_SESSION['username'] ?? 'system');
+            $_SESSION['successMessage'] = 'Cancelled. Nothing was changed.';
+            $this->redirect($back);
+        }
+        if (!HrBatchModel::canDecide($batch)) {
+            $_SESSION['errorMessage'] = 'You cannot approve this: it is not waiting for approval, or you sent it yourself.';
+            $this->redirect($back);
+        }
+        if ($decision === 'reject') {
+            if ($note === '') {
+                $_SESSION['errorMessage'] = 'Write the reason for rejecting it, so the sender can fix the file.';
+                $this->redirect($back);
+            }
+            if ($batchModel->finish($batchId, 'REJECTED', $me, $note)) {
+                $this->notifySender($batch, "{$myName} rejected your upload {$label}: {$note}", 'danger');
+                ActivityLogger::update('HR - Approvals', (string) $batchId, "Rejected: {$label} ({$note})", $_SESSION['username'] ?? 'system');
+                $_SESSION['successMessage'] = 'Rejected. Nothing was changed; the sender was notified.';
+            }
+            $this->redirect($back);
+        }
+        if ($decision !== 'approve' || !$batchModel->claim($batchId, $me)) {
+            $_SESSION['errorMessage'] = 'Someone already decided on this upload.';
+            $this->redirect($back);
+        }
+
+        try {
+            if ($batch['batch_type'] === 'STOCK') {
+                $result = $this->uniformModel->applyImport($batch['rows'], (string) $batch['import_mode'], $_SESSION['username'] ?? 'system');
+                $resultText = "{$result['created']} new item(s), {$result['updated']} updated"
+                    . (!empty($result['discontinued']) ? ", {$result['discontinued']} discontinued" : '');
+            } else {
+                $issued = $this->uniformModel->applyAssignBatch($batch['rows'], $batchId, $me);
+                $resultText = "{$issued} item row(s) issued to employees";
+                $this->notifyIssued($batch['rows']);
+            }
+            $batchModel->complete($batchId, 'APPROVED', $note, $resultText);
+            ActivityLogger::update('HR - Approvals', (string) $batchId, "Approved: {$label} ({$resultText})", $_SESSION['username'] ?? 'system');
+            $this->notifySender($batch, "{$myName} approved your upload {$label}: {$resultText}.", 'success');
+            $_SESSION['successMessage'] = 'Approved and done: ' . $resultText . '.';
+        } catch (\Throwable $e) {
+            error_log('UniformController::approvalDecide error: ' . $e->getMessage());
+            $batchModel->complete($batchId, 'FAILED', $note, $e->getMessage());
+            $this->notifySender($batch, "Your upload {$label} could not be applied: " . $e->getMessage(), 'danger');
+            $_SESSION['errorMessage'] = 'Could not apply it; nothing was changed. ' . $e->getMessage();
+        }
+        $this->redirect($back);
+    }
+
+    private function notifySender(array $batch, string $message, string $color): void
+    {
+        $this->notificationModel->create((int) $batch['submitted_by'], $message, 'fa-clipboard-check', $color,
+            '/hr/uniforms/approvals/' . (int) $batch['batch_id'], (int) $batch['batch_id']);
+    }
+
+    /** One notification per employee: what HR issued, and a reminder to confirm receipt. */
+    private function notifyIssued(array $rows): void
+    {
+        $byEmployee = [];
+        foreach ($rows as $row) {
+            $byEmployee[(int) $row['employee_id']][] = $row;
+            $this->hrModel->logAction('ASSIGNED_UNIFORM', (int) $row['employee_id'], (int) $row['uniform_id'], (int) $_SESSION['account_id'],
+                "Assigned {$row['quantity']}x {$row['item_label']} to {$row['employee_name']} (Assign from Excel)");
+        }
+        foreach ($byEmployee as $items) {
+            $first = $items[0];
+            if (empty($first['account_id'])) {
+                continue;
+            }
+            $labels = array_map(static fn($r) => $r['quantity'] . ' x ' . $r['item_label'], $items);
+            $this->notificationModel->create((int) $first['account_id'],
+                'HR issued you: ' . implode(', ', $labels) . '. Please confirm you received it in My Issued Items.',
+                'fa-tshirt', 'info', UniformReportModel::itemsPathForUsertype($first['usertype'] ?? null), (int) $first['employee_id']);
+        }
+    }
+
+    /* ---------- Assign items from Excel (sent for approval) ---------- */
+
+    /** GET /hr/uniforms/assign-import */
+    public function assignImportForm() {
+        $this->requireHR();
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $csrf_token = $_SESSION['csrf_token'];
+        $import = $_SESSION['uniform_assign_import'] ?? null;
+        require __DIR__ . '/../../Views/hr/uniforms/assign_import.php';
+    }
+
+    /** GET /hr/uniforms/assign-import/template */
+    public function assignImportTemplate() {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Services/UniformAssignImportService.php';
+        $csv = UniformAssignImportService::templateCsv();
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="assign_items_template.csv"');
+        header('Content-Length: ' . strlen($csv));
+        echo $csv;
+        exit;
+    }
+
+    /** POST /hr/uniforms/assign-import/preview */
+    public function assignImportPreview() {
+        $this->requireHR();
+        require_once __DIR__ . '/../../Services/UniformAssignImportService.php';
+        unset($_SESSION['uniform_assign_import']);
+        if (!$this->csrfOk()) {
+            $_SESSION['errorMessage'] = 'Invalid form token. Please try again.';
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        $file = $_FILES['import_file'] ?? null;
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            $_SESSION['errorMessage'] = 'Please choose an .xlsx or .csv file to upload.';
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        $ext = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, ['xlsx', 'csv', 'xls', 'txt'], true)) {
+            $_SESSION['errorMessage'] = 'Only .xlsx and .csv files can be imported.';
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        try {
+            $result = UniformAssignImportService::parse(
+                (string) $file['tmp_name'],
+                (string) $file['name'],
+                fn(string $email, string $employeeId, string $name) => $this->uniformModel->findEmployeeForImport($email, $employeeId, $name),
+                fn(string $type, string $size, string $color) => $this->uniformModel->findUniformByKey($type, $size, $color)
+            );
+        } catch (\Throwable $e) {
+            $_SESSION['errorMessage'] = $e->getMessage();
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        $_SESSION['uniform_assign_import'] = [
+            'token'    => bin2hex(random_bytes(16)),
+            'filename' => basename((string) $file['name']),
+            'rows'     => $result['rows'],
+            'errors'   => $result['errors'],
+            'total'    => $result['total'],
+        ];
+        $this->redirect('/hr/uniforms/assign-import');
+    }
+
+    /** POST /hr/uniforms/assign-import/submit — send the valid rows for approval. */
+    public function assignImportSubmit() {
+        $this->requireHR();
+        $import = $_SESSION['uniform_assign_import'] ?? null;
+        if (!$this->csrfOk() || !$import || !hash_equals($import['token'], (string) ($_POST['import_token'] ?? ''))) {
+            $_SESSION['errorMessage'] = 'This preview has expired. Please upload the file again.';
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        if (empty($import['rows'])) {
+            $_SESSION['errorMessage'] = 'There are no valid rows to send. Fix the errors and upload again.';
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        $people = count(array_unique(array_column($import['rows'], 'employee_id')));
+        $pieces = array_sum(array_column($import['rows'], 'quantity'));
+        $summary = "Issue {$pieces} item(s) to {$people} employee(s)";
+        $batchId = $this->submitBatch('ASSIGN', null, $import['filename'], $import['rows'], count($import['errors']), $summary);
+        if ($batchId === 0) {
+            $this->redirect('/hr/uniforms/assign-import');
+        }
+        unset($_SESSION['uniform_assign_import']);
+        $this->redirect('/hr/uniforms/approvals/' . $batchId);
+    }
+
+    /** POST /hr/uniforms/assign-import/cancel */
+    public function assignImportCancel() {
+        $this->requireHR();
+        unset($_SESSION['uniform_assign_import']);
+        $this->redirect('/hr/uniforms/assign-import');
+    }
+
+    /** POST /hr/uniforms/import/mode: answer to the "add or overwrite" popup. */
+    public function importMode() {
+        $this->requireHR();
+        if (!$this->csrfOk() || empty($_SESSION['uniform_import'])) {
+            $_SESSION['errorMessage'] = 'This import preview has expired. Please upload the file again.';
+            $this->redirect('/hr/uniforms/import');
+        }
+        $mode = (string) ($_POST['mode'] ?? '');
+        $_SESSION['uniform_import']['mode'] = in_array($mode, ['add', 'replace'], true) ? $mode : null;
+        $this->redirect('/hr/uniforms/import');
     }
 
     /** POST /hr/uniforms/import/cancel */

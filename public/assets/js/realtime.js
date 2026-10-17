@@ -15,6 +15,19 @@
     return '';
   }
 
+  // Saved links are app paths ("/it/tickets/view?id=3"); add the base when the site
+  // runs in a sub-folder such as localhost/tms/public (same rule as AppUrl::resolve).
+  function appUrl(url) {
+    url = String(url || '').trim();
+    if (!url || url === '#') return '#';
+    if (/^(https?:)?\/\//i.test(url) || url.charAt(0) !== '/') return url;
+    var b = baseUrl();
+    if (!b) return url;
+    var basePath = b.replace(/^https?:\/\/[^\/]+/i, '');
+    if (basePath && (url === basePath || url.indexOf(basePath + '/') === 0)) return url;
+    return b + url;
+  }
+
   function getJson(url, params) {
     var qs = '';
     if (params && typeof params === 'object') {
@@ -207,7 +220,7 @@
     var readClass = isRead ? 'notification-read' : 'notification-unread';
     var bg = escapeHtml(n.bg_color || 'primary');
     var icon = escapeHtml(n.icon || 'fa-bell');
-    var url = escapeHtml(n.action_url || '#');
+    var url = escapeHtml(appUrl(n.action_url));
     var id = parseInt(n.id, 10) || 0;
     var message = escapeHtml(n.message || '');
     var dateLabel = formatNotifDate(n.created_at);
@@ -573,8 +586,7 @@
   }
 
   function startPolling() {
-    if (!baseUrl()) return;
-
+    // An empty base is fine (site at the domain root): links are then root-relative.
     document.addEventListener('click', handleNotificationClick);
     document.addEventListener('click', handleMarkAllReadClick);
 

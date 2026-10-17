@@ -10,6 +10,8 @@ require_once __DIR__ . '/../../Helpers/Session.php';
 require_once __DIR__ . '/../../Helpers/ActivityLogger.php';
 require_once __DIR__ . '/../../Models/PasswordResetRequest.php';
 require_once __DIR__ . '/../../Helpers/LoginThrottle.php';
+require_once __DIR__ . '/../../Helpers/EmployeePersonal.php';
+require_once __DIR__ . '/../../Services/PasswordChangeMailer.php';
 require_once __DIR__ . '/../../Helpers/PasswordPolicy.php';
 
 class AdminController extends AuthController
@@ -153,6 +155,18 @@ class AdminController extends AuthController
             return;
         }
 
+        // Everyone sees the first-time guide again at their next sign-in.
+        if ($action === 'reset_guide_all') {
+            try {
+                $count = $accountModel->getPDO()->exec('UPDATE tblaccounts SET onboarding_done_at = NULL WHERE onboarding_done_at IS NOT NULL');
+                ActivityLogger::update('Admin - Users', 'all', 'First-time guide shown again to everyone', $actor, ['accounts' => (int) $count]);
+                $_SESSION['flash_success'] = 'Everyone will see the first-time guide again at their next sign-in (' . (int) $count . ' accounts).';
+            } catch (Throwable $e) {
+                $_SESSION['flash_error'] = 'Please run the database update first.';
+            }
+            return;
+        }
+
         // Unlocking is allowed for every account, including the system admin.
         if ($action === 'unlock') {
             if (!$account) {
@@ -261,10 +275,31 @@ class AdminController extends AuthController
                 'branch_id'   => (int)($_POST['branch_id'] ?? 0),
                 'email'       => trim($_POST['email'] ?? ''),
             ];
+            if (isset($_POST['position'])) {
+                $dataEmp['position'] = trim((string) $_POST['position']);
+            }
+
+            require_once __DIR__ . '/../../Helpers/AccountRules.php';
+            $editPdo = $accountModel->getPDO();
+            $editProblem = ($dataEmp['email'] !== '' ? AccountRules::emailProblem($editPdo, $dataEmp['email'], (int) $dataEmp['employee_id']) : null)
+                ?? AccountRules::departmentProblem($editPdo, (string) $dataAcc['usertype'], (string) $dataEmp['department'])
+                ?? ((isset($dataEmp['position']) && $dataEmp['position'] === '') ? 'Please fill in the position.' : null);
+            if ($editProblem !== null) {
+                $_SESSION['flash_error'] = $editProblem;
+                $this->redirect('/admin/account/edit?account_id=' . (int) ($_POST['account_id'] ?? 0));
+            }
+
+            // Personal details (only when the form had them, so an old form never clears them)
+            $savePersonal = !empty($_POST['personal_form']);
+            [$personal, $personalProblem] = EmployeePersonal::fromPost($_POST);
+            if ($savePersonal && $personalProblem !== null) {
+                $_SESSION['flash_error'] = $personalProblem;
+                $this->redirect('/admin/account/edit?account_id=' . (int) ($_POST['account_id'] ?? 0));
+            }
 
             $rawPw = trim($dataAcc['password']);
             $passwordChanged = $rawPw !== '';
-            if ($passwordChanged && strpos($rawPw, '$2y$') !== 0 && ($problem = PasswordPolicy::problem($rawPw)) !== null) {
+            if ($passwordChanged && strpos($rawPw, '$2y$') !== 0 && ($problem = PasswordPolicy::adminSetProblem($rawPw)) !== null) {
                 $_SESSION['flash_error'] = $problem;
                 $this->redirect('/admin/account/edit?account_id=' . $dataAcc['account_id']);
             }
@@ -290,6 +325,9 @@ class AdminController extends AuthController
                 if (!$okAcc || !$okEmp) {
                     throw new Exception("Failed updating records.");
                 }
+                if ($savePersonal && $pdo instanceof PDO) {
+                    EmployeePersonal::save($pdo, (int) $dataEmp['employee_id'], $personal);
+                }
 
                 // Log update via ActivityLogger
                 ActivityLogger::update('Admin - Accounts', (string)$dataAcc['account_id'],
@@ -312,6 +350,17 @@ class AdminController extends AuthController
                 }
                 if ($passwordChanged) {
                     (new PasswordResetRequest())->resolveForAccount((int) $dataAcc['account_id'], (string) ($_SESSION['username'] ?? 'admin'));
+                    // Tell the owner by e-mail, in case it was not requested by them.
+                    if ($pdo instanceof PDO) {
+                        PasswordChangeMailer::send($pdo, (int) $dataAcc['account_id'], true);
+                    }
+                }
+                if (!empty($_POST['reset_guide']) && $pdo instanceof PDO) {
+                    try {
+                        $pdo->prepare('UPDATE tblaccounts SET onboarding_done_at = NULL WHERE account_id = ?')->execute([(int) $dataAcc['account_id']]);
+                    } catch (Throwable $e) {
+                        // column not migrated yet
+                    }
                 }
 
                 $_SESSION['flash_success'] = $passwordChanged
@@ -349,6 +398,10 @@ class AdminController extends AuthController
             'position'    => $full['position'] ?? '',
         ];
 
+        $editPdo = $accountModel->getPDO();
+        $personalReady = $editPdo instanceof PDO && EmployeePersonal::ready($editPdo);
+        $personal = $personalReady ? EmployeePersonal::get($editPdo, (int) $employee['employee_id']) : [];
+
         // Branches
         $branches = method_exists($accountModel, 'fetchBranches')
             ? $accountModel->fetchBranches()
@@ -366,6 +419,8 @@ class AdminController extends AuthController
 
         $count = $notificationData['count'];
         $notifications = $notificationData['notifications'];
+        require_once __DIR__ . '/../../Helpers/AccountRules.php';
+        $roleDepartments = $accountModel->getPDO() instanceof PDO ? AccountRules::departmentMap($accountModel->getPDO()) : [];
         require __DIR__ . '/../../Views/admin/account/edit.php';
     }
 
@@ -383,6 +438,11 @@ class AdminController extends AuthController
 
         $accountModel = $this->model ?? new Account();
         $departmentModel = new Department();
+        $addPdo = $accountModel->getPDO();
+        $personalReady = $addPdo instanceof PDO && EmployeePersonal::ready($addPdo);
+        require_once __DIR__ . '/../../Helpers/AccountRules.php';
+        $roleDepartments = $addPdo instanceof PDO ? AccountRules::departmentMap($addPdo) : [];
+        $gmailChecksOld = [];
 
         // Helper to load layout variables consistently
         $loadLayout = function () {
@@ -428,6 +488,14 @@ class AdminController extends AuthController
             ];
 
             $password = (string)($_POST['password'] ?? '');
+            [$personal, $personalProblem] = EmployeePersonal::fromPost($_POST);
+            $gmailPassword = (string) ($_POST['gmail_password'] ?? '');
+            $old['gmail_password'] = $gmailPassword;
+            if ($gmailPassword === '') {
+                require_once __DIR__ . '/../../Models/CompanyGmailModel.php';
+                $gmailFormula = CompanyGmailModel::formulaPassword($old['middlename'], $old['employee_id'], $old['lastname']);
+                $gmailPassword = mb_strlen($gmailFormula) >= 8 ? $gmailFormula : '';
+            }
 
             // basic validation
             if ($old['username'] === '' || $password === '' || $old['usertype'] === '') {
@@ -439,7 +507,7 @@ class AdminController extends AuthController
                 return;
             }
 
-            if (($problem = PasswordPolicy::problem($password)) !== null) {
+            if (($problem = PasswordPolicy::adminSetProblem($password)) !== null) {
                 $_SESSION['flash_error'] = $problem;
                 $branches = $accountModel->fetchBranches();
                 $departments = $departmentModel->fetchAll();
@@ -456,6 +524,37 @@ class AdminController extends AuthController
                 (int)$old['employee_id'] <= 0
             ) {
                 $_SESSION['flash_error'] = 'Employee ID is required and must be a positive number with no spaces.';
+                $branches = $accountModel->fetchBranches();
+                $departments = $departmentModel->fetchAll();
+                extract($loadLayout());
+                require __DIR__ . '/../../Views/admin/account/add.php';
+                return;
+            }
+
+            if ($personalReady && $personalProblem !== null) {
+                $_SESSION['flash_error'] = $personalProblem;
+                $branches = $accountModel->fetchBranches();
+                $departments = $departmentModel->fetchAll();
+                extract($loadLayout());
+                require __DIR__ . '/../../Views/admin/account/add.php';
+                return;
+            }
+
+            // Employee, company Gmail and role checks with a clear message (instead of a database error).
+            $gmailChecksOld = (array) ($_POST['gmail_checks'] ?? []);
+            $emailProblem = null;
+            if ($old['lastname'] === '' || $old['firstname'] === '' || $old['position'] === '' || $old['department'] === '' || (int) $old['branch_id'] <= 0) {
+                $emailProblem = 'Fill in the last name, first name, branch, department and position.';
+            }
+            $emailProblem = $emailProblem
+                ?? AccountRules::employeeIdProblem($addPdo, $old['employee_id'])
+                ?? AccountRules::departmentProblem($addPdo, $old['usertype'], $old['department'])
+                ?? AccountRules::emailProblem($addPdo, $old['email'])
+                ?? (($gmailPassword === '' || mb_strlen($gmailPassword) < 8 || mb_strlen($gmailPassword) > 100)
+                    ? 'The Gmail password must be 8 to 100 characters (Google needs at least 8).' : null)
+                ?? AccountRules::gmailChecksProblem($gmailChecksOld);
+            if ($emailProblem !== null) {
+                $_SESSION['flash_error'] = $emailProblem;
                 $branches = $accountModel->fetchBranches();
                 $departments = $departmentModel->fetchAll();
                 extract($loadLayout());
@@ -517,6 +616,9 @@ class AdminController extends AuthController
                 if (!$newEmployeeId) {
                     throw new Exception('EMPLOYEE INSERT FAILED.');
                 }
+                if ($personalReady) {
+                    EmployeePersonal::save($pdo, (int) $old['employee_id'], $personal);
+                }
 
                 // log
                 ActivityLogger::create('Admin - Accounts', (string)$newAccountId,
@@ -533,7 +635,16 @@ class AdminController extends AuthController
 
                 if ($pdo instanceof PDO) $pdo->commit();
 
-                $_SESSION['flash_success'] = 'New Account successfully created!';
+                // Company Gmail (made before the account): address, Gmail password and the ticked steps.
+                require_once __DIR__ . '/../../Models/CompanyGmailModel.php';
+                $companyGmail = new CompanyGmailModel();
+                if ($companyGmail->ready()) {
+                    $companyGmail->save((int) $old['employee_id'], $old['email'], $gmailPassword, $gmailChecksOld,
+                        'Made with Add User', (int) ($_SESSION['account_id'] ?? 0));
+                }
+
+                $_SESSION['flash_success'] = 'Account created for ' . trim($old['firstname'] . ' ' . $old['lastname'])
+                    . '. They sign in with ' . $old['username'] . '; the company Gmail and its password are saved (Users > Google button).';
                 $this->redirect('/admin/account');
                 return;
 
@@ -662,6 +773,12 @@ class AdminController extends AuthController
             $this->redirect('/login');
             return;
         }
+        require_once __DIR__ . '/../../Helpers/AdminAccess.php';
+        if (!AdminAccess::canManageSystem()) {
+            $_SESSION['flash_error'] = 'The Audit Trail is for the system administrator only.';
+            $this->redirect('/admin/dashboard');
+            return;
+        }
 
         $auditTrail = new AuditTrail();
         
@@ -733,7 +850,8 @@ class AdminController extends AuthController
 
         header('Content-Type: application/json; charset=utf-8');
 
-        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN') {
+        require_once __DIR__ . '/../../Helpers/AdminAccess.php';
+        if (empty($_SESSION['account_id']) || strtoupper($_SESSION['usertype'] ?? '') !== 'ADMIN' || !AdminAccess::canManageSystem()) {
             http_response_code(403);
             echo json_encode(['error' => 'Unauthorized']);
             exit;
@@ -747,7 +865,7 @@ class AdminController extends AuthController
         }
 
         $auditTrail = new AuditTrail();
-        $trail = $auditTrail->getRecordAuditTrail($recordId);
+        $trail = $auditTrail->getRecordAuditTrail($recordId, isset($_GET['module']) ? (string) $_GET['module'] : null);
 
         echo json_encode(['success' => true, 'data' => $trail]);
         exit;
@@ -765,6 +883,32 @@ class AdminController extends AuthController
         }
 
         require_once __DIR__ . '/../../Models/admin/RatingsModel.php';
+        require_once __DIR__ . '/../../Helpers/AdminAccess.php';
+        require_once __DIR__ . '/../../Helpers/AdminAccountPerson.php';
+        global $pdo;
+
+        $canLinkAdmin = AdminAccess::canManageSystem();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'link_admin_person') {
+            if (!$canLinkAdmin || empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', (string) $_POST['csrf_token'])) {
+                $_SESSION['flash_error'] = 'Only the system administrator can change this.';
+            } else {
+                $person = (int) ($_POST['admin_person'] ?? 0);
+                $valid = array_map('intval', array_column(AdminAccountPerson::candidates($pdo), 'employee_id'));
+                AppSettings::set(AdminAccountPerson::SETTING, ($person > 0 && in_array($person, $valid, true)) ? (string) $person : null);
+                ActivityLogger::update('Admin - Ratings', 'admin-account', 'Shared admin account linked to a person',
+                    $_SESSION['username'] ?? 'Unknown', ['employee_id' => $person]);
+                $_SESSION['flash_success'] = $person > 0
+                    ? 'Saved. The ratings of the shared Admin account now count for this person.'
+                    : 'Saved. The shared Admin account is listed on its own again.';
+            }
+            $this->redirect('/admin/ratings#staff-performance');
+            return;
+        }
+        $adminPersonOptions = $canLinkAdmin ? AdminAccountPerson::candidates($pdo) : [];
+        $adminPersonId = AdminAccountPerson::personEmployeeId();
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
 
         $ratingsModel = new RatingsModel();
         $ratings = $ratingsModel->getAllRatings();

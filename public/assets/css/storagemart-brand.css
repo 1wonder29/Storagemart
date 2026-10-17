@@ -1,0 +1,151 @@
+/*
+ * StorageMart brand colors for every signed-in page, taken from www.storagemart.com.ph and the logo:
+ * navy #19398A (headings, logo box), royal blue #2661D4, orange #F85F00 (logo house, buttons).
+ * Loaded last (partials/sidebar_styles.php), so it replaces the older per-role colors
+ * (purple sidebar, green employee pages, pink HR pages...). Status colors (green resolved,
+ * red cancelled / critical, amber pending) keep their meaning. Dark mode keeps its own colors.
+ */
+:root {
+  --sm-navy: #19398a;
+  --sm-navy-dark: #0f2563;
+  --sm-navy-mid: #1d4ab0;
+  --sm-blue: #2661d4;
+  --sm-orange: #f85f00;
+  --sm-orange-dark: #d94f00;
+  --sm-orange-soft: #fff1e8;
+  --sm-hero: linear-gradient(135deg, #0f2563 0%, #19398a 55%, #2661d4 100%);
+}
+
+/* ---------- sidebar (all roles) ---------- */
+#accordionSidebar.sidebar-modern {
+  --sb-bg-start: #0f2563;
+  --sb-bg-mid: #19398a;
+  --sb-bg-end: #1d4ab0;
+  --sb-accent: #f85f00;
+  --sb-shadow: 0 0.35rem 1.25rem rgba(15, 37, 99, 0.35);
+}
+#accordionSidebar.sidebar-modern::before {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(38, 97, 212, 0.28), transparent 42%),
+    radial-gradient(circle at 85% 100%, rgba(248, 95, 0, 0.16), transparent 38%);
+}
+@media (min-width: 768px) {
+  #accordionSidebar.sidebar-modern.toggled .nav-item > .collapse {
+    background-color: #19398a !important;
+    background-image: linear-gradient(185deg, #0f2563 0%, #19398a 55%, #1d4ab0 100%) !important;
+    box-shadow: 0 0.5rem 1.5rem rgba(15, 37, 99, 0.5) !important;
+  }
+}
+html.it-dark #accordionSidebar.sidebar-modern { --sb-accent: #f85f00; }
+
+/* ---------- header ---------- */
+.topbar.app-topbar { border-bottom: 3px solid var(--sm-orange); }
+.app-topbar .nav-link:hover, .app-topbar .nav-link:focus, .tmsw-header-btn:hover, .tmsw-header-btn:focus { color: var(--sm-orange) !important; }
+
+/* ---------- page banners ---------- */
+.page-hero,
+.page-hero.hero-accounts, .page-hero.hero-employees, .page-hero.hero-form, .page-hero.hero-inventory, .page-hero.hero-directory,
+.page-hero.hero-assets, .page-hero.hero-uploads, .page-hero.hero-resolved, .page-hero.hero-in-progress, .page-hero.hero-my-tickets,
+.page-hero.hero-all-tickets, .page-hero.hero-alerts, .page-hero.ticket-detail-hero, .profile-hero {
+  background: var(--sm-hero) !important;
+  border-bottom: 4px solid var(--sm-orange);
+}
+.page-hero.hero-pending { background: linear-gradient(135deg, #b34100 0%, #d94f00 50%, #f85f00 100%) !important; border-bottom-color: var(--sm-navy); }
+.page-hero.hero-defective { background: linear-gradient(135deg, #0f2563 0%, #19398a 60%, #d94f00 100%) !important; }
+/* Cancelled / danger banners stay red: the color is the message. */
+.page-hero.hero-cancelled, .page-hero.hero-danger { border-bottom: 4px solid #7f1d1d; }
+
+/* Each role's page colors -> StorageMart navy / blue / orange */
+body .admin-dashboard-page, body .head-dashboard-page {
+  --dash-navy: #0f2563; --dash-blue: #19398a; --dash-blue-bright: #2661d4; --dash-orange: #f85f00;
+}
+body .employee-dashboard-page, body .employee-ticket-page, body .employee-assets-page {
+  --emp-green-dark: #0f2563; --emp-green: #19398a; --emp-green-bright: #2661d4;
+  --emp-navy: #0f2563; --emp-blue: #19398a; --emp-blue-bright: #2661d4; --emp-orange: #f85f00;
+  --emp-border: rgba(25, 57, 138, 0.08); --emp-shadow: 0 4px 20px rgba(15, 37, 99, 0.08); --emp-shadow-hover: 0 12px 32px rgba(15, 37, 99, 0.14);
+}
+body .hr-dashboard-page {
+  --hr-pink-dark: #0f2563; --hr-pink: #19398a; --hr-pink-bright: #2661d4;
+  --hr-navy: #0f2563; --hr-blue: #19398a; --hr-orange: #f85f00;
+  --hr-border: rgba(25, 57, 138, 0.08); --hr-shadow: 0 4px 20px rgba(15, 37, 99, 0.08); --hr-shadow-hover: 0 12px 32px rgba(15, 37, 99, 0.14);
+}
+body .it-dashboard-page { --it-navy: #0f2563; --it-blue: #19398a; --it-blue-bright: #2661d4; --it-orange: #f85f00; }
+body .om-dashboard-page {
+  --om-navy: #0f2563; --om-blue: #19398a; --om-blue-bright: #2661d4;
+  --om-green: #19398a; --om-green-mid: #1d4ab0; --om-green-bright: #2661d4; --om-orange: #f85f00;
+}
+body .aom-dashboard-page { --aom-navy: #0f2563; --aom-blue: #19398a; --aom-blue-bright: #2661d4; --aom-orange: #f85f00; }
+body .profile-page, body .profile-page.theme-hr, body .profile-page.theme-employee, body .profile-page.theme-it, body .profile-page.theme-om {
+  --pf-hero-dark: #0f2563; --pf-hero-mid: #19398a; --pf-hero-bright: #2661d4;
+  --pf-border: rgba(25, 57, 138, 0.08); --pf-shadow: 0 4px 20px rgba(15, 37, 99, 0.08);
+}
+body .ticket-detail-page, body .ticket-detail-page.theme-aom, body .ticket-detail-page.theme-hom, body .ticket-detail-page.theme-hr, body .ticket-detail-page.theme-it {
+  --td-hero-dark: #0f2563; --td-hero-mid: #19398a; --td-hero-bright: #2661d4;
+  --td-border: rgba(25, 57, 138, 0.08); --td-shadow: 0 4px 20px rgba(15, 37, 99, 0.08);
+}
+body .ticket-create-page { --tc-accent: #19398a; --tc-accent-end: #2661d4; --tc-personal: #d94f00; --tc-personal-end: #f85f00; }
+body .admin-audit-page { --audit-primary: #19398a; --audit-primary-light: #2661d4; }
+body .admin-ratings-page { --ratings-primary: #19398a; --ratings-primary-light: #2661d4; }
+body .admin-monthly-report-page { --report-primary: #19398a; --report-primary-light: #2661d4; }
+
+/* Light page backgrounds without the old green / pink tint */
+html:not(.it-dark) #content-wrapper:has(.employee-dashboard-page),
+html:not(.it-dark) #content-wrapper:has(.employee-ticket-page),
+html:not(.it-dark) #content-wrapper:has(.employee-assets-page),
+html:not(.it-dark) #content-wrapper:has(.hr-dashboard-page),
+html:not(.it-dark) #content-wrapper:has(.profile-page.theme-employee),
+html:not(.it-dark) #content-wrapper:has(.profile-page.theme-om),
+html:not(.it-dark) #content-wrapper:has(.ticket-detail-page.theme-hr),
+html:not(.it-dark) #content-wrapper:has(.ticket-detail-page.theme-hom) {
+  background: linear-gradient(160deg, #eef3fc 0%, #f4f7fb 45%, #e8eef8 100%) !important;
+}
+
+/* Quick buttons on the dashboards */
+.quick-action-btn.qa-primary { background: linear-gradient(135deg, #0f2563, #19398a) !important; }
+.quick-action-btn.qa-success { background: linear-gradient(135deg, #19398a, #2661d4) !important; }
+.quick-action-btn.qa-info { background: linear-gradient(135deg, #d94f00, #f85f00) !important; }
+.quick-action-btn.qa-warning { background: linear-gradient(135deg, #f85f00, #ff8a3d) !important; }
+.quick-action-btn.qa-secondary { background: linear-gradient(135deg, #475569, #64748b) !important; }
+
+/* Modal headers that used purple / teal */
+#auditDetailModal .modal-header, .rating-details-modal .modal-header, .it-rating-details-modal .modal-header,
+.head-employee-modal .modal-header, .ticket-communication-modal .modal-header { background: var(--sm-hero) !important; }
+
+/* ---------- Bootstrap "primary" (buttons, links, checkboxes, pages) ---------- */
+a { color: var(--sm-blue); }
+a:hover { color: var(--sm-navy); }
+.text-primary { color: var(--sm-navy) !important; }
+a.text-primary:hover, a.text-primary:focus { color: var(--sm-navy-dark) !important; }
+.bg-primary, .badge-primary { background-color: var(--sm-navy) !important; }
+.border-left-primary { border-left-color: var(--sm-navy) !important; }
+.bg-gradient-primary { background-color: var(--sm-navy); background-image: var(--sm-hero); }
+.btn-primary { background-color: var(--sm-navy); border-color: var(--sm-navy); }
+.btn-primary:hover, .btn-primary:focus, .btn-primary:not(:disabled):not(.disabled):active, .btn-primary:not(:disabled):not(.disabled).active {
+  background-color: var(--sm-navy-dark); border-color: var(--sm-navy-dark);
+}
+.btn-primary:focus, .btn-outline-primary:focus { box-shadow: 0 0 0 0.2rem rgba(25, 57, 138, 0.3); }
+.btn-primary.disabled, .btn-primary:disabled { background-color: var(--sm-navy); border-color: var(--sm-navy); }
+.btn-outline-primary { color: var(--sm-navy); border-color: var(--sm-navy); }
+.btn-outline-primary:hover, .btn-outline-primary:not(:disabled):not(.disabled):active { background-color: var(--sm-navy); border-color: var(--sm-navy); color: #fff; }
+.btn-warning { background-color: var(--sm-orange); border-color: var(--sm-orange); color: #fff; }
+.btn-warning:hover, .btn-warning:focus { background-color: var(--sm-orange-dark); border-color: var(--sm-orange-dark); color: #fff; }
+.page-link { color: var(--sm-navy); }
+.page-item.active .page-link { background-color: var(--sm-navy); border-color: var(--sm-navy); }
+.custom-control-input:checked ~ .custom-control-label::before { background-color: var(--sm-navy); border-color: var(--sm-navy); }
+.custom-control-input:focus ~ .custom-control-label::before { box-shadow: 0 0 0 0.2rem rgba(25, 57, 138, 0.25); }
+.custom-switch .custom-control-input:checked ~ .custom-control-label::before { background-color: var(--sm-orange); border-color: var(--sm-orange); }
+.form-control:focus, .custom-select:focus { border-color: #8aa4e0; box-shadow: 0 0 0 0.2rem rgba(25, 57, 138, 0.18); }
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link { background-color: var(--sm-navy); }
+.progress-bar { background-color: var(--sm-navy); }
+.dropdown-item.active, .dropdown-item:active { background-color: var(--sm-navy); }
+.card .card-header .text-primary i, .card .card-header h6.text-primary i { color: var(--sm-orange); }
+
+/* Dark mode: keep it readable (light text on dark), only the accents change. */
+html.it-dark a { color: #8fb0ff; }
+html.it-dark .text-primary { color: #8fb0ff !important; }
+html.it-dark .btn-outline-primary { color: #8fb0ff; border-color: #8fb0ff; }
+html.it-dark .btn-outline-primary:hover { color: #fff; }
+
+/* Password boxes have their own eye button; hide the extra one Microsoft Edge adds. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear { display: none; }

@@ -14,6 +14,14 @@ $branchIdHint = (int) ($inventory['branch_id'] ?? $profile['branch_id'] ?? 0);
 $isHeadOfficeForm = TicketFormFields::isHeadOffice($branchCodeHint, $branchNameHint)
     || ($branchNameHint === '' && TicketFormFields::isHeadOfficeBranchId($branchIdHint));
 $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
+
+// What the user typed before a rule sent them back (TicketRules::rejectAndReturnPath); shown once.
+$oldTicketInput = $_SESSION['ticket_old_input'] ?? [];
+unset($_SESSION['ticket_old_input']);
+$oldSubject = (string) ($oldTicketInput['subject'] ?? '');
+$oldDescription = (string) ($oldTicketInput['concern_details'] ?? '');
+$oldCategory = (string) ($oldTicketInput['category'] ?? '');
+$oldPriority = (string) ($oldTicketInput['priority'] ?? 'Medium');
 ?>
 <div class="ticket-issue-layout">
     <div class="ticket-issue-main">
@@ -28,8 +36,9 @@ $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
                     <i class="fas fa-heading"></i> Subject <span class="text-danger">*</span>
                 </label>
                 <input type="text" id="subject" name="subject" class="form-control form-control-lg" maxlength="255" required
-                       placeholder="Brother MFC-T810W Printer is not working">
-                <small class="form-text text-muted">Brief description of the issue.</small>
+                       value="<?= htmlspecialchars($oldSubject) ?>"
+                       placeholder="Brother MFC-T810W printer at the front desk shows Paper Jam">
+                <small class="form-text text-muted">Brief description of the issue: device brand/model, where, and what happens.</small>
             </div>
 
             <div class="mb-3">
@@ -37,12 +46,134 @@ $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
                     <i class="fas fa-align-left"></i> Description <?= $descriptionRequired ? '<span class="text-danger">*</span>' : '' ?>
                 </label>
                 <textarea id="concern_details" name="concern_details" class="form-control form-control-lg" rows="6"
-                          placeholder="Describe the issue in detail..." maxlength="1000"<?= $descriptionRequired ? ' required' : '' ?>></textarea>
+                          placeholder="Describe the issue in detail..." maxlength="1000"<?= $descriptionRequired ? ' required' : '' ?>><?= htmlspecialchars($oldDescription) ?></textarea>
                 <small class="form-text text-muted">
-                    Please describe the issue in detail. Include any error messages, steps to reproduce the issue,
-                    and other relevant information. Maximum 1,000 characters.
+                    Be specific: the device brand/model (e.g. Brother DCP-L2540DW), where it is (e.g. front desk,
+                    2nd floor), what happens and any error message. Vague tickets such as "Printer is not working"
+                    are not accepted. Maximum 1,000 characters.
                 </small>
+                <div class="ticket-specific-hint text-warning small mt-1" id="ticketSpecificHint" hidden></div>
             </div>
+
+            <div class="mb-3 ticket-photos">
+                <label class="form-label"><i class="fas fa-camera"></i> Photos of the problem <span class="text-muted small">(optional, up to 4)</span></label>
+                <div class="d-flex flex-wrap align-items-center" style="gap:8px">
+                    <label class="btn btn-outline-primary btn-sm mb-0 ticket-photo-add">
+                        <i class="fas fa-images mr-1"></i> Add photos
+                        <input type="file" class="d-none ticket-photo-picker" accept="image/*" multiple>
+                    </label>
+                    <button type="button" class="btn btn-outline-secondary btn-sm ticket-photo-camera">
+                        <i class="fas fa-camera mr-1"></i> Take a photo
+                    </button>
+                    <input type="file" class="d-none ticket-photo-camera-input" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+                    <input type="file" name="problem_photos[]" class="d-none ticket-photo-files" accept="image/*" multiple tabindex="-1" aria-hidden="true">
+                    <span class="small text-muted" id="ticketPhotoCount"></span>
+                </div>
+                <div class="ticket-photo-grid mt-2" id="ticketPhotoPreview"></div>
+                <div class="small text-warning mt-1" id="ticketPhotoNote" hidden></div>
+                <small class="form-text text-muted">A photo of the screen, error message or device helps IT fix it faster. Add them one at a time or several at once; click &times; on a photo to remove it. Max 10 MB each.</small>
+            </div>
+            <script>
+            (function () {
+                var box = document.currentScript.previousElementSibling;
+                var form = box.closest('form');
+                if (form) { form.enctype = 'multipart/form-data'; form.encoding = 'multipart/form-data'; }
+                var MAX = 4, MAX_BYTES = 10 * 1024 * 1024;
+                var picker = box.querySelector('.ticket-photo-picker');
+                var cameraBtn = box.querySelector('.ticket-photo-camera');
+                var cameraInput = box.querySelector('.ticket-photo-camera-input');
+                var filesInput = box.querySelector('.ticket-photo-files');
+                var preview = box.querySelector('#ticketPhotoPreview');
+                var count = box.querySelector('#ticketPhotoCount');
+                var note = box.querySelector('#ticketPhotoNote');
+                var canKeep = typeof DataTransfer !== 'undefined';
+                var photos = [];
+                if (!canKeep) {
+                    // Very old browser: each button sends its own photos (choosing again replaces them).
+                    picker.name = 'problem_photos[]';
+                    cameraInput.name = 'problem_photos_camera[]';
+                    filesInput.removeAttribute('name');
+                }
+                function say(text) {
+                    note.textContent = text || '';
+                    note.hidden = !text;
+                }
+                function sync() {
+                    if (canKeep) {
+                        try {
+                            var dt = new DataTransfer();
+                            photos.forEach(function (f) { dt.items.add(f); });
+                            filesInput.files = dt.files;
+                        } catch (e) { /* keep what the browser has */ }
+                    }
+                    preview.textContent = '';
+                    var shown = canKeep ? photos : [].concat(
+                        Array.prototype.slice.call(picker.files || []), Array.prototype.slice.call(cameraInput.files || []));
+                    shown.forEach(function (f, i) {
+                        var tile = document.createElement('div');
+                        tile.className = 'ticket-photo-tile';
+                        var img = document.createElement('img');
+                        img.alt = f.name || 'Photo ' + (i + 1);
+                        if (window.URL && URL.createObjectURL) img.src = URL.createObjectURL(f);
+                        tile.appendChild(img);
+                        if (canKeep) {
+                            var x = document.createElement('button');
+                            x.type = 'button';
+                            x.className = 'ticket-photo-remove';
+                            x.setAttribute('aria-label', 'Remove photo ' + (i + 1));
+                            x.title = 'Remove';
+                            x.innerHTML = '&times;';
+                            x.addEventListener('click', function () {
+                                photos.splice(i, 1);
+                                say('');
+                                sync();
+                            });
+                            tile.appendChild(x);
+                        }
+                        preview.appendChild(tile);
+                    });
+                    count.textContent = shown.length ? shown.length + ' of ' + MAX + ' photos added' : '';
+                    var full = canKeep && shown.length >= MAX;
+                    picker.disabled = full;
+                    cameraBtn.disabled = full;
+                    picker.closest('label').classList.toggle('disabled', full);
+                }
+                function add(files) {
+                    files = files.filter(Boolean);
+                    if (!files.length) return;
+                    var shrink = window.TMSShrinkImage
+                        ? Promise.all(files.map(function (f) { return window.TMSShrinkImage(f); }))
+                        : Promise.resolve(files);
+                    shrink.then(function (small) {
+                        var tooBig = 0, extra = 0;
+                        small.forEach(function (f) {
+                            if (f.size > MAX_BYTES) { tooBig++; return; }
+                            if (photos.length >= MAX) { extra++; return; }
+                            photos.push(f);
+                        });
+                        say(tooBig ? 'A photo was not added: each photo must be 10 MB or less.'
+                            : (extra ? 'Only ' + MAX + ' photos can be added. Remove one to add another.' : ''));
+                        sync();
+                    });
+                }
+                picker.addEventListener('change', function () {
+                    if (!canKeep) { sync(); return; }
+                    add(Array.prototype.slice.call(picker.files || []));
+                    picker.value = '';
+                });
+                cameraInput.addEventListener('change', function () {
+                    if (!canKeep) { sync(); return; }
+                    add(Array.prototype.slice.call(cameraInput.files || []));
+                    cameraInput.value = '';
+                });
+                cameraBtn.addEventListener('click', function () {
+                    if (!window.TMSCamera) { cameraInput.click(); return; }
+                    window.TMSCamera.take({ fallbackInput: cameraInput }).then(function (file) {
+                        if (file) add([file]);
+                    });
+                });
+            })();
+            </script>
 
             <div class="row">
                 <div class="col-md-6 mb-3">
@@ -54,7 +185,7 @@ $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
                             data-branch="<?= htmlspecialchars(json_encode(TicketFormFields::BRANCH_CATEGORIES), ENT_QUOTES, 'UTF-8') ?>">
                         <option value="">-- Select Category --</option>
                         <?php foreach ($categoryOptions as $categoryOption): ?>
-                            <option value="<?= htmlspecialchars($categoryOption) ?>"><?= htmlspecialchars($categoryOption) ?></option>
+                            <option value="<?= htmlspecialchars($categoryOption) ?>"<?= $categoryOption === $oldCategory ? ' selected' : '' ?>><?= htmlspecialchars($categoryOption) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -64,7 +195,7 @@ $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
                     </label>
                     <select id="priority" name="priority" class="form-control form-control-lg">
                         <?php foreach (TicketFormFields::PRIORITIES as $priorityOption): ?>
-                            <option value="<?= $priorityOption ?>"<?= $priorityOption === 'Medium' ? ' selected' : '' ?>><?= $priorityOption ?></option>
+                            <option value="<?= $priorityOption ?>"<?= $priorityOption === $oldPriority ? ' selected' : '' ?>><?= $priorityOption ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -107,4 +238,7 @@ $categoryOptions = TicketFormFields::categoriesFor($isHeadOfficeForm);
         <i class="fas fa-times"></i> Cancel
     </a>
 </div>
-<script src="<?= htmlspecialchars($formBase) ?>/assets/js/ticket-form.js"></script>
+<script src="<?= htmlspecialchars($formBase) ?>/assets/js/ticket-form.js?v=<?= (int) @filemtime(__DIR__ . '/../../../../public/assets/js/ticket-form.js') ?>"></script>
+<script src="<?= htmlspecialchars($formBase) ?>/assets/js/ticket-guide.js?v=<?= (int) @filemtime(__DIR__ . '/../../../../public/assets/js/ticket-guide.js') ?>"></script>
+<?php /* Suggestions while typing the subject and description (what device, where, what happens). */ ?>
+<script src="<?= htmlspecialchars($formBase) ?>/assets/js/ticket-writer.js?v=<?= (int) @filemtime(__DIR__ . '/../../../../public/assets/js/ticket-writer.js') ?>"></script>

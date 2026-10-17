@@ -14,7 +14,7 @@ $totalCategories = count($categories);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-assets.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
 
@@ -73,7 +73,7 @@ $totalCategories = count($categories);
                             <button type="submit" class="btn btn-primary" name="btnSubmit">
                                 <i class="fas fa-save mr-1"></i> Save Category
                             </button>
-                            <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="reset" class="btn btn-outline-secondary" title="Clear the form and stay on this page">Clear</button>
                         </div>
                     </form>
                 </div>
@@ -116,7 +116,7 @@ $totalCategories = count($categories);
                                             <div class="action-btn-group">
                                                 <a href="<?= htmlspecialchars($base) ?>/admin/assets/category/delete?category_id=<?= (int) ($category['category_id'] ?? 0) ?>"
                                                    class="btn btn-sm btn-outline-danger" title="Delete category"
-                                                   onclick="return confirm('Are you sure you want to delete this category?');">
+                                                   data-confirm="Are you sure you want to delete this category?">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </div>

@@ -90,7 +90,7 @@ $totalBranches = count($branches);
                                         <button type="submit" class="btn btn-primary" name="btnSubmit">
                                             <i class="fas fa-save mr-1"></i> Save Branch
                                         </button>
-                                        <a href="<?= htmlspecialchars($base) ?>/admin/assets" class="btn btn-outline-secondary">Cancel</a>
+                                        <button type="reset" class="btn btn-outline-secondary" title="Clear the form and stay on this page">Clear</button>
                                     </div>
                                     </form>
                         </div>
@@ -147,7 +147,7 @@ $totalBranches = count($branches);
                                                         </a>
                                                         <a href="<?= htmlspecialchars($base) ?>/admin/assets/branch/delete?branch_id=<?= (int) ($branch['branch_id'] ?? 0) ?>"
                                                            class="btn btn-sm btn-outline-danger" title="Delete branch"
-                                                           onclick="return confirm('Are you sure you want to delete this branch?');">
+                                                           data-confirm="Are you sure you want to delete this branch?">
                                                             <i class="fas fa-trash"></i>
                                                         </a>
                                                     </div>

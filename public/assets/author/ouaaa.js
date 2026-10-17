@@ -43,12 +43,10 @@ const blocks = [
 const colors = ["#0f0", "#f00", "#0ff", "#ff0", "#f0f"];
 const baseStyle = "font-family:monospace;font-size:15px;font-weight:bold;";
 
-let tick = 0;
-
-setInterval(() => {
-  console.clear();
-
-  const color = colors[tick % colors.length];
+// Printed once per page. It used to clear and redraw the console every 140 ms,
+// which kept the browser busy on every page (and wiped real error messages).
+(() => {
+  const color = colors[2];
 
   blocks.forEach((block) => {
     block.lines.forEach((line) => {
@@ -65,5 +63,4 @@ setInterval(() => {
     });
   });
 
-  tick++;
-}, 140);
+})();

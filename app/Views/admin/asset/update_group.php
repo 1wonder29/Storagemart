@@ -70,8 +70,8 @@ $base = rtrim(BASE_URL, '/');
                                             </div>
                                             <div class="col-md-6">
                                                 <label for = "description" class ="form-label">Description</label>
-                                                <textarea id ="description" name="description" class="form-control" rows="6" maxlength="1000" required><?= htmlspecialchars($assets['description'] ?? '') ?></textarea>
-                                                <small class="form-text text-muted">Maximum 1000 characters.</small>
+                                                <textarea id ="description" name="description" class="form-control" rows="6" maxlength="150" required><?= htmlspecialchars($assets['description'] ?? '') ?></textarea>
+                                                <small class="form-text text-muted">Maximum 150 characters.</small>
                                             </div>
                                     </div>
                                     <div class="form-actions">

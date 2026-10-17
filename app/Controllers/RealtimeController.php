@@ -9,11 +9,17 @@ class RealtimeController extends AuthController
     public function pollNotifications(): void
     {
         $this->jsonAuthRequired(function (int $accountId) {
+            // Every signed-in page polls here, so this doubles as the (throttled) timer that
+            // moves auto-assigned tickets nobody opened in time.
+            global $pdo;
+            require_once __DIR__ . '/../Helpers/TicketAssigner.php';
+            TicketAssigner::reassignStale($pdo);
+
             $model = new NotificationModel();
             echo json_encode([
                 'success'       => true,
                 'count'         => $model->getUnreadCount($accountId),
-                'notifications' => $model->getLatest($accountId, 5),
+                'notifications' => $model->getForBell($accountId),
                 'server_time'   => date('Y-m-d H:i:s'),
             ]);
         });

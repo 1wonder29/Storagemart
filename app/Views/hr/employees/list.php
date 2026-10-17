@@ -29,7 +29,7 @@ if (!empty($queryParams)) {
     <title>Storage Mart | Employees</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-pages.css" rel="stylesheet">
@@ -45,6 +45,8 @@ if (!empty($queryParams)) {
                     <div class="col-lg-8">
                         <h1><i class="fas fa-users mr-2"></i>Employees</h1>
                         <p>Search, filter, and review employee records and accountability forms in one view.</p>
+                        <a href="<?= htmlspecialchars($base) ?>/hr/user-requests/new" class="btn btn-light btn-sm mt-1"><i class="fas fa-user-plus"></i> Request a new user</a>
+                        <a href="<?= htmlspecialchars($base) ?>/hr/user-requests" class="btn btn-light btn-sm mt-1"><i class="fas fa-list"></i> New user requests</a>
                     </div>
                     <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
                         <div class="hero-stat d-inline-block text-center px-4">
@@ -151,6 +153,7 @@ if (!empty($queryParams)) {
                                         <th>Department</th>
                                         <th>Email</th>
                                         <th>Branch</th>
+                                        <th>Issued Items</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -162,14 +165,25 @@ if (!empty($queryParams)) {
                                             <td><?= htmlspecialchars($emp['department']) ?></td>
                                             <td><?= htmlspecialchars($emp['email']) ?></td>
                                             <td class="branch-cell"><?= htmlspecialchars($emp['branchName'] ?? 'N/A') ?></td>
-                                            <td class="actions-cell">
-                                                <a href="<?= htmlspecialchars($base) ?>/hr/employees/detail/<?= $emp['employee_id'] ?>" 
-                                                   class="btn btn-sm btn-primary">
+                                            <td>
+                                                <?php $issued = $issuedCounts[(int) $emp['employee_id']] ?? null; ?>
+                                                <?php if ($issued): ?>
+                                                    <a href="<?= htmlspecialchars($base) ?>/hr/employees/detail/<?= (int) $emp['employee_id'] ?>#accountability-form"
+                                                       class="badge badge-warning p-2" title="Has items not yet returned">
+                                                        <i class="fas fa-box-open"></i> <?= $issued['items'] ?> active (<?= $issued['units'] ?> pc<?= $issued['units'] === 1 ? '' : 's' ?>)
+                                                    </a>
+                                                <?php else: ?>
+                                                    <span class="badge badge-light p-2 text-muted">None</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="actions-cell text-nowrap">
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/employees/detail/<?= (int) $emp['employee_id'] ?>"
+                                                   class="btn btn-sm btn-primary" title="View profile, issued items and history">
                                                     <i class="fas fa-eye"></i> View
                                                 </a>
-                                                <a href="<?= htmlspecialchars($base) ?>/hr/employees/accountability/<?= $emp['employee_id'] ?>" 
-                                                   class="btn btn-sm btn-success">
-                                                    <i class="fas fa-download"></i> Form
+                                                <a href="<?= htmlspecialchars($base) ?>/hr/employees/accountability/<?= (int) $emp['employee_id'] ?>"
+                                                   class="btn btn-sm btn-outline-success" title="Download the accountability form">
+                                                    <i class="fas fa-file-download"></i> Form
                                                 </a>
                                             </td>
                                         </tr>

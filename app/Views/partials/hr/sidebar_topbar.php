@@ -35,6 +35,13 @@ $base = rtrim(BASE_URL, '/');
         </a>
     </li>
 
+    <li class="nav-item <?= ($activePage === 'user-requests') ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= htmlspecialchars($base) ?>/hr/user-requests">
+            <i class="fas fa-user-plus"></i>
+            <span>New User Requests</span>
+        </a>
+    </li>
+
     <li class="nav-item <?= ($activePage === 'uniforms') ? 'active' : '' ?>">
         <a class="nav-link" href="<?= htmlspecialchars($base) ?>/hr/uniforms">
             <i class="fas fa-archive"></i>
@@ -62,6 +69,8 @@ $base = rtrim(BASE_URL, '/');
             <span>Tickets</span>
         </a>
     </li>
+
+    <?php require __DIR__ . '/../sidebar_manuals_link.php'; ?>
 
 </ul>
 <!-- End of Sidebar -->

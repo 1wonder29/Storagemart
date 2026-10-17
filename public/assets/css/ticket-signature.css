@@ -1,0 +1,75 @@
+/* Signing page for the Technical Summary Report (the paper itself uses the PDF's CSS). */
+* { box-sizing: border-box; }
+body { margin: 0; background: #e9ecf3; color: #1f2937; font-family: "Nunito", system-ui, sans-serif; }
+
+.sig-toolbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 16px; background: #1f3a93; color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.15); }
+.sig-title { display: flex; flex-direction: column; line-height: 1.2; margin-right: auto; }
+.sig-title span { font-size: .8rem; opacity: .8; }
+.sig-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.sig-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 8px; padding: 8px 14px;
+  background: #f26522; color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer; text-decoration: none; font-family: inherit; }
+.sig-btn:hover { filter: brightness(1.05); color: #fff; text-decoration: none; }
+.sig-btn:disabled { opacity: .6; cursor: wait; }
+.sig-btn-ghost { background: rgba(255,255,255,.14); }
+.sig-main .sig-btn-ghost, .sig-dialog .sig-btn-ghost { background: #eef1f7; color: #374151; }
+
+.sig-main { max-width: 840px; margin: 0 auto; padding: 16px 12px 120px; }
+.sig-help { background: #fff; border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; font-size: .9rem; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+.sig-help p { margin: 0 0 8px; }
+.sig-warn { color: #92400e; }
+.sig-status { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; color: #6b7280; }
+.sig-status li.done { color: #047857; font-weight: 700; }
+
+.paper { width: 794px; max-width: 100%; min-height: 1000px; margin: 0 auto; padding: 28px 48px 40px; background: #fff;
+  box-shadow: 0 6px 24px rgba(0,0,0,.12); overflow-x: auto; }
+.paper .sign-area { position: relative; }
+.paper .sign-area.mine { outline: 2px dashed #f26522; outline-offset: 2px; border-radius: 4px; background: #fff8f2; }
+.paper .sign-area.placing { outline-color: #1f3a93; background: #f4f6ff; }
+.paper .sign-area .sign-img { cursor: default; }
+.paper .sign-area.placing .sign-img { cursor: grab; touch-action: none; }
+.sig-here { position: absolute; inset: 0; margin: auto; height: 30px; width: 120px; border: 0; border-radius: 999px;
+  background: #f26522; color: #fff; font-weight: 800; font-size: 11px; cursor: pointer; font-family: inherit; }
+.sig-mini { position: absolute; top: 2px; right: 2px; display: flex; gap: 4px; }
+.sig-mini button { border: 0; border-radius: 6px; padding: 2px 6px; font-size: 10px; font-weight: 700; cursor: pointer; background: #1f3a93; color: #fff; font-family: inherit; }
+.sig-mini button.remove { background: #dc2626; }
+
+.sig-place { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap; justify-content: center; padding: 10px 14px; border-radius: 14px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  font-size: .85rem; max-width: calc(100vw - 24px); }
+.sig-place[hidden] { display: none; }
+.sig-place label { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 700; }
+
+.sig-modal { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(17,24,39,.55); }
+.sig-modal[hidden] { display: none; }
+.sig-dialog { width: 100%; max-width: 620px; background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+.sig-dialog-head { display: flex; justify-content: space-between; align-items: center; }
+.sig-dialog-head h2 { font-size: 1.1rem; margin: 0; font-weight: 800; }
+.sig-x { border: 0; background: transparent; font-size: 1.6rem; line-height: 1; cursor: pointer; color: #6b7280; }
+.sig-tabs { display: flex; gap: 6px; margin: 12px 0 8px; }
+.sig-tab { border: 1px solid #d1d5db; background: #fff; border-radius: 999px; padding: 6px 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.sig-tab.active { background: #1f3a93; border-color: #1f3a93; color: #fff; }
+.sig-pad-wrap { position: relative; border: 2px dashed #c7cbe0; border-radius: 12px; background: #fff; }
+#sigPad { display: block; width: 100%; height: auto; touch-action: none; cursor: crosshair; border-radius: 10px; }
+.sig-pad-hint { position: absolute; left: 0; right: 0; bottom: 40px; text-align: center; color: #9ca3af; pointer-events: none; font-size: .9rem; }
+.sig-pad-hint[hidden] { display: none; }
+.sig-pad-wrap::after { content: ""; position: absolute; left: 24px; right: 24px; bottom: 34px; border-bottom: 1px solid #d1d5db; pointer-events: none; }
+.sig-upload { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; font-size: .85rem; }
+.sig-upload[hidden] { display: none; }
+.sig-upload small { color: #6b7280; }
+.sig-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.sig-error { color: #b91c1c; font-size: .85rem; margin: 8px 0 0; }
+.sig-error[hidden] { display: none; }
+
+@media (max-width: 820px) {
+  .paper { padding: 20px 16px; }
+}
+
+@media print {
+  body { background: #fff; }
+  .sig-toolbar, .sig-help, .sig-place, .sig-modal, .sig-here, .sig-mini { display: none !important; }
+  .sig-main { padding: 0; max-width: none; }
+  .paper { box-shadow: none; width: auto; min-height: 0; padding: 0; }
+  .paper .sign-area.mine, .paper .sign-area.placing { outline: 0; background: transparent; }
+  @page { margin: 28px 48px 40px; }
+}

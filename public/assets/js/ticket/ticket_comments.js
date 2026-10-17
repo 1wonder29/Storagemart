@@ -36,11 +36,35 @@
     return 'role-pill role-pill-default';
   }
 
+  // Web addresses in a comment become links (the text is escaped first, so only real links are made).
+  function linkify(escaped) {
+    return escaped.replace(/\bhttps?:\/\/[^\s<]+/g, function (url) {
+      let trail = '';
+      while (/[.,!?;:)\]]$/.test(url) || /&(?:#0?39|quot);$/.test(url)) {
+        const m = url.match(/(&(?:#0?39|quot);|[.,!?;:)\]])$/);
+        trail = m[1] + trail;
+        url = url.slice(0, -m[1].length);
+      }
+      return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+    });
+  }
+
   function renderComment(comment) {
     const role = escapeHtml(comment.author_role || 'User');
     const name = escapeHtml(comment.author_name || 'Unknown');
-    const text = escapeHtml(comment.comment_text || '').replace(/\n/g, '<br>');
+    const text = linkify(escapeHtml(comment.comment_text || '')).replace(/\n/g, '<br>');
     const date = formatDate(comment.created_at);
+    let attachment = '';
+    if (comment.attachment_url) {
+      const url = escapeHtml(comment.attachment_url);
+      const name = escapeHtml(comment.attachment_name || 'File');
+      attachment = comment.attachment_is_image
+        ? '<a href="' + url + '" target="_blank" rel="noopener" class="ticket-comment-photo d-inline-block mt-1">' +
+            '<img src="' + url + '" alt="' + name + '" loading="lazy" style="max-width:260px;max-height:200px;border-radius:10px;border:1px solid rgba(0,0,0,.1)"' +
+            ' onerror="this.outerHTML=\'<span><i class=&quot;fas fa-image mr-1&quot;></i>Open photo</span>\'"></a>'
+        : '<a href="' + url + '" target="_blank" rel="noopener" class="ticket-comment-file-link d-inline-flex align-items-center mt-1">' +
+            '<i class="fas fa-file-alt mr-1"></i>' + name + '</a>';
+    }
 
     return (
       '<div class="ticket-comment-item">' +
@@ -51,7 +75,8 @@
           '</div>' +
           '<small class="text-muted text-nowrap ml-2">' + date + '</small>' +
         '</div>' +
-        '<div class="ticket-comment-text">' + text + '</div>' +
+        (text ? '<div class="ticket-comment-text">' + text + '</div>' : '') +
+        attachment +
       '</div>'
     );
   }
@@ -65,6 +90,7 @@
   }
 
   function showAlert($section, type, message) {
+    clearTimeout($section.data('alert-timer'));
     const $alert = $section.find('.ticket-comments-alert');
     if (!$alert.length) return;
     $alert.removeClass('d-none alert-success alert-danger')
@@ -174,30 +200,41 @@
       return;
     }
 
-    if (!comment) {
-      showAlert($section, 'danger', 'Please enter a comment.');
+    const file = ($section.data('comment-file') || null);
+    if (!comment && !file) {
+      showAlert($section, 'danger', 'Please enter a comment or attach a file.');
       return;
     }
 
     $section.data('comment-submitting', true);
     $btn.prop('disabled', true);
 
+    const form = new FormData();
+    form.append('ticket_id', ticketId);
+    form.append('comment', comment);
+    if (file) form.append('attachment', file, file.name);
+
     $.ajax({
       url: baseUrl + '/ticket-comments/add',
       method: 'POST',
       dataType: 'json',
-      data: { ticket_id: ticketId, comment: comment },
+      data: form,
+      processData: false,
+      contentType: false,
     })
       .done(function (res) {
         if (res && res.success) {
           $input.val('');
+          $section.data('comment-file', null);
+          $section.find('.ticket-comment-file').val('');
+          $section.find('.ticket-comment-file-name').text('');
           showAlert($section, 'success', res.message || 'Comment posted.');
           if (res.comment) {
             appendComments($section, [res.comment]);
           } else {
             loadComments($section);
           }
-          setTimeout(function () { hideAlert($section); }, 2500);
+          $section.data('alert-timer', setTimeout(function () { hideAlert($section); }, 2500));
         } else {
           showAlert($section, 'danger', (res && res.message) ? res.message : 'Failed to post comment.');
         }
@@ -222,9 +259,69 @@
     }
 
     $section.data('comments-init', true);
+    $section.on('change.ticketComments', '.ticket-comment-file', function () {
+      const input = this;
+      const chosen = input.files && input.files[0] ? input.files[0] : null;
+      const shrink = chosen && window.TMSShrinkImage ? window.TMSShrinkImage(chosen) : Promise.resolve(chosen);
+      shrink.then(function (file) {
+        if (file && file.size > 10 * 1024 * 1024) {
+          showAlert($section, 'danger', 'The file is too large (max 10 MB).');
+          input.value = '';
+          return;
+        }
+        $section.data('comment-file', file);
+        $section.find('.ticket-comment-file-name').text(file ? 'Attached: ' + file.name : '');
+      });
+    });
+    // Paste a screenshot into the comment box (Ctrl+V or right-click > Paste).
+    $section.on('paste.ticketComments', '.ticket-comment-input', function (e) {
+      const items = (e.originalEvent.clipboardData && e.originalEvent.clipboardData.items) || [];
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].kind === 'file' && /^image\//.test(items[i].type)) {
+          const blob = items[i].getAsFile();
+          if (!blob) continue;
+          e.preventDefault();
+          let file = blob;
+          try { file = new File([blob], 'screenshot-' + Date.now() + '.png', { type: blob.type || 'image/png' }); } catch (err) { /* keep blob */ }
+          const shrink = window.TMSShrinkImage ? window.TMSShrinkImage(file) : Promise.resolve(file);
+          shrink.then(function (small) {
+            $section.data('comment-file', small);
+            $section.find('.ticket-comment-file-name').text('Attached: ' + (small.name || 'screenshot.png') + ' (pasted)');
+          });
+          return;
+        }
+      }
+    });
     $section.on('submit.ticketComments', '.ticket-comments-form', function (e) {
       e.preventDefault();
       submitComment($section);
+    });
+    // Enter sends the comment; Shift + Enter starts a new line. On phones (no Shift key)
+    // Enter keeps making a new line and the Post Comment button sends.
+    const touchOnly = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    $section.on('keydown.ticketComments', '.ticket-comment-input', function (e) {
+      const ev = e.originalEvent || e;
+      if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || ev.isComposing || touchOnly) {
+        return;
+      }
+      e.preventDefault();
+      submitComment($section);
+    });
+    // Camera button: the camera window (laptop webcam or phone), or the phone camera app.
+    $section.on('click.ticketComments', '.ticket-comment-camera', function () {
+      const input = $section.find('.ticket-comment-camera-input')[0];
+      if (!window.TMSCamera) {
+        if (input) input.click();
+        return;
+      }
+      window.TMSCamera.take({ fallbackInput: input }).then(function (file) {
+        if (!file) return;
+        const shrink = window.TMSShrinkImage ? window.TMSShrinkImage(file) : Promise.resolve(file);
+        shrink.then(function (small) {
+          $section.data('comment-file', small);
+          $section.find('.ticket-comment-file-name').text('Attached: ' + (small.name || 'photo.jpg'));
+        });
+      });
     });
   }
 

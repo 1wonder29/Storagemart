@@ -7,12 +7,14 @@ require_once __DIR__ . '/../../Helpers/AppShell.php';
 
 $base = rtrim(BASE_URL, '/');
 $sidebarUser = AppShell::currentUser();
+$sidebarProfileUrl = AppShell::profileUrl();
 ?>
 <li class="sidebar-user">
     <script>
     (function () {
         try {
-            if (localStorage.getItem('app-sidebar-collapsed') === '1') {
+            // Desktop only: on phones the menu is a drawer that starts closed.
+            if (localStorage.getItem('app-sidebar-collapsed') === '1' && !(window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches)) {
                 var sidebar = document.currentScript.closest('.sidebar');
                 if (sidebar) sidebar.classList.add('toggled');
                 document.body.classList.add('sidebar-toggled');
@@ -21,9 +23,19 @@ $sidebarUser = AppShell::currentUser();
     })();
     </script>
     <div class="sidebar-user-card">
+        <?php if ($sidebarProfileUrl !== ''): ?>
+        <a class="sidebar-user-profile" href="<?= htmlspecialchars($sidebarProfileUrl) ?>" title="View my profile">
+            <img class="sidebar-user-avatar" src="<?= htmlspecialchars($base) ?>/assets/img/undraw_profile.svg" alt="My profile">
+        </a>
+        <?php else: ?>
         <img class="sidebar-user-avatar" src="<?= htmlspecialchars($base) ?>/assets/img/undraw_profile.svg" alt="">
+        <?php endif; ?>
         <div class="sidebar-user-info">
+            <?php if ($sidebarProfileUrl !== ''): ?>
+            <a class="sidebar-user-name sidebar-user-profile" href="<?= htmlspecialchars($sidebarProfileUrl) ?>" title="View my profile"><?= htmlspecialchars($sidebarUser['fullname']) ?></a>
+            <?php else: ?>
             <div class="sidebar-user-name"><?= htmlspecialchars($sidebarUser['fullname']) ?></div>
+            <?php endif; ?>
             <?php if ($sidebarUser['email'] !== ''): ?>
                 <div class="sidebar-user-email" title="<?= htmlspecialchars($sidebarUser['email']) ?>"><?= htmlspecialchars($sidebarUser['email']) ?></div>
             <?php endif; ?>

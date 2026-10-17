@@ -260,7 +260,7 @@ $todayLabel = date('l, F j, Y');
                                 <thead>
                                     <tr>
                                         <th>Action Taken</th>
-                                        <th>Technician</th>
+                                        <th>Done by</th>
                                         <th>Old Status</th>
                                         <th>New Status</th>
                                         <th>Date</th>
@@ -336,7 +336,7 @@ $todayLabel = date('l, F j, Y');
                             $("#ticketHistoryTable tbody").append(
                                 '<tr>' +
                                 '<td>' + escapeHtml(row.action_details) + '</td>' +
-                                '<td>' + escapeHtml(row.performed_by) + '</td>' +
+                                '<td>' + escapeHtml(String(row.performed_by || '').trim() || 'System') + '</td>' +
                                 '<td>' + escapeHtml(row.old_status || "") + '</td>' +
                                 '<td>' + escapeHtml(row.new_status || "") + '</td>' +
                                 '<td>' + escapeHtml(row.date_logged || "") + '</td>' +
@@ -363,7 +363,7 @@ $todayLabel = date('l, F j, Y');
         });
     });
     </script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261016"></script>
 
 </body>
 </html>

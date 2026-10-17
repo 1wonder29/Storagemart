@@ -44,6 +44,33 @@ class NotificationModel extends BaseModel
         return (int) $stmt->fetchColumn();
     }
 
+    /**
+     * For the bell: every unread notification (up to 30) plus the newest read ones, so the
+     * list never shows fewer items than the "new" count. Newest first.
+     */
+    public function getForBell($userId, int $minimum = 10): array
+    {
+        $unread = $this->pdo->prepare(
+            "SELECT * FROM notifications WHERE user_id = ? AND is_read = 0 ORDER BY created_at DESC, id DESC LIMIT 30"
+        );
+        $unread->execute([$userId]);
+        $rows = $unread->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $room = max(0, $minimum - count($rows));
+        if ($room > 0) {
+            $read = $this->pdo->prepare(
+                "SELECT * FROM notifications WHERE user_id = ? AND is_read <> 0 ORDER BY created_at DESC, id DESC LIMIT " . (int) $room
+            );
+            $read->execute([$userId]);
+            $rows = array_merge($rows, $read->fetchAll(PDO::FETCH_ASSOC) ?: []);
+        }
+        usort($rows, static function ($a, $b) {
+            return [strtotime((string) ($b['created_at'] ?? '')), (int) ($b['id'] ?? 0)]
+                <=> [strtotime((string) ($a['created_at'] ?? '')), (int) ($a['id'] ?? 0)];
+        });
+
+        return $this->normalizeNotificationsForUser($rows, $this->getAccountUsertype((int) $userId));
+    }
+
     public function getLatest($userId, $limit = 5)
     {
         $limit = (int)$limit;

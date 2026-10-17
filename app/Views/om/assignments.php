@@ -12,7 +12,7 @@ $base = rtrim(BASE_URL, '/');
     <!-- Custom fonts for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
 
     <!-- Custom styles for this template -->
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
@@ -85,7 +85,7 @@ $base = rtrim(BASE_URL, '/');
                                             <?php if ($assignment['is_active']): ?>
                                             <form method="POST" action="<?= htmlspecialchars($base) ?>/om/deactivate-assignment" 
                                                   style="display:inline;" 
-                                                  onsubmit="return confirm('Are you sure you want to deactivate this assignment?');">
+                                                  data-confirm="Are you sure you want to deactivate this assignment?">
                                                 <input type="hidden" name="assignment_id" value="<?= $assignment['assignment_id'] ?>">
                                                 <button type="submit" class="btn btn-sm btn-danger">
                                                     <i class="fas fa-times"></i>

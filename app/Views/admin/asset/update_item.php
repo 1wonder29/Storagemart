@@ -1,9 +1,24 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 $groupId = (int) ($inventory['group_id'] ?? ($_GET['group_id'] ?? 0));
-$backUrl = $groupId > 0
-    ? $base . '/admin/assets/item?group_id=' . $groupId
-    : $base . '/admin/assets';
+require_once __DIR__ . '/../../../Helpers/ReturnTo.php';
+// Back where the person came from (item list, Defective Items, ...), not always the item list.
+$returnTo = ReturnTo::path($groupId > 0 ? '/admin/assets/item?group_id=' . $groupId : '/admin/assets', '/admin/assets', '/admin/assets/item/edit');
+$backUrl = $base . $returnTo;
+$backLabel = strpos($returnTo, '/admin/assets/defective') === 0 ? 'Back to Defective Items'
+    : (strpos($returnTo, '/admin/assets/item') === 0 ? 'Back to Inventory' : 'Back');
+
+$currentStatus = strtoupper(trim((string) ($inventory['status'] ?? '')));
+// Assigning and returning go through Assign/Transfer and Return, so an assigned
+// item keeps its status here and ASSIGNED cannot be picked by hand.
+$isAssigned = $currentStatus === 'ASSIGNED';
+$statusOptions = [
+    'UNASSIGNED' => 'Unassigned',
+    'DEFECTIVE'  => 'Defective',
+    'DISPOSED'   => 'Disposed',
+    'LOST'       => 'Lost',
+    'RETURNED'   => 'Returned',
+];
 ?>
 <html lang="en">
 
@@ -40,7 +55,7 @@ $backUrl = $groupId > 0
                     <p>Edit asset item details, status, and serial number information.</p>
                     <div class="quick-nav mt-3">
                         <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-sm btn-outline-light">
-                            <i class="fas fa-arrow-left mr-1"></i> Back to Inventory
+                            <i class="fas fa-arrow-left mr-1"></i> <?= htmlspecialchars($backLabel) ?>
                         </a>
                     </div>
                 </div>
@@ -58,6 +73,7 @@ $backUrl = $groupId > 0
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                             <input type="hidden" name="inventory" value="<?= (int)($inventory['inventory_id'] ?? 0) ?>">
                             <input type="hidden" name="group_id" value="<?= (int)($inventory['group_id'] ?? ($_GET['group_id'] ?? 0)) ?>">
+                            <input type="hidden" name="return_to" value="<?= htmlspecialchars($returnTo) ?>">
 
                             <div class="row mb-4">
                                 <div class="col-md-6">
@@ -67,22 +83,32 @@ $backUrl = $groupId > 0
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label>Status</label>
-                                    <select name="status" id="status" class="form-control" required>
-                                        <option value="UNASSIGNED" <?= (($inventory['status'] ?? '') === 'UNASSIGNED') ? 'selected' : ''; ?>>Unassigned</option>
-                                        <option value="ASSIGNED" <?= (($inventory['status'] ?? '') === 'ASSIGNED') ? 'selected' : ''; ?>>Assigned</option>
-                                        <option value="DEFECTIVE" <?= (($inventory['status'] ?? '') === 'DEFECTIVE') ? 'selected' : ''; ?>>Defective</option>
-                                        <option value="DISPOSED" <?= (($inventory['status'] ?? '') === 'DISPOSED') ? 'selected' : ''; ?>>Disposed</option>
-                                        <option value="LOST" <?= (($inventory['status'] ?? '') === 'LOST') ? 'selected' : ''; ?>>Lost</option>
-                                        <option value="RETURNED" <?= (($inventory['status'] ?? '') === 'RETURNED') ? 'selected' : ''; ?>>Returned</option>
-                                    </select>
+                                    <label for="status">Status</label>
+                                    <?php if ($isAssigned): ?>
+                                        <input type="hidden" name="status" value="ASSIGNED">
+                                        <select id="status" class="form-control" disabled>
+                                            <option value="ASSIGNED" selected>Assigned</option>
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            This asset is with an employee. To change its status, return it first
+                                            (Users &amp; Employees → View Asset → Return).
+                                        </small>
+                                    <?php else: ?>
+                                        <select name="status" id="status" class="form-control" required
+                                                data-original-status="<?= htmlspecialchars($currentStatus) ?>">
+                                            <?php foreach ($statusOptions as $value => $label): ?>
+                                                <option value="<?= $value ?>" <?= $currentStatus === $value ? 'selected' : '' ?>><?= $label ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <label>Item General Info</label>
-                                    <textarea name="itemInfo" class="form-control" rows="5" required><?= htmlspecialchars($inventory['itemInfo'] ?? '') ?></textarea>
+                                    <textarea name="itemInfo" class="form-control" rows="5" maxlength="150" required><?= htmlspecialchars($inventory['itemInfo'] ?? '') ?></textarea>
+                                    <small class="form-text text-muted">Maximum 150 characters.</small>
                                 </div>
 
                                 <div class="col-md-6">
@@ -116,8 +142,8 @@ $backUrl = $groupId > 0
 
                             <div class="row mb-4" id="reasonRow" style="display:none;">
                                 <div class="col-md-12">
-                                    <label>Reason</label>
-                                    <textarea class="form-control" id="transferDetails" name="transferDetails" rows="4"
+                                    <label for="transferDetails">Reason <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="transferDetails" name="transferDetails" rows="4" maxlength="200"
                                               placeholder="Enter reason for Defective, Disposed, Lost, or Returned"><?= in_array(strtoupper((string) ($inventory['status'] ?? '')), ['DEFECTIVE', 'DISPOSED', 'LOST', 'RETURNED'], true) ? htmlspecialchars((string) ($inventory['currentReason'] ?? '')) : '' ?></textarea>
                                 </div>
                             </div>
@@ -153,7 +179,8 @@ $backUrl = $groupId > 0
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-<script src="<?= htmlspecialchars($base) ?>/assets/js/asset/update_item.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/asset/update_item.js?v=20261008"></script>
+<?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 
 </body>
 </html>

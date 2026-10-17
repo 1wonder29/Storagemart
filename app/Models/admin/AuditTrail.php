@@ -67,8 +67,8 @@ class AuditTrail extends BaseModel {
      * @param string $recordId
      * @return array
      */
-    public function getRecordAuditTrail($recordId) {
-        return $this->logger->getRecordAuditTrail($recordId);
+    public function getRecordAuditTrail($recordId, $module = null) {
+        return $this->logger->getRecordAuditTrail($recordId, $module);
     }
 
     /**

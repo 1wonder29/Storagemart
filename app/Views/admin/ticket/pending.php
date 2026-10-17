@@ -45,7 +45,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-ticket-list.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/ticket-history-modal.css" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
 
@@ -412,7 +412,7 @@ $priorityOptions = it_ticket_priority_options(array_keys($priorities));
     window.BASE_URL = "<?= htmlspecialchars($base) ?>";
     </script>
     <script src="<?= htmlspecialchars($base) ?>/assets/js/admin-pendings.js"></script>
-    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+    <script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261016"></script>
     <?php require __DIR__ . '/../../partials/flash_modal.php'; ?>
 </body>
 

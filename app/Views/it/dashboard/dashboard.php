@@ -22,7 +22,7 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
 
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/it-dashboard.css?v=20261007" rel="stylesheet">
     <?php require_once __DIR__ . '/../../partials/it/theme_head.php'; ?>
@@ -94,6 +94,61 @@ $hasResolutionChart = !empty($resolutionLabels) && !empty($resolutionData);
                 <i class="fas fa-star"></i> My Ratings
             </a>
         </div>
+
+        <?php
+        // Automatic assignment: which zones this person covers and whether they take new tickets.
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+        }
+        $itAway = false;
+        $itZones = [];
+        try {
+            global $pdo;
+            $meStmt = $pdo->prepare('SELECT e.employee_id, COALESCE(av.is_away, 0) AS is_away
+                    FROM tblemployee e LEFT JOIN tblit_availability av ON av.employee_id = e.employee_id
+                    WHERE e.account_id = ? LIMIT 1');
+            $meStmt->execute([(int) ($_SESSION['account_id'] ?? 0)]);
+            $me = $meStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $itAway = (int) ($me['is_away'] ?? 0) === 1;
+            $zoneStmt = $pdo->prepare("SELECT z.label, GROUP_CONCAT(b.branchName ORDER BY b.branchName SEPARATOR ', ') AS branches
+                    FROM tblit_zones z LEFT JOIN tblbranch b ON b.zone = z.zone
+                    WHERE z.it_employee_id = ? GROUP BY z.zone, z.label");
+            $zoneStmt->execute([(int) ($me['employee_id'] ?? 0)]);
+            $itZones = $zoneStmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {
+            // Database update not run yet: hide the card.
+            $me = null;
+        }
+        ?>
+        <?php if (!empty($me)): ?>
+        <div class="card shadow-sm mb-4 it-availability-card">
+            <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
+                <div class="mb-2 mb-md-0">
+                    <h6 class="mb-1 font-weight-bold">
+                        <i class="fas fa-user-clock mr-1"></i>
+                        <?= $itAway ? 'You are marked Away' : 'You are Available for new tickets' ?>
+                    </h6>
+                    <div class="small text-muted">
+                        <?php if ($itZones): ?>
+                            <?php foreach ($itZones as $z): ?>
+                                <div><strong><?= htmlspecialchars($z['label']) ?>:</strong> <?= htmlspecialchars($z['branches'] ?: 'no branches') ?></div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            You get Head Office tickets and tickets from branches without a zone (shared randomly).
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <form method="POST" action="<?= htmlspecialchars($base) ?>/it/availability" class="m-0">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                    <input type="hidden" name="away" value="<?= $itAway ? '0' : '1' ?>">
+                    <button type="submit" class="btn <?= $itAway ? 'btn-success' : 'btn-outline-secondary' ?>">
+                        <i class="fas <?= $itAway ? 'fa-check-circle' : 'fa-plane-departure' ?> mr-1"></i>
+                        <?= $itAway ? "I'm back - give me tickets" : "I'm away (absent / leave)" ?>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Charts -->
         <div class="row mb-4">

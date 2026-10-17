@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
     <title>Storage Mart | Employee Detail</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-pages.css" rel="stylesheet">
@@ -31,6 +31,9 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                     <div class="col-lg-4 mt-3 mt-lg-0 text-lg-right">
                         <a href="<?= htmlspecialchars($base) ?>/hr/employees" class="btn btn-light btn-sm">
                             <i class="fas fa-arrow-left"></i> Back to Employees
+                        </a>
+                        <a href="<?= htmlspecialchars($base) ?>/hr/company-gmail?employee_id=<?= (int) ($employee['employee_id'] ?? $employeeId ?? 0) ?>" class="btn btn-light btn-sm">
+                            <i class="fab fa-google"></i> Company Gmail
                         </a>
                     </div>
                 </div>
@@ -269,10 +272,15 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                                         <th>Quantity</th>
                                         <th>Issued</th>
                                         <th>Condition</th>
+                                        <th>Received</th>
                                         <th>Return</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <?php
+                                    require_once dirname(__DIR__, 3) . '/Helpers/UniformReceipts.php';
+                                    $uniformReceipts = UniformReceipts::forAssignments(array_column($uniforms, 'assignment_id'));
+                                    ?>
                                     <?php foreach ($uniforms as $unif): ?>
                                         <tr>
                                             <td>
@@ -285,6 +293,7 @@ require_once __DIR__ . '/../../../Helpers/RoleLabel.php';
                                             <td><?= $unif['quantity_issued'] ?></td>
                                             <td><?= date('M d, Y', strtotime($unif['date_issued'])) ?></td>
                                             <td><?= htmlspecialchars($unif['condition_upon_issue'] ?? '-') ?></td>
+                                            <td><?= UniformReceipts::badge($uniformReceipts[(int) $unif['assignment_id']] ?? null) ?: '—' ?></td>
                                             <td>
                                                 <a href="<?= htmlspecialchars($base) ?>/hr/uniforms/return_confirm/<?= $unif['assignment_id'] ?>"
                                                    class="btn btn-sm btn-primary">Return</a>

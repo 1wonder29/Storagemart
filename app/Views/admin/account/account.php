@@ -58,7 +58,7 @@ ksort($branchOptions);
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/admin-users.css?v=20261002c" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/datatables/datatables.min.css" rel="stylesheet">
 </head>
 
@@ -225,6 +225,21 @@ ksort($branchOptions);
                     </h6>
                     <div class="card-header-actions">
                         <span class="badge badge-primary"><?= $totalUsers ?> user<?= $totalUsers === 1 ? '' : 's' ?></span>
+                        <?php
+                        require_once __DIR__ . '/../../../Models/UserRequestModel.php';
+                        $userRequestsWaiting = (new UserRequestModel())->countWaiting('ADMIN');
+                        ?>
+                        <a href="<?= htmlspecialchars($base) ?>/admin/user-requests" class="btn btn-sm <?= $userRequestsWaiting ? 'btn-warning' : 'btn-outline-primary' ?>" title="New user accounts requested by HR">
+                            <i class="fas fa-user-plus"></i> Requests from HR<?php if ($userRequestsWaiting): ?> <span class="badge badge-light"><?= (int) $userRequestsWaiting ?></span><?php endif; ?>
+                        </a>
+                        <form method="POST" action="<?= htmlspecialchars($base) ?>/admin/account" class="d-inline"
+                              data-confirm="Show the first-time guide again to EVERYONE at their next sign-in?">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                            <input type="hidden" name="action" value="reset_guide_all">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Everyone sees the first-time guide again at their next sign-in">
+                                <i class="fas fa-redo"></i> First-time guide for all
+                            </button>
+                        </form>
                         <a href="<?= htmlspecialchars($base) ?>/admin/account/add" class="btn btn-sm btn-primary">
                             <i class="fas fa-plus mr-1"></i> Add User
                         </a>
@@ -369,6 +384,10 @@ ksort($branchOptions);
                                                     </form>
                                                 <?php endif; ?>
                                                 <?php if ($employeeId > 0): ?>
+                                                    <a href="<?= htmlspecialchars($base) ?>/admin/company-gmail?employee_id=<?= $employeeId ?>"
+                                                       class="btn btn-sm btn-outline-secondary btn-action-icon" title="Company Gmail (password, QR, checklist)">
+                                                        <i class="fab fa-google"></i>
+                                                    </a>
                                                     <a href="<?= htmlspecialchars($base) ?>/admin/assets/view?employee_id=<?= $employeeId ?>"
                                                        class="btn btn-sm btn-outline-info btn-action-icon" title="View assigned assets">
                                                         <i class="fas fa-box-open"></i>

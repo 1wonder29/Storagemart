@@ -11,7 +11,7 @@ $base = rtrim(BASE_URL, '/');
 
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/png">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <?php require_once __DIR__ . '/../../partials/ticket/ticket_detail_assets.php'; ?>
 </head>
@@ -103,7 +103,7 @@ $base = rtrim(BASE_URL, '/');
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/jquery/jquery.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/sb-admin-2.min.js"></script>
-<script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js"></script>
+<script src="<?= htmlspecialchars($base) ?>/assets/js/ticket/ticket_comments.js?v=20261016"></script>
 <script src="<?= htmlspecialchars($base) ?>/assets/js/edit_ticket_action.js"></script>
 <?php require __DIR__ . '/../../partials/ticket/cancel_ticket_modal.php'; ?>
 

@@ -56,7 +56,9 @@ class UniformReportModel extends UniformModel {
 
     /**
      * Damaged / lost units HR recorded while processing a return become report records too
-     * (status CONFIRMED, source HR_RETURN), so every loss shows on the Lost / Damaged Reports page.
+     * (source HR_RETURN), so every loss shows on the Lost / Damaged Reports page. Returns
+     * still under review are PENDING (HR confirms them or marks the item OK); older ones
+     * were applied at once and are CONFIRMED.
      * Idempotent: each return row is linked at most once (unique return_id).
      */
     public function syncReturnReports(): void
@@ -89,10 +91,13 @@ class UniformReportModel extends UniformModel {
                 (assignment_id, uniform_id, employee_id, report_type, quantity, description, status,
                  hr_remarks, reviewed_by, reviewed_at, created_at, source, return_id)
             SELECT rt.assignment_id, rt.uniform_id, rt.employee_id, rt.condition_upon_return, rt.quantity_returned,
-                   NULLIF(TRIM(rt.remarks), ''), 'CONFIRMED',
-                   'Recorded by HR when the item was returned.',
-                   CASE WHEN rt.processed_by REGEXP '^[0-9]+$' THEN CAST(rt.processed_by AS UNSIGNED) ELSE NULL END,
-                   COALESCE(rt.processed_at, rt.datecreated), COALESCE(rt.datecreated, NOW()), 'HR_RETURN', rt.return_id
+                   NULLIF(TRIM(rt.remarks), ''),
+                   CASE WHEN rt.return_status = 'PENDING' THEN 'PENDING' ELSE 'CONFIRMED' END,
+                   CASE WHEN rt.return_status = 'PENDING' THEN NULL ELSE 'Recorded by HR when the item was returned.' END,
+                   CASE WHEN rt.return_status = 'PENDING' THEN NULL
+                        WHEN rt.processed_by REGEXP '^[0-9]+$' THEN CAST(rt.processed_by AS UNSIGNED) ELSE NULL END,
+                   CASE WHEN rt.return_status = 'PENDING' THEN NULL ELSE COALESCE(rt.processed_at, rt.datecreated) END,
+                   COALESCE(rt.datecreated, NOW()), 'HR_RETURN', rt.return_id
             FROM tbluniform_returns rt
             WHERE rt.condition_upon_return IN ('DAMAGED', 'LOST')
               AND rt.return_status <> 'REJECTED'
@@ -114,7 +119,14 @@ class UniformReportModel extends UniformModel {
                 ORDER BY ua.date_issued DESC, ua.assignment_id DESC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$employeeId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        require_once __DIR__ . '/../../Helpers/UniformReceipts.php';
+        $receipts = UniformReceipts::forAssignments(array_column($rows, 'assignment_id'));
+        foreach ($rows as &$row) {
+            $row['receipt'] = $receipts[(int) $row['assignment_id']] ?? null;
+        }
+        unset($row);
+        return $rows;
     }
 
     public function getReportsForEmployee(int $employeeId, int $limit = 50): array
@@ -255,6 +267,10 @@ class UniformReportModel extends UniformModel {
             return [false, 'This report was already reviewed.', 0];
         }
 
+        if (($report['source'] ?? '') === 'HR_RETURN' && !empty($report['return_id'])) {
+            return $this->resolveReturnReview($report, $decision, $hrRemarks, $reviewedBy);
+        }
+
         if ($decision === 'ITEM_OK') {
             return [true, 'Report closed. The item stays active with the employee.', 0];
         }
@@ -313,6 +329,109 @@ class UniformReportModel extends UniformModel {
         }
 
         return [true, 'Report confirmed. Inventory updated.', $qty];
+    }
+
+    /**
+     * A damaged / lost return held for review (claimed already by resolveReport).
+     * CONFIRMED: the units are added to the item's damaged / lost counts.
+     * ITEM_OK:   the item was fine after all; the units go back to stock as good.
+     *
+     * @return array{0: bool, 1: string, 2: int}
+     */
+    private function resolveReturnReview(array $report, string $decision, string $hrRemarks, int $reviewedBy): array
+    {
+        $returnId = (int) $report['return_id'];
+        $qty = (int) $report['quantity'];
+        if ($decision === 'ITEM_OK') {
+            $this->pdo->prepare("UPDATE tbluniform_returns
+                    SET condition_upon_return = 'GOOD',
+                        remarks = CONCAT(COALESCE(remarks, ''), ' | Checked by HR: item OK, back to stock.')
+                    WHERE return_id = ? AND return_status = 'PENDING'")
+                ->execute([$returnId]);
+        }
+        if (!$this->approveReturn($returnId, 'APPROVED', $reviewedBy)) {
+            if ($decision === 'ITEM_OK') {
+                $this->pdo->prepare("UPDATE tbluniform_returns SET condition_upon_return = ? WHERE return_id = ? AND return_status = 'PENDING'")
+                    ->execute([$report['report_type'], $returnId]);
+            }
+            $this->pdo->prepare("UPDATE {$this->tblreports}
+                    SET status = 'PENDING', hr_remarks = NULL, reviewed_by = NULL, reviewed_at = NULL
+                    WHERE report_id = ?")->execute([(int) $report['report_id']]);
+            return [false, 'Could not update the inventory for this return.', 0];
+        }
+
+        if ($decision === 'ITEM_OK') {
+            // The issuance no longer counts as damaged / lost unless other units were.
+            $this->pdo->prepare("UPDATE {$this->tbluniform_assignment} ua
+                    SET ua.condition_upon_return = 'GOOD'
+                    WHERE ua.assignment_id = ?
+                      AND NOT EXISTS (SELECT 1 FROM tbluniform_returns rt
+                                      WHERE rt.assignment_id = ua.assignment_id
+                                        AND rt.condition_upon_return IN ('DAMAGED', 'LOST')
+                                        AND rt.return_status <> 'REJECTED')")
+                ->execute([(int) $report['assignment_id']]);
+            return [true, 'Item OK: ' . $qty . ' unit(s) went back to stock.', 0];
+        }
+        return [true, 'Confirmed: ' . $qty . ' unit(s) recorded as ' . strtolower($report['report_type']) . '.', $qty];
+    }
+
+    /**
+     * Correct a mistake: switch a report between DAMAGED and LOST. Allowed while pending,
+     * and after confirming when the units were recorded through a return (counts move over).
+     *
+     * @return array{0: bool, 1: string}
+     */
+    public function changeReportType(int $reportId, string $newType): array
+    {
+        $newType = strtoupper(trim($newType));
+        if (!in_array($newType, self::TYPES, true)) {
+            return [false, 'Choose Lost or Damaged.'];
+        }
+        $report = $this->getReportById($reportId);
+        if (!$report) {
+            return [false, 'Report not found.'];
+        }
+        $oldType = (string) $report['report_type'];
+        if ($oldType === $newType) {
+            return [true, 'Nothing to change.'];
+        }
+        $returnId = (int) ($report['return_id'] ?? 0);
+
+        if ($report['status'] === 'ITEM_OK') {
+            return [false, 'This report was closed as Item OK; nothing was written off.'];
+        }
+        if ($report['status'] === 'CONFIRMED' && $returnId <= 0) {
+            return [false, 'This older report cannot be changed. Ask IT to correct it.'];
+        }
+
+        try {
+            $this->pdo->beginTransaction();
+            if ($returnId > 0) {
+                $this->pdo->prepare("UPDATE tbluniform_returns SET condition_upon_return = ? WHERE return_id = ?")
+                    ->execute([$newType, $returnId]);
+                $this->pdo->prepare("UPDATE {$this->tbluniform_assignment} SET condition_upon_return = ?
+                        WHERE assignment_id = ? AND condition_upon_return = ?")
+                    ->execute([$newType, (int) $report['assignment_id'], $oldType]);
+            }
+            if ($report['status'] === 'CONFIRMED') {
+                $from = $oldType === 'LOST' ? 'quantity_lost' : 'quantity_damaged';
+                $to = $newType === 'LOST' ? 'quantity_lost' : 'quantity_damaged';
+                $this->pdo->prepare("UPDATE {$this->tbluniform_inventory}
+                        SET {$from} = GREATEST(0, COALESCE({$from}, 0) - ?), {$to} = COALESCE({$to}, 0) + ?, date_updated = NOW()
+                        WHERE uniform_id = ?")
+                    ->execute([(int) $report['quantity'], (int) $report['quantity'], (int) $report['uniform_id']]);
+            }
+            $this->pdo->prepare("UPDATE {$this->tblreports} SET report_type = ? WHERE report_id = ?")
+                ->execute([$newType, $reportId]);
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('UniformReportModel::changeReportType failed: ' . $e->getMessage());
+            return [false, 'Could not change the report.'];
+        }
+        return [true, 'Changed from ' . strtolower($oldType) . ' to ' . strtolower($newType) . '.'];
     }
 
     public function hasPendingReport(int $assignmentId): bool

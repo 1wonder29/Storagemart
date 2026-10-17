@@ -74,6 +74,12 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                             <i class="fas fa-file-word"></i> Report Word
                         </a>
                     <?php endif; ?>
+                    <?php if (in_array(strtolower($status), ['resolved', 'closed'], true)): ?>
+                        <a href="<?= htmlspecialchars($detailBase) ?>/tickets/signature?id=<?= $ticketId ?>"
+                           class="btn btn-primary btn-sm" title="Sign the technical report without printing, or print it">
+                            <i class="fas fa-signature"></i> Sign report
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="card-body">
@@ -188,9 +194,14 @@ $detailRoutePrefix = $routePrefix ?? 'employee';
                                 actionTaken.focus();
                                 return;
                             }
-                            if (!window.confirm('Mark this ticket as resolved? The requester will be notified.')) { return; }
-                            actionField.value = 'Resolve';
-                            form.submit();
+                            var ask = window.TmsDialog
+                                ? window.TmsDialog.confirm('Mark this ticket as resolved? The requester will be notified.', { okText: 'Mark as Done', danger: false })
+                                : Promise.resolve(window.confirm('Mark this ticket as resolved? The requester will be notified.'));
+                            ask.then(function (ok) {
+                                if (!ok) { return; }
+                                actionField.value = 'Resolve';
+                                form.submit();
+                            });
                         });
                     })();
                     </script>

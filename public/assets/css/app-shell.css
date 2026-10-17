@@ -38,7 +38,8 @@
   display: block;
   height: 2.3rem;
   width: auto;
-  border-radius: 0.35rem;
+  aspect-ratio: 298 / 74;
+  image-rendering: auto;
 }
 
 .app-topbar .app-topbar-clock {
@@ -239,4 +240,25 @@ html.it-dark .app-topbar .app-profile-name {
 
 html.it-dark .app-topbar .app-clock-date {
   color: var(--it-text-dim);
+}
+
+/* Avatar and name open the profile (the header profile menu was removed). */
+#accordionSidebar.sidebar-modern a.sidebar-user-profile {
+  display: block;
+  text-decoration: none;
+}
+
+#accordionSidebar.sidebar-modern a.sidebar-user-name.sidebar-user-profile {
+  color: #fff;
+}
+
+#accordionSidebar.sidebar-modern a.sidebar-user-name:hover,
+#accordionSidebar.sidebar-modern a.sidebar-user-name:focus {
+  color: #fff;
+  text-decoration: underline;
+}
+
+#accordionSidebar.sidebar-modern a.sidebar-user-profile:hover .sidebar-user-avatar,
+#accordionSidebar.sidebar-modern a.sidebar-user-profile:focus .sidebar-user-avatar {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
 }

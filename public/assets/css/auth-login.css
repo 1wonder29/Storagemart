@@ -1,14 +1,14 @@
 /* Storage Mart TMS — Modern Dynamic Auth Pages */
 
 :root {
-  --auth-page-bg: #012b90;
-  --auth-page-bg-light: #0235a8;
-  --auth-page-bg-dark: #011f6e;
-  --auth-blue: #0046ad;
-  --auth-blue-bright: #006ad4;
-  --auth-blue-dark: #003a8f;
-  --auth-orange: #f37021;
-  --auth-orange-hover: #de6126;
+  --auth-page-bg: #19398a;
+  --auth-page-bg-light: #1d4ab0;
+  --auth-page-bg-dark: #0f2563;
+  --auth-blue: #19398a;
+  --auth-blue-bright: #2661d4;
+  --auth-blue-dark: #0f2563;
+  --auth-orange: #f85f00;
+  --auth-orange-hover: #d94f00;
   --auth-orange-light: #ddb090;
   --auth-orange-glow: rgba(255, 185, 135, 0.14);
   --auth-surface: rgba(255, 255, 255, 0.96);
@@ -577,6 +577,16 @@ a.auth-submit--link {
   height: 18px;
 }
 
+/* One eye at a time (auth-login.js adds "is-showing" while the password is visible). */
+.auth-toggle-pw .icon-eye-off,
+.auth-toggle-pw.is-showing .icon-eye {
+  display: none;
+}
+
+.auth-toggle-pw.is-showing .icon-eye-off {
+  display: block;
+}
+
 .auth-submit {
   position: relative;
   margin-top: 8px;
@@ -932,4 +942,11 @@ textarea:not([readonly]):not([disabled]),
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
   user-select: none !important;
+}
+
+/* Microsoft Edge adds its own "show password" eye to password boxes; the TMS has its own
+   eye button, so hide Edge's to avoid two overlapping icons. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
 }

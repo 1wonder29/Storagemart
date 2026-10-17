@@ -74,6 +74,8 @@ class TicketCommentController extends AuthController
 
         $ticketId = (int) ($_POST['ticket_id'] ?? 0);
         $commentText = trim((string) ($_POST['comment'] ?? ''));
+        require_once __DIR__ . '/../Helpers/TicketAttachments.php';
+        $files = TicketAttachments::filesFrom($_FILES['attachment'] ?? null);
 
         if ($ticketId <= 0) {
             http_response_code(400);
@@ -81,15 +83,23 @@ class TicketCommentController extends AuthController
             return;
         }
 
-        if ($commentText === '') {
+        if ($commentText === '' && !$files) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Comment cannot be empty.']);
+            echo json_encode(['success' => false, 'message' => 'Type a message or attach a file.']);
             return;
         }
 
         if (mb_strlen($commentText) > 2000) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Comment is too long (max 2000 characters).']);
+            return;
+        }
+
+        // Anti-spam: at most 12 messages per 30 seconds per person.
+        require_once __DIR__ . '/../Helpers/RateLimit.php';
+        if (($wait = RateLimit::hit('ticket_comment', 12, 30)) > 0) {
+            http_response_code(429);
+            echo json_encode(['success' => false, 'message' => RateLimit::message($wait)]);
             return;
         }
 
@@ -103,6 +113,17 @@ class TicketCommentController extends AuthController
             return;
         }
 
+        $attachment = null;
+        if ($files) {
+            try {
+                $attachment = TicketAttachments::store($files[0], $ticketId);
+            } catch (RuntimeException $e) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                return;
+            }
+        }
+
         try {
             $model = new TicketCommentModel();
             $author = $model->getAuthorDisplayInfo($accountId);
@@ -111,7 +132,8 @@ class TicketCommentController extends AuthController
                 $accountId,
                 $author['role'],
                 $author['name'],
-                $commentText
+                $commentText,
+                $attachment
             );
 
             try {
@@ -121,7 +143,8 @@ class TicketCommentController extends AuthController
                     $accountId,
                     $author['name'],
                     $author['role'],
-                    $commentText
+                    $commentText !== '' ? $commentText
+                        : ($attachment && TicketAttachments::isImageMime($attachment['mime']) ? '[sent a photo]' : '[sent a file]')
                 );
             } catch (Throwable $notifyError) {
                 error_log('Ticket comment notification failed: ' . $notifyError->getMessage());
@@ -130,20 +153,55 @@ class TicketCommentController extends AuthController
             echo json_encode([
                 'success' => true,
                 'message' => 'Comment posted.',
-                'comment' => [
-                    'comment_id'   => $commentId,
-                    'ticket_id'    => $ticketId,
-                    'account_id'   => $accountId,
-                    'author_role'  => $author['role'],
-                    'author_name'  => $author['name'],
-                    'comment_text' => $commentText,
-                    'created_at'   => date('Y-m-d H:i:s'),
-                ],
+                'comment' => TicketCommentModel::presentComment([
+                    'comment_id'      => $commentId,
+                    'ticket_id'       => $ticketId,
+                    'account_id'      => $accountId,
+                    'author_role'     => $author['role'],
+                    'author_name'     => $author['name'],
+                    'comment_text'    => $commentText,
+                    'created_at'      => date('Y-m-d H:i:s'),
+                    'attachment_path' => $attachment['path'] ?? null,
+                    'attachment_name' => $attachment['name'] ?? null,
+                    'attachment_mime' => $attachment['mime'] ?? null,
+                    'attachment_size' => $attachment['size'] ?? null,
+                ]),
             ]);
         } catch (Throwable $e) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Failed to post comment.']);
         }
+    }
+
+    /** GET /ticket-comments/file?id= : a chat attachment, for people who can see the ticket. */
+    public function downloadAttachment(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $accountId = (int) ($_SESSION['account_id'] ?? 0);
+        $model = new TicketCommentModel();
+        $comment = $accountId > 0 ? $model->getCommentById((int) ($_GET['id'] ?? 0)) : null;
+        $access = $comment ? $this->resolveAccess((int) $comment['ticket_id'], $accountId, strtoupper((string) ($_SESSION['usertype'] ?? ''))) : null;
+        require_once __DIR__ . '/../Helpers/TicketAttachments.php';
+        $path = ($comment && !empty($comment['attachment_path'])) ? TicketAttachments::absolutePath((string) $comment['attachment_path']) : null;
+        if (!$access || !$access['canView'] || $path === null) {
+            error_log('Chat attachment not served: comment ' . (int) ($_GET['id'] ?? 0) . ', account ' . $accountId
+                . ($comment ? '' : ', no such comment') . ($access && !$access['canView'] ? ', no access' : '')
+                . ($comment && $path === null ? ', file missing: ' . ($comment['attachment_path'] ?? '') : ''));
+            http_response_code($accountId > 0 ? 404 : 401);
+            echo 'File not found.';
+            return;
+        }
+        $mime = (string) $comment['attachment_mime'];
+        $inline = TicketAttachments::isImageMime($mime) || $mime === 'application/pdf';
+        $name = str_replace(['"', "\r", "\n"], '', (string) $comment['attachment_name']);
+        header('Content-Type: ' . ($inline ? $mime : 'application/octet-stream'));
+        header('Content-Length: ' . filesize($path));
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: private, max-age=86400');
+        header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . '; filename="' . $name . '"');
+        readfile($path);
     }
 
     /**

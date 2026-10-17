@@ -9,7 +9,7 @@ $base = rtrim(BASE_URL, '/');
     <title>Storage Mart | Pending Item Returns</title>
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
 </head>
 <body id="page-top">
@@ -86,7 +86,7 @@ $base = rtrim(BASE_URL, '/');
                                                 <form method="post" action="<?= htmlspecialchars($base) ?>/hr/uniforms/approve-return" style="display: inline;">
                                                     <input type="hidden" name="return_id" value="<?= (int)$return['return_id'] ?>">
                                                     <input type="hidden" name="action" value="reject">
-                                                    <button type="submit" class="btn btn-sm btn-danger" title="Reject Return" onclick="return confirm('Are you sure you want to reject this return?');">
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="Reject Return" data-confirm="Are you sure you want to reject this return?">
                                                         <i class="fas fa-times"></i> Reject
                                                     </button>
                                                 </form>

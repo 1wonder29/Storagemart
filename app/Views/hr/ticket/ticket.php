@@ -1,14 +1,12 @@
 <?php
 $base = rtrim(BASE_URL, '/');
 
+// Every status is always shown (0 included), the same as on the Employee page.
+require_once __DIR__ . '/../../../Helpers/TicketStatus.php';
 $rawTicketStats = $ticketStats ?? [];
-$statusOrder = ['Pending', 'In Progress', 'Cancelled', 'Resolved'];
 $summaryTicketStats = [];
-foreach ($statusOrder as $status) {
-    $count = (int)($rawTicketStats[$status] ?? 0);
-    if ($count > 0 || $status === 'Resolved') {
-        $summaryTicketStats[$status] = $count;
-    }
+foreach (TicketStatus::all() as $status) {
+    $summaryTicketStats[$status] = (int) ($rawTicketStats[$status] ?? 0);
 }
 foreach ($rawTicketStats as $status => $count) {
     if (!isset($summaryTicketStats[$status])) {
@@ -42,7 +40,7 @@ $hrTicketStatTone = static function (string $status): string {
 
     <link href="<?= htmlspecialchars($base) ?>/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm_favicon.png" type="image/x-icon">
+    <link rel="icon" href="<?= htmlspecialchars($base) ?>/assets/img/sm-icon-32.png?v=20261016" type="image/x-icon">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/storagemart.css" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-dashboard.css?v=20261007" rel="stylesheet">
     <link href="<?= htmlspecialchars($base) ?>/assets/css/hr-pages.css" rel="stylesheet">

@@ -52,7 +52,11 @@ class TicketCancelController extends AuthController
         $model = new TicketCancelModel();
 
         if (!$model->canUserCancelTicket($ticketId, $accountId, $usertype)) {
-            $this->respond(false, 'You are not allowed to cancel this ticket.', $isAjax, 403);
+            $row = $model->getTicketRow($ticketId);
+            $message = ($usertype !== 'ADMIN' && !empty($row['assigned_to']))
+                ? 'This ticket is already assigned to IT, so only the admin can cancel it. Message IT in the ticket chat if it is no longer needed.'
+                : 'You are not allowed to cancel this ticket.';
+            $this->respond(false, $message, $isAjax, 403);
             return;
         }
 
